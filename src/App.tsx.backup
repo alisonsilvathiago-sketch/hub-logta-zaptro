@@ -1,0 +1,216 @@
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import Sidebar from './components/Sidebar';
+import MasterSidebar from './components/MasterSidebar';
+import Header from './components/Header';
+import Dashboard from './pages/Dashboard';
+import MasterAdmin from './pages/MasterAdmin';
+import Logistics from './pages/Logistics';
+import HR from './pages/HR';
+import CRM from './pages/CRM';
+import Finance from './pages/Finance';
+import Inventory from './pages/Inventory';
+import Settings from './pages/Settings';
+import ProtectedRoute from './components/ProtectedRoute';
+import SuspendedAccount from './pages/SuspendedAccount';
+import Login from './pages/Login';
+import Reports from './pages/Reports';
+import Vehicles from './pages/Vehicles';
+import DriverApp from './pages/DriverApp';
+import UserManagement from './pages/UserManagement';
+import UserProfile from './pages/UserProfile';
+import UserProfileSettings from './pages/UserProfileSettings';
+import Permissions from './pages/Permissions';
+import Fleet from './pages/Fleet';
+import Drivers from './pages/Drivers';
+import CompanySettings from './pages/CompanySettings';
+import Training from './pages/Training';
+import CourseDetail from './pages/CourseDetail';
+import CompanyManagement from './pages/Master/CompanyManagement';
+import MasterFinance from './pages/Master/MasterFinance';
+import AuditLogs from './pages/Master/AuditLogs';
+import SupportTickets from './pages/Master/SupportTickets';
+import GlobalSettings from './pages/Master/GlobalSettings';
+import MasterCRM from './pages/Master/MasterCRM';
+import MasterPlans from './pages/Master/MasterPlans';
+import MasterStaff from './pages/Master/MasterStaff';
+import ModulePage from './pages/ModulePage';
+import ApiManagement from './pages/Master/ApiManagement';
+import Integrations from './pages/Integrations';
+import CompanySubscription from './pages/CompanySubscription';
+import { useAuth } from './context/AuthContext';
+import { useTenantTheme } from './hooks/useTenantTheme';
+import Chat from './components/Chat';
+import { Toaster } from 'react-hot-toast';
+import { getHomePathForRole } from './utils/rbac';
+
+import Home from './pages/Home';
+import PlansPage from './pages/Plans';
+
+function RoleRedirect() {
+  const { profile, user, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading || !user || !profile) return null;
+
+  const publicPaths = ['/', '/login', '/master-login'];
+  if (publicPaths.includes(location.pathname)) {
+    const target = getHomePathForRole(profile.role);
+    if (target !== location.pathname) {
+      return <Navigate to={target} replace />;
+    }
+  }
+
+  if (location.pathname === '/dashboard' && !['ADMIN', 'MASTER_ADMIN'].includes(profile.role)) {
+    return <Navigate to={getHomePathForRole(profile.role)} replace />;
+  }
+
+  return null;
+}
+
+function AppContent() {
+  const { profile, user, isLoading } = useAuth();
+  const location = useLocation();
+
+  useTenantTheme(profile?.company_id);
+
+  if (isLoading) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-app)' }}>
+        <p style={{ color: 'var(--primary)', fontWeight: '700' }}>Carregando...</p>
+      </div>
+    );
+  }
+  
+  const isMaster = !!profile && profile?.role === 'MASTER_ADMIN';
+  const isDriverRoute = location.pathname.startsWith('/motorista');
+  const isPublicPath = ['/', '/planos', '/login', '/master-login'].includes(location.pathname) || 
+                       location.pathname.startsWith('/login');
+  
+  const isSuspended = profile?.status_empresa === 'bloqueado' && !isMaster && !isPublicPath;
+  const showSidebar = !!user && !!profile && !isDriverRoute && profile?.role !== 'MOTORISTA' && !isPublicPath && !isSuspended;
+
+  if (isSuspended && location.pathname !== '/suspensao') {
+     return <Navigate to="/suspensao" replace />;
+  }
+
+  // Prevenir flash no '/' ou '/dashboard'
+  if (!isPublicPath && user && profile) {
+    const roleTarget = getHomePathForRole(profile.role);
+    if ((location.pathname === '/' || location.pathname === '/dashboard') && location.pathname !== roleTarget) {
+       return <Navigate to={roleTarget} replace />;
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', width: '100%', minHeight: '100vh', backgroundColor: 'var(--bg-app)' }}>
+      {user && profile && <RoleRedirect />}
+      
+      {showSidebar && (
+        isMaster ? <MasterSidebar /> : <Sidebar />
+      )}
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column',
+        marginLeft: showSidebar ? 'var(--sidebar-width-collapsed)' : '0',
+        transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        minHeight: '100vh',
+      }}>
+        {showSidebar && <Header />}
+        <main style={{ 
+          padding: (isDriverRoute || !showSidebar) ? '0' : '32px',
+          flex: 1,
+        }}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/planos" element={<PlansPage />} />
+            <Route path="/master-login" element={user ? <Navigate to="/master-admin" /> : <Login type="master" />} />
+            <Route path="/login" element={user ? <Navigate to={getHomePathForRole(profile?.role)} /> : <Login type="empresa" />} />
+            <Route path="/suspensao" element={<SuspendedAccount />} />
+            <Route path="/dashboard" element={<Navigate to={getHomePathForRole(profile?.role || 'ADMIN')} replace />} />
+            <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN', 'MASTER_ADMIN']}><Dashboard /></ProtectedRoute>} />
+            <Route path="/perfil" element={<ProtectedRoute><UserProfileSettings /></ProtectedRoute>} />
+            <Route path="/motorista/dashboard" element={<ProtectedRoute allowedRoles={['MOTORISTA', 'ADMIN', 'MASTER_ADMIN']}><DriverApp /></ProtectedRoute>} />
+            <Route path="/motorista" element={<Navigate to="/motorista/dashboard" replace />} />
+            <Route path="/auditoria" element={<ProtectedRoute allowedRoles={['ADMIN', 'MASTER_ADMIN']}><AuditLogs /></ProtectedRoute>} />
+            <Route path="/logistica/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN', 'GERENTE', 'LOGISTICA', 'MASTER_ADMIN']}><Logistics /></ProtectedRoute>} />
+            <Route path="/logistica" element={<Navigate to="/logistica/dashboard" replace />} />
+            <Route path="/logistica/:tab" element={<ProtectedRoute><Logistics /></ProtectedRoute>} />
+            <Route path="/rh/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN', 'GERENTE', 'RH', 'MASTER_ADMIN']}><HR /></ProtectedRoute>} />
+            <Route path="/rh" element={<Navigate to="/rh/dashboard" replace />} />
+            <Route path="/rh/:tab" element={<ProtectedRoute><HR /></ProtectedRoute>} />
+            <Route path="/crm/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN', 'GERENTE', 'COMERCIAL', 'MASTER_ADMIN']}><CRM /></ProtectedRoute>} />
+            <Route path="/crm" element={<Navigate to="/crm/dashboard" replace />} />
+            <Route path="/crm/:tab" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
+            <Route path="/atendimento/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN', 'GERENTE', 'ATENDIMENTO', 'MASTER_ADMIN']}><div style={{ padding: '40px' }}><h1>Dashboard de Atendimento</h1><p>Central de tickets e suporte em tempo real.</p></div></ProtectedRoute>} />
+            <Route path="/atendimento" element={<Navigate to="/atendimento/dashboard" replace />} />
+            <Route path="/estoque/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN', 'GERENTE', 'ALMOXARIFADO', 'ESTOQUISTA', 'MASTER_ADMIN']}><Inventory /></ProtectedRoute>} />
+            <Route path="/estoque" element={<Navigate to="/estoque/dashboard" replace />} />
+            <Route path="/estoque/:tab" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
+            <Route path="/gestao-motoristas" element={<ProtectedRoute allowedRoles={['ADMIN', 'GERENTE', 'LOGISTICA', 'MASTER_ADMIN']}><Drivers /></ProtectedRoute>} />
+            <Route path="/frota/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN', 'GERENTE', 'LOGISTICA', 'MASTER_ADMIN']}><Fleet /></ProtectedRoute>} />
+            <Route path="/frota" element={<Navigate to="/frota/dashboard" replace />} />
+            <Route path="/frota/:tab" element={<ProtectedRoute><Fleet /></ProtectedRoute>} />
+            <Route path="/financeiro/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN', 'GERENTE', 'FINANCEIRO', 'MASTER_ADMIN']}><Finance /></ProtectedRoute>} />
+            <Route path="/financeiro" element={<Navigate to="/financeiro/dashboard" replace />} />
+            <Route path="/financeiro/:tab" element={<ProtectedRoute><Finance /></ProtectedRoute>} />
+            <Route path="/relatorios" element={<ProtectedRoute allowedRoles={['ADMIN', 'GERENTE', 'MASTER_ADMIN']}><Reports /></ProtectedRoute>} />
+            <Route path="/treinamentos" element={<ProtectedRoute><Training /></ProtectedRoute>} />
+            <Route path="/treinamentos/:id" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
+            <Route path="/usuarios" element={<ProtectedRoute allowedRoles={['ADMIN', 'MASTER_ADMIN']}><UserManagement /></ProtectedRoute>} />
+            <Route path="/usuarios/:id" element={<ProtectedRoute allowedRoles={['ADMIN', 'MASTER_ADMIN']}><UserProfile /></ProtectedRoute>} />
+            <Route path="/permissoes" element={<ProtectedRoute allowedRoles={['ADMIN', 'MASTER_ADMIN']}><Permissions /></ProtectedRoute>} />
+            <Route path="/empresa" element={<ProtectedRoute allowedRoles={['ADMIN', 'MASTER_ADMIN']}><CompanySettings /></ProtectedRoute>} />
+            <Route path="/plano" element={<ProtectedRoute allowedRoles={['ADMIN', 'MASTER_ADMIN']}><div style={{ padding: '40px' }}><h1>Plano e Assinatura</h1><p>Em breve...</p></div></ProtectedRoute>} />
+            <Route path="/minha-assinatura" element={<ProtectedRoute allowedRoles={['ADMIN', 'MASTER_ADMIN']}><CompanySubscription /></ProtectedRoute>} />
+            <Route path="/notificacoes" element={<ProtectedRoute allowedRoles={['ADMIN', 'GERENTE', 'LOGISTICA', 'MASTER_ADMIN']}><div style={{ padding: '40px' }}><h1>Notificações</h1><p>Em breve...</p></div></ProtectedRoute>} />
+            <Route path="/configuracoes" element={<ProtectedRoute allowedRoles={['ADMIN', 'MASTER_ADMIN']}><Settings /></ProtectedRoute>} />
+            <Route path="/integracoes" element={<ProtectedRoute allowedRoles={['ADMIN', 'MASTER_ADMIN']}><Integrations /></ProtectedRoute>} />
+            <Route path="/master-admin" element={<ProtectedRoute requireMasterAdmin><MasterAdmin /></ProtectedRoute>} />
+            <Route path="/master/empresas" element={<ProtectedRoute requireMasterAdmin><CompanyManagement /></ProtectedRoute>} />
+            <Route path="/master/crm" element={<ProtectedRoute requireMasterAdmin><MasterCRM /></ProtectedRoute>} />
+            <Route path="/master/financeiro" element={<ProtectedRoute requireMasterAdmin><MasterFinance /></ProtectedRoute>} />
+            <Route path="/master/planos" element={<ProtectedRoute requireMasterAdmin><MasterPlans /></ProtectedRoute>} />
+            <Route path="/master/equipe" element={<ProtectedRoute requireMasterAdmin><MasterStaff /></ProtectedRoute>} />
+            <Route path="/master/armazenamento" element={<ProtectedRoute requireMasterAdmin><div style={{ padding: '40px' }}><h1>Infra & Storage</h1><p>Em breve...</p></div></ProtectedRoute>} />
+            <Route path="/master/monitoramento" element={<ProtectedRoute requireMasterAdmin><div style={{ padding: '40px' }}><h1>Monitoramento Técnico</h1><p>Em breve...</p></div></ProtectedRoute>} />
+            <Route path="/master/atendimento" element={<ProtectedRoute requireMasterAdmin><SupportTickets /></ProtectedRoute>} />
+            <Route path="/master/notificacoes" element={<ProtectedRoute requireMasterAdmin><div style={{ padding: '40px' }}><h1>Notificações Master</h1><p>Em breve...</p></div></ProtectedRoute>} />
+            <Route path="/master/auditoria" element={<ProtectedRoute requireMasterAdmin><AuditLogs /></ProtectedRoute>} />
+            <Route path="/master/apis" element={<ProtectedRoute requireMasterAdmin><ApiManagement /></ProtectedRoute>} />
+            <Route path="/master/configuracoes" element={<ProtectedRoute requireMasterAdmin><GlobalSettings /></ProtectedRoute>} />
+          </Routes>
+        </main>
+        {user && <Chat />}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div style={{ 
+        height: '100vh', width: '100vw', display: 'flex', 
+        alignItems: 'center', justifyContent: 'center', 
+        backgroundColor: 'var(--bg-app)', color: 'var(--primary)' 
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <h2 style={{ fontWeight: '700', fontSize: '24px' }}>Logta</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Carregando ambiente seguro...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Router>
+      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+      <AppContent />
+    </Router>
+  );
+}
+
+export default App;

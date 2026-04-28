@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  /* Paleta Principal (Light Mode Premium) */
+  --sidebar-bg:    #FFFFFF;
+  --sidebar-hover: #F9FAFB;
+  --sidebar-active:#EEF2FF;
+  --content-bg:    #f4f4f4;
+  --card-bg:       #FFFFFF;
+  --border:        #F1F5F9;
+
+  /* Texto */
+  --text-primary:  #1F2937;
+  --text-secondary:#64748B;
+  --text-sidebar:  #4B5563;
+  --text-sidebar-active: #4F46E5;
+
+  /* Accent */
+  --accent:        #6366F1;
+  --accent-light:  #F1F5F9;
+  --accent-glow:   rgba(99,102,241,0.25);
+  --green:         #22C55E;
+  --orange:        #F97316;
+  --red:           #EF4444;
+  --blue:          #3B82F6;
+  --yellow:        #EAB308;
+
+  /* Shadows */
+  --shadow-card:   0 2px 12px rgba(0,0,0,0.06);
+  --shadow-modal:  0 20px 60px rgba(0,0,0,0.15);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { font-size: 14px; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--content-bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ─────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.25); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── Animations ─────────────────────────────────── */
+@keyframes spin    { to { transform: rotate(360deg); } }
+@keyframes fadeIn  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideIn { from { transform:translateX(-100%); } to { transform:translateX(0); } }
+@keyframes pulse   { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+
+.animate-spin   { animation: spin   1s linear infinite; }
+.animate-fadeIn { animation: fadeIn .25s ease; }
+.animate-pulse  { animation: pulse  2s ease infinite; }
+
+/* ── Utility ─────────────────────────────────────── */
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-only  { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+
+/* ── Global Cards (Premium Light) ──────────────── */
+.card,
+[class*="card"],
+[class*="Card"] {
+  border-radius: 24px;
+  background-color: #ffffff !important;
+  color: #0F172A;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover,
+[class*="card"]:hover,
+[class*="Card"]:hover,
+.hover-scale:hover {
+  transform: translateY(-6px) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ── Sidebar Nav Fixes ── */
+.sidebar-link {
+  transition: all 0.2s ease !important;
+}
+
+.sidebar-link:hover {
+  background: var(--sidebar-hover) !important;
+  color: var(--text-sidebar-active) !important;
+  transform: translateX(4px);
+}
+
+.sidebar-link:hover .sidebar-icon {
+  color: var(--text-sidebar-active) !important;
+  transform: scale(1.1);
+}
+
+.sidebar-link:hover .sidebar-label {
+  color: var(--text-sidebar-active) !important;
+  font-weight: 600 !important;
+}
+
+/* Fix for icons disappearing on hover in some browsers */
+
+/* ── Monitoring ────────────────────────────────── */
+.pulse-success {
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-spin-slow {
+  animation: spin 3s linear infinite;
+}
