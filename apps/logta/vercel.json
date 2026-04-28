@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/supabase-api/:path*",
+      "destination": "https://zvqsqcxtowqoyqxjapoq.supabase.co/:path*"
+    },
+    { "source": "/registrar", "destination": "/index.html" },
+    { "source": "/welcome", "destination": "/index.html" },
+    { "source": "/sso", "destination": "/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" }
+      ]
+    }
+  ]
+}

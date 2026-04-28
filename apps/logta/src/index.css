@@ -1,0 +1,451 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* Unified Premium Theme (Light Mode) */
+  --primary: #7c3aed; 
+  --primary-light: #f4f4f4;
+  --primary-glow: rgba(124, 58, 237, 0.1);
+  --accent: #000000;
+  
+  --bg-app: #f4f4f4;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-deep: #f4f4f4;
+  
+  --text-main: #000000;
+  --text-secondary: #222222;
+  --text-muted: #555555;
+  
+  --border: #e2e8f0;
+  --border-light: #f4f4f4;
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02);
+  --shadow-premium: 0 20px 40px -10px rgba(124, 58, 237, 0.12);
+  
+  --sidebar-width-expanded: 280px;
+  --sidebar-width-collapsed: 80px;
+  --header-height: 72px;
+
+  --mobile: 768px;
+  --tablet: 1024px;
+}
+
+[data-theme="dark"] {
+  --bg-app: #000000;
+  --bg-surface: #0A0A0A;
+  --bg-card: #0F172A;
+  --bg-deep: #000000;
+  
+  --text-main: #ffffff;
+  --text-secondary: #e5e5e5;
+  --text-muted: #a3a3a3;
+  
+  --border: rgba(255, 255, 255, 0.1);
+  --border-light: rgba(255, 255, 255, 0.05);
+  
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+/* Base Nexio Modern Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Outfit', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+body {
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  overflow-x: hidden;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography Gradient */
+.text-gradient {
+  background: linear-gradient(135deg, var(--text-main) 0%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-purple {
+  background: linear-gradient(135deg, #000000 0%, #333333 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Transitions & Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes logta-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+.animate-slide-up { animation: slideUp 0.5s ease-out forwards; }
+
+/* Responsive Utility Classes (Generic) */
+.desktop-only { display: block; }
+.mobile-only { display: none; }
+
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: block !important; }
+  
+  h1 { font-size: 2rem !important; }
+  h2 { font-size: 1.5rem !important; }
+}
+
+/* Premium Components */
+.card {
+  background: var(--bg-card);
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid #e9e4f7;
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  transform: translateY(-4px);
+  border-color: #d8d2f0;
+}
+
+.logta-card {
+  background: #ffffff;
+  border-radius: 32px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.logta-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.06);
+  border-color: var(--primary-glow);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #f4f4f4;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+button {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Logta Standard Buttons */
+.btn-primary {
+  background-color: var(--primary);
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+}
+
+.btn-primary:hover {
+  background-color: #6d28d9;
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3);
+}
+
+.btn-secondary {
+  background-color: var(--primary-glow);
+  color: var(--primary);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  padding: 12px 24px;
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(124, 58, 237, 0.15);
+}
+
+.btn-black {
+  background-color: #000000;
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-black:hover {
+  background-color: #1a1a1a;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-ghost:hover {
+  background-color: #f1f5f9;
+  color: var(--text-main);
+}
+
+/* Modern Inputs */
+input, select, textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  outline: none;
+  font-size: 0.95rem;
+}
+
+input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-glow);
+}
+
+/* Standardized Metric Card */
+.metric-card {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid #e9e4f7;
+  padding: 22px 22px 18px;
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+}
+
+.metric-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 25px 50px -12px rgba(124, 58, 237, 0.15);
+  border-color: rgba(124, 58, 237, 0.3);
+}
+
+.metric-card .icon-box {
+  transition: transform 0.3s ease;
+}
+
+.metric-card:hover .icon-box {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* Scrollbar Style */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #CBD5E1;
+}
+
+/* Responsive Table Helper */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+th {
+  background: var(--bg-app);
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-main);
+}
+
+tr:hover td {
+  background: var(--primary-light);
+}
+
+/* Print Styles */
+@media print {
+  .no-print, aside, nav, header, .chat-widget {
+    display: none !important;
+  }
+  body { background: white !important; }
+  .card { border: 1px solid #ddd !important; box-shadow: none !important; }
+}
+
+
+
+/* Global Logo Pulse Animation */
+@keyframes logtaPulse {
+  0% { transform: scale(0.98); opacity: 0.7; }
+  50% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(0.98); opacity: 0.7; }
+}
+
+@keyframes shimmerText {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-logta-pulse {
+  animation: logtaPulse 1s ease-in-out infinite;
+}
+
+.text-shimmer {
+  background: linear-gradient(90deg, #000000, #333333, #000000);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmerText 1.5s linear infinite;
+}
+
+.loading-container {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Hover Utility Classes */
+.hover-link:hover {
+  color: #FFFFFF !important;
+  transform: translateX(4px);
+}
+
+.social-icon-hover:hover {
+  background-color: var(--primary) !important;
+  color: #FFFFFF !important;
+  transform: translateY(-2px);
+}
+
+.nav-link-hover:hover {
+  color: var(--primary) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+/* Dashboard: rotas e frota — mapa OpenStreetMap em P&B (só ladrilhos; marcadores mantêm cor) */
+.logta-routes-osm .leaflet-tile-pane,
+.logta-fleet-map .leaflet-tile-pane {
+  filter: grayscale(1) contrast(1.06);
+}
+.logta-routes-osm .leaflet-control-attribution {
+  font-size: 9px;
+  line-height: 1.2;
+  max-width: 100%;
+  white-space: normal;
+  background: rgba(255, 255, 255, 0.88) !important;
+  border-radius: 6px 0 0 0;
+  padding: 2px 6px !important;
+}
+.logta-routes-osm .leaflet-control-attribution a {
+  color: #475569;
+}
+
+.logta-fleet-map .leaflet-control-attribution {
+  font-size: 9px;
+  line-height: 1.2;
+  max-width: min(320px, 42vw);
+  white-space: normal;
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-radius: 8px 0 0 0;
+  padding: 4px 8px !important;
+  box-shadow: 0 -1px 0 rgba(15, 23, 42, 0.06);
+}
+.logta-fleet-map .leaflet-control-attribution a {
+  color: #475569;
+}

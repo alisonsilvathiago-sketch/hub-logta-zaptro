@@ -1,0 +1,20 @@
+================================================================================
+  PRODUTO LOGTA (ERP SaaS — transportadora)
+================================================================================
+
+Objetivo desta pasta
+  Código exclusivo do produto Logta (módulos operacionais). Partilhado com
+  `src/pages/` e `src/components/` onde ainda faz sentido.
+
+Desenvolvimento local
+  URL típica: http://localhost:5173
+
+Base de dados (SQL / Supabase)
+  Projeto: variável VITE_SUPABASE_URL (cliente em src/lib/supabase.ts).
+  Regras RLS devem respeitar o tenant (company_id) e papéis em profiles.
+
+Quem acede
+  Rotas internas: ProtectedRoute em src/components/ProtectedRoute.tsx
+  (utilizador autenticado). Papéis MASTER / MASTER_* em src/utils/permissions.ts.
+
+================================================================================
