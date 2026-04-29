@@ -14,6 +14,7 @@ import { AutomationHandlers } from './services/automationHandlers.js';
 import { IntelligenceService } from './services/intelligenceService.js';
 import { AutoAutomationService } from './services/autoAutomationService.js';
 import { BillingIntelligenceService } from './services/billingIntelligenceService.js';
+import { UnifiedApiService } from './services/unifiedApiService.js';
 import { EventHub } from './services/eventHub.js';
 
 async function main() {
@@ -66,11 +67,15 @@ async function main() {
   const intelligenceService = new IntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const autoAutomationService = new AutoAutomationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const billingIntelligenceService = new BillingIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const unifiedApiService = new UnifiedApiService(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
   // Link billing to maintenance for the daily cycle
   maintenanceService.setBillingService(billingIntelligenceService);
 
-  console.log('[Intelligent Hub] Autonomous services, Intelligence Cortex, and Billing Machine initialized...');
+  // Register the Unified API Routes (HUB, ZAPTRO, LOGTA)
+  unifiedApiService.registerRoutes(app, cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+  console.log('[Intelligent Hub] Autonomous services, Intelligence Cortex, and Unified Multi-Module API initialized...');
 
   app.listen(cfg.port, () => {
     // eslint-disable-next-line no-console
