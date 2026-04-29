@@ -33,6 +33,7 @@ import { DeliveryGuardianService } from './services/deliveryGuardianService.js';
 import { ReschedulingIntelligenceService } from './services/reschedulingIntelligenceService.js';
 import { AutonomousNavigatorService } from './services/autonomousNavigatorService.js';
 import { GeofencingValidationService } from './services/geofencingValidationService.js';
+import { LastMileMasterService } from './services/lastMileMasterService.js';
 import { UnifiedApiService } from './services/unifiedApiService.js';
 import { EventHub } from './services/eventHub.js';
 
@@ -106,6 +107,7 @@ async function main() {
   const reschedulingIntelligenceService = new ReschedulingIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const autonomousNavigatorService = new AutonomousNavigatorService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const geofencingValidationService = new GeofencingValidationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const lastMileMasterService = new LastMileMasterService(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
   // Link services to maintenance for the daily/hourly cycle
   maintenanceService.setBillingService(billingIntelligenceService);
@@ -117,7 +119,7 @@ async function main() {
   // Register the Unified API Routes (HUB, ZAPTRO, LOGTA)
   unifiedApiService.registerRoutes(app, cfg.supabaseUrl, cfg.supabaseAnonKey);
 
-  console.log('[Intelligent Hub] Autonomous services, Master Operational Orchestrator (CEO), and Geofencing Guardian (Location Audit) initialized...');
+  console.log('[Intelligent Hub] Autonomous services, Master Operational Orchestrator (CEO), and Last-Mile Master Optimizer initialized...');
 
   app.listen(cfg.port, () => {
     // eslint-disable-next-line no-console
