@@ -111,6 +111,15 @@ export class WorkflowService {
         console.log(`[WorkflowEngine] [MULTICHANNEL] Notifying ${userName} about confirmation via all active channels.`);
         break;
 
+      case 'SEND_GAMIFICATION_REWARD':
+        await this.sendEmail('level_up_celebration', cn, to, { ...context, userName });
+        break;
+
+      case 'SEND_LOGISTICS_DELAY_NOTICE':
+        console.log(`[WorkflowEngine] Sending LOGISTICS_DELAY_NOTICE via ${channel.toUpperCase()} to ${context.customerEmail}...`);
+        await this.sendEmail('logistics_delay_notice', cn, context.customerEmail, { ...context, userName: context.customerName });
+        break;
+
       case 'PROCESS_LEAD_CONVERSION':
         await this.processLeadConversion({
           name: context.name,

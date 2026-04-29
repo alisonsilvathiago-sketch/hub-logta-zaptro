@@ -34,6 +34,10 @@ export class DecisionEngineService {
         await this.decideGamificationReward(data);
       }
 
+      if (data.action === 'LOGISTICS_DELAY_DETECTED') {
+        await this.decideLogisticsStrategy(data);
+      }
+
       if (data.action === 'PAYMENT_RECEIVED') {
         await this.updateBehavioralProfile(data.actorId, data.metadata);
       }
@@ -221,6 +225,45 @@ export class DecisionEngineService {
 
     } catch (err) {
       console.error('[DecisionEngine] Gamification reward decision failed:', err);
+    }
+  }
+
+  /**
+   * Decides the best way to handle a logistics delay
+   */
+  private async decideLogisticsStrategy(event: any) {
+    const companyId = event.actorId;
+    const { delayMinutes, trackingCode, customerName } = event.metadata;
+    
+    try {
+      // Decision Logic: Tone depends on the severity of the delay
+      const tone = delayMinutes > 60 ? 'APOLOGETIC' : 'INFORMATIVE';
+      
+      const decision = {
+        action: 'SEND_LOGISTICS_DELAY_NOTICE',
+        tone,
+        delay_minutes: delayMinutes,
+        tracking_code: trackingCode,
+        customer_name: customerName,
+        original_context: event.metadata
+      };
+
+      await this.supabase.from('system_decision_logs').insert([{
+        company_id: companyId,
+        trigger_event: 'LOGISTICS_DELAY_DETECTED',
+        decision_taken: decision,
+        rationale: `Delay of ${delayMinutes}min detected for ${trackingCode}. Choosing ${tone} tone.`,
+        confidence: 0.9
+      }]);
+
+      this.hub.emit(SystemEvent.DECISION_MADE, {
+        logic: 'LogisticsCoordination',
+        outcome: decision,
+        companyId
+      });
+
+    } catch (err) {
+      console.error('[DecisionEngine] Logistics strategy failed:', err);
     }
   }
 

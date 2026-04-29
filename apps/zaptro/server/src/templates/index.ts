@@ -39,7 +39,8 @@ export type TransactionalKind =
   | 'billing_overdue_recovery'
   | 'payment_confirmed'
   | 'growth_invitation'
-  | 'level_up_celebration';
+  | 'level_up_celebration'
+  | 'logistics_delay_notice';
 
 export function buildTransactionalEmail(
   kind: TransactionalKind,
@@ -626,6 +627,32 @@ export function buildTransactionalEmail(
           bodyHtml: body,
           ctaLabel: 'Ver Meus Pontos',
           ctaUrl: 'https://hub.zaptro.com.br/master/analytics',
+        }),
+        text: subject,
+      };
+    }
+    case 'logistics_delay_notice': {
+      const isApologetic = vars.tone === 'APOLOGETIC';
+      const subject = isApologetic ? `Pedimos desculpas: Sua entrega teve um imprevisto 🚚` : `Atualização sobre sua entrega — ${vars.tracking_code}`;
+      const delayText = vars.delay_minutes ? `estimado em ${vars.delay_minutes} minutos` : 'de curto prazo';
+      
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>${isApologetic ? 'Infelizmente, identificamos um imprevisto na sua rota que causará um atraso.' : 'Gostaríamos de informar uma pequena alteração no cronograma da sua entrega.'}</p>
+        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; margin: 24px 0;">
+          <p style="margin: 0; font-size: 14px; color: #94a3b8;">Pedido: <strong>${vars.tracking_code}</strong></p>
+          <p style="margin: 8px 0 0 0; font-size: 16px; color: #fff;">Novo atraso previsto: <span style="color: #D9FF00;">${delayText}</span></p>
+        </div>
+        <p>Nossa equipe já está trabalhando para normalizar a situação o mais rápido possível.</p>`;
+      
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'DARK',
+          companyName: cn,
+          headline: isApologetic ? 'PEDIMOS DESCULPAS' : 'STATUS DA ENTREGA',
+          bodyHtml: body,
+          ctaLabel: 'Rastrear em Tempo Real',
+          ctaUrl: `https://logta.com.br/track/${vars.tracking_code}`,
         }),
         text: subject,
       };
