@@ -46,6 +46,10 @@ export class DecisionEngineService {
         await this.decideFuelAlertStrategy(data);
       }
 
+      if (['SECURITY_CRITICAL_ALERT', 'PACKAGE_LOSS_RISK_DETECTED', 'LOGISTICS_DELAY_DETECTED'].includes(data.action)) {
+        await this.decideOperationalStrategy(data);
+      }
+
       if (data.action === 'PAYMENT_RECEIVED') {
         await this.updateBehavioralProfile(data.actorId, data.metadata);
       }
@@ -357,6 +361,57 @@ export class DecisionEngineService {
 
     } catch (err) {
       console.error('[DecisionEngine] Fuel alert strategy failed:', err);
+    }
+  }
+
+  /**
+   * Decides the strategy for operational and security events
+   */
+  private async decideOperationalStrategy(event: any) {
+    const companyId = event.actorId;
+    
+    try {
+      let action = 'LOG_ONLY';
+      let priority = 'NORMAL';
+      let channel = 'email';
+
+      if (event.action === 'SECURITY_CRITICAL_ALERT') {
+        action = 'NOTIFY_SECURITY_BREACH';
+        priority = 'URGENT';
+        channel = 'whatsapp';
+      } else if (event.action === 'PACKAGE_LOSS_RISK_DETECTED') {
+        action = 'NOTIFY_OPERATIONAL_RISK';
+        priority = 'HIGH';
+        channel = 'email';
+      } else if (event.action === 'LOGISTICS_DELAY_DETECTED') {
+        action = 'SEND_LOGISTICS_DELAY_NOTICE';
+        priority = 'NORMAL';
+        channel = 'multichannel';
+      }
+
+      const decision = {
+        action,
+        priority,
+        target_channel: channel,
+        context: event.metadata
+      };
+
+      await this.supabase.from('system_decision_logs').insert([{
+        company_id: companyId === 'SYSTEM' || companyId === 'GLOBAL' ? null : companyId,
+        trigger_event: event.action,
+        decision_taken: decision,
+        rationale: `Operational event ${event.action} detected. Strategizing response with ${priority} priority via ${channel}.`,
+        confidence: 0.92
+      }]);
+
+      this.hub.emit(SystemEvent.DECISION_MADE, {
+        logic: 'OperationalShield',
+        outcome: decision,
+        companyId
+      });
+
+    } catch (err) {
+      console.error('[DecisionEngine] Operational strategy failed:', err);
     }
   }
 
