@@ -1,4 +1,5 @@
 import { BillingIntelligenceService } from './billingIntelligenceService.js';
+import { CustomerHealthService } from './customerHealthService.js';
 import { EventHub, SystemEvent } from './eventHub.js';
 
 /**
@@ -9,6 +10,7 @@ import { EventHub, SystemEvent } from './eventHub.js';
 export class MaintenanceService {
   private hub: EventHub;
   private billingService: BillingIntelligenceService | null = null;
+  private healthService: CustomerHealthService | null = null;
 
   constructor() {
     this.hub = EventHub.getInstance();
@@ -18,6 +20,10 @@ export class MaintenanceService {
 
   public setBillingService(service: BillingIntelligenceService) {
     this.billingService = service;
+  }
+
+  public setHealthService(service: CustomerHealthService) {
+    this.healthService = service;
   }
 
   private setupListeners() {
@@ -46,6 +52,11 @@ export class MaintenanceService {
       if (this.billingService) {
         await this.billingService.runDailyBillingCycle();
       }
+      if (this.healthService) {
+        await this.healthService.runDailyHealthCheck();
+      }
+      
+      console.log('[Maintenance] Daily autonomous cycle completed (Billing + Health).');
       this.hub.emit(SystemEvent.MAINTENANCE_REQUIRED, { type: 'DAILY_PURGE', details: { reason: 'Scheduled' } });
     }, 86400000);
   }
