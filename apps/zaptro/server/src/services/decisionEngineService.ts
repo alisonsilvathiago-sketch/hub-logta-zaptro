@@ -26,6 +26,10 @@ export class DecisionEngineService {
         await this.decideCommunicationStrategy(data);
       }
       
+      if (data.action === 'REFERRAL_INVITE_TRIGGERED') {
+        await this.decideGrowthStrategy(data);
+      }
+
       if (data.action === 'PAYMENT_RECEIVED') {
         await this.updateBehavioralProfile(data.actorId, data.metadata);
       }
@@ -115,6 +119,51 @@ export class DecisionEngineService {
 
     } catch (err) {
       console.error('[DecisionEngine] Decision failed:', err);
+    }
+  }
+
+  /**
+   * Decides the best incentive for a referral invite
+   */
+  private async decideGrowthStrategy(event: any) {
+    const companyId = event.actorId;
+    
+    try {
+      const { data: company } = await this.supabase
+        .from('companies')
+        .select('behavioral_profile')
+        .eq('id', companyId)
+        .single();
+
+      const profile = company?.behavioral_profile || {};
+      
+      // Strategy: If customer has "last_successful_method" as CREDIT_CARD, they might prefer a DISCOUNT.
+      // If they use PIX, they might prefer a direct CREDIT balance.
+      const preferredReward = profile.last_successful_method === 'CREDIT_CARD' ? 'DISCOUNT' : 'CREDIT';
+      
+      const decision = {
+        action: 'SEND_GROWTH_INVITE',
+        reward_type: preferredReward,
+        referral_link: event.metadata.referral_link,
+        original_context: event.metadata
+      };
+
+      await this.supabase.from('system_decision_logs').insert([{
+        company_id: companyId,
+        trigger_event: 'REFERRAL_INVITE_TRIGGERED',
+        decision_taken: decision,
+        rationale: `Promoter identified. Offering ${preferredReward} based on payment history.`,
+        confidence: 0.85
+      }]);
+
+      this.hub.emit(SystemEvent.DECISION_MADE, {
+        logic: 'GrowthInvitation',
+        outcome: decision,
+        companyId
+      });
+
+    } catch (err) {
+      console.error('[DecisionEngine] Growth decision failed:', err);
     }
   }
 

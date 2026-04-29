@@ -37,7 +37,8 @@ export type TransactionalKind =
   | 'permission_changed'
   | 'billing_due_soon'
   | 'billing_overdue_recovery'
-  | 'payment_confirmed';
+  | 'payment_confirmed'
+  | 'growth_invitation';
 
 export function buildTransactionalEmail(
   kind: TransactionalKind,
@@ -572,6 +573,29 @@ export function buildTransactionalEmail(
           headline: 'Pagamento Pendente',
           bodyHtml: body,
           ctaLabel: 'Regularizar Agora',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'growth_invitation': {
+      const subject = `Indique um amigo e ganhe benefícios — ${cn}`;
+      const reward = vars.reward_type === 'DISCOUNT' ? 'desconto na mensalidade' : 'crédito em conta';
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Vimos que você está aproveitando ao máximo a plataforma <strong>${cn}</strong>, e adoraríamos ter mais parceiros como você no nosso ecossistema.</p>
+        <p>Indique um amigo usando seu link exclusivo e, assim que ele ativar a conta, você ganha <strong>${reward}</strong> como agradecimento.</p>
+        <div style="background: rgba(217,255,0,0.05); padding: 24px; border-radius: 16px; border: 1px dashed rgba(217,255,0,0.3); text-align: center; margin: 24px 0;">
+          <p style="margin: 0 0 12px 0; font-size: 13px; color: #94a3b8;">Seu link exclusivo:</p>
+          <strong style="color: #D9FF00; font-size: 16px;">${vars.referral_link || '—'}</strong>
+        </div>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'GOLD',
+          companyName: cn,
+          headline: 'Cresça Conosco',
+          bodyHtml: body,
+          ctaLabel: 'Copiar Link',
           ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
         }),
         text: subject,
