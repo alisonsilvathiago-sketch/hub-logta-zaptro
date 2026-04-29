@@ -50,6 +50,10 @@ export class DecisionEngineService {
         await this.decideOperationalStrategy(data);
       }
 
+      if (data.action === 'DOCUMENT_ERROR_DETECTED') {
+        await this.decideDocumentErrorStrategy(data);
+      }
+
       if (data.action === 'PAYMENT_RECEIVED') {
         await this.updateBehavioralProfile(data.actorId, data.metadata);
       }
@@ -412,6 +416,47 @@ export class DecisionEngineService {
 
     } catch (err) {
       console.error('[DecisionEngine] Operational strategy failed:', err);
+    }
+  }
+
+  /**
+   * Decides how to handle document validation errors
+   */
+  private async decideDocumentErrorStrategy(event: any) {
+    const companyId = event.actorId;
+    const { docType, docNumber, errors } = event.metadata;
+    
+    try {
+      const isCritical = ['CTE', 'NFE'].includes(docType);
+      const action = isCritical ? 'BLOCK_OPERATIONAL_FLOW' : 'NOTIFY_PENDING_CORRECTION';
+      const rationale = isCritical 
+        ? `Inconsistência crítica no ${docType} #${docNumber}. Bloqueando operação para evitar multas.` 
+        : `Divergência menor no ${docType}. Solicitando correção, mas mantendo fluxo.`;
+
+      const decision = {
+        action,
+        doc_type: docType,
+        doc_number: docNumber,
+        error_count: errors.length,
+        is_critical: isCritical
+      };
+
+      await this.supabase.from('system_decision_logs').insert([{
+        company_id: companyId,
+        trigger_event: 'DOCUMENT_ERROR_DETECTED',
+        decision_taken: decision,
+        rationale,
+        confidence: 0.98
+      }]);
+
+      this.hub.emit(SystemEvent.DECISION_MADE, {
+        logic: 'DocumentAuditCoordination',
+        outcome: decision,
+        companyId
+      });
+
+    } catch (err) {
+      console.error('[DecisionEngine] Document error strategy failed:', err);
     }
   }
 

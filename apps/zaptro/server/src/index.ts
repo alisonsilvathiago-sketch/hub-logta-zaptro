@@ -26,6 +26,7 @@ import { RouteOptimizationService } from './services/routeOptimizationService.js
 import { FuelMonitoringService } from './services/fuelMonitoringService.js';
 import { OperationsShieldService } from './services/operationsShieldService.js';
 import { OperationalBrainService } from './services/operationalBrainService.js';
+import { DocumentAuditService } from './services/documentAuditService.js';
 import { UnifiedApiService } from './services/unifiedApiService.js';
 import { EventHub } from './services/eventHub.js';
 
@@ -92,6 +93,7 @@ async function main() {
   const fuelMonitoringService = new FuelMonitoringService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const operationsShieldService = new OperationsShieldService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const operationalBrainService = new OperationalBrainService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const documentAuditService = new DocumentAuditService(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
   // Link services to maintenance for the daily/hourly cycle
   maintenanceService.setBillingService(billingIntelligenceService);
@@ -103,7 +105,7 @@ async function main() {
   // Register the Unified API Routes (HUB, ZAPTRO, LOGTA)
   unifiedApiService.registerRoutes(app, cfg.supabaseUrl, cfg.supabaseAnonKey);
 
-  console.log('[Intelligent Hub] Autonomous services, Master Operational Orchestrator (CEO), and Operational Intelligence Suite initialized...');
+  console.log('[Intelligent Hub] Autonomous services, Master Operational Orchestrator (CEO), and Document Intelligence Auditor initialized...');
 
   app.listen(cfg.port, () => {
     // eslint-disable-next-line no-console
