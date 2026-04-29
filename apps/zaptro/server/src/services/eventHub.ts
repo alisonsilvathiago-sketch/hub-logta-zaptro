@@ -6,7 +6,9 @@ export enum SystemEvent {
   PAYMENT_RECEIVED = 'payment.received',
   TASK_COMPLETED = 'task.completed',
   ERROR_CRITICAL = 'system.error.critical',
-  MAINTENANCE_REQUIRED = 'system.maintenance.required'
+  MAINTENANCE_REQUIRED = 'system.maintenance.required',
+  BEHAVIOR_OBSERVED = 'system.behavior.observed',
+  DECISION_MADE = 'system.decision.made'
 }
 
 export interface EventPayload {
@@ -16,6 +18,8 @@ export interface EventPayload {
   [SystemEvent.TASK_COMPLETED]: { taskId: string; assignedTo: string };
   [SystemEvent.ERROR_CRITICAL]: { message: string; stack?: string; service: string };
   [SystemEvent.MAINTENANCE_REQUIRED]: { type: string; details: any };
+  [SystemEvent.BEHAVIOR_OBSERVED]: { action: string; userId: string; context: any };
+  [SystemEvent.DECISION_MADE]: { logic: string; outcome: any; confidence: number };
 }
 
 /**
