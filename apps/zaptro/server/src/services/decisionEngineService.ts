@@ -38,6 +38,10 @@ export class DecisionEngineService {
         await this.decideLogisticsStrategy(data);
       }
 
+      if (data.action === 'ROUTE_OPTIMIZED' || data.action === 'ROUTE_REROUTED') {
+        await this.decideRoutingCommunication(data);
+      }
+
       if (data.action === 'PAYMENT_RECEIVED') {
         await this.updateBehavioralProfile(data.actorId, data.metadata);
       }
@@ -264,6 +268,49 @@ export class DecisionEngineService {
 
     } catch (err) {
       console.error('[DecisionEngine] Logistics strategy failed:', err);
+    }
+  }
+
+  /**
+   * Decides how to communicate routing changes
+   */
+  private async decideRoutingCommunication(event: any) {
+    const companyId = event.actorId;
+    
+    try {
+      let action = 'UPDATE_DRIVER_ONLY';
+      let rationale = 'Minor route adjustment. No customer notification needed.';
+
+      if (event.action === 'ROUTE_OPTIMIZED' && event.metadata.fuelSaved > 5) {
+        action = 'NOTIFY_CUSTOMER_ANTICIPATION';
+        rationale = `High efficiency optimization (${event.metadata.fuelSaved}L saved). Notifying customers about potential early arrival.`;
+      } else if (event.action === 'ROUTE_REROUTED') {
+        action = 'UPDATE_DRIVER_AND_ETA';
+        rationale = 'Route adjusted due to traffic. Updating internal ETAs.';
+      }
+
+      const decision = {
+        action,
+        route_id: event.metadata.routeId,
+        context: event.metadata
+      };
+
+      await this.supabase.from('system_decision_logs').insert([{
+        company_id: companyId,
+        trigger_event: event.action,
+        decision_taken: decision,
+        rationale,
+        confidence: 0.88
+      }]);
+
+      this.hub.emit(SystemEvent.DECISION_MADE, {
+        logic: 'RoutingCoordination',
+        outcome: decision,
+        companyId
+      });
+
+    } catch (err) {
+      console.error('[DecisionEngine] Routing communication decision failed:', err);
     }
   }
 

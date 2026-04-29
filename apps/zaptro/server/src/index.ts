@@ -22,6 +22,7 @@ import { GamificationService } from './services/gamificationService.js';
 import { DeliveryIntelligenceService } from './services/deliveryIntelligenceService.js';
 import { MasterOrchestratorService } from './services/masterOrchestratorService.js';
 import { LogisticsIntelligenceService } from './services/logisticsIntelligenceService.js';
+import { RouteOptimizationService } from './services/routeOptimizationService.js';
 import { UnifiedApiService } from './services/unifiedApiService.js';
 import { EventHub } from './services/eventHub.js';
 
@@ -84,6 +85,7 @@ async function main() {
   const deliveryIntelligenceService = new DeliveryIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const masterOrchestratorService = new MasterOrchestratorService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const logisticsIntelligenceService = new LogisticsIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const routeOptimizationService = new RouteOptimizationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
   // Link services to maintenance for the daily/hourly cycle
   maintenanceService.setBillingService(billingIntelligenceService);
@@ -94,7 +96,7 @@ async function main() {
   // Register the Unified API Routes (HUB, ZAPTRO, LOGTA)
   unifiedApiService.registerRoutes(app, cfg.supabaseUrl, cfg.supabaseAnonKey);
 
-  console.log('[Intelligent Hub] Autonomous services, Master Operational Orchestrator (CEO), and Logistics Intelligence Brain initialized...');
+  console.log('[Intelligent Hub] Autonomous services, Master Operational Orchestrator (CEO), and Route Optimization Navigator initialized...');
 
   app.listen(cfg.port, () => {
     // eslint-disable-next-line no-console
