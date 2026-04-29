@@ -58,6 +58,10 @@ export class DecisionEngineService {
         await this.decideFulfillmentStrategy(data);
       }
 
+      if (data.action === 'DELIVERY_LOCATION_MISMATCH_DETECTED') {
+        await this.decideGeofencingStrategy(data);
+      }
+
       if (data.action === 'PAYMENT_RECEIVED') {
         await this.updateBehavioralProfile(data.actorId, data.metadata);
       }
@@ -512,6 +516,53 @@ export class DecisionEngineService {
 
     } catch (err) {
       console.error('[DecisionEngine] Fulfillment strategy failed:', err);
+    }
+  }
+
+  /**
+   * Decides how to handle location mismatches during delivery.
+   */
+  private async decideGeofencingStrategy(event: any) {
+    const companyId = event.actorId;
+    const distance = event.metadata.distance;
+    
+    try {
+      let action = 'BLOCK_COMPLETION';
+      let priority = 'HIGH';
+      let rationale = `Location mismatch detected: ${distance.toFixed(0)}m from destination.`;
+
+      if (distance > 1000) {
+        action = 'ESCALATE_TO_SECURITY_AUDIT';
+        priority = 'CRITICAL';
+        rationale += ' Critical distance gap suggests potential theft or major navigation failure. Blocking and notifying Shield.';
+      } else {
+        action = 'BLOCK_AND_REQUIRE_VISUAL_OVERRIDE';
+        rationale += ' Blocking completion. Driver must submit photo proof of the house/door to override.';
+      }
+
+      const decision = {
+        action,
+        priority,
+        delivery_id: event.metadata.deliveryId,
+        distance_detected: distance
+      };
+
+      await this.supabase.from('system_decision_logs').insert([{
+        company_id: companyId === 'DRIVER_GPS' ? null : companyId,
+        trigger_event: event.action,
+        decision_taken: decision,
+        rationale,
+        confidence: 0.98
+      }]);
+
+      this.hub.emit(SystemEvent.DECISION_MADE, {
+        logic: 'GeofencingGuardian',
+        outcome: decision,
+        companyId
+      });
+
+    } catch (err) {
+      console.error('[DecisionEngine] Geofencing strategy failed:', err);
     }
   }
 
