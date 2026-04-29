@@ -29,6 +29,8 @@ import { OperationalBrainService } from './services/operationalBrainService.js';
 import { DocumentAuditService } from './services/documentAuditService.js';
 import { InternalEfficiencyService } from './services/internalEfficiencyService.js';
 import { AggregateManagementService } from './services/aggregateManagementService.js';
+import { DeliveryGuardianService } from './services/deliveryGuardianService.js';
+import { ReschedulingIntelligenceService } from './services/reschedulingIntelligenceService.js';
 import { UnifiedApiService } from './services/unifiedApiService.js';
 import { EventHub } from './services/eventHub.js';
 
@@ -98,6 +100,8 @@ async function main() {
   const documentAuditService = new DocumentAuditService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const internalEfficiencyService = new InternalEfficiencyService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const aggregateManagementService = new AggregateManagementService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const deliveryGuardianService = new DeliveryGuardianService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const reschedulingIntelligenceService = new ReschedulingIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
   // Link services to maintenance for the daily/hourly cycle
   maintenanceService.setBillingService(billingIntelligenceService);
@@ -109,7 +113,7 @@ async function main() {
   // Register the Unified API Routes (HUB, ZAPTRO, LOGTA)
   unifiedApiService.registerRoutes(app, cfg.supabaseUrl, cfg.supabaseAnonKey);
 
-  console.log('[Intelligent Hub] Autonomous services, Master Operational Orchestrator (CEO), and Aggregate Intelligence Talent Scout initialized...');
+  console.log('[Intelligent Hub] Autonomous services, Master Operational Orchestrator (CEO), and Fulfillment Guardian (Anti No-Show) initialized...');
 
   app.listen(cfg.port, () => {
     // eslint-disable-next-line no-console

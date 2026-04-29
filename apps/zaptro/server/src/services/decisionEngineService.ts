@@ -54,6 +54,10 @@ export class DecisionEngineService {
         await this.decideDocumentErrorStrategy(data);
       }
 
+      if (['DELIVERY_CONFIRMED_BY_CLIENT', 'DELIVERY_RESCHEDULED_BY_CLIENT', 'DELIVERY_CONFIRMATION_EXPIRED'].includes(data.action)) {
+        await this.decideFulfillmentStrategy(data);
+      }
+
       if (data.action === 'PAYMENT_RECEIVED') {
         await this.updateBehavioralProfile(data.actorId, data.metadata);
       }
@@ -457,6 +461,57 @@ export class DecisionEngineService {
 
     } catch (err) {
       console.error('[DecisionEngine] Document error strategy failed:', err);
+    }
+  }
+
+  /**
+   * Decides how to handle fulfillment choices (Confirm/Reschedule/Expired)
+   */
+  private async decideFulfillmentStrategy(event: any) {
+    const companyId = event.actorId;
+    
+    try {
+      let action = 'PROCESS_PENDING';
+      let priority = 'NORMAL';
+      let rationale = '';
+
+      if (event.action === 'DELIVERY_CONFIRMED_BY_CLIENT') {
+        action = 'RELEASE_TO_ACTIVE_ROUTE';
+        priority = 'HIGH';
+        rationale = 'Client confirmed delivery. Releasing to logistics optimizer for immediate routing.';
+      } else if (event.action === 'DELIVERY_RESCHEDULED_BY_CLIENT') {
+        action = 'UPDATE_MASTER_PLANNER';
+        priority = 'NORMAL';
+        rationale = `Client rescheduled to ${event.metadata.newDate}. Adjusting master schedule and clearing current route.`;
+      } else if (event.action === 'DELIVERY_CONFIRMATION_EXPIRED') {
+        action = 'BLOCK_DELIVERY_AND_LOG_PENALTY';
+        priority = 'HIGH';
+        rationale = 'No response within 12h window. Blocking delivery to prevent wasted operational costs (No-Show Protection).';
+      }
+
+      const decision = {
+        action,
+        priority,
+        delivery_id: event.metadata.deliveryId,
+        context: event.metadata
+      };
+
+      await this.supabase.from('system_decision_logs').insert([{
+        company_id: companyId === 'SYSTEM' ? null : companyId,
+        trigger_event: event.action,
+        decision_taken: decision,
+        rationale,
+        confidence: 0.95
+      }]);
+
+      this.hub.emit(SystemEvent.DECISION_MADE, {
+        logic: 'FulfillmentGuardian',
+        outcome: decision,
+        companyId
+      });
+
+    } catch (err) {
+      console.error('[DecisionEngine] Fulfillment strategy failed:', err);
     }
   }
 
