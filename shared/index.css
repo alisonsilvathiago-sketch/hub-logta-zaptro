@@ -19,6 +19,9 @@
   --accent:        #6366F1;
   --accent-light:  #F9FAFB;
   --accent-glow:   rgba(99,102,241,0.1);
+  --bg-active:     rgba(99, 102, 241, 0.08);
+  --bg-overlay:    rgba(99, 102, 241, 0.04);
+  --bg-secondary:  rgba(99, 102, 241, 0.03);
   --green:         #10B981;
   --orange:        #F59E0B;
   --red:           #EF4444;
@@ -87,6 +90,11 @@ h4 { font-size: 1.25rem; font-weight: 600; }
   border: 1px solid #E5E7EB;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-scale {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
 }
 
 .card:hover,

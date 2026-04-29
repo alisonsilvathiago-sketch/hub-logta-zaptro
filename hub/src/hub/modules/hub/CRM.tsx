@@ -16,9 +16,11 @@ import {
 } from 'recharts';
 import { supabase } from '@core/lib/supabase';
 import LogtaModal from '@shared/components/Modal';
+import Pagination from '@shared/components/Pagination';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 
 const MasterCRM: React.FC = () => {
+
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
@@ -34,6 +36,14 @@ const MasterCRM: React.FC = () => {
     contact_name: ''
   });
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number | 'all'>(() => {
+    const saved = localStorage.getItem('hub_crm_per_page');
+    return saved === 'all' ? 'all' : Number(saved || 20);
+  });
+  const [totalItems, setTotalItems] = useState(0);
+
   const funnelStages = [
     { id: 'novo', name: 'Novas Oportunidades', color: '#D9FF00' },
     { id: 'contato', name: 'Qualificação', color: '#6366F1' },
@@ -45,13 +55,22 @@ const MasterCRM: React.FC = () => {
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('leads')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' });
+
+      // Pagination
+      if (itemsPerPage !== 'all') {
+        const from = (currentPage - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
+        query = query.range(from, to);
+      }
+
+      const { data, error, count } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
       setLeads(data || []);
+      setTotalItems(count || 0);
     } catch (err: any) {
       toastError('Erro ao carregar leads do pipeline.');
     } finally {
@@ -59,9 +78,15 @@ const MasterCRM: React.FC = () => {
     }
   };
 
+  const handleItemsPerPageChange = (val: number | 'all') => {
+    setItemsPerPage(val);
+    setCurrentPage(1);
+    localStorage.setItem('hub_crm_per_page', String(val));
+  };
+
   useEffect(() => {
     fetchLeads();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const handleAddLead = async () => {
     const tid = toastLoading('Registrando oportunidade no pipeline...');
@@ -105,215 +130,197 @@ const MasterCRM: React.FC = () => {
     }
   };
 
-  const statsData = [
-    { name: 'Leads', value: leads.filter(l => l.status === 'novo').length + 5, color: '#0F172A' },
-    { name: 'Contato', value: leads.filter(l => l.status === 'contato').length + 3, color: '#1E293B' },
-    { name: 'Negoc.', value: leads.filter(l => l.status === 'negociacao').length + 2, color: '#334155' },
-    { name: 'Proposta', value: leads.filter(l => l.status === 'proposta').length + 1, color: '#475569' },
-    { name: 'Fechado', value: leads.filter(l => l.status === 'fechamento').length, color: '#6366F1' },
-  ];
-
   return (
     <div style={styles.container} className="animate-fade-in">
       <header style={styles.header}>
         <div>
-          <div style={styles.bread}>{'MASTER CRM > PIPELINE DE EXPANSÃO'}</div>
-          <h1 className="h1-style" style={{ margin: 0 }}>Pipeline de Alta Conversão</h1>
-          <p className="text-subtitle" style={{ margin: '4px 0 0 0' }}>Gestão estratégica de oportunidades corporativas e expansão de rede.</p>
+          <h1 className="h1-style" style={{ margin: 0 }}>Gestão de Expansão & Vendas</h1>
+          <p className="text-subtitle" style={{ margin: '4px 0 0 0' }}>Centralize leads e negociações em um único ecossistema.</p>
         </div>
         <div style={styles.headerActions}>
-           <div style={styles.viewToggle}>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={styles.viewToggle}>
               <button 
                 style={{...styles.toggleBtn, ...(viewMode === 'kanban' ? styles.toggleActive : {})}}
                 onClick={() => setViewMode('kanban')}
               >
-                 <Kanban size={14} /> Kanban
+                <Kanban size={14} /> Kanban
               </button>
               <button 
                 style={{...styles.toggleBtn, ...(viewMode === 'list' ? styles.toggleActive : {})}}
                 onClick={() => setViewMode('list')}
               >
-                 <List size={14} /> Lista
+                <List size={14} /> Lista
               </button>
-           </div>
-           <button style={styles.addBtn} onClick={() => setIsLeadModalOpen(true)}>
-             <UserPlus size={18} /> Nova Oportunidade ⚡
-           </button>
+            </div>
+            <button style={styles.addBtn} onClick={() => setIsLeadModalOpen(true)}>
+              <UserPlus size={18} /> Nova Lead ⚡
+            </button>
+          </div>
         </div>
       </header>
-
-      {viewMode === 'list' && (
-        <>
           <div style={styles.statsGrid}>
-             <div style={styles.statCard}>
-                <div style={styles.statHeader}>
-                   <div style={{...styles.statIcon, backgroundColor: 'rgba(99, 102, 241, 0.1)', color: '#6366F1'}}><Target size={20} /></div>
-                   <span style={styles.statLabel}>Pipeline Total</span>
-                </div>
-                <div style={styles.statValue}>R$ {(leads.reduce((acc, curr) => acc + (Number(curr.potential_value) || 0), 0) / 1000).toFixed(1)}k</div>
-                <div style={styles.statFooter}>
-                   <span style={{color: '#10b981', fontWeight: '600', fontSize: '12px'}}><TrendingUp size={12} /> +12%</span>
-                   <span style={styles.statSub}>vs mês anterior</span>
-                </div>
-             </div>
-    
-             <div style={styles.statCard}>
-                <div style={styles.statHeader}>
-                   <div style={{...styles.statIcon, backgroundColor: '#ecfdf5', color: '#10b981'}}><CheckCircle size={20} /></div>
-                   <span style={styles.statLabel}>Taxa de Conversão</span>
-                </div>
-                <div style={styles.statValue}>18.4%</div>
-                <div style={styles.statFooter}>
-                   <span style={styles.statSub}>Média do trimestre</span>
-                </div>
-             </div>
-    
-             <div style={styles.statCard}>
-                <div style={styles.statHeader}>
-                   <div style={{...styles.statIcon, backgroundColor: '#fef2f2', color: '#ef4444'}}><Zap size={20} /></div>
-                   <span style={styles.statLabel}>Leads em Risco</span>
-                </div>
-                <div style={styles.statValue}>12</div>
-                <div style={styles.statFooter}>
-                   <span style={styles.statSub}>Sem contato há 7+ dias</span>
-                </div>
-             </div>
-    
-             <div style={styles.statCard}>
-                <div style={styles.statHeader}>
-                   <div style={{...styles.statIcon, backgroundColor: '#fff7ed', color: '#f59e0b'}}><Star size={20} /></div>
-                   <span style={styles.statLabel}>Ticket Médio SaaS</span>
-                </div>
-                <div style={styles.statValue}>R$ 1.450</div>
-                <div style={styles.statFooter}>
-                   <span style={styles.statSub}>Mix de planos Ouro/Prata</span>
-                </div>
-             </div>
-          </div>
-    
-          <div style={styles.chartRow}>
-             <div style={styles.funnelCard}>
-                <h3 style={styles.chartTitle}>Funil de Vendas Corporativo</h3>
-                <div style={{height: '240px'}}>
-                   <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={statsData} layout="vertical">
-                         <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                         <XAxis type="number" hide />
-                         <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 500}} width={70} />
-                         <Tooltip cursor={{fill: 'transparent'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} />
-                         <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={30}>
-                            {statsData.map((entry, index) => (
-                               <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                         </Bar>
-                      </BarChart>
-                   </ResponsiveContainer>
-                </div>
-             </div>
-             <div style={styles.miniStatsCard}>
-                <div style={styles.mStatItem}>
-                   <div style={styles.mStatLabel}>NOVOS LEADS (MES)</div>
-                   <div style={styles.mStatValue}>+42</div>
-                </div>
-                <div style={styles.mStatItem}>
-                   <div style={styles.mStatLabel}>TEMPO MÉDIO FECHAMENTO</div>
-                   <div style={styles.mStatValue}>14 dias</div>
-                </div>
-             </div>
-          </div>
-        </>
-      )}
-
-      {viewMode === 'kanban' ? (
-        <div style={styles.kanbanBoard}>
-           {funnelStages.map(stage => (
-              <div key={stage.id} style={styles.kanbanColumn}>
-                 <header style={styles.columnHeader}>
-                    <div style={{...styles.columnDot, backgroundColor: stage.color}}></div>
-                    <h4 style={styles.columnTitle}>{stage.name}</h4>
-                    <span style={styles.columnCount}>{leads.filter(l => l.status === stage.id).length}</span>
-                 </header>
-                 <div style={styles.columnScroll}>
-                    {leads.filter(l => l.status === stage.id).map(lead => (
-                        <div key={lead.id} style={styles.leadCard} onClick={() => setSelectedLead(lead)}>
-                           <div style={styles.cardTop}>
-                              <span style={{...styles.potentialTag, 
-                                 backgroundColor: Number(lead.potential_value) > 10000 ? '#fef3c7' : '#f1f5f9', 
-                                 color: Number(lead.potential_value) > 10000 ? '#92400e' : '#64748b'
-                              }}>{Number(lead.potential_value) > 10000 ? 'OURO' : 'PADRÃO'}</span>
-                              <span style={styles.cardValue}>R$ {Number(lead.potential_value).toLocaleString()}</span>
-                           </div>
-                           <h5 style={styles.leadName}>{lead.name}</h5>
-                           <div style={styles.leadLoc}><MapPin size={10} /> {lead.city || 'Local não informado'}</div>
-                           <footer style={styles.cardFooter}>
-                              <div style={styles.leadUser}><Users size={12} /> {lead.contact_name || lead.company_name}</div>
-                              <div style={styles.leadTime}><Clock size={12} /> {new Date(lead.created_at).toLocaleDateString()}</div>
-                           </footer>
-                        </div>
-                    ))}
-                    <button style={styles.columnAddBtn} onClick={() => setIsLeadModalOpen(true)}><Plus size={14} /> Adicionar nesta etapa</button>
-                 </div>
+            <div style={styles.statCard}>
+              <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
+                <Target size={20} color="#6366F1" />
               </div>
-           ))}
-        </div>
-      ) : (
-        <div style={styles.tableWrapper}>
-            <table style={styles.table}>
-               <thead>
-                  <tr>
-                     <th style={styles.th}>TRANSPORTADORA</th>
-                     <th style={styles.th}>CONTATO</th>
-                     <th style={styles.th}>VALOR POTENCIAL</th>
-                     <th style={styles.th}>ETAPA</th>
-                     <th style={styles.th}>CADASTRO</th>
-                     <th style={styles.th}>AÇÕES</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  {leads.map(lead => (
-                     <tr key={lead.id} style={styles.tr}>
-                        <td style={styles.td}>
-                           <div>
-                              <div style={styles.lNameTable}>{lead.name}</div>
-                              <div style={styles.lLocTable}>{lead.city}</div>
-                           </div>
-                        </td>
-                        <td style={styles.td}>
-                           <div style={styles.lContactTable}>
-                              <span>{lead.contact_name}</span>
-                              <span style={{fontSize: '11px', color: '#94a3b8'}}>{lead.email}</span>
-                           </div>
-                        </td>
-                        <td style={styles.td}>
-                           <div style={{fontWeight: '500', color: 'var(--primary)', letterSpacing: '0.3px'}}>R$ {Number(lead.potential_value).toLocaleString()}</div>
-                        </td>
-                        <td style={styles.td}>
-                           <select 
-                             value={lead.status} 
-                             onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                             style={{...styles.statusBadge, border: 'none', backgroundColor: '#f1f5f9', cursor: 'pointer', outline: 'none'}}
-                           >
-                              {funnelStages.map(s => <option key={s.id} value={s.id}>{s.name.toUpperCase()}</option>)}
-                           </select>
-                        </td>
-                        <td style={styles.td}>
-                           <div style={styles.lTimeTable}>{new Date(lead.created_at).toLocaleDateString()}</div>
-                        </td>
-                        <td style={styles.td}>
-                           <button style={styles.iconBtn} onClick={() => setSelectedLead(lead)}><MoreVertical size={18} /></button>
-                        </td>
-                     </tr>
-                  ))}
-               </tbody>
-            </table>
-        </div>
-      )}
+              <div style={styles.statContent}>
+                <p style={styles.statLabel}>Pipeline Total</p>
+                <h3 style={styles.statValue}>R$ {(leads.reduce((acc, curr) => acc + (Number(curr.potential_value) || 0), 0) / 1000).toFixed(1)}k</h3>
+              </div>
+              <div style={{...styles.statTrend, color: '#10B981'}}>
+                +12% <TrendingUp size={12} />
+              </div>
+            </div>
+
+            <div style={styles.statCard}>
+              <div style={{...styles.statIconBox, backgroundColor: '#6366F1'}}>
+                <CheckCircle size={20} color="#FFFFFF" />
+              </div>
+              <div style={styles.statContent}>
+                <p style={styles.statLabel}>Taxa de Conversão</p>
+                <h3 style={styles.statValue}>18.4%</h3>
+              </div>
+              <div style={{...styles.statTrend, color: '#64748B'}}>
+                Média do trimestre
+              </div>
+            </div>
+
+            <div style={styles.statCard}>
+              <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
+                <Zap size={20} color="#6366F1" />
+              </div>
+              <div style={styles.statContent}>
+                <p style={styles.statLabel}>Leads em Risco</p>
+                <h3 style={styles.statValue}>12</h3>
+              </div>
+              <div style={{...styles.statTrend, color: '#64748B'}}>
+                Sem contato há 7+ dias
+              </div>
+            </div>
+
+            <div style={styles.statCard}>
+              <div style={{...styles.statIconBox, backgroundColor: '#4F46E5'}}>
+                <Star size={20} color="#FFFFFF" />
+              </div>
+              <div style={styles.statContent}>
+                <p style={styles.statLabel}>Ticket Médio SaaS</p>
+                <h3 style={styles.statValue}>R$ 1.450</h3>
+              </div>
+              <div style={{...styles.statTrend, color: '#64748B'}}>
+                Mix de planos
+              </div>
+            </div>
+          </div>
+
+          {viewMode === 'kanban' ? (
+            <div style={styles.kanbanBoard}>
+              {funnelStages.map(stage => (
+                  <div key={stage.id} style={styles.kanbanColumn}>
+                    <header style={styles.columnHeader}>
+                        <div style={{...styles.columnDot, backgroundColor: stage.color}}></div>
+                        <h4 style={styles.columnTitle}>{stage.name}</h4>
+                        <span style={styles.columnCount}>{leads.filter(l => l.status === stage.id).length}</span>
+                    </header>
+                    <div style={styles.columnScroll}>
+                        {leads.filter(l => l.status === stage.id).map(lead => (
+                            <div 
+                              key={lead.id} 
+                              style={{...styles.leadCard, cursor: 'pointer'}} 
+                              onClick={() => setSelectedLead(lead)}
+                              className="hover-scale"
+                            >
+                              <div style={styles.cardTop}>
+                                  <span style={{...styles.potentialTag, 
+                                    backgroundColor: Number(lead.potential_value) > 10000 ? '#fef3c7' : '#f1f5f9', 
+                                    color: Number(lead.potential_value) > 10000 ? '#92400e' : '#64748b'
+                                  }}>{Number(lead.potential_value) > 10000 ? 'ALTO VALOR' : 'PADRÃO'}</span>
+                                  <span style={styles.cardValue}>R$ {Number(lead.potential_value).toLocaleString()}</span>
+                              </div>
+                              <h5 style={styles.leadName}>{lead.name}</h5>
+                              <div style={styles.leadLoc}><MapPin size={10} /> {lead.city || 'Local não informado'}</div>
+                              <footer style={styles.cardFooter}>
+                                  <div style={styles.leadUser}><Users size={12} /> {lead.contact_name || lead.company_name}</div>
+                                  <div style={styles.leadTime}><Clock size={12} /> {lead.created_at ? new Date(lead.created_at).toLocaleDateString() : 'N/A'}</div>
+                              </footer>
+                            </div>
+                        ))}
+                        <button style={styles.columnAddBtn} onClick={() => setIsLeadModalOpen(true)}><Plus size={14} /> Adicionar nesta etapa</button>
+                    </div>
+                  </div>
+              ))}
+            </div>
+          ) : (
+            <div style={styles.tableWrapper}>
+                <table style={styles.table}>
+                  <thead>
+                      <tr>
+                        <th style={styles.th}>TRANSPORTADORA</th>
+                        <th style={styles.th}>CONTATO</th>
+                        <th style={styles.th}>VALOR POTENCIAL</th>
+                        <th style={styles.th}>ETAPA</th>
+                        <th style={styles.th}>CADASTRO</th>
+                        <th style={styles.th}>AÇÕES</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {leads.map(lead => (
+                        <tr 
+                          key={lead.id} 
+                          style={{...styles.tr, cursor: 'pointer'}} 
+                          onClick={() => setSelectedLead(lead)}
+                          className="hover-scale"
+                        >
+                            <td style={styles.td}>
+                              <div>
+                                  <div style={styles.lNameTable}>{lead.name}</div>
+                                  <div style={styles.lLocTable}>{lead.city}</div>
+                              </div>
+                            </td>
+                            <td style={styles.td}>
+                              <div style={styles.lContactTable}>
+                                  <span>{lead.contact_name}</span>
+                                  <span style={{fontSize: '11px', color: '#94a3b8'}}>{lead.email}</span>
+                              </div>
+                            </td>
+                            <td style={styles.td}>
+                              <div style={{fontWeight: '500', color: 'var(--primary)', letterSpacing: '0.3px'}}>R$ {Number(lead.potential_value).toLocaleString()}</div>
+                            </td>
+                            <td style={styles.td} onClick={(e) => e.stopPropagation()}>
+                              <select 
+                                value={lead.status} 
+                                onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                                style={{...styles.statusBadge, border: 'none', backgroundColor: '#f1f5f9', cursor: 'pointer', outline: 'none'}}
+                              >
+                                  {funnelStages.map(s => <option key={s.id} value={s.id}>{s.name.toUpperCase()}</option>)}
+                              </select>
+                            </td>
+                            <td style={styles.td}>
+                              <div style={styles.lTimeTable}>{new Date(lead.created_at).toLocaleDateString()}</div>
+                            </td>
+                            <td style={styles.td}>
+                              <button style={styles.iconBtn} onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); }}><MoreVertical size={18} /></button>
+                            </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+
+                <Pagination 
+                  currentPage={currentPage}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                />
+            </div>
+          )}
 
       {/* LEAD DETAIL MODAL */}
       <LogtaModal 
         isOpen={!!selectedLead} 
         onClose={() => setSelectedLead(null)} 
-        width="1000px"
+        size="xl"
         title={selectedLead?.name}
         subtitle={`${selectedLead?.city} • ID: ${selectedLead?.id?.substring(0,8)}`}
         icon={<Briefcase />}
@@ -378,7 +385,7 @@ const MasterCRM: React.FC = () => {
       <LogtaModal 
         isOpen={isLeadModalOpen} 
         onClose={() => setIsLeadModalOpen(false)} 
-        width="850px" 
+        size="lg" 
         title="Adicionar ao Pipeline"
         subtitle="Cadastre um novo prospecto no funil de expansão master."
         icon={<Target />}
@@ -470,26 +477,64 @@ const styles = {
   headerActions: { display: 'flex', gap: '20px', alignItems: 'center' },
   addBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 28px', backgroundColor: '#111827', color: '#D9FF00', border: 'none', borderRadius: '16px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)', transition: 'all 0.2s', letterSpacing: '0.4px' },
   
+  tabSwitch: { display: 'flex', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '16px', gap: '4px' },
+  tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', border: 'none', borderRadius: '12px', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '700', color: '#64748b', transition: 'all 0.2s' },
+  tabActive: { backgroundColor: 'white', color: '#111827', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' },
+
   viewToggle: { display: 'flex', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '12px' },
   toggleBtn: { display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', border: 'none', borderRadius: '8px', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#64748b', transition: 'all 0.2s' },
   toggleActive: { backgroundColor: 'white', color: '#111827', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' },
 
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '48px' },
-  statCard: { backgroundColor: 'white', padding: '32px', borderRadius: '28px', border: '1px solid #F1F5F9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' },
-  statHeader: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' },
-  statIcon: { width: '44px', height: '44px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statLabel: { fontSize: '11px', fontWeight: '700', color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '1px' },
-  statValue: { fontSize: '38px', fontWeight: '700', color: '#111827', marginBottom: '8px', letterSpacing: '-1.5px' },
-  statFooter: { display: 'flex', alignItems: 'center', gap: '6px' },
-  statSub: { fontSize: '12px', color: '#94A3B8', fontWeight: '500' },
-
-  chartRow: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '48px' },
-  funnelCard: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', border: '1px solid #F1F5F9', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' },
-  chartTitle: { fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '24px', letterSpacing: '-0.3px' },
-  miniStatsCard: { display: 'flex', flexDirection: 'column' as const, gap: '16px' },
-  mStatItem: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid #F1F5F9', flex: 1, display: 'flex', flexDirection: 'column' as const, justifyContent: 'center' },
-  mStatLabel: { fontSize: '10px', fontWeight: '800', color: '#6B7280', textTransform: 'uppercase' as const, marginBottom: '6px', letterSpacing: '1px' },
-  mStatValue: { fontSize: '24px', fontWeight: '700', color: '#111827', letterSpacing: '-0.5px' },
+  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' },
+  statCard: { 
+    backgroundColor: 'white', 
+    padding: '24px', 
+    borderRadius: '32px', 
+    border: '1px solid #E2E8F0', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '16px', 
+    position: 'relative' as const,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+  },
+  statIconBox: { 
+    width: '48px', 
+    height: '48px', 
+    borderRadius: '16px', 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  statContent: { 
+    display: 'flex', 
+    flexDirection: 'column' as const 
+  },
+  statLabel: { 
+    fontSize: '11px', 
+    fontWeight: '600', 
+    color: '#94A3B8', 
+    margin: 0, 
+    textTransform: 'uppercase' as const, 
+    letterSpacing: '0.8px' 
+  },
+  statValue: { 
+    fontSize: '24px', 
+    fontWeight: '500', 
+    color: '#0F172A', 
+    margin: '4px 0 0', 
+    letterSpacing: '0.2px' 
+  },
+  statTrend: { 
+    position: 'absolute' as const, 
+    top: '24px', 
+    right: '24px', 
+    fontSize: '12px', 
+    fontWeight: '600', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '4px', 
+    letterSpacing: '0.2px' 
+  },
 
   kanbanBoard: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '20px', minHeight: '700px', alignItems: 'flex-start' },
   kanbanColumn: { backgroundColor: '#F8FAFC', borderRadius: '24px', padding: '16px', display: 'flex', flexDirection: 'column' as const, gap: '16px', minHeight: '600px', border: '1px solid #F1F5F9' },

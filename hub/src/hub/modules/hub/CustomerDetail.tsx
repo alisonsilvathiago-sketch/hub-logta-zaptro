@@ -95,7 +95,7 @@ const CustomerDetail: React.FC = () => {
               color: 'white',
               boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)'
             }}>
-              {client.logo_url ? <img src={client.logo_url} style={{width: '100%', height: '100%', borderRadius: '16px', objectFit: 'cover'}} /> : client.name[0]}
+              {client.logo_url ? <img src={client.logo_url} style={{width: '100%', height: '100%', borderRadius: '16px', objectFit: 'cover'}} /> : (client.name || 'U')[0]}
             </div>
             <div style={styles.titleGroup}>
               <h1 style={styles.title}>{client.name}</h1>
@@ -291,7 +291,7 @@ const CustomerDetail: React.FC = () => {
             <div style={styles.teamList}>
               {team.length > 0 ? team.map((member, i) => (
                 <div key={i} style={styles.memberItem}>
-                  <div style={{...styles.avatarSmall, backgroundColor: i % 2 === 0 ? '#6366F1' : '#10B981'}}>{member.full_name[0]}</div>
+                  <div style={{...styles.avatarSmall, backgroundColor: i % 2 === 0 ? '#6366F1' : '#10B981'}}>{(member.full_name || 'U')[0]}</div>
                   <div style={styles.memberInfo}>
                     <p style={styles.memberName}>{member.full_name}</p>
                     <p style={styles.memberRole}>{member.role.toUpperCase()}</p>
@@ -371,7 +371,7 @@ const styles: Record<string, any> = {
   title: { fontSize: '36px', fontWeight: '800', color: '#0F172A', margin: 0, letterSpacing: '-1.5px' },
   badgeRow: { display: 'flex', gap: '8px' },
   statusBadge: { padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '800' },
-  productBadge: { backgroundColor: '#F4F4F4', color: '#6366F1', padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '800' },
+  productBadge: { backgroundColor: 'var(--bg-overlay)', color: '#6366F1', padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '800' },
   actions: { display: 'flex', gap: '12px' },
   primaryBtn: { backgroundColor: '#6366F1', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '22px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
   secondaryBtn: { backgroundColor: 'white', color: '#64748B', border: '1px solid #E2E8F0', padding: '12px 24px', borderRadius: '22px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
@@ -380,21 +380,23 @@ const styles: Record<string, any> = {
   rightCol: { display: 'flex', flexDirection: 'column', gap: '32px' },
   card: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #E2E8F0', padding: '32px', position: 'relative' },
   cardHeader: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' },
-  cardIconBox: { width: '40px', height: '40px', borderRadius: '24px', backgroundColor: '#F4F4F4', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  cardIconBox: { width: '40px', height: '40px', borderRadius: '24px', backgroundColor: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   cardTitle: { fontSize: '18px', fontWeight: '800', color: '#0F172A', margin: 0, flex: 1 },
   infoGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
   infoItem: { display: 'flex', flexDirection: 'column', gap: '6px' },
   infoLabel: { fontSize: '11px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' },
   infoText: { fontSize: '15px', fontWeight: '600', color: '#1E293B', margin: 0 },
   teamList: { display: 'flex', flexDirection: 'column', gap: '16px' },
-  memberItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '24px', backgroundColor: '#F4F4F4' },
+  memberItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '24px', backgroundColor: 'var(--bg-secondary)' },
+  input: { padding: '12px', borderRadius: '24px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)', outline: 'none' },
+  textarea: { padding: '12px', borderRadius: '24px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)', outline: 'none', minHeight: '100px', resize: 'none' },
   avatarSmall: { width: '32px', height: '32px', borderRadius: '10px', backgroundColor: '#6366F1', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800' },
   memberInfo: { flex: 1 },
   memberName: { fontSize: '14px', fontWeight: '700', color: '#1E293B', margin: 0 },
   memberRole: { fontSize: '11px', fontWeight: '700', color: '#94A3B8', margin: 0 },
   dot: { width: '8px', height: '8px', borderRadius: '50%' },
   productStack: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  productItem: { padding: '20px', borderRadius: '24px', backgroundColor: '#F4F4F4', border: '1px solid #E2E8F0' },
+  productItem: { padding: '20px', borderRadius: '24px', backgroundColor: 'var(--bg-overlay)', border: '1px solid var(--border)' },
   productMain: { display: 'flex', alignItems: 'center', gap: '16px' },
   prodIcon: { width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' },
   prodName: { fontSize: '15px', fontWeight: '800', color: '#1E293B', margin: 0 },

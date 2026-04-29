@@ -35,7 +35,7 @@ export const LOGTA_DASHBOARD_PAGE_PAD_TOP_PX = 8;
 export const LOGTA_MODULE_STACK_GAP_PX = 24;
 
 /**
- * Área de conteúdo padrão dos módulos (`ModuleLayout`): mesmo modelo que Logística dashboard
+ * Área de conteúdo padrão dos módulos (`ModuleLayout`): mesmo modelo que Logita dashboard
  * — coluna flex, gap 24px, animação `animate-fade-in` aplicada no layout.
  */
 export const LOGTA_MODULE_CONTENT_SHELL: CSSProperties = {

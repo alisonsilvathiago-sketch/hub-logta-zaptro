@@ -149,7 +149,7 @@ const Reports: React.FC = () => {
           <div style={{display:'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap:'24px'}}>
              <div style={styles.insightBox}><p style={styles.insightLabel}>FINANCEIRO</p><p style={styles.insightText}>Lucro cresceu 4% por redução de custos em manutenção.</p></div>
              <div style={styles.insightBox}><p style={styles.insightLabel}>COMERCIAL</p><p style={styles.insightText}>Taxa de conversão caiu 2% essa semana. Revisar follow-ups.</p></div>
-             <div style={styles.insightBox}><p style={styles.insightLabel}>LOGÍSTICA</p><p style={styles.insightText}>Rota Sul com custo 15% maior. Redesenhar roteiro economiza R$ 12k/mês.</p></div>
+             <div style={styles.insightBox}><p style={styles.insightLabel}>LOGITA</p><p style={styles.insightText}>Rota Sul com custo 15% maior. Redesenhar roteiro economiza R$ 12k/mês.</p></div>
           </div>
        </div>
     </div>
@@ -165,7 +165,7 @@ const Reports: React.FC = () => {
         </div>
 
        <div style={styles.chartCardFull}>
-          <div style={styles.cardHeader}><div><h3 style={styles.chartTitle}>Eficiência Logística de Entregas</h3><p style={{margin:0, fontSize:'12px', color:'#94a3b8'}}>No Prazo vs Atrasos (Diário)</p></div></div>
+          <div style={styles.cardHeader}><div><h3 style={styles.chartTitle}>Eficiência Logita de Entregas</h3><p style={{margin:0, fontSize:'12px', color:'#94a3b8'}}>No Prazo vs Atrasos (Diário)</p></div></div>
           <div style={{height: 350, marginTop: 32}}>
              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={logisticaData}>
@@ -287,7 +287,7 @@ const Reports: React.FC = () => {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard Estratégico', icon: LayoutDashboard },
-    { id: 'logistica', label: 'Estatísticas de Logística', icon: Truck },
+    { id: 'logistica', label: 'Estatísticas de Logita', icon: Truck },
     { id: 'financeiro', label: 'Métricas Financeiras', icon: DollarSign },
     { id: 'crm', label: 'Performance Comercial / CRM', icon: ShoppingCart },
     { id: 'pessoas', label: 'RH & Gestão de Pessoas', icon: Users },
@@ -299,7 +299,7 @@ const Reports: React.FC = () => {
   return (
     <ModuleLayout
       title={modulePageTitle}
-      badge="LOGTA BUSINESS INTELLIGENCE"
+      badge="LOGITA BUSINESS INTELLIGENCE"
       items={navItems}
       activeTab={activeTab}
       onTabChange={handleTabChange}

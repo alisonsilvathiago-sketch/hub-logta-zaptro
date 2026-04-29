@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useZaptroTheme } from '../context/ZaptroThemeContext';
 import { ZAPTRO_SHADOW } from '../constants/zaptroShadows';
 import { notifyZaptro } from '../components/Zaptro/ZaptroNotificationSystem';
+import Pagination from '@shared/components/Pagination';
 
 // Lead Statuses
 const STAGES = [
@@ -40,6 +41,9 @@ export const ZaptroLeadsTab: React.FC = () => {
     { id: 'l4', name: 'Mercado Central Ltda', phone: '(31) 98888-0000', stage: 'atendimento', value: '—', date: '2024-04-24', tags: ['Frio'], owner: 'Ana Souza' },
   ]);
 
+  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
+
   const filteredLeads = leads.filter(l => {
     const q = searchTerm.toLowerCase();
     const matchesText = l.name.toLowerCase().includes(q) || 
@@ -48,10 +52,20 @@ export const ZaptroLeadsTab: React.FC = () => {
     return matchesText && matchesStage;
   });
 
+  const totalPages = Math.ceil(filteredLeads.length / rowsPerPage);
+  const paginatedLeads = filteredLeads.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
   const getStageLeads = (stageId: string) => filteredLeads.filter(l => l.stage === stageId);
 
   const renderKanban = () => (
     <div style={{ display: 'flex', gap: 20, overflowX: 'auto', paddingBottom: 20, minHeight: '600px' }}>
+      <style>{`
+        .hover-scale { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .hover-scale:hover { transform: scale(1.02) translateY(-4px); box-shadow: 0 12px 24px -8px rgba(0,0,0,0.15) !important; }
+      `}</style>
       {STAGES.map(stage => {
         const stageLeads = getStageLeads(stage.id);
         return (
@@ -62,7 +76,7 @@ export const ZaptroLeadsTab: React.FC = () => {
                 <span style={{ fontSize: 13, fontWeight: 700, color: palette.text, letterSpacing: '-0.01em' }}>{stage.label}</span>
                 <span style={{ fontSize: 11, fontWeight: 700, color: palette.textMuted, backgroundColor: surface2, padding: '2px 8px', borderRadius: 20 }}>{stageLeads.length}</span>
               </div>
-              <button style={{ background: 'transparent', border: 'none', color: palette.textMuted, cursor: 'pointer' }}>
+              <button className="hover-scale" style={{ background: 'transparent', border: 'none', color: palette.textMuted, cursor: 'pointer' }}>
                 <Plus size={16} />
               </button>
             </div>
@@ -72,6 +86,7 @@ export const ZaptroLeadsTab: React.FC = () => {
                 <div 
                   key={lead.id} 
                   onClick={() => navigate(`/clientes/leads/perfil/${lead.id}`)}
+                  className="hover-scale"
                   style={{ 
                     backgroundColor: surface, 
                     border: `1px solid ${border}`, 
@@ -79,10 +94,7 @@ export const ZaptroLeadsTab: React.FC = () => {
                     padding: 16, 
                     cursor: 'pointer',
                     boxShadow: d ? 'none' : ZAPTRO_SHADOW.sm,
-                    transition: 'transform 0.2s ease',
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                     <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: palette.text, letterSpacing: '-0.01em' }}>{lead.name}</h4>
@@ -118,7 +130,7 @@ export const ZaptroLeadsTab: React.FC = () => {
                       <span style={{ fontSize: 11, fontWeight: 700, color: palette.textMuted }}>{lead.owner.split(' ')[0]}</span>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button title="WhatsApp" style={{ width: 28, height: 28, borderRadius: 8, border: 'none', backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); notifyZaptro('success', 'WhatsApp', 'Abrindo conversa...'); }}>
+                      <button className="hover-scale" title="WhatsApp" style={{ width: 28, height: 28, borderRadius: 8, border: 'none', backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); notifyZaptro('success', 'WhatsApp', 'Abrindo conversa...'); }}>
                         <MessageSquare size={14} />
                       </button>
                     </div>
@@ -137,11 +149,83 @@ export const ZaptroLeadsTab: React.FC = () => {
     </div>
   );
 
+  const renderList = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ backgroundColor: surface, borderRadius: '24px', border: `1px solid ${border}`, overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ backgroundColor: surface2, borderBottom: `1px solid ${border}` }}>
+              <th style={{ padding: '20px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: palette.text, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Lead</th>
+              <th style={{ padding: '20px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: palette.text, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Estágio</th>
+              <th style={{ padding: '20px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: palette.text, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Valor</th>
+              <th style={{ padding: '20px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: palette.text, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Data</th>
+              <th style={{ padding: '20px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: palette.text, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!paginatedLeads.length ? (
+              <tr>
+                <td colSpan={5} style={{ padding: 48, textAlign: 'center', color: palette.textMuted, fontWeight: 700 }}>Nenhum lead encontrado.</td>
+              </tr>
+            ) : (
+              paginatedLeads.map(lead => {
+                const stage = STAGES.find(s => s.id === lead.stage);
+                return (
+                  <tr key={lead.id} className="hover-scale" onClick={() => navigate(`/clientes/leads/perfil/${lead.id}`)} style={{ borderBottom: `1px solid ${border}` }}>
+                    <td style={{ padding: '20px 24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: palette.lime, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{lead.name[0]}</div>
+                        <div>
+                          <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: palette.text }}>{lead.name}</span>
+                          <span style={{ display: 'block', fontSize: 12, color: palette.textMuted, fontWeight: 600 }}>{lead.phone}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '20px 24px' }}>
+                      <span style={{ padding: '6px 12px', borderRadius: 8, fontSize: 10, fontWeight: 700, letterSpacing: '0.02em', backgroundColor: stage?.bg, color: stage?.color }}>
+                        {stage?.label.toUpperCase()}
+                      </span>
+                    </td>
+                    <td style={{ padding: '20px 24px', fontSize: 13, fontWeight: 700, color: lead.value !== '—' ? stage?.color : palette.textMuted }}>
+                      {lead.value}
+                    </td>
+                    <td style={{ padding: '20px 24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: palette.textMuted }}>
+                        <Calendar size={14} />
+                        <span>{new Date(lead.date).toLocaleDateString()}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '20px 24px' }}>
+                      <button className="hover-scale" style={{ padding: '10px 16px', backgroundColor: surface2, color: palette.text, border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }} onClick={(e) => { e.stopPropagation(); navigate(`/clientes/leads/perfil/${lead.id}`); }}>
+                        Ver Detalhes <ArrowRight size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Pagination 
+        currentPage={currentPage}
+        totalItems={filteredLeads.length}
+        itemsPerPage={rowsPerPage}
+        onPageChange={setCurrentPage}
+        onItemsPerPageChange={(val) => {
+          setRowsPerPage(val as number);
+          setCurrentPage(1);
+        }}
+      />
+    </div>
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Dashboard Mini */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
-        <div style={{ backgroundColor: surface, border: `1px solid ${border}`, borderRadius: 20, padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div className="hover-scale" style={{ backgroundColor: surface, border: `1px solid ${border}`, borderRadius: 20, padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <TrendingUp size={20} color="#3b82f6" />
           </div>
@@ -150,7 +234,7 @@ export const ZaptroLeadsTab: React.FC = () => {
             <span style={{ fontSize: 20, fontWeight: 800, color: palette.text }}>{leads.length}</span>
           </div>
         </div>
-        <div style={{ backgroundColor: surface, border: `1px solid ${border}`, borderRadius: 20, padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div className="hover-scale" style={{ backgroundColor: surface, border: `1px solid ${border}`, borderRadius: 20, padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(234, 179, 8, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <DollarSign size={20} color="#eab308" />
           </div>
@@ -159,7 +243,7 @@ export const ZaptroLeadsTab: React.FC = () => {
             <span style={{ fontSize: 20, fontWeight: 800, color: palette.text }}>{leads.filter(l => l.stage === 'negociacao').length}</span>
           </div>
         </div>
-        <div style={{ backgroundColor: surface, border: `1px solid ${border}`, borderRadius: 20, padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div className="hover-scale" style={{ backgroundColor: surface, border: `1px solid ${border}`, borderRadius: 20, padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <CheckCircle2 size={20} color="#22c55e" />
           </div>
@@ -178,7 +262,7 @@ export const ZaptroLeadsTab: React.FC = () => {
             <input 
               placeholder="Buscar leads por nome ou telefone..." 
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               style={{ border: 'none', outline: 'none', fontSize: 14, fontWeight: 600, width: '100%', backgroundColor: 'transparent', color: palette.text }} 
             />
           </div>
@@ -186,7 +270,7 @@ export const ZaptroLeadsTab: React.FC = () => {
             <Filter size={16} color={palette.textMuted} />
             <select
               value={stageFilter}
-              onChange={(e) => setStageFilter(e.target.value)}
+              onChange={(e) => { setStageFilter(e.target.value); setCurrentPage(1); }}
               style={{ border: 'none', outline: 'none', fontSize: 13, fontWeight: 700, backgroundColor: 'transparent', color: palette.text, cursor: 'pointer', padding: '12px 0', fontFamily: 'inherit', appearance: 'none' }}
             >
               <option value="all">Filtro: Todos</option>
@@ -200,32 +284,28 @@ export const ZaptroLeadsTab: React.FC = () => {
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ display: 'flex', backgroundColor: surface2, padding: 4, borderRadius: 12, border: `1px solid ${border}` }}>
             <button 
+              className="hover-scale"
               onClick={() => setViewMode('kanban')}
               style={{ padding: '8px 12px', border: 'none', borderRadius: 8, backgroundColor: viewMode === 'kanban' ? surface : 'transparent', color: viewMode === 'kanban' ? palette.text : palette.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
             >
               <LayoutGrid size={16} />
             </button>
             <button 
+              className="hover-scale"
               onClick={() => setViewMode('list')}
               style={{ padding: '8px 12px', border: 'none', borderRadius: 8, backgroundColor: viewMode === 'list' ? surface : 'transparent', color: viewMode === 'list' ? palette.text : palette.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
             >
               <ListIcon size={16} />
             </button>
           </div>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', backgroundColor: 'rgba(217, 255, 0, 0.14)', color: '#000', border: '1px solid rgba(217, 255, 0, 1)', borderRadius: 16, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+          <button className="hover-scale" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', backgroundColor: 'rgba(217, 255, 0, 0.14)', color: '#000', border: '1px solid rgba(217, 255, 0, 1)', borderRadius: 16, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
             <Plus size={18} strokeWidth={2.5} /> Novo Lead
           </button>
         </div>
       </div>
 
       {/* Main Content */}
-      {viewMode === 'kanban' ? renderKanban() : (
-        <div style={{ padding: 40, textAlign: 'center', backgroundColor: surface, borderRadius: 24, border: `1px solid ${border}` }}>
-          <ListIcon size={48} color={palette.textMuted} style={{ marginBottom: 16, opacity: 0.5 }} />
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: palette.text }}>Visualização em Lista</h3>
-          <p style={{ margin: '8px 0 0', fontSize: 14, color: palette.textMuted }}>O modo lista está sendo otimizado para grandes volumes de dados.</p>
-        </div>
-      )}
+      {viewMode === 'kanban' ? renderKanban() : renderList()}
     </div>
   );
 };

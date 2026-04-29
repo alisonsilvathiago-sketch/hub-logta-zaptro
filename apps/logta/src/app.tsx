@@ -19,6 +19,7 @@ import Fleet from './product-logta/pages/Fleet';
 import Inventory from './product-logta/pages/Inventory';
 import Reports from './product-logta/pages/Reports';
 import IntelligenceDashboard from './product-logta/pages/IntelligenceDashboard';
+import FuelCenter from './product-logta/pages/FuelCenter';
 import DriverPortal from './product-logta/pages/DriverPortal';
 import Drivers from './product-logta/pages/Drivers';
 import UserManagement from './product-logta/pages/UserManagement';
@@ -146,6 +147,7 @@ const App: React.FC = () => {
               <Route path="/sso" element={<SSOLogin />} />
 
               <Route path="/dashboard" element={<ProtectedRoute><IntelligenceDashboard /></ProtectedRoute>} />
+              <Route path="/combustivel" element={<ProtectedRoute><FuelCenter /></ProtectedRoute>} />
               <Route path="/logistica" element={<ProtectedRoute><Navigate to="/logistica/dashboard" replace /></ProtectedRoute>} />
               <Route path="/logistica/:tab" element={<ProtectedRoute><Logistics /></ProtectedRoute>} />
               <Route path="/financeiro" element={<ProtectedRoute><Navigate to="/financeiro/inteligencia" replace /></ProtectedRoute>} />

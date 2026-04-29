@@ -40,20 +40,33 @@ export default function ClientesManagement() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  const [newClient, setNewClient] = useState({ name: '', email: '', cnpj: '', plan: 'Combo Pro' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number | 'all'>(20);
 
   const fetchClients = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from('companies')
-      .select('*, subscriptions(status, plan_id, product_name)')
-      .order('created_at', { ascending: false });
+      .select('*, subscriptions(status, plan_id, product_name)', { count: 'exact' });
+
+    if (itemsPerPage !== 'all') {
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+      query = query.range(from, to);
+    }
+
+    const { data, error, count } = await query.order('created_at', { ascending: false });
     
     if (data) setClients(data);
     setLoading(false);
   };
 
-  useEffect(() => { fetchClients(); }, []);
+  useEffect(() => { fetchClients(); }, [currentPage, itemsPerPage]);
+
+  const handleItemsPerPageChange = (val: number | 'all') => {
+    setItemsPerPage(val);
+    setCurrentPage(1);
+  };
 
   const handleAddCliente = async () => {
     if (!newClient.name || !newClient.email) return;
@@ -117,6 +130,10 @@ export default function ClientesManagement() {
 
   return (
     <div style={S.page}>
+      <style>{`
+        .hover-scale { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .hover-scale:hover { transform: scale(1.01) translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1) !important; }
+      `}</style>
       <SEOManager title="Master | Gestão de Clientes" />
 
       {/* MODAL ADICIONAR NOVO CLIENTE (PADRONIZADO) */}
@@ -182,61 +199,71 @@ export default function ClientesManagement() {
           </button>
         </div>
 
-        <table style={S.table}>
-          <thead>
-            <tr>
-              <th style={S.th}>Empresa / Cliente</th>
-              <th style={S.th}>Status</th>
-              <th style={S.th}>Plano</th>
-              <th style={S.th}>Data de Início</th>
-              <th style={{ ...S.th, textAlign: 'right' }}>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={5} style={{ padding: '60px', textAlign: 'center' }}><Loader2 size={40} className="spin" color="#E2E8F0" /></td></tr>
-            ) : filteredItems.map(client => (
-              <tr key={client.id} onClick={() => navigate(`/master/customers/${client.id}`)} style={{ cursor: 'pointer', transition: '0.2s' }}>
-                <td style={S.td}>
-                  <div style={{ fontWeight: '900', color: '#1E293B', fontSize: '15px' }}>{client.name}</div>
-                  <div style={{ fontSize: '12px', color: '#94A3B8', fontWeight: '600' }}>{client.email}</div>
-                </td>
-                <td style={S.td}>
-                  <span style={S.badge(client.status === 'active' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', client.status === 'active' ? '#10B981' : '#EF4444')}>
-                    {client.status === 'active' ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-                    {client.status.toUpperCase()}
-                  </span>
-                </td>
-                <td style={S.td}>
-                  <span style={{ fontWeight: '800', color: '#6366F1', fontSize: '12px', background: 'rgba(99,102,241,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
-                    {client.subscriptions?.[0]?.plan_id || 'Nenhum'}
-                  </span>
-                </td>
-                <td style={S.td}>
-                  <div style={{ fontSize: '13px', color: '#64748B', fontWeight: '600' }}>{new Date(client.created_at).toLocaleDateString()}</div>
-                </td>
-                <td style={{ ...S.td, textAlign: 'right' }}>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                    <button 
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        const product = client.subscriptions?.[0]?.product_name || client.origin || 'zaptro';
-                        handleImpersonate(client.id, product); 
-                      }}
-                      title={`Entrar como Cliente (${client.subscriptions?.[0]?.product_name || 'Zaptro'})`}
-                      style={{ padding: '8px 12px', borderRadius: '10px', background: 'rgba(99,102,241,0.1)', border: 'none', color: COLORS.accent, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '800' }}
-                    >
-                      <Shield size={14} /> ACESSAR
-                    </button>
-                    <button style={{ padding: '8px', borderRadius: '10px', background: '#F1F5F9', border: 'none', color: '#94A3B8', cursor: 'pointer' }}>
-                      <MoreVertical size={20} />
-                    </button>
-                  </div>
-                </td>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={S.table}>
+            <thead>
+              <tr>
+                <th style={S.th}>Empresa / Cliente</th>
+                <th style={S.th}>Status</th>
+                <th style={S.th}>Plano</th>
+                <th style={S.th}>Data de Início</th>
+                <th style={{ ...S.th, textAlign: 'right' }}>AÇÕES MASTER</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={5} style={{ padding: '60px', textAlign: 'center' }}><Loader2 size={40} className="spin" color="#E2E8F0" /></td></tr>
+              ) : filteredItems.map(client => (
+                <tr key={client.id} className="hover-scale" onClick={() => navigate(`/master/customers/${client.id}`)} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={S.td}>
+                    <div style={{ fontWeight: '900', color: '#1E293B', fontSize: '15px' }}>{client.name}</div>
+                    <div style={{ fontSize: '12px', color: '#94A3B8', fontWeight: '600' }}>{client.email}</div>
+                  </td>
+                  <td style={S.td}>
+                    <span style={S.badge(client.status === 'active' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', client.status === 'active' ? '#10B981' : '#EF4444')}>
+                      {client.status === 'active' ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                      {client.status.toUpperCase()}
+                    </span>
+                  </td>
+                  <td style={S.td}>
+                    <span style={{ fontWeight: '800', color: '#6366F1', fontSize: '12px', background: 'rgba(99,102,241,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
+                      {client.subscriptions?.[0]?.plan_id || 'Nenhum'}
+                    </span>
+                  </td>
+                  <td style={S.td}>
+                    <div style={{ fontSize: '13px', color: '#64748B', fontWeight: '600' }}>{new Date(client.created_at).toLocaleDateString()}</div>
+                  </td>
+                  <td style={{ ...S.td, textAlign: 'right' }}>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          const product = client.subscriptions?.[0]?.product_name || client.origin || 'zaptro';
+                          handleImpersonate(client.id, product); 
+                        }}
+                        title={`Entrar como Cliente (${client.subscriptions?.[0]?.product_name || 'Zaptro'})`}
+                        style={{ padding: '8px 12px', borderRadius: '10px', background: 'rgba(33, 33, 33, 1)', border: 'none', color: '#D9FF00', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '800' }}
+                      >
+                        <Shield size={14} /> ACESSAR
+                      </button>
+                      <button style={{ padding: '8px', borderRadius: '10px', background: '#F1F5F9', border: 'none', color: '#94A3B8', cursor: 'pointer' }}>
+                        <MoreVertical size={20} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <Pagination 
+          currentPage={currentPage}
+          totalItems={clients.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
       </div>
 
       <style>{`

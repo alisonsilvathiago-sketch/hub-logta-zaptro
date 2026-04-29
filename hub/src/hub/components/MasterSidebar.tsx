@@ -4,7 +4,8 @@ import {
   LayoutDashboard, TrendingUp, MessageSquare, Truck,
   Building2, Users, CreditCard, FileText,
   Link, Zap, HardDrive, Database, Shield,
-  LogOut, Box, ChevronRight, UserCircle, CalendarDays
+  LogOut, Box, ChevronRight, UserCircle, CalendarDays,
+  DollarSign
 } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
 
@@ -15,17 +16,19 @@ const MasterSidebar: React.FC = () => {
 
   const menuStructure = [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/master' },
-    { label: 'CRM & Vendas', icon: TrendingUp, path: '/master/crm' },
-    { label: 'Clientes', icon: UserCircle, path: '/master/clientes' },
-    { label: 'Agenda Hub', icon: CalendarDays, path: '/master/agenda' },
+    { label: 'CRM & Expansão', icon: TrendingUp, path: '/master/crm' },
+    { label: 'Agenda Ruby', icon: CalendarDays, path: '/master/agenda' },
     { label: 'HubChat', icon: MessageSquare, path: '/master/hubchat' },
+    { label: 'Clientes Hub', icon: Users, path: '/master/clientes' },
     { label: 'Logística', icon: Truck, path: '/master/logistica' },
     {
       title: 'OPERAÇÕES',
       items: [
         { label: 'Empresas', icon: Building2, path: '/master/companies' },
-        { label: 'Faturamento', icon: CreditCard, path: '/master/billing' },
-        { label: 'Relatórios', icon: FileText, path: '/master/reports' },
+        { label: 'Faturamento & Financeiro', icon: CreditCard, path: '/master/billing' },
+        { label: 'Inteligência & Relatórios', icon: FileText, path: '/master/reports' },
+        { label: 'Infra & Segurança', icon: HardDrive, path: '/master/infrastructure' },
+        { label: 'Workflows & Automações', icon: Zap, path: '/master/automacoes' },
       ]
     }
   ];

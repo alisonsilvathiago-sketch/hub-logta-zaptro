@@ -13,7 +13,7 @@ import LogtaPageView from '../../components/LogtaPageView';
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: 'ADMIN', label: 'Administrador' },
   { value: 'GERENTE', label: 'Gerente' },
-  { value: 'LOGISTICA', label: 'Logística' },
+  { value: 'LOGISTICA', label: 'Logita' },
   { value: 'CRM', label: 'CRM' },
   { value: 'COMERCIAL', label: 'Comercial' },
   { value: 'RH', label: 'RH' },

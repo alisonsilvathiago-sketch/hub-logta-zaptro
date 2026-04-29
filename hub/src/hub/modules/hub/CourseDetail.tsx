@@ -229,7 +229,7 @@ const styles = {
 
   moduleList: { display: 'flex', flexDirection: 'column' as const, gap: '24px' },
   moduleCard: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid #e2e8f0', overflow: 'hidden' },
-  modHeader: { padding: '20px 24px', backgroundColor: '#f4f4f4', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  modHeader: { padding: '20px 24px', backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   modTitleWrap: { display: 'flex', alignItems: 'center', gap: '16px' },
   modIndex: { width: '28px', height: '28px', backgroundColor: 'var(--primary)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700' },
   modName: { fontSize: '15px', fontWeight: '600', color: '#000000' },
@@ -250,8 +250,8 @@ const styles = {
   fGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
   fGroup: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
   fLabel: { fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
-  input: { padding: '14px', borderRadius: '22px', border: '1px solid #e2e8f0', backgroundColor: '#f4f4f4', color: '#000000', fontWeight: '700', outline: 'none', width: '100%' },
-  textarea: { padding: '14px', borderRadius: '22px', border: '1px solid #e2e8f0', backgroundColor: '#f4f4f4', color: '#000000', fontWeight: '700', outline: 'none', height: '100px', resize: 'none' as const },
+  input: { padding: '14px', borderRadius: '22px', border: '1px solid #e2e8f0', backgroundColor: 'var(--bg-secondary)', color: '#000000', fontWeight: '700', outline: 'none', width: '100%' },
+  textarea: { padding: '14px', borderRadius: '22px', border: '1px solid #e2e8f0', backgroundColor: 'var(--bg-secondary)', color: '#000000', fontWeight: '700', outline: 'none', height: '100px', resize: 'none' as const },
   submitBtn: { padding: '16px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '700', cursor: 'pointer' },
   storageBox: { display: 'flex', gap: '8px' },
   uploadBtn: { width: '48px', backgroundColor: '#1e293b', color: 'white', border: 'none', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }

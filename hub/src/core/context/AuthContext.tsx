@@ -25,6 +25,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
+    const devSessionRaw =
+      typeof window !== 'undefined' && window.location.hostname === 'localhost'
+        ? localStorage.getItem('hub-dev-session')
+        : null;
+
+    if (devSessionRaw) {
+      try {
+        const devSession = JSON.parse(devSessionRaw);
+        const devId = 'hub-dev-local-user';
+        const devEmail = devSession?.email || 'adm@teste.com';
+        const devRole: Profile['role'] =
+          devSession?.role === 'MASTER_ADMIN' || devSession?.role === 'ADMIN' || devSession?.role === 'USER'
+            ? devSession.role
+            : 'MASTER';
+
+        setUser({ id: devId, email: devEmail });
+        setProfile({
+          id: devId,
+          email: devEmail,
+          full_name: devSession?.full_name || 'Master Developer',
+          role: devRole,
+          avatar_url: devSession?.avatar_url || undefined,
+        });
+        setIsLoading(false);
+        return;
+      } catch {
+        localStorage.removeItem('hub-dev-session');
+      }
+    }
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);

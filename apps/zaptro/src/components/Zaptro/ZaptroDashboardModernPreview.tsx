@@ -1,4 +1,4 @@
-import React, { useId, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { resolveSessionAvatarUrl } from '../../utils/zaptroAvatar';
@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Calendar,
   ChevronDown,
+  Fuel,
   Gift,
   Maximize2,
   Minus,
@@ -15,6 +16,8 @@ import {
   Phone,
   Plus,
   Route,
+  TrendingDown,
+  TrendingUp,
   Truck,
   Upload,
   Zap,
@@ -25,6 +28,7 @@ import ZaptroKpiMetricCard from './ZaptroKpiMetricCard';
 import { zaptroCardSurfaceStyle, zaptroIconOrbStyle } from '../../constants/zaptroCardSurface';
 import { notifyZaptro } from './ZaptroNotificationSystem';
 import { zaptroWhatsappInboxThreadPath } from '../../constants/zaptroRoutes';
+import { supabase } from '../../lib/supabase';
 /** Mock — identidade preto + lime Zaptro (sem roxo: gráficos usam sempre `palette.lime`). */
 const TEXT = '#000000';
 const MUTED = '#6B7280';
@@ -52,6 +56,14 @@ const kpiDistanceLine = [
   { x: 4, y: 38 },
   { x: 5, y: 52 },
 ];
+
+type FuelMarketRow = {
+  id?: string;
+  type?: string | null;
+  price?: number | null;
+  variation_percentage?: number | null;
+  last_updated?: string | null;
+};
 
 function ProgressRing({ pct, isDark, stroke }: { pct: number; isDark: boolean; stroke: string }) {
   const r = 24;
@@ -148,6 +160,7 @@ const ZaptroDashboardModernPreview: React.FC = () => {
   const areaGradId = useId().replace(/:/g, '');
   const { palette } = useZaptroTheme();
   const { profile } = useAuth();
+  const navigate = useNavigate();
 
   const sessionAvatarSrc = useMemo(() => resolveSessionAvatarUrl(profile), [profile]);
   const displayName = profile?.full_name?.trim() ?? '';
@@ -164,6 +177,60 @@ const ZaptroDashboardModernPreview: React.FC = () => {
   const accent = palette.lime;
   const barFillSoft = 'rgba(217, 255, 0, 0.5)';
   const c = () => zaptroCardSurfaceStyle(isDark);
+  const [fuelRows, setFuelRows] = useState<FuelMarketRow[]>([]);
+  const [fuelLoading, setFuelLoading] = useState(true);
+
+  useEffect(() => {
+    const normalizeType = (value?: string | null) => {
+      const type = (value || '').toLowerCase();
+      if (type.includes('gasolina')) return 'gasolina';
+      if (type.includes('etanol') || type.includes('alcool') || type.includes('álcool')) return 'etanol';
+      if (type.includes('diesel')) return 'diesel';
+      if (type.includes('gnv') || type.includes('gas') || type.includes('gás')) return 'gnv';
+      return type;
+    };
+
+    const fetchFuel = async () => {
+      setFuelLoading(true);
+      const { data } = await supabase.from('fuel_prices').select('id, type, price, variation_percentage, last_updated').order('type');
+      setFuelRows((data || []).map((item) => ({ ...item, type: normalizeType(item.type) })));
+      setFuelLoading(false);
+    };
+
+    fetchFuel();
+    const interval = window.setInterval(fetchFuel, 60000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const fuelDisplayRows = useMemo(() => {
+    const labels: Record<string, string> = {
+      gasolina: 'Gasolina',
+      diesel: 'Diesel',
+      etanol: 'Etanol',
+      gnv: 'GNV',
+    };
+    const colors: Record<string, string> = {
+      gasolina: '#6366F1',
+      diesel: '#EF4444',
+      etanol: '#10B981',
+      gnv: '#0EA5E9',
+    };
+    const order = ['gasolina', 'diesel', 'etanol', 'gnv'];
+    const byType = new Map<string, FuelMarketRow>();
+    fuelRows.forEach((row) => byType.set((row.type || '').toLowerCase(), row));
+    return order.map((type) => ({
+      type,
+      label: labels[type],
+      color: colors[type],
+      data: byType.get(type) || null,
+    }));
+  }, [fuelRows]);
+
+  const fuelAverage = useMemo(() => {
+    const available = fuelDisplayRows.filter((item) => item.data?.price != null);
+    if (available.length === 0) return 0;
+    return available.reduce((acc, item) => acc + Number(item.data?.price || 0), 0) / available.length;
+  }, [fuelDisplayRows]);
 
   const kpis = useMemo(
     () => [
@@ -446,6 +513,51 @@ const ZaptroDashboardModernPreview: React.FC = () => {
               />
             );
           })}
+          <div style={{ ...c(), padding: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Fuel size={16} color={accent} />
+                <strong style={{ fontSize: '13px', color: text }}>Combustível BR</strong>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/combustivel')}
+                style={{ border: 'none', background: 'none', color: accent, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: '12px' }}
+              >
+                Ver detalhes
+              </button>
+            </div>
+            {fuelLoading ? (
+              <div style={{ fontSize: '12px', color: sub, fontWeight: 600 }}>Atualizando preços...</div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <strong style={{ fontSize: '24px', color: text }}>R$ {fuelAverage.toFixed(2)}</strong>
+                  <span style={{ fontSize: '11px', color: sub, fontWeight: 700 }}>Média nacional</span>
+                </div>
+                <div style={{ display: 'grid', gap: 6 }}>
+                  {fuelDisplayRows.map((item) => {
+                    const variation = Number(item.data?.variation_percentage || 0);
+                    const positive = variation > 0;
+                    return (
+                      <div key={item.type} style={{ borderRadius: 10, border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`, padding: '7px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: item.color }}>{item.label}</span>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <strong style={{ fontSize: '11px', color: text }}>{item.data?.price != null ? `R$ ${Number(item.data.price).toFixed(2)}` : '—'}</strong>
+                          {item.data ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: '10px', fontWeight: 700, color: positive ? '#EF4444' : '#10B981' }}>
+                              {positive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                              {Math.abs(variation).toFixed(1)}%
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div

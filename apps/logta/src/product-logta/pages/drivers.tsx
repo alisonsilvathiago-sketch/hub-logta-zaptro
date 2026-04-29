@@ -73,7 +73,7 @@ const Drivers: React.FC = () => {
         { id: '2', full_name: 'Marcos Souza', type: 'Motorista', phone: '(11) 97766-5544', email: 'marcos@logta.com', status: 'DISPONIVEL', position: 'Motorista Distribuição', hiring_date: '2023-05-20', cnh_number: '987654321', cnh_category: 'D', cnh_expiry: '2027-05-15', health_score: 88, performance_score: 92, current_vehicle: '-', last_activity: 'Base Central', deliveries: 128, on_time_rate: 94.5, avg_delivery_time: '0h 55m', occurrences: 1 },
         { id: '3', full_name: 'José Lima', type: 'Agregado', phone: '(11) 96655-4433', email: 'jose@frete.com', status: 'EM_ROTA', position: 'Agregado Urbano', hiring_date: '2024-02-10', cnh_number: '456789123', cnh_category: 'C', cnh_expiry: '2025-01-10', health_score: 92, performance_score: 85, current_vehicle: 'KDT-9912', last_activity: 'Curitiba - PR', deliveries: 95, on_time_rate: 88.0, avg_delivery_time: '1h 10m', occurrences: 2 },
         { id: '4', full_name: 'Ricardo Alves', type: 'Motorista', phone: '(11) 95544-3322', email: 'ricardo@logta.com', status: 'INDISPONIVEL', position: 'Motorista Pesado', hiring_date: '2022-11-05', cnh_number: '321654987', cnh_category: 'E', cnh_expiry: '2026-04-05', health_score: 75, performance_score: 80, current_vehicle: '-', last_activity: 'Licença Médica', deliveries: 210, on_time_rate: 91.2, avg_delivery_time: '0h 48m', occurrences: 4 },
-        { id: '5', full_name: 'Ana Paula Santos', type: 'Motorista', phone: '(11) 94433-2211', email: 'ana@logta.com', status: 'PENDENTE', position: 'Motorista Logística', hiring_date: '2024-04-01', cnh_number: '789123456', cnh_category: 'D', cnh_expiry: '2026-04-22', health_score: 100, performance_score: 0, current_vehicle: '-', last_activity: 'Integração', deliveries: 0, on_time_rate: 0, avg_delivery_time: '-', occurrences: 0 },
+        { id: '5', full_name: 'Ana Paula Santos', type: 'Motorista', phone: '(11) 94433-2211', email: 'ana@logta.com', status: 'PENDENTE', position: 'Motorista Logita', hiring_date: '2024-04-01', cnh_number: '789123456', cnh_category: 'D', cnh_expiry: '2026-04-22', health_score: 100, performance_score: 0, current_vehicle: '-', last_activity: 'Integração', deliveries: 0, on_time_rate: 0, avg_delivery_time: '-', occurrences: 0 },
       ];
       setDrivers(mockDrivers);
     } catch (err) { console.error(err); }
@@ -160,7 +160,7 @@ const Drivers: React.FC = () => {
        <div style={styles.heroWrapper}>
           <div style={styles.heroContent}>
              <h1 style={styles.heroTitle}>Gestão de Pessoas Operacionais</h1>
-             <p style={styles.heroText}>Monitoramento de performance, conformidade de CNH e inteligência de escala para sua logística.</p>
+             <p style={styles.heroText}>Monitoramento de performance, conformidade de CNH e inteligência de escala para sua logita.</p>
              <div style={styles.heroActions}>
                 <button style={styles.primaryBtn} onClick={() => setIsAddModalOpen(true)}><Plus size={18} /> Novo Motorista</button>
                 <button style={styles.secondaryBtn}><Download size={18} /> Exportar Base</button>

@@ -184,7 +184,7 @@ const styles = {
   td: { padding: '20px 32px', fontSize: '14px', color: '#334155' },
   
   appCell: { display: 'flex', gap: '16px', alignItems: 'center' },
-  iconThumb: { width: '40px', height: '40px', backgroundColor: '#f4f4f4', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e8e8e8' },
+  iconThumb: { width: '40px', height: '40px', backgroundColor: 'var(--bg-secondary)', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e8e8e8' },
   appInfo: { display: 'flex', flexDirection: 'column' as const },
   appName: { fontSize: '14px', fontWeight: '700', color: '#000000' },
   appType: { fontSize: '10px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase' as const },

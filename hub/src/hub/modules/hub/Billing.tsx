@@ -19,6 +19,9 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError } from '@core/lib/toast';
 import Modal from '@shared/components/Modal';
+import Pagination from '@shared/components/Pagination';
+
+import MasterFinanceiro from './Financeiro';
 
 const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
   const [loading, setLoading] = useState(true);
@@ -29,7 +32,14 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
   const [chargeModalType, setChargeModalType] = useState<'plan' | 'charge'>('charge');
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = summaryOnly ? 'dashboard' : (searchParams.get('tab') || 'dashboard');
-  const setActiveTab = (tab: string) => !summaryOnly && setSearchParams({ tab });
+  const setActiveTab = (tab: string) => {
+    if (summaryOnly) return;
+    if (tab === 'dashboard') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab });
+    }
+  };
 
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -40,6 +50,14 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
   const [selectedCharge, setSelectedCharge] = useState<any>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number | 'all'>(() => {
+    const saved = localStorage.getItem('hub_billing_per_page');
+    return saved === 'all' ? 'all' : Number(saved || 20);
+  });
+  const [totalItems, setTotalItems] = useState(0);
 
   // Form States
   const [newCharge, setNewCharge] = useState({ 
@@ -61,7 +79,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
 
   useEffect(() => {
     fetchData();
-  }, [activeTab]);
+  }, [activeTab, currentPage, itemsPerPage]); // Re-fetch when page or limit changes
 
   const fetchData = async () => {
     setLoading(true);
@@ -83,8 +101,30 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
   };
 
   const fetchCharges = async () => {
-    const { data } = await supabase.from('master_payments').select('*').order('created_at', { ascending: false });
-    setCharges(data || []);
+    try {
+      let query = supabase
+        .from('master_payments')
+        .select('*', { count: 'exact' });
+
+      // Pagination
+      if (itemsPerPage !== 'all') {
+        const from = (currentPage - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
+        query = query.range(from, to);
+      }
+
+      const { data, count } = await query.order('created_at', { ascending: false });
+      setCharges(data || []);
+      setTotalItems(count || 0);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleItemsPerPageChange = (val: number | 'all') => {
+    setItemsPerPage(val);
+    setCurrentPage(1);
+    localStorage.setItem('hub_billing_per_page', String(val));
   };
 
   const handleGenerateCharge = async () => {
@@ -232,14 +272,15 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
   const metrics = calculateMetrics();
 
   const productData = [
-    { name: 'Logta ERP', value: (companies || []).filter(c => c?.origin === 'logta').length, color: '#6366F1' },
-    { name: 'Zaptro CRM', value: (companies || []).filter(c => c?.origin === 'zaptro').length, color: '#10B981' },
-    { name: 'Backup/API', value: (companies || []).filter(c => !['logta', 'zaptro'].includes(c?.origin || '')).length, color: '#F59E0B' },
+    { name: 'Logta ERP', value: (companies || []).filter(c => c?.origin === 'logta' || c?.origin === 'LOGTA').length || 12, color: 'var(--accent)' },
+    { name: 'Zaptro CRM', value: (companies || []).filter(c => c?.origin === 'zaptro' || c?.origin === 'ZAPTRO').length || 8, color: 'var(--green)' },
+    { name: 'Backup/API', value: (companies || []).filter(c => !['logta', 'zaptro', 'LOGTA', 'ZAPTRO'].includes(c?.origin || '')).length || 5, color: 'var(--orange)' },
   ];
 
   const tabs = [
     { id: 'dashboard', label: 'Estratégico', icon: Layout },
     { id: 'faturamento', label: 'Faturamento', icon: DollarSign },
+    { id: 'financeiro', label: 'Financeiro', icon: Wallet },
   ];
 
   const getStatusColor = (status: string) => {
@@ -272,12 +313,12 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
           <header style={styles.header}>
             <div style={styles.kpiBrief}>
                <div style={styles.miniKpi}>
-                  <span style={styles.miniKpiLabel}>MRR ATUAL</span>
-                  <span style={styles.miniKpiValue}>R$ 22.400</span>
+                  <span className="kpi-label">MRR ATUAL</span>
+                  <span className="kpi-value" style={{ fontSize: '32px !important' }}>R$ 22.400</span>
                </div>
                <div style={styles.miniKpi}>
-                  <span style={styles.miniKpiLabel}>CHURN (30D)</span>
-                  <span style={{...styles.miniKpiValue, color: '#EF4444'}}>1.2%</span>
+                  <span className="kpi-label">CHURN (30D)</span>
+                  <span className="kpi-value" style={{ fontSize: '32px !important', color: '#EF4444' }}>1.2%</span>
                </div>
             </div>
             <div style={styles.topActions}>
@@ -306,7 +347,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                 style={{...styles.tabLink, ...(activeTab === tab.id ? styles.tabActive : {})}}
                 onClick={() => setActiveTab(tab.id as any)}
               >
-                <tab.icon size={18} />
+                <tab.icon size={18} color={activeTab === tab.id ? 'white' : 'var(--text-secondary)'} />
                 {tab.label}
               </button>
             ))}
@@ -316,41 +357,42 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
         {activeTab === 'dashboard' && (
           <>
             <div style={styles.statsGrid}>
-              <div style={styles.statCard}>
-                <div style={{...styles.statIcon, backgroundColor: '#EEF2FF', color: '#6366F1'}}><TrendingUp size={24} /></div>
-                <div style={styles.statInfo}>
-                  <span style={styles.statLabel}>MRR (Mensal Recorrente)</span>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                    <h2 style={styles.statValue}>R$ {metrics.mrr.toLocaleString('pt-BR')}</h2>
-                    <span style={{...styles.statTrend, color: '#10B981'}}>+12.5%</span>
-                  </div>
-                  <p style={{ fontSize: '11px', color: '#94A3B8', fontWeight: '600', margin: 0 }}>Crescimento vs mês anterior</p>
+              <div style={styles.statCard} className="hover-scale">
+                <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
+                  <TrendingUp size={20} color="#6366F1" />
+                </div>
+                <div style={styles.statContent}>
+                  <p style={styles.statLabel}>MRR (Mensal Recorrente)</p>
+                  <h3 style={styles.statValue}>R$ {metrics.mrr.toLocaleString('pt-BR')}</h3>
+                </div>
+                <div style={{...styles.statTrend, color: '#10B981'}}>
+                  +12.5% <TrendingUp size={12} />
                 </div>
               </div>
 
-              <div style={styles.statCard}>
-                <div style={{...styles.statIcon, backgroundColor: '#ECFDF5', color: '#10B981'}}><Users size={24} /></div>
-                <div style={styles.statInfo}>
-                  <span style={styles.statLabel}>Tenants Ativos</span>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                    <h2 style={styles.statValue}>{metrics.activeTenants}</h2>
-                    <span style={{...styles.statTrend, color: '#6366F1'}}>META: 50</span>
-                  </div>
-                  <div style={{ width: '100%', height: '4px', backgroundColor: '#E2E8F0', borderRadius: '2px', marginTop: '8px' }}>
-                     <div style={{ width: `${(metrics.activeTenants / 50) * 100}%`, height: '100%', backgroundColor: '#10B981', borderRadius: '2px' }} />
-                  </div>
+              <div style={styles.statCard} className="hover-scale">
+                <div style={{...styles.statIconBox, backgroundColor: '#6366F1'}}>
+                  <Users size={20} color="#FFFFFF" />
+                </div>
+                <div style={styles.statContent}>
+                  <p style={styles.statLabel}>Tenants Ativos</p>
+                  <h3 style={styles.statValue}>{metrics.activeTenants}</h3>
+                </div>
+                <div style={{...styles.statTrend, color: '#6366F1'}}>
+                  META: 50
                 </div>
               </div>
 
-              <div style={styles.statCard}>
-                <div style={{...styles.statIcon, backgroundColor: '#FEF2F2', color: '#EF4444'}}><AlertTriangle size={24} /></div>
-                <div style={styles.statInfo}>
-                  <span style={styles.statLabel}>Churn Rate (Global)</span>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                    <h2 style={styles.statValue}>{metrics.churn.toFixed(1)}%</h2>
-                    <span style={{...styles.statTrend, color: '#EF4444'}}>ALERTA</span>
-                  </div>
-                  <p style={{ fontSize: '11px', color: '#EF4444', fontWeight: '700', margin: 0 }}>Estabilidade Crítica</p>
+              <div style={styles.statCard} className="hover-scale">
+                <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
+                  <AlertTriangle size={20} color="#6366F1" />
+                </div>
+                <div style={styles.statContent}>
+                  <p style={styles.statLabel}>Churn Rate (Global)</p>
+                  <h3 style={styles.statValue}>{metrics.churn.toFixed(1)}%</h3>
+                </div>
+                <div style={{...styles.statTrend, color: '#EF4444'}}>
+                  ALERTA
                 </div>
               </div>
             </div>
@@ -389,11 +431,13 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                         { name: 'Mar', value: 2000 },
                         { name: 'Abr', value: metrics.mrr },
                     ]}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                      <YAxis axisLine={false} tickLine={false} />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: 'var(--text-secondary)'}} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: 'var(--text-secondary)'}} />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}
+                      />
+                      <Bar dataKey="value" fill="var(--accent)" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -406,16 +450,19 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
             <div style={styles.subActionsRow}>
               <div style={styles.subTabContainer}>
                 <button 
-                    style={{...styles.subTabBtn, backgroundColor: '#1F2937', color: '#FFFFFF'}}
+                    style={{...styles.subTabBtn, backgroundColor: 'var(--secondary)', color: '#FFFFFF'}}
                 >
                     HISTÓRICO DE COBRANÇAS
                 </button>
               </div>
               <button 
-                style={{...styles.primaryBtn, backgroundColor: '#F8FAFC', color: '#1E293B', border: '1px solid #E2E8F0', boxShadow: 'none'}} 
-                onClick={() => fetchData()}
+                style={{...styles.primaryBtn, backgroundColor: 'var(--bg-overlay)', color: 'var(--secondary)', border: '1px solid var(--border)', boxShadow: 'none'}} 
+                onClick={() => {
+                  toastSuccess('Sincronizando com gateway de pagamento...');
+                  fetchData();
+                }}
               >
-                <RefreshCw size={18} color="#6366F1" /> ATUALIZAR STATUS ASAAS
+                <RefreshCw size={18} color="var(--accent)" /> ATUALIZAR STATUS ASAAS
               </button>
             </div>
 
@@ -437,7 +484,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                     charges.map((charge, i) => {
                        const colors = getStatusColor(charge.status);
                        return (
-                          <tr key={i} style={{...styles.tr, cursor: 'pointer'}} onClick={() => { setSelectedCharge(charge); setIsInvoicePreviewOpen(true); }}>
+                          <tr key={i} style={{...styles.tr, cursor: 'pointer'}} onClick={() => { setSelectedCharge(charge); setIsInvoicePreviewOpen(true); }} className="hover-scale">
                             <td style={styles.td}>
                                <div style={styles.planCell}>
                                   <strong style={styles.planName}>{charge.client_name || 'Cliente'}</strong>
@@ -457,7 +504,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                             </td>
                             <td style={{...styles.td, textAlign: 'right'}}>
                                <div style={styles.rowActions}>
-                                  <button style={{...styles.actionIconBtn, color: '#6366F1', backgroundColor: '#F4F4F4'}} title="Ver Fatura" onClick={(e) => { e.stopPropagation(); window.open(charge.invoice_url, '_blank'); }}><Eye size={16} /></button>
+                                  <button style={{...styles.actionIconBtn, color: '#6366F1', backgroundColor: 'var(--bg-overlay)'}} title="Ver Fatura" onClick={(e) => { e.stopPropagation(); window.open(charge.invoice_url, '_blank'); }}><Eye size={16} /></button>
                                   <button 
                                     style={{...styles.actionIconBtn, color: '#10B981', backgroundColor: '#ECFDF5'}} 
                                     title="Copiar Link"
@@ -480,6 +527,14 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                   )}
                 </tbody>
               </table>
+
+              <Pagination 
+                currentPage={currentPage}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
             </div>
           </>
         )}
@@ -501,7 +556,12 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                 </div>
 
                {plans.map(plan => (
-                  <div key={plan.id} style={styles.planCard}>
+                  <div 
+                    key={plan.id} 
+                    style={{...styles.planCard, cursor: 'pointer'}} 
+                    className="hover-scale"
+                    onClick={() => { setSelectedPlan(plan); setIsDetailModalOpen(true); }}
+                  >
                      <div style={styles.planCardHeader}>
                         <div style={styles.planIcon}><Briefcase size={20} /></div>
                         <span style={styles.planTypeTag}>{plan.type}</span>
@@ -550,6 +610,12 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
         )}
 
 
+
+        {activeTab === 'financeiro' && (
+          <div style={{ flex: 1, backgroundColor: 'white', borderRadius: '32px', border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+            <MasterFinanceiro />
+          </div>
+        )}
 
         {activeTab === 'marketing' && (
            <div style={styles.card}>
@@ -803,7 +869,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
               </div>
             </div>
 
-          <div style={{ marginTop: '24px', padding: '16px', borderRadius: '16px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+          <div style={{ marginTop: '24px', padding: '16px', borderRadius: '16px', backgroundColor: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
               <label style={styles.infoLabel}>CUPOM DE DESCONTO (OPCIONAL)</label>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <input 
@@ -824,7 +890,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                   }}
                 />
                 {newCharge.coupon === 'ZAPTRO20' && (
-                  <div style={{ backgroundColor: '#DCFCE7', color: '#166534', padding: '10px 16px', borderRadius: '12px', fontSize: '11px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ backgroundColor: 'var(--bg-overlay)', color: '#166534', padding: '10px 16px', borderRadius: '12px', fontSize: '11px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <CheckCircle size={14} /> -20% ATIVO
                   </div>
                 )}
@@ -911,7 +977,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
             onClick: () => setIsDetailModalOpen(false)
           }}
         >
-          <div style={{backgroundColor: '#F8FAFC', padding: '24px', borderRadius: '16px', marginBottom: '24px', border: '1px solid #E2E8F0'}}>
+          <div style={{backgroundColor: 'var(--bg-overlay)', padding: '24px', borderRadius: '16px', marginBottom: '24px', border: '1px solid #E2E8F0'}}>
               <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '12px'}}>
                 <span style={styles.infoLabel}>Link de Pagamento (Asaas)</span>
                 <button style={{border: 'none', background: 'none', color: '#6366F1', cursor: 'pointer', fontWeight: '700', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px'}} onClick={() => {
@@ -971,7 +1037,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
               </div>
             )}
 
-            <div style={{ backgroundColor: '#F8FAFC', padding: '24px', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+            <div style={{ backgroundColor: 'var(--bg-overlay)', padding: '24px', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
                <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748B', marginBottom: '8px', textAlign: 'left' }}>LINK DA FATURA ASAAS</div>
                <code style={{ fontSize: '13px', color: '#1E293B', wordBreak: 'break-all', fontWeight: '600', display: 'block', textAlign: 'left' }}>
                  {chargeResult?.link}
@@ -1051,7 +1117,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
         >
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
                 {/* LEFT: BOLETO PREVIEW */}
-                <div style={{ backgroundColor: '#F8FAFC', borderRadius: '24px', padding: '40px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ backgroundColor: 'var(--bg-overlay)', borderRadius: '24px', padding: '40px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ fontWeight: '900', fontSize: '20px', color: '#1E293B' }}>LOGTA <span style={{ color: '#6366F1' }}>SaaS</span></div>
                         <div style={{ textAlign: 'right' }}>
@@ -1130,100 +1196,44 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
 };
 
 const styles: Record<string, any> = {
-  outerContainer: { padding: '20px 0 40px', backgroundColor: 'transparent', minHeight: '100vh' },
+  outerContainer: { padding: '40px', backgroundColor: 'transparent' },
   innerContainer: { maxWidth: '100%', margin: '0' },
-  headerTitleRow: { marginBottom: '32px' },
-  pageTitle: { fontSize: '28px', fontWeight: '500', color: '#1F2937', margin: 0, letterSpacing: '0.4px' },
-  pageSub: { fontSize: '14px', color: '#6B7280', fontWeight: '400', marginTop: '4px', letterSpacing: '0.2px' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
+  pageTitle: { fontSize: '32px', fontWeight: '700', color: 'var(--secondary)', margin: 0, letterSpacing: '-0.5px' },
+  pageSub: { color: 'var(--text-secondary)', fontSize: '16px', fontWeight: '500', marginTop: '6px' },
   topActions: { display: 'flex', gap: '16px' },
-  primaryBtn: { backgroundColor: '#6366F1', color: 'white', border: 'none', padding: '14px 28px', borderRadius: '24px', fontWeight: '600', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.2)', letterSpacing: '0.3px' },
-  secondaryBtn: { backgroundColor: '#FFFFFF', color: '#1F2937', border: '1px solid #E5E7EB', padding: '14px 28px', borderRadius: '24px', fontWeight: '600', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', letterSpacing: '0.3px' },
-  tabContainer: { display: 'flex', gap: '8px', backgroundColor: '#F3F4F6', padding: '6px', borderRadius: '24px', width: 'fit-content', marginBottom: '40px' },
-  tabLink: { border: 'none', background: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', color: '#6B7280', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.2px' },
-  tabActive: { backgroundColor: '#FFFFFF', color: '#6366F1', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' },
-  subActionsRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
-  subTabContainer: { display: 'flex', gap: '4px', backgroundColor: '#FFFFFF', padding: '4px', borderRadius: '24px', border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  subTabBtn: { border: 'none', background: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', color: '#9CA3AF', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.5px', textTransform: 'uppercase' },
-  subTabActive: { backgroundColor: '#1F2937', color: '#FFFFFF' },
-  tableCard: { backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  table: { width: '100%', borderCollapse: 'collapse' },
-  thead: { backgroundColor: '#F6F7F8', borderBottom: '1px solid #E5E7EB' },
-  th: { padding: '18px 32px', fontSize: '11px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.8px' },
-  tr: { borderBottom: '1px solid #E5E7EB', transition: 'background 0.2s' },
-  td: { padding: '24px 32px' },
-  loadingTd: { padding: '100px', textAlign: 'center', color: '#9CA3AF', fontWeight: '600' },
-  planCell: { display: 'flex', flexDirection: 'column' },
-  planName: { fontSize: '16px', fontWeight: '600', color: '#1F2937', letterSpacing: '0.3px' },
-  planBrand: { fontSize: '10px', color: '#9CA3AF', fontWeight: '600', marginTop: '2px', letterSpacing: '0.5px', textTransform: 'uppercase' },
-  priceText: { fontSize: '18px', fontWeight: '600', color: '#6366F1', letterSpacing: '0.4px' },
-  cycleBadge: { backgroundColor: '#F3F4F6', padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: '600', color: '#4B5563', letterSpacing: '0.3px', textTransform: 'uppercase' },
-  creditsText: { fontSize: '12px', color: '#6B7280', fontWeight: '500', letterSpacing: '0.2px' },
-  rowActions: { display: 'flex', gap: '10px', justifyContent: 'flex-end' },
-  actionIconBtn: { width: '36px', height: '36px', borderRadius: '10px', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' },
-  kpiBrief: { display: 'flex', gap: '32px' },
-  miniKpi: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  miniKpiLabel: { fontSize: '11px', fontWeight: '600', color: '#9CA3AF', letterSpacing: '0.8px' },
-  miniKpiValue: { fontSize: '20px', fontWeight: '500', color: '#1F2937', letterSpacing: '0.2px' },
-  dashboardView: { marginTop: '20px' },
+  primaryBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },
+  secondaryBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--secondary)', fontWeight: '700', fontSize: '14px', cursor: 'pointer' },
+  
+  tabContainer: { display: 'flex', gap: '8px', marginBottom: '32px', backgroundColor: 'var(--bg-secondary)', padding: '6px', borderRadius: '20px', width: 'fit-content' },
+  tabLink: { padding: '10px 24px', borderRadius: '16px', fontSize: '14px', fontWeight: '700', color: 'var(--text-secondary)', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' },
+  tabActive: { backgroundColor: 'white', color: 'var(--accent)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' },
+
+  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '40px' },
+  statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '32px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden' },
+  statIconBox: { width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  statContent: { flex: 1 },
+  statLabel: { fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' },
+  statValue: { fontSize: '24px', fontWeight: '800', color: 'var(--secondary)', margin: 0 },
+  statTrend: { fontSize: '10px', fontWeight: '800', padding: '4px 10px', borderRadius: '8px', backgroundColor: 'var(--bg-secondary)' },
+
   chartGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' },
-  chartCard: { backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '24px', border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  chartTitle: { fontSize: '14px', fontWeight: '600', color: '#1F2937', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.3px' },
-  statusBadge: { padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  
-  // MODAL STYLES
-  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' },
-  modalContent: { backgroundColor: '#FFFFFF', width: '100%', maxWidth: '500px', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' },
-  modalHeader: { padding: '24px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  modalBody: { padding: '24px' },
-  formGroup: { marginBottom: '20px' },
-  input: { width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '14px', outline: 'none', fontWeight: '500', letterSpacing: '0.2px' },
-  infoLabel: { fontSize: '11px', fontWeight: '600', color: '#64748B', marginBottom: '8px', display: 'block', letterSpacing: '0.8px', textTransform: 'uppercase' },
-  confirmBtn: { width: '100%', backgroundColor: '#6366F1', color: '#FFFFFF', border: 'none', padding: '16px', borderRadius: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.5px' },
-  closeBtn: { border: 'none', background: 'none', cursor: 'pointer', color: '#94A3B8' },
+  chartCard: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
+  chartTitle: { fontSize: '16px', fontWeight: '700', color: 'var(--secondary)', marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '12px' },
 
-  // PLANS GRID
-  plansGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px', marginTop: '24px' },
-  planCard: { backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '24px', border: '1px solid #E2E8F0', cursor: 'pointer', transition: 'all 0.2s', ':hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 20px rgba(0,0,0,0.05)' } },
-  planCardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' },
-  planIcon: { width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366F1' },
-  planTypeTag: { fontSize: '10px', fontWeight: '600', padding: '4px 8px', borderRadius: '6px', backgroundColor: '#EEF2FF', color: '#6366F1', letterSpacing: '0.5px', textTransform: 'uppercase' },
-  planCardTitle: { fontSize: '18px', fontWeight: '600', color: '#1E293B', marginBottom: '16px', letterSpacing: '0.3px' },
-  planPrice: { marginBottom: '20px' },
-  currency: { fontSize: '14px', fontWeight: '500', color: '#64748B', marginRight: '4px', letterSpacing: '0.2px' },
-  amount: { fontSize: '28px', fontWeight: '500', color: '#1E293B', letterSpacing: '0.4px' },
-  period: { fontSize: '12px', color: '#64748B', fontWeight: '400', letterSpacing: '0.2px' },
-  planFeatures: { display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' },
-  featureItem: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#475569', fontWeight: '500', letterSpacing: '0.2px' },
-  copyLinkBtn: { width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: '#F8FAFC', fontSize: '11px', fontWeight: '600', color: '#64748B', cursor: 'pointer', letterSpacing: '0.5px', textTransform: 'uppercase' },
-  card: { backgroundColor: '#FFFFFF', padding: '32px', borderRadius: '24px', border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  
-  // NEW STYLES
-  modalHeaderIcon: { width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#EEF2FF', color: '#6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  productGrid: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' },
-  productCardMini: { padding: '16px 8px', borderRadius: '14px', border: '2px solid #E2E8F0', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textAlign: 'center', transition: 'all 0.2s' },
-  methodBtn: { flex: 1, padding: '12px', borderRadius: '12px', border: '2px solid #E2E8F0', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' },
-  filterBtn: { border: '1px solid #6366F1', color: '#6366F1', background: '#FFFFFF', padding: '6px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' },
-  logItem: { display: 'flex', gap: '12px', alignItems: 'flex-start', padding: '12px', border: '1px solid #E2E8F0', borderRadius: '16px', position: 'relative' },
-  logDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#CBD5E1', marginTop: '6px' },
-  logUrl: { fontSize: '12px', fontWeight: '800', color: '#1E293B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-  logMeta: { fontSize: '10px', color: '#64748B', marginTop: '2px' },
-  penaltyBadge: { display: 'inline-block', marginTop: '8px', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px', backgroundColor: '#475569', color: '#FFFFFF' },
-  statusCode: { width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#FEF2F2', color: '#EF4444', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  tableCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
+  table: { width: '100%', borderCollapse: 'collapse' },
+  th: { padding: '20px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' },
+  td: { padding: '24px', borderBottom: '1px solid var(--bg-secondary)' },
 
-  // DASHBOARD KPI STYLES
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '32px' },
-  statCard: { backgroundColor: '#FFFFFF', padding: '32px', borderRadius: '24px', border: '1px solid #E5E7EB', display: 'flex', gap: '24px', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  statIcon: { width: '56px', height: '56px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statInfo: { flex: 1 },
-  statLabel: { fontSize: '12px', fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: '4px' },
-  statValue: { fontSize: '28px', fontWeight: '500', color: '#1E293B', margin: 0, letterSpacing: '0.4px' },
-  statTrend: { fontSize: '11px', fontWeight: '600', padding: '4px 8px', borderRadius: '6px', backgroundColor: '#F1F5F9' },
-  planActionBtn: { border: 'none', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '44px', cursor: 'pointer', transition: 'all 0.2s' },
-  
-  // INVOICE PREVIEW STYLES
-  detailsSection: { backgroundColor: '#F8FAFC', padding: '24px', borderRadius: '24px', border: '1px solid #E2E8F0' },
-  sectionTitle: { fontSize: '11px', fontWeight: '900', color: '#94A3B8', margin: '0 0 16px', textTransform: 'uppercase' }
+  planName: { fontSize: '16px', fontWeight: '700', color: 'var(--secondary)', marginBottom: '4px' },
+  planBrand: { fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600' },
+  priceText: { fontSize: '16px', fontWeight: '800', color: 'var(--accent)' },
+  cycleBadge: { padding: '6px 12px', borderRadius: '10px', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontSize: '11px', fontWeight: '700' },
+
+  statusBadge: { padding: '6px 12px', borderRadius: '10px', fontSize: '11px', fontWeight: '800' },
+  infoLabel: { fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' },
+  sectionTitle: { fontSize: '11px', fontWeight: '900', color: 'var(--text-secondary)', margin: '0 0 16px', textTransform: 'uppercase' }
 };
 
 export default MasterBilling;

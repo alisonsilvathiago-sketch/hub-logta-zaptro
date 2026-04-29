@@ -17,6 +17,7 @@ import {
 } from 'recharts';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import LogtaModal from '@shared/components/Modal';
+import Pagination from '@shared/components/Pagination';
 import { supabase } from '@core/lib/supabase';
 import { useAuth } from '@core/context/AuthContext';
 import type { Company, Profile } from '@core/types';
@@ -49,6 +50,14 @@ const CompanyManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'geral' | 'operacao' | 'comunicacao' | 'usuarios' | 'financeiro' | 'integracoes' | 'logs' | 'acoes'>('geral');
   const [saving, setSaving] = useState(false);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number | 'all'>(() => {
+    const saved = localStorage.getItem('hub_companies_per_page');
+    return saved === 'all' ? 'all' : Number(saved || 20);
+  });
+  const [totalItems, setTotalItems] = useState(0);
+
   const [newCompany, setNewCompany] = useState({
     name: '',
     subdomain: '',
@@ -57,6 +66,8 @@ const CompanyManagement: React.FC = () => {
     phone: '',
     cnpj: ''
   });
+
+  const [currentFilter, setCurrentFilter] = useState<'todas' | 'ativas' | 'erros' | 'novas' | 'billing'>('todas');
 
   const logMasterAction = async (action: string, details: string, companyId?: string, metadata: any = {}) => {
     try {
@@ -76,18 +87,33 @@ const CompanyManagement: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('companies')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' });
+
+      // Pagination
+      if (itemsPerPage !== 'all') {
+        const from = (currentPage - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
+        query = query.range(from, to);
+      }
+
+      const { data, error, count } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setCompanies(data || []);
+      setTotalItems(count || 0);
     } catch (err) {
       console.error('Error fetching companies:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleItemsPerPageChange = (val: number | 'all') => {
+    setItemsPerPage(val);
+    setCurrentPage(1);
+    localStorage.setItem('hub_companies_per_page', String(val));
   };
 
   const fetchCompanySpecificData = async (companyId: string) => {
@@ -126,7 +152,7 @@ const CompanyManagement: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const toggleStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'ATIVO' ? 'SUSPENSO' : 'ATIVO';
@@ -241,11 +267,27 @@ const CompanyManagement: React.FC = () => {
     navigate(`/master/companies/${company.id}`);
   };
 
-  const filteredCompanies = companies.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.subdomain?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.settings?.cnpj?.includes(searchTerm)
-  );
+  const filteredCompanies = companies.filter(c => {
+    const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.subdomain?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.settings?.cnpj?.includes(searchTerm);
+    
+    if (!matchesSearch) return false;
+
+    const statusStr = (c.status || '').toUpperCase();
+    
+    if (currentFilter === 'todas') return true;
+    if (currentFilter === 'ativas') return statusStr === 'ACTIVE' || statusStr === 'ATIVO';
+    if (currentFilter === 'erros') return statusStr === 'ERROR' || statusStr === 'INSTÁVEL' || statusStr === 'SUSPENSO';
+    if (currentFilter === 'novas') {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return new Date(c.created_at || Date.now()) > weekAgo;
+    }
+    if (currentFilter === 'billing') return c.plan === 'OURO' || c.plan === 'PRATA';
+    
+    return true;
+  });
 
   const stats = {
     total: companies.length,
@@ -269,79 +311,105 @@ const CompanyManagement: React.FC = () => {
       {/* PAGE TITLE & ACTION */}
       <div style={styles.pageHeader}>
         <div>
-          <div style={styles.bread}>{'CENTRAL DE COMANDO > OPERAÇÕES GLOBAIS'}</div>
-          <h1 style={styles.pageTitle}>Controle de Instâncias Master</h1>
-          <p style={styles.pageSub}>Monitoramento de saúde, faturamento e performance do ecossistema Logta/Zapto.</p>
+          <h1 style={styles.pageTitle}>Central de Comando Master</h1>
+          <p style={styles.pageSub}>Governança global, faturamento e saúde das instâncias Logta & Zaptro.</p>
         </div>
         <div style={styles.headerActions}>
            <button style={styles.refreshBtn} onClick={fetchData}><RefreshCw size={18} /></button>
            <button style={styles.addBtn} onClick={() => setIsAddModalOpen(true)}>
-             <Plus size={18} /> ABRIR NOVA UNIDADE
+             <Plus size={18} /> NOVA UNIDADE
            </button>
         </div>
       </div>
 
       {/* DASHBOARD MASTER (CONTROL CENTER VERSION) */}
       <div style={styles.statsGrid}>
-         <div style={styles.statCard}>
-            <div style={styles.statHeader}>
-               <div style={{...styles.statIcon, backgroundColor: 'rgba(99, 102, 241, 0.1)', color: '#6366F1'}}><Globe size={20} /></div>
-               <span style={styles.statLabel}>Unidade Global</span>
-            </div>
-            <div style={styles.statValue}>{stats.total}</div>
-            <div style={styles.statFooter}>
-               <span style={{color: '#10b981', fontWeight: '800', fontSize: '11px'}}>OPERANDO</span>
-               <span style={styles.statSub}>Instâncias provisionadas</span>
-            </div>
-         </div>
+        <div style={styles.statCard}>
+          <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
+            <Globe size={20} color="#6366F1" />
+          </div>
+          <div style={styles.statContent}>
+            <p style={styles.statLabel}>Unidade Global</p>
+            <h3 style={styles.statValue}>{stats.total}</h3>
+          </div>
+          <div style={{...styles.statTrend, color: '#10B981'}}>
+            OPERANDO
+          </div>
+        </div>
 
-         <div style={styles.statCard}>
-            <div style={styles.statHeader}>
-               <div style={{...styles.statIcon, backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981'}}><Activity size={20} /></div>
-               <span style={styles.statLabel}>Online Agora</span>
-            </div>
-            <div style={styles.statValue}>{stats.online}</div>
-            <div style={styles.statFooter}>
-               <span style={styles.statSub}>Empresas com atividade real</span>
-            </div>
-         </div>
+        <div style={styles.statCard}>
+          <div style={{...styles.statIconBox, backgroundColor: '#6366F1'}}>
+            <Activity size={20} color="#FFFFFF" />
+          </div>
+          <div style={styles.statContent}>
+            <p style={styles.statLabel}>Online Agora</p>
+            <h3 style={styles.statValue}>{stats.online}</h3>
+          </div>
+        </div>
 
-         <div style={styles.statCard}>
-            <div style={styles.statHeader}>
-               <div style={{...styles.statIcon, backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444'}}><ShieldAlert size={20} /></div>
-               <span style={styles.statLabel}>Erros Críticos (Zapto/Logta)</span>
-            </div>
-            <div style={styles.statValue}>{stats.criticalErrors}</div>
-            <div style={styles.statFooter}>
-               <span style={{color: '#ef4444', fontWeight: '800', fontSize: '11px'}}>ATENÇÃO</span>
-               <span style={styles.statSub}>Integrações interrompidas</span>
-            </div>
-         </div>
+        <div style={styles.statCard}>
+          <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
+            <ShieldAlert size={20} color="#6366F1" />
+          </div>
+          <div style={styles.statContent}>
+            <p style={styles.statLabel}>Erros Críticos</p>
+            <h3 style={styles.statValue}>{stats.criticalErrors}</h3>
+          </div>
+          <div style={{...styles.statTrend, color: '#EF4444'}}>
+            ATENÇÃO
+          </div>
+        </div>
 
-         <div style={styles.statCard}>
-            <div style={styles.statHeader}>
-               <div style={{...styles.statIcon, backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b'}}><DollarSign size={20} /></div>
-               <span style={styles.statLabel}>Receita Global (MRR)</span>
-            </div>
-            <div style={styles.statValue}>
-               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.revenue)}
-            </div>
-            <div style={styles.statFooter}>
-               <span style={{color: '#10b981', fontWeight: '800', fontSize: '11px'}}>+4.2%</span>
-               <span style={styles.statSub}>Crescimento de base</span>
-            </div>
-         </div>
+        <div style={styles.statCard}>
+          <div style={{...styles.statIconBox, backgroundColor: '#4F46E5'}}>
+            <DollarSign size={20} color="#FFFFFF" />
+          </div>
+          <div style={styles.statContent}>
+            <p style={styles.statLabel}>Receita Global (MRR)</p>
+            <h3 style={styles.statValue}>
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.revenue)}
+            </h3>
+          </div>
+          <div style={{...styles.statTrend, color: '#10B981'}}>
+            +4.2% <TrendingUp size={12} />
+          </div>
+        </div>
       </div>
 
       {/* DASHBOARD MASTER (CONTROL CENTER VERSION) */}
 
       {/* SEGMENTATION TABS */}
       <div style={styles.segmentTabs}>
-         <button style={{...styles.segmentBtn, ...styles.segmentBtnActive}}>Todas</button>
-         <button style={styles.segmentBtn}>Ativas</button>
-         <button style={styles.segmentBtn}>Com Erro <span style={styles.tabCounter}>{stats.criticalErrors}</span></button>
-         <button style={styles.segmentBtn}>Novas</button>
-         <button style={styles.segmentBtn}>Alto Faturamento</button>
+         <button 
+           style={{...styles.segmentBtn, ...(currentFilter === 'todas' ? styles.segmentBtnActive : {})}}
+           onClick={() => setCurrentFilter('todas')}
+         >
+           Todas as Operações
+         </button>
+         <button 
+           style={{...styles.segmentBtn, ...(currentFilter === 'ativas' ? styles.segmentBtnActive : {})}}
+           onClick={() => setCurrentFilter('ativas')}
+         >
+           Unidades Ativas
+         </button>
+         <button 
+           style={{...styles.segmentBtn, ...(currentFilter === 'erros' ? styles.segmentBtnActive : {})}}
+           onClick={() => setCurrentFilter('erros')}
+         >
+           Erros & Alertas <span style={styles.tabCounter}>{stats.criticalErrors}</span>
+         </button>
+         <button 
+           style={{...styles.segmentBtn, ...(currentFilter === 'novas' ? styles.segmentBtnActive : {})}}
+           onClick={() => setCurrentFilter('novas')}
+         >
+           Novas Unidades
+         </button>
+         <button 
+           style={{...styles.segmentBtn, ...(currentFilter === 'billing' ? styles.segmentBtnActive : {})}}
+           onClick={() => setCurrentFilter('billing')}
+         >
+           Auto-Faturamento
+         </button>
       </div>
 
       {/* CONTROLS & SEARCH */}
@@ -381,11 +449,16 @@ const CompanyManagement: React.FC = () => {
             ) : filteredCompanies.length === 0 ? (
                <tr><td colSpan={6} style={{padding: '60px', textAlign: 'center', color: '#94a3b8'}}>Nenhuma unidade detectada na rede.</td></tr>
             ) : filteredCompanies.map(company => (
-              <tr key={company.id} style={styles.tr} onClick={() => openDetails(company)}>
+              <tr 
+                key={company.id} 
+                style={{...styles.tr, cursor: 'pointer'}} 
+                onClick={() => openDetails(company)}
+                className="hover-scale"
+              >
                 <td style={styles.td}>
                    <div style={styles.companyInfo}>
                       <div style={{...styles.avatar, backgroundColor: company.primary_color || '#6366F1'}}>
-                         {company.name[0]}
+                        {(company.name || 'U')[0]}
                       </div>
                       <div>
                          <div style={styles.companyName}>{company.name}</div>
@@ -459,13 +532,21 @@ const CompanyManagement: React.FC = () => {
             ))}
           </tbody>
         </table>
+
+        <Pagination 
+          currentPage={currentPage}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
       </div>
 
       {/* MODAL DETALHES EMPRESA */}
       <LogtaModal 
         isOpen={isDetailsModalOpen} 
         onClose={() => setIsDetailsModalOpen(false)} 
-        width="950px" 
+        size="xl" 
         title={`Gerenciamento: ${selectedCompany?.name}`}
         subtitle="Controle total de infraestrutura, billing e logs de auditoria master."
         icon={<Settings />}
@@ -526,7 +607,7 @@ const CompanyManagement: React.FC = () => {
                {activeTab === 'geral' && selectedCompany && (
                   <div style={styles.geralContainer}>
                      <div style={styles.geralHeader}>
-                        <div style={{...styles.geralAvatar, backgroundColor: selectedCompany.primary_color || '#6366F1'}}>{selectedCompany.name[0]}</div>
+                        <div style={{...styles.geralAvatar, backgroundColor: selectedCompany.primary_color || '#6366F1'}}>{(selectedCompany.name || 'U')[0]}</div>
                         <div>
                            <h2 style={styles.geralTitle}>{selectedCompany.name}</h2>
                            <div style={styles.geralBadges}>
@@ -896,7 +977,7 @@ const CompanyManagement: React.FC = () => {
       <LogtaModal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
-        width="850px" 
+        size="lg" 
         title="Ouvir Nova Instância Master"
         subtitle="Provisionamento automático de infraestrutura e banco de dados isolado."
         icon={<Globe />}
@@ -932,7 +1013,7 @@ const CompanyManagement: React.FC = () => {
                        onChange={e => setNewCompany({...newCompany, subdomain: e.target.value.replace(/[^a-z0-9]/gi, '')})} 
                        placeholder="brasil"
                     />
-                    <span>.logta.app</span>
+                    <span style={styles.subdomainSuffix}>.logta.app</span>
                  </div>
               </div>
            </div>
@@ -992,79 +1073,74 @@ const CompanyManagement: React.FC = () => {
 };
 
 const styles: Record<string, any> = {
-  container: { padding: '0', minHeight: '100vh', backgroundColor: 'transparent' },
-  pageHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' },
-  bread: { fontSize: '10px', fontWeight: '600', color: '#6366F1', letterSpacing: '1px', marginBottom: '8px', textTransform: 'uppercase' },
-  pageTitle: { fontSize: '32px', fontWeight: '500', color: '#0F172A', margin: 0, letterSpacing: '0.4px' },
-  pageSub: { color: '#64748B', fontSize: '16px', fontWeight: '400', marginTop: '4px', letterSpacing: '0.2px' },
-  headerActions: { display: 'flex', gap: '12px' },
-  refreshBtn: { width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: '24px', cursor: 'pointer', color: '#64748B', transition: 'all 0.2s' },
-  addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '14px 28px', backgroundColor: '#6366F1', color: '#FFFFFF', border: 'none', borderRadius: '24px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)', letterSpacing: '0.3px' },
-  
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' },
-  statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '28px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
-  statHeader: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' },
-  statIcon: { width: '44px', height: '44px', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statLabel: { fontSize: '11px', fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.8px' },
-  statValue: { fontSize: '32px', fontWeight: '500', color: '#0F172A', marginBottom: '8px', letterSpacing: '0.2px' },
-  statFooter: { display: 'flex', alignItems: 'center', gap: '8px' },
-  statSub: { fontSize: '11px', color: '#94A3B8', fontWeight: '500', letterSpacing: '0.3px' },
+  container: { padding: '40px', backgroundColor: 'transparent' },
+  pageHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
+  pageTitle: { fontSize: '32px', fontWeight: '700', color: 'var(--secondary)', margin: 0, letterSpacing: '-0.5px' },
+  pageSub: { color: 'var(--text-secondary)', fontSize: '16px', fontWeight: '500', marginTop: '6px' },
+  headerActions: { display: 'flex', gap: '16px' },
+  refreshBtn: { width: '48px', height: '48px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' },
+  addBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },
 
-  insightsBar: { display: 'flex', gap: '24px', backgroundColor: '#0F172A', padding: '16px 24px', borderRadius: '24px', marginBottom: '32px', overflowX: 'auto' },
-  insightItem: { display: 'flex', alignItems: 'center', gap: '10px', whiteSpace: 'nowrap' },
-  insightIcon: { width: '24px', height: '24px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  insightText: { color: '#CBD5E1', fontSize: '12px', fontWeight: '600' },
+  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' },
+  statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '32px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden' },
+  statIconBox: { width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  statContent: { flex: 1 },
+  statLabel: { fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' },
+  statValue: { fontSize: '24px', fontWeight: '800', color: 'var(--secondary)', margin: 0 },
+  statTrend: { fontSize: '10px', fontWeight: '800', padding: '4px 10px', borderRadius: '8px', backgroundColor: 'var(--bg-secondary)' },
 
-  segmentTabs: { display: 'flex', gap: '8px', marginBottom: '24px' },
-  segmentBtn: { padding: '10px 20px', borderRadius: '20px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.2px' },
-  segmentBtnActive: { backgroundColor: '#0F172A', color: 'white', borderColor: '#0F172A' },
-  tabCounter: { backgroundColor: '#ef4444', color: 'white', padding: '2px 6px', borderRadius: '6px', fontSize: '10px', fontWeight: '700' },
+  segmentTabs: { display: 'flex', gap: '8px', marginBottom: '32px', backgroundColor: 'var(--bg-secondary)', padding: '6px', borderRadius: '20px', width: 'fit-content' },
+  segmentBtn: { padding: '10px 24px', borderRadius: '16px', fontSize: '14px', fontWeight: '700', color: 'var(--text-secondary)', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' },
+  segmentBtnActive: { backgroundColor: 'white', color: 'var(--accent)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' },
+  tabCounter: { backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '6px', fontSize: '10px' },
 
-  controls: { display: 'flex', justifyContent: 'space-between', gap: '20px', marginBottom: '24px' },
-  searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'white', padding: '14px 24px', borderRadius: '24px', border: '1px solid #E2E8F0', maxWidth: '600px' },
-  searchInput: { border: 'none', outline: 'none', fontSize: '14px', fontWeight: '500', width: '100%', color: '#0F172A', letterSpacing: '0.2px' },
+  controls: { display: 'flex', justifyContent: 'space-between', gap: '24px', marginBottom: '24px' },
+  searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'white', padding: '0 24px', borderRadius: '20px', border: '1px solid var(--border)', height: '56px' },
+  searchInput: { border: 'none', backgroundColor: 'transparent', outline: 'none', fontSize: '15px', fontWeight: '600', color: 'var(--secondary)', width: '100%' },
   controlActions: { display: 'flex', gap: '12px' },
-  filterBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: '20px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', letterSpacing: '0.2px' },
-  syncBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '20px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', color: '#6366F1', letterSpacing: '0.2px' },
+  filterBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', borderRadius: '20px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--secondary)', fontWeight: '700', fontSize: '14px', cursor: 'pointer' },
+  syncBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', borderRadius: '20px', border: '1px solid var(--border)', backgroundColor: 'var(--secondary)', color: 'white', fontWeight: '700', fontSize: '14px', cursor: 'pointer' },
 
-  listCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' },
+  listCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  tableHead: { backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0' },
-  th: { padding: '20px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.8px' },
-  tr: { borderBottom: '1px solid #F1F5F9', transition: 'all 0.2s' },
-  td: { padding: '20px 24px', verticalAlign: 'middle' },
+  tableHead: { backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' },
+  th: { padding: '20px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' },
+  tr: { borderBottom: '1px solid var(--bg-secondary)', transition: 'all 0.2s' },
+  td: { padding: '24px' },
   
-  companyInfo: { display: 'flex', alignItems: 'center', gap: '14px' },
-  avatar: { width: '48px', height: '48px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '20px', fontWeight: '500', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
-  companyName: { fontSize: '16px', fontWeight: '600', color: '#0F172A', marginBottom: '2px', letterSpacing: '0.3px' },
-  subdomainLink: { fontSize: '13px', color: '#6366F1', fontWeight: '500', letterSpacing: '0.2px' },
-  companyMeta: { fontSize: '11px', color: '#94A3B8', fontWeight: '500', marginTop: '4px', letterSpacing: '0.3px' },
+  companyInfo: { display: 'flex', alignItems: 'center', gap: '16px' },
+  avatar: { width: '48px', height: '48px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '18px', fontWeight: '700' },
+  companyName: { fontSize: '16px', fontWeight: '700', color: 'var(--secondary)', marginBottom: '4px' },
+  subdomainLink: { fontSize: '13px', color: 'var(--accent)', fontWeight: '600' },
+  companyMeta: { fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: '500' },
 
-  systemsGrid: { display: 'flex', flexDirection: 'column', gap: '6px' },
-  sysBadgeLogta: { display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '8px', backgroundColor: '#EFF6FF', color: '#2563EB', fontSize: '10px', fontWeight: '600', width: 'fit-content', letterSpacing: '0.3px' },
-  sysBadgeZapto: { display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '8px', backgroundColor: '#F0FDF4', color: '#16A34A', fontSize: '10px', fontWeight: '600', width: 'fit-content', letterSpacing: '0.3px' },
+  systemsGrid: { display: 'flex', gap: '8px' },
+  sysBadgeLogta: { padding: '6px 12px', borderRadius: '10px', backgroundColor: '#EEF2FF', color: '#4F46E5', fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' },
+  sysBadgeZapto: { padding: '6px 12px', borderRadius: '10px', backgroundColor: '#F0FDF4', color: '#16A34A', fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' },
 
-  statusBadgeMaster: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', width: 'fit-content', letterSpacing: '0.5px' },
-  pulseDot: { width: '8px', height: '8px', borderRadius: '50%', animation: 'pulse 2s infinite' },
+  statusBadgeMaster: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '12px', fontSize: '11px', fontWeight: '800', width: 'fit-content' },
+  pulseDot: { width: '8px', height: '8px', borderRadius: '50%' },
 
-  metricsCell: { display: 'flex', flexDirection: 'column', gap: '6px' },
-  mrrValue: { fontSize: '15px', fontWeight: '600', color: '#0F172A', letterSpacing: '0.3px' },
-  usageBar: { width: '100px', height: '6px', backgroundColor: '#F1F5F9', borderRadius: '3px', overflow: 'hidden' },
-  usageFill: { height: '100%', backgroundColor: '#6366F1', borderRadius: '3px' },
-  usageText: { fontSize: '10px', color: '#94A3B8', fontWeight: '500', letterSpacing: '0.3px' },
+  metricsCell: { width: '150px' },
+  mrrValue: { fontSize: '14px', fontWeight: '700', color: 'var(--secondary)', marginBottom: '8px' },
+  usageBar: { height: '6px', backgroundColor: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' },
+  usageFill: { height: '100%', backgroundColor: 'var(--accent)' },
+  usageText: { fontSize: '10px', color: 'var(--text-secondary)', marginTop: '6px', fontWeight: '600' },
 
   activityCell: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  dateText: { fontSize: '13px', fontWeight: '600', color: '#0F172A', letterSpacing: '0.2px' },
-  deviceText: { fontSize: '11px', color: '#94A3B8', fontWeight: '500', letterSpacing: '0.3px' },
-  actionBtnAdmin: { display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', backgroundColor: '#0F172A', color: 'white', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.3px' },
-  actionBtnView: { padding: '10px', backgroundColor: '#F8FAFC', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: '12px', cursor: 'pointer' },
-  actionBtnConfig: { padding: '10px', backgroundColor: '#F8FAFC', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: '12px', cursor: 'pointer' },
-  actionBtnRestart: { padding: '10px', backgroundColor: '#F0FDF4', color: '#16A34A', border: '1px solid #DCFCE7', borderRadius: '12px', cursor: 'pointer' },
-  modalContent: { padding: '10px' },
-  modalTabs: { display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '16px', borderBottom: '1px solid #F1F5F9', marginBottom: '24px' },
   tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', borderRadius: '12px', border: 'none', backgroundColor: 'transparent', color: '#64748B', fontSize: '13px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap', letterSpacing: '0.2px' },
   activeTab: { backgroundColor: '#6366F1', color: 'white', fontWeight: '500' },
   tabContent: { minHeight: '400px' },
+
+  /* Form Styles */
+  form: { padding: '10px 0' },
+  formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' },
+  inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  label: { fontSize: '12px', fontWeight: '700', color: '#475569', letterSpacing: '0.3px', marginLeft: '4px' },
+  formInput: { padding: '14px 18px', borderRadius: '16px', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: '500', outline: 'none', transition: 'all 0.2s', backgroundColor: '#F8FAFC', color: '#0F172A' },
+  subdomainInputBox: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '0 18px', transition: 'all 0.2s' },
+  formInputSub: { border: 'none', backgroundColor: 'transparent', padding: '14px 0', outline: 'none', fontSize: '14px', fontWeight: '700', width: '100%', textAlign: 'right', color: '#6366F1' },
+  subdomainSuffix: { fontSize: '14px', fontWeight: '600', color: '#94A3B8' },
 };
 
 export default CompanyManagement;

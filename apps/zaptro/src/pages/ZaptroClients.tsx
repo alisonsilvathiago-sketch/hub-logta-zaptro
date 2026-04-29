@@ -14,6 +14,7 @@ import { notifyZaptro } from '../components/Zaptro/ZaptroNotificationSystem';
 import ZaptroKpiMetricCard from '../components/Zaptro/ZaptroKpiMetricCard';
 import { exportToExcel } from '../lib/exportToExcel';
 import { ZaptroLeadsTab } from './ZaptroLeadsTab';
+import Pagination from '@shared/components/Pagination';
 
 /** Linhas fictícias (mesmo formato que `whatsapp_conversations`) para pré-visualizar a lista e KPIs. */
 export function getZaptroDemoClientById(id: string): any | null {
@@ -41,12 +42,8 @@ const ZaptroClients: React.FC = () => {
     }
   }, [location.pathname]);
   
-  const [clients, setClients] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'finished'>('all');
-  /** Lista preenchida com exemplos (sem empresa ou base vazia / erro). */
-  const [isPreview, setIsPreview] = useState(false);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -91,6 +88,10 @@ const ZaptroClients: React.FC = () => {
   useEffect(() => {
     void fetchClients();
   }, [fetchClients]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, activeTab]);
 
   const handleExportExcel = () => {
     if (!filteredClients.length) {
@@ -137,6 +138,12 @@ const ZaptroClients: React.FC = () => {
     }
   );
 
+  const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
+  const paginatedClients = filteredClients.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
   const kpis = [
     { label: 'Total Base', value: clients.length, icon: Users },
     { label: 'Ativos 24h', value: clients.filter(c => new Date(c.updated_at) > new Date(Date.now() - 86400000)).length, icon: TrendingUp },
@@ -148,6 +155,8 @@ const ZaptroClients: React.FC = () => {
       <style>{`
         @keyframes zaptroClientsSpin { to { transform: rotate(360deg); } }
         .zaptro-clients-spin { animation: zaptroClientsSpin 0.9s linear infinite; }
+        .hover-scale { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .hover-scale:hover { transform: scale(1.01) translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1) !important; }
       `}</style>
       <div style={styles.container}>
         <header style={styles.header}>
@@ -179,12 +188,14 @@ const ZaptroClients: React.FC = () => {
            </div>
            <div style={styles.actions}>
               <button 
+                className="hover-scale"
                 style={{...styles.exportBtn, backgroundColor: 'transparent', color: '#000', border: '1px solid #EBEBEC', marginRight: 12}} 
                 onClick={handleDownloadTemplate}
               >
                  <Download size={16} /> Baixar Modelo
               </button>
               <button 
+                className="hover-scale"
                 style={{...styles.exportBtn, backgroundColor: 'rgba(217, 255, 0, 0.14)', color: '#000', border: '1px solid rgba(217, 255, 0, 1)'}} 
                 onClick={() => document.getElementById('excel-import-input')?.click()}
               >
@@ -225,6 +236,7 @@ const ZaptroClients: React.FC = () => {
               setActiveTab('clients');
               navigate(ZAPTRO_ROUTES.CLIENTS);
             }}
+            className="hover-scale"
             style={{
               padding: '8px 18px',
               borderRadius: 14,
@@ -245,6 +257,7 @@ const ZaptroClients: React.FC = () => {
               setActiveTab('leads');
               navigate('/clientes/leads');
             }}
+            className="hover-scale"
             style={{
               padding: '8px 18px',
               borderRadius: 14,
@@ -291,68 +304,81 @@ const ZaptroClients: React.FC = () => {
             {loading ? (
               <div style={styles.loadingArea}><Loader2 className="zaptro-clients-spin" size={32} color="#000" /></div>
             ) : (
-              <div style={styles.tableCard}>
-                <table style={styles.table}>
-                    <thead>
-                      <tr style={styles.thead}>
-                          <th style={styles.th}>CLIENTE</th>
-                          <th style={styles.th}>STATUS</th>
-                          <th style={styles.th}>ÚLTIMO CONTATO</th>
-                          <th style={styles.th}>INTERAÇÕES</th>
-                          <th style={styles.th}>AÇÕES</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {!filteredClients.length ? (
-                        <tr>
-                          <td colSpan={5} style={{ ...styles.td, textAlign: 'center', padding: 48, color: '#64748B', fontWeight: 700 }}>
-                            Nenhum contacto corresponde à busca. Limpa o filtro ou altera o termo.
-                          </td>
+              <>
+                <div style={styles.tableCard}>
+                  <table style={styles.table}>
+                      <thead>
+                        <tr style={styles.thead}>
+                            <th style={styles.th}>CLIENTE</th>
+                            <th style={styles.th}>STATUS</th>
+                            <th style={styles.th}>ÚLTIMO CONTATO</th>
+                            <th style={styles.th}>INTERAÇÕES</th>
+                            <th style={styles.th}>AÇÕES</th>
                         </tr>
-                      ) : (
-                      filteredClients.map(c => (
-                        <tr key={c.id} style={styles.tr}>
-                            <td style={styles.td}>
-                              <div style={styles.clientCell}>
-                                  <div style={styles.avatar}>{c.sender_name?.[0] || <User size={14}/>}</div>
-                                  <div style={styles.clientInfo}>
-                                    <span style={styles.clientName}>{c.sender_name || 'Cliente S/ Nome'}</span>
-                                    <span style={styles.clientPhone}>{c.sender_number}</span>
-                                  </div>
-                              </div>
+                      </thead>
+                      <tbody>
+                        {!paginatedClients.length ? (
+                          <tr>
+                            <td colSpan={5} style={{ ...styles.td, textAlign: 'center', padding: 48, color: '#64748B', fontWeight: 700 }}>
+                              Nenhum contacto corresponde à busca. Limpa o filtro ou altera o termo.
                             </td>
-                            <td style={styles.td}>
-                              <span style={{...styles.statBadge, backgroundColor: c.status === 'open' ? '#EEFCEF' : '#F1F5F9', color: c.status === 'open' ? '#10B981' : '#64748B'}}>
-                                  {c.status === 'open' ? 'EM ATENDIMENTO' : 'FINALIZADO'}
-                              </span>
-                            </td>
-                            <td style={styles.td}>
-                              <div style={styles.dateCell}>
-                                  <Calendar size={14} color="#94A3B8" />
-                                  <span>{c.updated_at ? new Date(c.updated_at).toLocaleDateString() : '—'}</span>
-                              </div>
-                            </td>
-                            <td style={styles.td}>
-                              <div style={styles.interactionCell}>
-                                  <MessageSquare size={14} color="#D9FF00" />
-                                  <span>{c.whatsapp_messages?.length || 0} msgs</span>
-                              </div>
-                            </td>
-                            <td style={styles.td}>
-                              <button
-                                style={styles.viewBtn}
-                                type="button"
-                                onClick={() => navigate(zaptroClientProfilePath(String(c.id)))}
-                              >
-                                  Ver Perfil <ChevronRight size={16} />
-                              </button>
-                            </td>
-                        </tr>
-                      ))
-                      )}
-                    </tbody>
-                </table>
-              </div>
+                          </tr>
+                        ) : (
+                        paginatedClients.map(c => (
+                          <tr key={c.id} style={styles.tr} className="hover-scale" onClick={() => navigate(zaptroClientProfilePath(String(c.id)))}>
+                              <td style={styles.td}>
+                                <div style={styles.clientCell}>
+                                    <div style={styles.avatar}>{c.sender_name?.[0] || <User size={14}/>}</div>
+                                    <div style={styles.clientInfo}>
+                                      <span style={styles.clientName}>{c.sender_name || 'Cliente S/ Nome'}</span>
+                                      <span style={styles.clientPhone}>{c.sender_number}</span>
+                                    </div>
+                                </div>
+                              </td>
+                              <td style={styles.td}>
+                                <span style={{...styles.statBadge, backgroundColor: c.status === 'open' ? '#EEFCEF' : '#F1F5F9', color: c.status === 'open' ? '#10B981' : '#64748B'}}>
+                                    {c.status === 'open' ? 'EM ATENDIMENTO' : 'FINALIZADO'}
+                                </span>
+                              </td>
+                              <td style={styles.td}>
+                                <div style={styles.dateCell}>
+                                    <Calendar size={14} color="#94A3B8" />
+                                    <span>{c.updated_at ? new Date(c.updated_at).toLocaleDateString('pt-BR') : '—'}</span>
+                                </div>
+                              </td>
+                              <td style={styles.td}>
+                                <div style={styles.interactionCell}>
+                                    <MessageSquare size={14} color="#D9FF00" />
+                                    <span>{c.whatsapp_messages?.length || 0} msgs</span>
+                                </div>
+                              </td>
+                              <td style={styles.td}>
+                                <button
+                                  style={styles.viewBtn}
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); navigate(zaptroClientProfilePath(String(c.id))); }}
+                                >
+                                    Ver Perfil <ChevronRight size={16} />
+                                </button>
+                              </td>
+                          </tr>
+                        ))
+                        )}
+                      </tbody>
+                  </table>
+                </div>
+
+                <Pagination 
+                  currentPage={currentPage}
+                  totalItems={filteredClients.length}
+                  itemsPerPage={rowsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={(val) => {
+                    setRowsPerPage(val as number);
+                    setCurrentPage(1);
+                  }}
+                />
+              </>
             )}
           </div>
         ) : (

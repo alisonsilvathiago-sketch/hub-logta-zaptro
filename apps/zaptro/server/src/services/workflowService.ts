@@ -3,6 +3,7 @@ import { GoogleIntegrationService } from './googleService.js';
 import { buildTransactionalEmail } from '../templates/index.js';
 import type { MailQueue } from '../queue/createMailQueue.js';
 import type { AppConfig } from '../config.js';
+import { WhatsAppService } from './whatsappService.js';
 import { EventHub, SystemEvent } from './eventHub.js';
 
 export class WorkflowService {
@@ -10,12 +11,14 @@ export class WorkflowService {
   private queue: MailQueue;
   private hub: EventHub;
   private supabase: SupabaseClient;
+  private whatsapp: WhatsAppService;
 
   constructor(cfg: AppConfig, queue: MailQueue) {
     this.googleService = new GoogleIntegrationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
     this.queue = queue;
     this.hub = EventHub.getInstance();
     this.supabase = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+    this.whatsapp = new WhatsAppService(); // Will use mock mode if keys are missing in constructor (TODO: pass from cfg)
     
     this.setupAutomation();
   }
@@ -102,7 +105,7 @@ export class WorkflowService {
         if (channel === 'email') {
           await this.sendEmail('billing_overdue_recovery', cn, to, { ...context, userName });
         } else {
-          console.log(`[WorkflowEngine] [WHATSAPP STRATEGY] Enqueuing intelligent WhatsApp recovery to ${userName}`);
+          await this.whatsapp.sendMessage(context.phone || '000000000', `Olá ${userName}, notamos uma pendência em sua conta ${cn}. Podemos ajudar?`);
         }
         break;
 
@@ -153,11 +156,13 @@ export class WorkflowService {
       case 'NOTIFY_SECURITY_BREACH':
         console.log(`[WorkflowEngine] [SECURITY] Sending URGENT security breach alert to admin.`);
         await this.sendEmail('security_alert', 'Logta Shield', 'admin@logta.com.br', { ...context });
+        await this.whatsapp.sendSecurityAlert('5511999999999', context.vehiclePlate || 'ABC-1234', context.location || 'Local desconhecido');
         break;
 
       case 'BLOCK_OPERATIONAL_FLOW':
-        console.log(`[WorkflowEngine] [AUDIT] Blocking operational flow for company due to critical document error.`);
-        // Logic to block company operations if needed
+        console.log(`[WorkflowEngine] [AUDIT] Blocking operational flow for company ${context.targetId} due to critical compliance error.`);
+        await this.supabase.from('companies').update({ operational_status: 'BLOCKED', block_reason: context.reason || 'FISCAL_COMPLIANCE_FAILURE' }).eq('id', context.targetId);
+        await this.sendEmail('operational_blocked_notice', 'Logta Compliance', context.adminEmail || 'admin@logta.com.br', { ...context });
         break;
 
       case 'PROCESS_LEAD_CONVERSION':

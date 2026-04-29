@@ -40,7 +40,7 @@ export default function FullTrackingMap() {
       .select('*, companies(name)')
       .eq('id', id)
       .single();
-    
+
     if (data) {
       setAsset(data);
       setHistory(prev => {

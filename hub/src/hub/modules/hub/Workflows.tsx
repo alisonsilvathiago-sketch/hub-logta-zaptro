@@ -6,7 +6,9 @@ import {
   Activity, Database, Globe, Mail, 
   MessageSquare, Trash2, Edit3, Save, X,
   Terminal, Share2, Layers, Cpu, Shield,
-  Bell, BellRing, Eye, EyeOff, RefreshCw
+  Bell, BellRing, Eye, EyeOff, RefreshCw,
+  ShieldCheck, DollarSign, FileText, Download, Copy,
+  Link as LinkIcon, Cloud, Video, FolderKanban, ShieldAlert
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
 import { useAuth } from '@core/context/AuthContext';
@@ -35,7 +37,7 @@ interface NotificationSetting {
 
 const WorkflowManagement: React.FC = () => {
   const { profile } = useAuth();
-  const [activeTab, setActiveTab] = useState<'workflows' | 'notifications'>('workflows');
+  const [activeTab, setActiveTab] = useState<'workflows' | 'notifications' | 'integracoes'>('workflows');
   const [loading, setLoading] = useState(true);
   
   // States for Workflows
@@ -106,6 +108,35 @@ const WorkflowManagement: React.FC = () => {
     }
   };
 
+  const handleTestEmail = async (notif: NotificationSetting) => {
+    const tid = toastLoading(`Disparando teste de e-mail (${notif.kind})...`);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_ZAPTRO_MAIL_API_URL}/v1/internal/raw`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Zaptro-Internal-Secret': 'HUB_MASTER_TEST_SECRET'
+        },
+        body: JSON.stringify({
+          to: profile?.email,
+          subject: `[TESTE HUB] ${notif.event_type}`,
+          template: notif.kind,
+          context: {
+            user_name: profile?.full_name || 'Admin',
+            event_details: 'Este é um disparo de validação da Matriz Master.'
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error('Falha na API de e-mail.');
+      toastSuccess(`E-mail de teste enviado para ${profile?.email}!`);
+    } catch (err) {
+      toastError('Erro de Disparo: Verifique se a Mail API está online.');
+    } finally {
+      toastDismiss(tid);
+    }
+  };
+
   const handleSaveWorkflow = async () => {
     if (!selectedWorkflow?.name || !selectedWorkflow?.trigger) {
       toastError('Verifique os campos: Nome e Gatilho são obrigatórios.');
@@ -141,8 +172,8 @@ const WorkflowManagement: React.FC = () => {
     <div style={styles.container} className="animate-fade-in">
       <header style={styles.header}>
         <div>
-          <h1 style={styles.title}>Workflows & Notificações (Brain)</h1>
-          <p style={styles.subtitle}>Gerencie a inteligência operacional e a matriz de comunicação global.</p>
+          <h1 style={styles.title}>Fluxos & Notificações (Brain)</h1>
+          <p style={styles.subtitle}>Gerencie a inteligência operacional e a matriz de comunicação global do ecossistema.</p>
         </div>
         <div style={styles.headerActions}>
            <button style={styles.refreshBtn} onClick={fetchData} title="Sincronizar Matriz">
@@ -167,9 +198,15 @@ const WorkflowManagement: React.FC = () => {
          >
             <BellRing size={16} /> Matriz de E-mails (Brain)
          </button>
+         <button 
+            style={{...styles.tab, ...(activeTab === 'integracoes' ? styles.activeTab : {})}}
+            onClick={() => setActiveTab('integracoes')}
+         >
+            <Globe size={16} /> Integrações & API
+         </button>
       </div>
 
-      {activeTab === 'workflows' ? (
+      {activeTab === 'workflows' && (
         <>
           <div style={styles.statsRow}>
              <div style={styles.statBox}>
@@ -199,9 +236,14 @@ const WorkflowManagement: React.FC = () => {
             {loading ? (
               <div style={styles.loadingState}>Sincronizando cluster de automação...</div>
             ) : workflows.length === 0 ? (
-               <div style={styles.loadingState}>Nenhum workflow registrado.</div>
+               <div style={styles.loadingState}>Nenhum protocolo operacional detectado.</div>
             ) : workflows.map(wf => (
-              <div key={wf.id} style={{...styles.wfCard, opacity: wf.is_active ? 1 : 0.7}}>
+              <div 
+                key={wf.id} 
+                style={{...styles.wfCard, opacity: wf.is_active ? 1 : 0.7, cursor: 'pointer'}}
+                className="hover-scale"
+                onClick={() => { setSelectedWorkflow(wf); setIsModalOpen(true); }}
+              >
                 <div style={styles.wfCardHeader}>
                   <div style={{...styles.wfIcon, backgroundColor: wf.is_active ? 'var(--primary)' : '#94a3b8'}}>
                     <Zap size={18} color="white" />
@@ -233,18 +275,25 @@ const WorkflowManagement: React.FC = () => {
                   <div style={styles.wfActions}>
                     <button 
                       style={styles.actionIconBtn} 
-                      onClick={() => toggleWorkflow(wf.id, wf.is_active)}
+                      onClick={(e) => { e.stopPropagation(); toggleWorkflow(wf.id, wf.is_active); }}
                     >
                       {wf.is_active ? <Pause size={16} /> : <Play size={16} />}
                     </button>
-                    <button style={styles.actionIconBtn} onClick={() => { setSelectedWorkflow(wf); setIsModalOpen(true); }}><Edit3 size={16} /></button>
+                    <button 
+                      style={styles.actionIconBtn} 
+                      onClick={(e) => { e.stopPropagation(); setSelectedWorkflow(wf); setIsModalOpen(true); }}
+                    >
+                      <Edit3 size={16} />
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         </>
-      ) : (
+      )}
+
+      {activeTab === 'notifications' && (
         <div style={styles.notifSection}>
            <div style={styles.notifHeader}>
               <h2 style={styles.sectionTitle}>Matriz de Comunicação Automatizada</h2>
@@ -255,7 +304,11 @@ const WorkflowManagement: React.FC = () => {
               {loading ? (
                  <div style={styles.loadingState}>Lendo configurações do cofre...</div>
               ) : notifs.map(n => (
-                 <div key={n.id} style={styles.notifCard}>
+                 <div 
+                    key={n.id} 
+                    style={{...styles.notifCard, cursor: 'pointer'}}
+                    className="hover-scale"
+                 >
                     <div style={styles.notifCardMain}>
                        <div style={{...styles.priorityBadge, 
                           backgroundColor: n.priority === 'CRITICO' ? '#fef2f2' : n.priority === 'IMPORTANTE' ? '#eff6ff' : '#f8fafc',
@@ -277,7 +330,13 @@ const WorkflowManagement: React.FC = () => {
                              {n.is_active ? 'ATIVO' : 'OFF'}
                           </span>
                        </div>
-                       <button style={styles.miniBtn} title="Testar Envio"><Mail size={14} /></button>
+                       <button 
+                         style={styles.miniBtn} 
+                         title="Testar Envio"
+                         onClick={() => handleTestEmail(n)}
+                       >
+                         <Mail size={14} />
+                       </button>
                     </div>
                  </div>
               ))}
@@ -292,13 +351,15 @@ const WorkflowManagement: React.FC = () => {
         </div>
       )}
 
+      {activeTab === 'integracoes' && <IntegrationsContent />}
+
       {/* MODAL WORKFLOW */}
       <LogtaModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         title={selectedWorkflow?.id ? 'Configurar Inteligência' : 'Nova Automação Master'}
         icon={<Zap />}
-        width="600px"
+        size="md"
         primaryAction={{
            label: 'SALVAR PROTOCOLO',
            onClick: handleSaveWorkflow
@@ -377,6 +438,112 @@ const WorkflowManagement: React.FC = () => {
   );
 };
 
+const IntegrationsContent: React.FC = () => {
+  const [googleConfig, setGoogleConfig] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchConfigs = async () => {
+      const { data } = await supabase
+        .from('master_settings')
+        .select('value')
+        .eq('key', 'GOOGLE_SERVICE_ACCOUNT_KEY')
+        .maybeSingle();
+      setGoogleConfig(data?.value || null);
+    };
+    fetchConfigs();
+  }, []);
+
+  const handleCopyWebhook = () => {
+    navigator.clipboard.writeText('https://rrjnkmgkhbtapumgmhhr.supabase.co/functions/v1/hub-core/webhook-asaas');
+    toastSuccess('Endpoint copiado para a área de transferência.');
+  };
+
+  return (
+    <div style={styles.notifSection}>
+      <div style={styles.notifHeader}>
+        <h2 style={styles.sectionTitle}>Integrações & Conectores Master</h2>
+        <p style={styles.sectionSub}>Gerencie a conectividade global do ecossistema e chaves de alta segurança.</p>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        <div style={styles.guardBanner}>
+          <div style={styles.guardIcon}><ShieldCheck size={28} color="var(--primary)" /></div>
+          <div>
+             <h3 style={styles.guardTitle}>Protocolo de Alta Governança</h3>
+             <p style={styles.guardSub}>Chaves e segredos são armazenados com criptografia em repouso no cofre master.</p>
+          </div>
+          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+             <div style={styles.guardLabel}>ESTADO DE ACESSO</div>
+             <div style={styles.guardBadge}><div style={styles.statusDot} /> MASTER ADMIN</div>
+          </div>
+        </div>
+
+        <div style={styles.integrationGrid}>
+          <div style={styles.card}>
+            <div style={styles.cardHeader}>
+              <div style={{...styles.planIcon, backgroundColor: '#fef2f2', color: '#ef4444'}}><Cloud size={24} /></div>
+              <div>
+                <h3 style={styles.cardTitle}>Google Cloud & Workspace</h3>
+                <p style={styles.cardSub}>Meet, Drive e Agenda.</p>
+              </div>
+              <div style={{ marginLeft: 'auto' }}>
+                <span style={{...styles.statusBadge, backgroundColor: googleConfig ? '#ecfdf5' : '#fff7ed', color: googleConfig ? '#10b981' : '#f97316'}}>
+                  {googleConfig ? 'ATIVO' : 'PENDENTE'}
+                </span>
+              </div>
+            </div>
+            <div style={styles.configArea}>
+               <label style={styles.infoLabel}>SERVICE ACCOUNT ID</label>
+               <div style={styles.codeBlock}><code>{googleConfig?.client_email || 'Aguardando configuração...'}</code></div>
+            </div>
+            <button style={{ ...styles.actionBtn, marginTop: '20px', color: '#ef4444', borderColor: '#fee2e2' }}>
+              <Settings size={14} /> RE-CONFIGURAR CHAVE
+            </button>
+          </div>
+
+          <div style={styles.card}>
+            <div style={styles.cardHeader}>
+              <div style={{...styles.planIcon, backgroundColor: '#eff6ff', color: 'var(--primary)'}}><DollarSign size={24} /></div>
+              <div>
+                <h3 style={styles.cardTitle}>Gateway Asaas</h3>
+                <p style={styles.cardSub}>Fluxos financeiros master.</p>
+              </div>
+              <div style={{ marginLeft: 'auto' }}>
+                <span style={{...styles.statusBadge, backgroundColor: '#ecfdf5', color: '#10b981'}}>CONECTADO</span>
+              </div>
+            </div>
+            <div style={styles.configArea}>
+               <label style={styles.infoLabel}>API KEY MASTER</label>
+               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <code style={{ fontSize: '11px', color: 'var(--text-muted)', flex: 1 }}>$a***************************************</code>
+                  <Eye size={14} color="#94a3b8" />
+               </div>
+            </div>
+            <button style={{ ...styles.actionBtn, marginTop: '20px' }}><Settings size={14} /> AJUSTES</button>
+          </div>
+        </div>
+
+        <div style={styles.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div>
+               <h3 style={styles.cardTitle}><Zap size={18} color="#f59e0b" fill="#f59e0b" /> Webhooks Ativos</h3>
+               <p style={styles.cardSub}>Escuta global de eventos externos.</p>
+            </div>
+            <button style={styles.refreshBtn}><RefreshCw size={14} /></button>
+          </div>
+          <div style={styles.webhookUrlArea}>
+            <label style={styles.infoLabel}>ENDPOINT (ASAAS)</label>
+            <div style={styles.urlInputRow}>
+               <code style={styles.urlCode}>.../functions/v1/hub-core/webhook-asaas</code>
+               <button style={styles.copyBtn} onClick={handleCopyWebhook}><Copy size={16} /></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const styles: Record<string, any> = {
   container: { padding: '0' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
@@ -439,7 +606,30 @@ const styles: Record<string, any> = {
   label: { fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' },
   input: { padding: '14px 18px', borderRadius: '14px', border: '1px solid var(--border)', outline: 'none', fontSize: '14px', fontWeight: '500', backgroundColor: '#f8fafc', letterSpacing: '0.2px' },
   select: { padding: '14px 18px', borderRadius: '14px', border: '1px solid var(--border)', outline: 'none', fontSize: '14px', fontWeight: '500', backgroundColor: 'white' },
-  textarea: { padding: '16px 18px', borderRadius: '16px', border: '1px solid var(--border)', outline: 'none', fontSize: '13px', fontWeight: '500', fontFamily: 'monospace', minHeight: '120px', backgroundColor: '#f8fafc', letterSpacing: '0.2px' }
+  textarea: { padding: '16px 18px', borderRadius: '16px', border: '1px solid var(--border)', outline: 'none', fontSize: '13px', fontWeight: '500', fontFamily: 'monospace', minHeight: '120px', backgroundColor: '#f8fafc', letterSpacing: '0.2px' },
+  
+  // Integration Styles
+  guardBanner: { backgroundColor: '#1e293b', padding: '28px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '20px', border: '1px solid #334155', boxShadow: 'var(--shadow-lg)', marginBottom: '32px' },
+  guardIcon: { backgroundColor: 'rgba(99, 102, 241, 0.1)', padding: '14px', borderRadius: '16px' },
+  guardTitle: { margin: 0, color: '#f8fafc', fontSize: '18px', fontWeight: '500', letterSpacing: '0.4px' },
+  guardSub: { margin: '4px 0 0', color: '#94a3b8', fontSize: '13px', fontWeight: '400', letterSpacing: '0.2px' },
+  guardLabel: { fontSize: '10px', color: 'var(--primary)', fontWeight: '700', marginBottom: '6px', letterSpacing: '1px' },
+  guardBadge: { color: '#10b981', fontWeight: '600', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '6px 14px', borderRadius: '20px' },
+  integrationGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
+  card: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column' },
+  cardHeader: { display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '32px' },
+  cardTitle: { fontSize: '18px', fontWeight: '500', color: 'var(--text-main)', margin: 0, letterSpacing: '0.3px' },
+  cardSub: { fontSize: '14px', color: 'var(--text-muted)', margin: '2px 0 0', fontWeight: '400' },
+  planIcon: { width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  statusBadge: { padding: '6px 14px', borderRadius: '12px', fontSize: '10px', fontWeight: '600', letterSpacing: '0.6px' },
+  configArea: { padding: '20px', backgroundColor: '#f8fafc', borderRadius: '20px', border: '1px solid var(--border)' },
+  infoLabel: { fontSize: '10px', fontWeight: '600', color: 'var(--text-muted)', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '8px', display: 'block' },
+  codeBlock: { fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis' },
+  webhookUrlArea: { padding: '24px', backgroundColor: '#f8fafc', borderRadius: '24px', border: '1px solid var(--border)', marginBottom: '12px' },
+  urlInputRow: { display: 'flex', gap: '12px', marginTop: '12px' },
+  urlCode: { fontSize: '12px', color: 'var(--text-main)', fontWeight: '500', backgroundColor: '#fff', padding: '12px 18px', borderRadius: '14px', flex: 1, border: '1px solid var(--border)', overflow: 'hidden', textOverflow: 'ellipsis' },
+  copyBtn: { padding: '12px', backgroundColor: 'var(--primary-light)', border: 'none', borderRadius: '14px', color: 'var(--primary)', cursor: 'pointer' },
+  actionBtn: { width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--border)', backgroundColor: '#fff', color: 'var(--text-muted)', fontWeight: '600', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.3px' },
 };
 
 export default WorkflowManagement;

@@ -235,7 +235,7 @@ const styles = {
   tabActive: { backgroundColor: 'white', color: 'var(--primary)', boxShadow: 'var(--shadow-sm)' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px', marginTop: '16px' },
   card: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', flexDirection: 'column' as const, transition: 'transform 0.2s', cursor: 'pointer' },
-  cardHeader: { position: 'relative' as const, height: '160px', backgroundColor: '#f4f4f4' },
+  cardHeader: { position: 'relative' as const, height: '160px', backgroundColor: 'var(--bg-secondary)' },
   cover: { width: '100%', height: '100%', objectFit: 'cover' as const },
   placeholderCover: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1' },
   statusBadge: { position: 'absolute' as const, top: '12px', right: '12px', padding: '4px 10px', borderRadius: '24px', fontSize: '10px', fontWeight: '700' },
@@ -254,8 +254,8 @@ const styles = {
   fGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
   fGroup: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
   fLabel: { fontSize: '13px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
-  input: { padding: '14px', borderRadius: '22px', border: '1px solid var(--border)', backgroundColor: '#f4f4f4', color: 'var(--text-main)', outline: 'none' },
-  textarea: { padding: '14px', borderRadius: '22px', border: '1px solid var(--border)', backgroundColor: '#f4f4f4', color: 'var(--text-main)', outline: 'none', height: '100px', resize: 'none' as const },
+  input: { padding: '14px', borderRadius: '22px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-main)', outline: 'none' },
+  textarea: { padding: '14px', borderRadius: '22px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-main)', outline: 'none', height: '100px', resize: 'none' as const },
   submitBtn: { marginTop: '12px', padding: '16px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '600', cursor: 'pointer' }
 };
 

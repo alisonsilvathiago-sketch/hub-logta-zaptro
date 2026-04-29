@@ -18,7 +18,7 @@ const LogtaAppShellHeader: React.FC<LogtaAppShellHeaderProps> = ({ fullBleed = f
   
   const isImpersonating = !!localStorage.getItem('hub-impersonate-tenant');
 
-  const displayName = useMemo(() => profile?.full_name?.trim() || 'Operador Logta', [profile?.full_name]);
+  const displayName = useMemo(() => profile?.full_name?.trim() || 'Operador Logita', [profile?.full_name]);
   const firstName = useMemo(() => displayName.split(/\s+/)[0], [displayName]);
   const roleLabel = useMemo(() => profile?.role?.replaceAll('_', ' ') || 'Operador', [profile?.role]);
 
@@ -76,7 +76,7 @@ const LogtaAppShellHeader: React.FC<LogtaAppShellHeaderProps> = ({ fullBleed = f
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Pesquisar cargas, clientes, rotas..."
-            aria-label="Pesquisar no Logta"
+            aria-label="Pesquisar no Logita"
             onKeyDown={(event) => {
               if (event.key === 'Enter' && query.trim()) {
                 navigate(`/dashboard?q=${encodeURIComponent(query.trim())}`);

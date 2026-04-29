@@ -16,6 +16,7 @@ export default defineConfig({
       '@core': path.resolve(__dirname, './src/core'),
       '@hub': path.resolve(__dirname, './src/hub'),
     },
+    dedupe: ['react', 'react-dom'],
   },
   build: {
     chunkSizeWarningLimit: 2000,

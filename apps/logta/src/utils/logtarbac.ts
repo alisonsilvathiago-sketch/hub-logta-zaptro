@@ -137,7 +137,7 @@ export function getSidebarNavForRole(role: string | undefined | null): SidebarNa
 
   const full: SidebarNavItem[] = [
     { label: 'Início', path: '/dashboard', icon: 'LayoutDashboard' },
-    { label: 'Logística', path: '/logistica', icon: 'Map' },
+    { label: 'Logita', path: '/logistica', icon: 'Map' },
     { label: 'CRM', path: '/crm', icon: 'Briefcase' },
     { label: 'RH', path: '/rh', icon: 'Users' },
     { label: 'Finanças', path: '/financas', icon: 'Wallet' },
@@ -152,7 +152,7 @@ export function getSidebarNavForRole(role: string | undefined | null): SidebarNa
 
   switch (r) {
     case 'LOGISTICA':
-      return [{ label: 'Logística', path: '/logistica', icon: 'Map' }];
+      return [{ label: 'Logita', path: '/logistica', icon: 'Map' }];
     case 'CRM':
     case 'COMERCIAL':
     case 'ATENDIMENTO':

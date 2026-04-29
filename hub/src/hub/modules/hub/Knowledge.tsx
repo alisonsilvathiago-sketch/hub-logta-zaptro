@@ -82,7 +82,6 @@ export const MasterKnowledge: React.FC = () => {
     <div style={styles.container} className="animate-fade-in">
       <header style={styles.header}>
         <div>
-          <div style={styles.bread}>{'MASTER HQ > CENTRAL DE AJUDA'}</div>
           <h1 style={styles.title}>Base de Conhecimento</h1>
           <p style={styles.subtitle}>Gerencie os artigos e tutoriais que ajudam seus clientes a extrair o máximo do Logta.</p>
         </div>
@@ -164,7 +163,7 @@ export const MasterKnowledge: React.FC = () => {
       )}
 
       {/* Article Modal */}
-      <LogtaModal isOpen={showArtModal} onClose={() => setShowArtModal(false)} width="800px" title={editingItem ? 'Editar Artigo' : 'Publicar Novo Artigo'}>
+      <LogtaModal isOpen={showArtModal} onClose={() => setShowArtModal(false)} size="lg" title={editingItem ? 'Editar Artigo' : 'Publicar Novo Artigo'}>
          <div style={styles.form}>
             <div style={styles.fRow}>
                <div style={styles.fGroup}>
@@ -235,8 +234,8 @@ const styles: Record<string, any> = {
   fRow: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
   fGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
   fLabel: { fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' },
-  input: { padding: '12px', borderRadius: '24px', border: '1px solid var(--border)', backgroundColor: '#f4f4f4', outline: 'none' },
-  textarea: { padding: '12px', borderRadius: '24px', border: '1px solid var(--border)', backgroundColor: '#f4f4f4', outline: 'none', minHeight: '100px', resize: 'none' },
+  input: { padding: '12px', borderRadius: '24px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)', outline: 'none' },
+  textarea: { padding: '12px', borderRadius: '24px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)', outline: 'none', minHeight: '100px', resize: 'none' },
   submitBtn: { marginTop: '10px', padding: '16px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '600', cursor: 'pointer' }
 };
 

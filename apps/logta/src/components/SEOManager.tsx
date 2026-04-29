@@ -11,9 +11,9 @@ const SEOManager: React.FC<SEOProps> = ({ title, description, keywords }) => {
   const location = useLocation();
 
   useEffect(() => {
-    const defaultTitle = 'Logta SaaS | Logística de Alta Performance';
-    const defaultDescription = 'Gestão completa com Logta: CRM, Logística, Frota, Estoque, Financeiro e RH para transportadoras.';
-    const defaultKeywords = 'logística, crm transporte, frota, gestão de estoque, erp logistica';
+    const defaultTitle = 'Logita Intelligence | Logística de Alta Performance';
+    const defaultDescription = 'Gestão completa com Logita: CRM, Logística, Frota, Estoque, Financeiro e RH para transportadoras.';
+    const defaultKeywords = 'logita, logística, crm transporte, frota, gestão de estoque, erp logistica';
 
     document.title = title || defaultTitle;
 

@@ -111,6 +111,7 @@ const Checkout = lazy(() => import('./pages/Checkout'));
 
 // Zaptro Dashboard Pages
 const ZaptroDashboardResults = lazy(() => import('./pages/ZaptroDashboardResults'));
+const ZaptroFuelCenter = lazy(() => import('./pages/ZaptroFuelCenter'));
 const ZaptroCrm = lazy(() => import('./pages/ZaptroCrm'));
 const ZaptroQuotesList = lazy(() => import('./pages/ZaptroQuotesList'));
 const ZaptroRoutes = lazy(() => import('./pages/ZaptroRoutes'));
@@ -131,6 +132,7 @@ const ZaptroPublicTrack = lazy(() => import('./pages/ZaptroPublicTrack'));
 const ZaptroVehicleProfile = lazy(() => import('./pages/ZaptroVehicleProfile'));
 const ZaptroLeadProfile = lazy(() => import('./pages/ZaptroLeadProfile'));
 const MasterConnect = lazy(() => import('./pages/MasterConnect'));
+const PublicDeliveryAction = lazy(() => import('./pages/PublicDeliveryAction'));
 
 
 const ZaptroGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -210,6 +212,7 @@ const App: React.FC = () => {
         {/* Zaptro Dashboard Routes (Protected by Guard) */}
         <Route path="/inicio" element={<ZaptroGuard><ZaptroHomeNovoDesign /></ZaptroGuard>} />
         <Route path="/resultados" element={<ZaptroGuard><ZaptroDashboardResults /></ZaptroGuard>} />
+        <Route path="/combustivel" element={<ZaptroGuard><ZaptroFuelCenter /></ZaptroGuard>} />
         <Route path="/comercial" element={<ZaptroGuard><ZaptroCrm /></ZaptroGuard>} />
         <Route path="/comercial/orcamentos" element={<ZaptroGuard><ZaptroQuotesList /></ZaptroGuard>} />
         <Route path="/rotas" element={<ZaptroGuard><ZaptroRoutes /></ZaptroGuard>} />
@@ -231,6 +234,7 @@ const App: React.FC = () => {
         <Route path="/rota-motorista/:token" element={<ZaptroDriverRoute />} />
         <Route path="/orcamento/:token" element={<ZaptroPublicQuote />} />
         <Route path="/rastreamento/:token" element={<ZaptroPublicTrack />} />
+        <Route path="/entrega/:token" element={<PublicDeliveryAction />} />
         
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

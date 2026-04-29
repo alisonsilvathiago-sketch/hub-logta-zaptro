@@ -42,10 +42,10 @@ export class DeliveryGuardianService {
       const token = uuidv4();
       const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12h from now
 
-      const { data: conf } = await this.supabase.from('logistics_delivery_confirmations').insert([{
-        delivery_id: deliveryId,
+      const { data: conf } = await this.supabase.from('delivery_actions').insert([{
+        order_id: deliveryId,
         token,
-        status: 'PENDING',
+        status: 'pendente',
         expires_at: expiresAt
       }]).select().single();
 
@@ -74,14 +74,14 @@ export class DeliveryGuardianService {
     const now = new Date().toISOString();
 
     const { data: expired } = await this.supabase
-      .from('logistics_delivery_confirmations')
-      .select('id, delivery_id')
-      .eq('status', 'PENDING')
+      .from('delivery_actions')
+      .select('id, order_id')
+      .eq('status', 'pendente')
       .lt('expires_at', now);
 
     for (const item of expired || []) {
-      await this.supabase.from('logistics_delivery_confirmations')
-        .update({ status: 'EXPIRED' })
+      await this.supabase.from('delivery_actions')
+        .update({ status: 'expirado' })
         .eq('id', item.id);
 
       // Block the delivery in the master system
@@ -100,17 +100,17 @@ export class DeliveryGuardianService {
    */
   async processChoice(token: string, action: 'CONFIRM' | 'RESCHEDULE', choiceMetadata?: any) {
     const { data: conf } = await this.supabase
-      .from('logistics_delivery_confirmations')
+      .from('delivery_actions')
       .select('*')
       .eq('token', token)
-      .eq('status', 'PENDING')
+      .eq('status', 'pendente')
       .single();
 
     if (!conf) throw new Error('Invalid or expired token.');
 
     if (action === 'CONFIRM') {
-      await this.supabase.from('logistics_delivery_confirmations')
-        .update({ status: 'CONFIRMED', confirmed_at: new Date() })
+      await this.supabase.from('delivery_actions')
+        .update({ status: 'confirmado', responded_at: new Date() })
         .eq('id', conf.id);
       
       this.hub.emit(SystemEvent.BEHAVIOR_OBSERVED, {
@@ -118,10 +118,10 @@ export class DeliveryGuardianService {
         metadata: { deliveryId: conf.delivery_id }
       });
     } else {
-      await this.supabase.from('logistics_delivery_confirmations')
+      await this.supabase.from('delivery_actions')
         .update({ 
-          status: 'RESCHEDULED', 
-          rescheduled_to: choiceMetadata.newDate,
+          status: 'reagendado', 
+          rescheduled_date: choiceMetadata.newDate,
           metadata: { slotId: choiceMetadata.slotId }
         })
         .eq('id', conf.id);

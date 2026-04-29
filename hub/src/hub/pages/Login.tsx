@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Lock, Mail, ArrowRight, Eye, EyeOff, Loader2,
-  AlertCircle, ShieldCheck, Building2
+  AlertCircle, ShieldCheck
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
-import { useAuth } from '@core/context/AuthContext';
 import { toastSuccess, toastError } from '@core/lib/toast';
 
 const Login: React.FC = () => {
-  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

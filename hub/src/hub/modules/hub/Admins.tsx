@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, Search, Filter, Mail, Building2, 
+import {
+  Users, Search, Filter, Mail, Building2,
   CheckCircle, XCircle, Shield, MoreVertical,
   RefreshCw, Loader2, UserCheck, UserX, ExternalLink,
   ShieldCheck, ShieldAlert, Zap
@@ -61,7 +61,7 @@ const UserManagement: React.FC = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           tem_zaptro: !current,
           status_zaptro: !current ? 'autorizado' : 'pendente'
         })
@@ -78,11 +78,11 @@ const UserManagement: React.FC = () => {
   };
 
   const filteredUsers = users.filter(u => {
-    const matchesSearch = 
+    const matchesSearch =
       (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.company_name || '').toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     if (filterProduct === 'zaptro') return matchesSearch && u.tem_zaptro;
     if (filterProduct === 'logta') return matchesSearch && !u.tem_zaptro;
     return matchesSearch;
@@ -96,52 +96,52 @@ const UserManagement: React.FC = () => {
           <p style={styles.subtitle}>Controle granular de acesso e distribuição de produtos no ecossistema.</p>
         </div>
         <div style={styles.headerActions}>
-           <button style={styles.refreshBtn} onClick={fetchData} title="Sincronizar Agora">
-             <RefreshCw size={18} />
-           </button>
+          <button style={styles.refreshBtn} onClick={fetchData} title="Sincronizar Agora">
+            <RefreshCw size={18} />
+          </button>
         </div>
       </header>
 
       <div style={styles.statsRow}>
-         <div style={styles.statMini}>
-            <span style={styles.statMiniLabel}>Base Total</span>
-            <span style={styles.statMiniValue}>{users.length}</span>
-         </div>
-         <div style={styles.statMini}>
-            <span style={styles.statMiniLabel}>Licenças Zaptro</span>
-            <span style={{...styles.statMiniValue, color: '#10b981'}}>{users.filter(u => u.tem_zaptro).length}</span>
-         </div>
-         <div style={styles.statMini}>
-            <span style={styles.statMiniLabel}>Apenas Logta</span>
-            <span style={{...styles.statMiniValue, color: 'var(--text-muted)'}}>{users.filter(u => !u.tem_zaptro).length}</span>
-         </div>
+        <div style={styles.statMini}>
+          <span style={styles.statMiniLabel}>Base Total</span>
+          <span style={styles.statMiniValue}>{users.length}</span>
+        </div>
+        <div style={styles.statMini}>
+          <span style={styles.statMiniLabel}>Licenças Zaptro</span>
+          <span style={{ ...styles.statMiniValue, color: '#10b981' }}>{users.filter(u => u.tem_zaptro).length}</span>
+        </div>
+        <div style={styles.statMini}>
+          <span style={styles.statMiniLabel}>Apenas Logta</span>
+          <span style={{ ...styles.statMiniValue, color: 'var(--text-muted)' }}>{users.filter(u => !u.tem_zaptro).length}</span>
+        </div>
       </div>
 
       <div style={styles.controls}>
         <div style={styles.searchBox}>
           <Search size={18} color="#94a3b8" />
-          <input 
-            type="text" 
-            placeholder="Localizar por e-mail, nome ou transportadora..." 
+          <input
+            type="text"
+            placeholder="Localizar por e-mail, nome ou transportadora..."
             style={styles.searchInput}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
+
         <div style={styles.filterGroup}>
-           <button 
-             style={{...styles.filterTab, ...(filterProduct === 'all' ? styles.activeFilter : {})}}
-             onClick={() => setFilterProduct('all')}
-           >Todos</button>
-           <button 
-             style={{...styles.filterTab, ...(filterProduct === 'zaptro' ? styles.activeFilter : {})}}
-             onClick={() => setFilterProduct('zaptro')}
-           ><Zap size={14} /> Zaptro</button>
-           <button 
-             style={{...styles.filterTab, ...(filterProduct === 'logta' ? styles.activeFilter : {})}}
-             onClick={() => setFilterProduct('logta')}
-           ><Shield size={14} /> Logta</button>
+          <button
+            style={{ ...styles.filterTab, ...(filterProduct === 'all' ? styles.activeFilter : {}) }}
+            onClick={() => setFilterProduct('all')}
+          >Todos</button>
+          <button
+            style={{ ...styles.filterTab, ...(filterProduct === 'zaptro' ? styles.activeFilter : {}) }}
+            onClick={() => setFilterProduct('zaptro')}
+          ><Zap size={14} /> Zaptro</button>
+          <button
+            style={{ ...styles.filterTab, ...(filterProduct === 'logta' ? styles.activeFilter : {}) }}
+            onClick={() => setFilterProduct('logta')}
+          ><Shield size={14} /> Logta</button>
         </div>
       </div>
 
@@ -155,62 +155,66 @@ const UserManagement: React.FC = () => {
           <table style={styles.table}>
             <thead>
               <tr style={styles.tableHead}>
-                 <th style={styles.th}>IDENTIDADE DO USUÁRIO</th>
-                 <th style={styles.th}>VÍNCULO CORPORATIVO</th>
-                 <th style={styles.th}>PRIVILÉGIO</th>
-                 <th style={styles.th}>MODO ZAPTRO</th>
-                 <th style={{...styles.th, textAlign: 'right'}}>AÇÕES MASTER</th>
+                <th style={styles.th}>IDENTIDADE DO USUÁRIO</th>
+                <th style={styles.th}>VÍNCULO CORPORATIVO</th>
+                <th style={styles.th}>PRIVILÉGIO</th>
+                <th style={styles.th}>MODO ZAPTRO</th>
+                <th style={{ ...styles.th, textAlign: 'right' }}>AÇÕES MASTER</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.length === 0 ? (
                 <tr><td colSpan={5} style={styles.emptyTd}>Nenhum registro encontrado para esta busca.</td></tr>
               ) : filteredUsers.map(user => (
-                <tr key={user.id} style={styles.tr}>
+                <tr
+                  key={user.id}
+                  style={{ ...styles.tr, cursor: 'pointer' }}
+                  className="hover-scale"
+                >
                   <td style={styles.td}>
-                     <div style={styles.userInfo}>
-                        <div style={styles.avatar}>{(user.full_name || user.email)[0].toUpperCase()}</div>
-                        <div>
-                           <div style={styles.userName}>{user.full_name || 'Usuário Sem Nome'}</div>
-                           <div style={styles.userEmail}><Mail size={12} /> {user.email}</div>
-                        </div>
-                     </div>
+                    <div style={styles.userInfo}>
+                      <div style={styles.avatar}>{(user.full_name || user.email)[0].toUpperCase()}</div>
+                      <div>
+                        <div style={styles.userName}>{user.full_name || 'Usuário Sem Nome'}</div>
+                        <div style={styles.userEmail}><Mail size={12} /> {user.email}</div>
+                      </div>
+                    </div>
                   </td>
                   <td style={styles.td}>
-                     <div style={styles.companyBadge}>
-                        <Building2 size={14} />
-                        <span>{user.company_name}</span>
-                     </div>
+                    <div style={styles.companyBadge}>
+                      <Building2 size={14} />
+                      <span>{user.company_name}</span>
+                    </div>
                   </td>
                   <td style={styles.td}>
-                     <span style={{
-                        ...styles.roleBadge,
-                        backgroundColor: user.role === 'ADMIN' ? '#fef2f2' : user.role.startsWith('MASTER') ? '#eff6ff' : '#f1f5f9',
-                        color: user.role === 'ADMIN' ? '#b91c1c' : user.role.startsWith('MASTER') ? 'var(--primary)' : '#475569'
-                     }}>
-                        {user.role}
-                     </span>
+                    <span style={{
+                      ...styles.roleBadge,
+                      backgroundColor: user.role === 'ADMIN' ? '#fef2f2' : user.role.startsWith('MASTER') ? '#eff6ff' : '#f1f5f9',
+                      color: user.role === 'ADMIN' ? '#b91c1c' : user.role.startsWith('MASTER') ? 'var(--primary)' : '#475569'
+                    }}>
+                      {user.role}
+                    </span>
                   </td>
                   <td style={styles.td}>
-                     <div 
-                        style={{
-                           ...styles.zaptroStatus,
-                           backgroundColor: user.tem_zaptro ? '#ecfdf5' : '#f8fafc',
-                           color: user.tem_zaptro ? '#10b981' : '#94a3b8',
-                           borderColor: user.tem_zaptro ? '#d1fae5' : 'var(--border)',
-                           cursor: 'pointer'
-                        }}
-                        onClick={() => toggleZaptro(user.id, user.tem_zaptro, user.full_name || user.email)}
-                     >
-                        {user.tem_zaptro ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}
-                        <span>{user.tem_zaptro ? 'AUTORIZADO' : 'BLOQUEADO'}</span>
-                     </div>
+                    <div
+                      style={{
+                        ...styles.zaptroStatus,
+                        backgroundColor: user.tem_zaptro ? '#ecfdf5' : '#f8fafc',
+                        color: user.tem_zaptro ? '#10b981' : '#94a3b8',
+                        borderColor: user.tem_zaptro ? '#d1fae5' : 'var(--border)',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => toggleZaptro(user.id, user.tem_zaptro, user.full_name || user.email)}
+                    >
+                      {user.tem_zaptro ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}
+                      <span>{user.tem_zaptro ? 'AUTORIZADO' : 'BLOQUEADO'}</span>
+                    </div>
                   </td>
-                  <td style={{...styles.td, textAlign: 'right'}}>
-                     <div style={styles.actions}>
-                        <button style={styles.actionBtn} title="Editar Segurança"><Shield size={16} /></button>
-                        <button style={styles.actionBtn} title="Logs de Auditoria"><ExternalLink size={16} /></button>
-                     </div>
+                  <td style={{ ...styles.td, textAlign: 'right' }}>
+                    <div style={styles.actions}>
+                      <button style={styles.actionBtn} title="Editar Segurança"><Shield size={16} /></button>
+                      <button style={styles.actionBtn} title="Logs de Auditoria"><ExternalLink size={16} /></button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -229,7 +233,7 @@ const styles: Record<string, any> = {
   subtitle: { color: 'var(--text-muted)', fontSize: '15px', fontWeight: '400', letterSpacing: '0.2px' },
   headerActions: { display: 'flex', gap: '12px' },
   refreshBtn: { width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' },
-  
+
   statsRow: { display: 'flex', gap: '20px', marginBottom: '32px' },
   statMini: { backgroundColor: 'white', padding: '20px 24px', borderRadius: '24px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', minWidth: '180px', boxShadow: 'var(--shadow-sm)' },
   statMiniLabel: { fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' },
@@ -238,19 +242,19 @@ const styles: Record<string, any> = {
   controls: { display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'center' },
   searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'white', padding: '12px 20px', borderRadius: '14px', border: '1px solid var(--border)' },
   searchInput: { border: 'none', outline: 'none', width: '100%', fontSize: '14px', fontWeight: '500', color: 'var(--text-main)', letterSpacing: '0.2px' },
-  
-  filterGroup: { display: 'flex', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '12px', gap: '4px' },
+
+  filterGroup: { display: 'flex', backgroundColor: 'var(--bg-overlay)', padding: '4px', borderRadius: '12px', gap: '4px' },
   filterTab: { padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '500', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', background: 'none', transition: 'all 0.2s', letterSpacing: '0.3px' },
   activeFilter: { backgroundColor: 'white', color: 'var(--primary)', boxShadow: 'var(--shadow-sm)' },
 
   listCard: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  tableHead: { backgroundColor: '#f8fafc', borderBottom: '1px solid var(--border)' },
+  tableHead: { backgroundColor: 'var(--bg-overlay)', borderBottom: '1px solid var(--border)' },
   th: { padding: '16px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' },
   tr: { borderBottom: '1px solid var(--border)', transition: 'background 0.2s' },
   td: { padding: '18px 24px' },
   emptyTd: { padding: '64px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '500', fontSize: '15px' },
-  
+
   loadingBox: { padding: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '15px' },
 
   userInfo: { display: 'flex', alignItems: 'center', gap: '12px' },
@@ -260,9 +264,9 @@ const styles: Record<string, any> = {
 
   companyBadge: { display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f8fafc', borderRadius: '10px', color: 'var(--text-muted)', fontSize: '12px', fontWeight: '600', border: '1px solid var(--border)', letterSpacing: '0.3px' },
   roleBadge: { padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: '600', letterSpacing: '0.5px' },
-  
+
   zaptroStatus: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '24px', fontSize: '11px', fontWeight: '600', border: '1px solid', width: 'fit-content', transition: 'all 0.2s', letterSpacing: '0.4px' },
-  
+
   actions: { display: 'flex', gap: '8px', justifyContent: 'flex-end' },
   actionBtn: { width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', borderRadius: '10px', background: 'white', color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s' }
 };

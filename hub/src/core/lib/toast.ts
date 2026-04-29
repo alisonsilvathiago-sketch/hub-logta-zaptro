@@ -12,6 +12,18 @@ export const toastLoading = (msg: string) => {
   return toast.loading(msg);
 };
 
+export const toastInfo = (msg: string) => {
+  toast(msg, {
+    icon: 'ℹ️',
+    duration: 5000,
+    style: {
+      borderRadius: '16px',
+      background: '#0F172A',
+      color: '#fff',
+    },
+  });
+};
+
 export const toastDismiss = (id?: string) => {
   if (id) toast.dismiss(id);
   else toast.dismiss();

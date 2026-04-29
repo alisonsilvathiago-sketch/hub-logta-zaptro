@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
+import { isMasterRole } from '../utils/logtaRbac';
 
 // Tela elegante de bloqueio
 function BlockScreen({ title, message }: { title: string, message: string }) {
@@ -21,12 +23,19 @@ function BlockScreen({ title, message }: { title: string, message: string }) {
 
 // O Guardião do Logta
 export default function HubGuard({ children, companyId }: { children: React.ReactNode, companyId: string }) {
+  const { profile } = useAuth();
   const [status, setStatus] = useState<'loading' | 'allowed' | 'blocked' | 'maintenance'>('loading');
   const [reason, setReason] = useState('');
 
   useEffect(() => {
     async function validateWithHub() {
       if (!companyId) return;
+
+      // BYPASS: Se for MASTER, o Hub libera tudo automaticamente
+      if (isMasterRole(profile?.role)) {
+        setStatus('allowed');
+        return;
+      }
 
       try {
         // 1. Pegar a API KEY do Hub salva na empresa atual no Logta
@@ -79,7 +88,7 @@ export default function HubGuard({ children, companyId }: { children: React.Reac
     }
 
     validateWithHub();
-  }, [companyId]);
+  }, [companyId, profile?.role]);
 
   if (status === 'loading') {
     return (

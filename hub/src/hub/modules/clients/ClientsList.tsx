@@ -8,6 +8,7 @@ import {
   Zap, AlertTriangle, Sparkles, Clock
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
+import Pagination from '@shared/components/Pagination';
 
 const ClientsList: React.FC = () => {
   const navigate = useNavigate();
@@ -15,6 +16,14 @@ const ClientsList: React.FC = () => {
   const [contacts, setContacts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeSegment, setActiveSegment] = useState('all');
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number | 'all'>(() => {
+    const saved = localStorage.getItem('hub_clients_per_page');
+    return saved === 'all' ? 'all' : Number(saved || 20);
+  });
+  const [totalItems, setTotalItems] = useState(0);
 
   // Cores automáticas para avatares baseados na inicial
   const getAvatarColor = (name: string) => {
@@ -25,18 +34,32 @@ const ClientsList: React.FC = () => {
 
   useEffect(() => {
     fetchContacts();
-  }, []);
+  }, [currentPage, itemsPerPage, activeSegment]); // Re-fetch when page or limit changes
 
   const fetchContacts = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('clients')
-        .select('*, companies(*)')
-        .order('name', { ascending: true });
+        .select('*, companies(*)', { count: 'exact' });
+
+      // Apply segment filters to query
+      if (activeSegment === 'active') query = query.neq('status', 'inactive');
+      if (activeSegment === 'risk') query = query.or('status.eq.risk,health_score.lt.50');
+      if (activeSegment === 'vip') query = query.or('plan.eq.OURO,is_vip.eq.true');
+
+      // Pagination
+      if (itemsPerPage !== 'all') {
+        const from = (currentPage - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
+        query = query.range(from, to);
+      }
+
+      const { data, error, count } = await query.order('name', { ascending: true });
 
       if (error) throw error;
       setContacts(data || []);
+      setTotalItems(count || 0);
     } catch (error) {
       console.error('Error fetching contacts:', error);
     } finally {
@@ -44,12 +67,18 @@ const ClientsList: React.FC = () => {
     }
   };
 
+  const handleItemsPerPageChange = (val: number | 'all') => {
+    setItemsPerPage(val);
+    setCurrentPage(1);
+    localStorage.setItem('hub_clients_per_page', String(val));
+  };
+
   const filteredContacts = contacts.filter(c => {
     // 1. Filtro de Busca
     const matchesSearch = 
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.companies?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.companies?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     if (!matchesSearch) return false;
 
@@ -97,7 +126,7 @@ const ClientsList: React.FC = () => {
       {/* DASHBOARD SUMMARY */}
       <div style={styles.summaryRow}>
         <div style={styles.summaryCard}>
-          <div style={{...styles.summaryIcon, backgroundColor: '#EEF2FF'}}><Users size={20} color="#6366F1" /></div>
+          <div style={{...styles.summaryIcon, backgroundColor: '#6366F115'}}><Users size={20} color="#6366F1" /></div>
           <div>
             <p style={styles.summaryLabel}>Total de Clientes</p>
             <h3 style={styles.summaryValue}>{contacts.length}</h3>
@@ -105,14 +134,14 @@ const ClientsList: React.FC = () => {
           <div style={{...styles.trendTag, color: '#10B981'}}>+4 <TrendingUp size={12} /></div>
         </div>
         <div style={styles.summaryCard}>
-          <div style={{...styles.summaryIcon, backgroundColor: '#ECFDF5'}}><CheckCircle2 size={20} color="#10B981" /></div>
+          <div style={{...styles.summaryIcon, backgroundColor: '#6366F1'}}><CheckCircle2 size={20} color="#FFFFFF" /></div>
           <div>
             <p style={styles.summaryLabel}>Clientes Ativos</p>
             <h3 style={styles.summaryValue}>{contacts.filter(c => c.status !== 'inactive').length}</h3>
           </div>
         </div>
         <div style={styles.summaryCard}>
-          <div style={{...styles.summaryIcon, backgroundColor: '#FFF7ED'}}><DollarSign size={20} color="#F59E0B" /></div>
+          <div style={{...styles.summaryIcon, backgroundColor: '#6366F115'}}><DollarSign size={20} color="#6366F1" /></div>
           <div>
             <p style={styles.summaryLabel}>MRR Estimado</p>
             <h3 style={styles.summaryValue}>R$ 42.800</h3>
@@ -120,7 +149,7 @@ const ClientsList: React.FC = () => {
           <div style={{...styles.trendTag, color: '#10B981'}}>+8.2% <TrendingUp size={12} /></div>
         </div>
         <div style={styles.summaryCard}>
-          <div style={{...styles.summaryIcon, backgroundColor: '#FEF2F2'}}><TrendingDown size={20} color="#EF4444" /></div>
+          <div style={{...styles.summaryIcon, backgroundColor: '#4F46E5'}}><TrendingDown size={20} color="#FFFFFF" /></div>
           <div>
             <p style={styles.summaryLabel}>Taxa de Churn</p>
             <h3 style={styles.summaryValue}>2.4%</h3>
@@ -174,7 +203,7 @@ const ClientsList: React.FC = () => {
               <tr key={i} style={styles.tr} onClick={() => navigate(`/master/clientes/${c.id}`)}>
                 <td style={styles.td}>
                   <div style={styles.uInfo}>
-                    <div style={{...styles.uAvatar, backgroundColor: getAvatarColor(c.name)}}>{c.name[0]}</div>
+                    <div style={{...styles.uAvatar, backgroundColor: getAvatarColor(c.name || 'U')}}>{(c.name || 'U')[0]}</div>
                     <div>
                       <strong style={styles.uName}>{c.name}</strong>
                       <div style={{display: 'flex', gap: '6px', alignItems: 'center'}}>
@@ -216,6 +245,14 @@ const ClientsList: React.FC = () => {
             ))}
           </tbody>
         </table>
+        
+        <Pagination 
+          currentPage={currentPage}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
       </div>
     </div>
   );
@@ -238,18 +275,18 @@ const styles: Record<string, any> = {
   
   tableCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #E2E8F0', overflow: 'hidden' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  thead: { textAlign: 'left', backgroundColor: '#F4F4F4' },
+  thead: { textAlign: 'left', backgroundColor: 'var(--bg-overlay)' },
   th: { padding: '18px 32px', fontSize: '11px', fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.8px' },
-  tr: { borderBottom: '1px solid #F4F4F4', cursor: 'pointer', transition: 'background 0.2s' },
+  tr: { borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.2s' },
   td: { padding: '20px 32px' },
   loadingTd: { padding: '100px', textAlign: 'center', color: '#94A3B8', fontWeight: '600' },
   
   uInfo: { display: 'flex', alignItems: 'center', gap: '14px' },
-  uAvatar: { width: '44px', height: '44px', borderRadius: '18px', background: '#F4F4F4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', color: '#6366F1', fontSize: '18px' },
+  uAvatar: { width: '44px', height: '44px', borderRadius: '18px', background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', color: '#6366F1', fontSize: '18px' },
   uName: { fontSize: '15px', fontWeight: '600', color: '#0F172A', display: 'block', letterSpacing: '0.2px' },
   uSubtext: { fontSize: '12px', color: '#94A3B8', fontWeight: '500', letterSpacing: '0.2px' },
   
-  brandTag: { padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: '600', background: '#F4F4F4', color: '#64748B', letterSpacing: '0.5px' },
+  brandTag: { padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: '600', background: 'var(--bg-overlay)', color: '#64748B', letterSpacing: '0.5px' },
   contactCell: { display: 'flex', flexDirection: 'column', gap: '4px' },
   contactItem: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748B', fontWeight: '500', letterSpacing: '0.1px' },
   
@@ -257,7 +294,7 @@ const styles: Record<string, any> = {
   statusDot: { width: '8px', height: '8px', borderRadius: '50%' },
   
   actions: { display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'flex-end' },
-  actionBtn: { width: '36px', height: '36px', borderRadius: '10px', border: 'none', background: '#F4F4F4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', cursor: 'pointer', transition: 'all 0.2s' },
+  actionBtn: { width: '36px', height: '36px', borderRadius: '10px', border: 'none', background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', cursor: 'pointer', transition: 'all 0.2s' },
   summaryRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' },
   summaryCard: { backgroundColor: 'white', padding: '24px', borderRadius: '32px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' },
   summaryIcon: { width: '48px', height: '48px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
@@ -272,8 +309,8 @@ const styles: Record<string, any> = {
   aiActionBtn: { padding: '8px 16px', borderRadius: '12px', border: '1px solid #374151', backgroundColor: 'transparent', color: 'white', fontSize: '12px', fontWeight: '600', cursor: 'pointer', letterSpacing: '0.3px' },
   
   segmentBtn: { padding: '10px 16px', borderRadius: '14px', border: 'none', background: 'transparent', color: '#64748B', fontSize: '14px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' },
-  activeSegment: { backgroundColor: '#F1F5F9', color: '#6366F1' },
-  countBadge: { padding: '2px 8px', borderRadius: '8px', backgroundColor: 'white', border: '1px solid #E2E8F0', fontSize: '10px', color: '#94A3B8' },
+  activeSegment: { backgroundColor: 'var(--bg-active)', color: '#6366F1' },
+  countBadge: { padding: '2px 8px', borderRadius: '8px', backgroundColor: 'white', border: '1px solid var(--border)', fontSize: '10px', color: '#94A3B8' },
   
   volumeCell: { display: 'flex', flexDirection: 'column', gap: '4px' },
   mrrText: { fontSize: '14px', fontWeight: '600', color: '#0F172A', letterSpacing: '0.2px' },

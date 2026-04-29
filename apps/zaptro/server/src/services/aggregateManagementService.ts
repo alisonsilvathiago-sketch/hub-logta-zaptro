@@ -42,11 +42,11 @@ export class AggregateManagementService {
       console.log(`[TalentScout] Finding best aggregate for delivery ${deliveryId}...`);
       
       const { data: aggregate } = await this.supabase
-        .from('logistics_aggregates')
+        .from('aggregates')
         .select('*')
         .eq('company_id', companyId)
-        .eq('status', 'ACTIVE')
-        .order('overall_score', { ascending: false })
+        .eq('status', 'ativo')
+        .order('score', { ascending: false })
         .limit(1)
         .single();
 
@@ -56,11 +56,11 @@ export class AggregateManagementService {
       }
 
       // Create Assignment
-      const { data: assignment } = await this.supabase.from('logistics_aggregate_assignments').insert([{
+      const { data: assignment } = await this.supabase.from('aggregate_assignments').insert([{
         aggregate_id: aggregate.id,
         delivery_id: deliveryId,
         amount: 35.0, // Base delivery pay
-        status: 'ASSIGNED'
+        status: 'atribuído'
       }]).select().single();
 
       await this.logAggregateEvent(aggregate.id, 'ASSIGNMENT', { deliveryId, assignmentId: assignment?.id });
@@ -79,21 +79,21 @@ export class AggregateManagementService {
     const isSuccess = metadata.status === 'COMPLETED';
     const bonus = isSuccess ? 1.5 : -5.0;
 
-    const { data: agg } = await this.supabase.from('logistics_aggregates').select('*').eq('id', aggregateId).single();
+    const { data: agg } = await this.supabase.from('aggregates').select('*').eq('id', aggregateId).single();
     if (!agg) return;
 
     const newScore = Math.min(100, Math.max(0, agg.overall_score + bonus));
     const newEarnings = agg.total_earnings + (isSuccess ? metadata.amount : 0);
 
-    await this.supabase.from('logistics_aggregates').update({
-      overall_score: newScore,
+    await this.supabase.from('aggregates').update({
+      score: newScore,
       total_earnings: newEarnings,
       total_deliveries: agg.total_deliveries + 1,
-      status: newScore < 40 ? 'BLOCKED' : 'ACTIVE'
+      status: newScore < 40 ? 'bloqueado' : 'ativo'
     }).eq('id', aggregateId);
 
-    await this.supabase.from('logistics_aggregate_assignments').update({
-      status: isSuccess ? 'COMPLETED' : 'FAILED',
+    await this.supabase.from('aggregate_assignments').update({
+      status: isSuccess ? 'concluído' : 'falhou',
       completed_at: new Date()
     }).eq('id', assignmentId);
 
@@ -139,7 +139,7 @@ export class AggregateManagementService {
    * LOGTA Style Memory
    */
   private async logAggregateEvent(aggregateId: string, type: string, details: any) {
-    await this.supabase.from('logistics_aggregate_logs').insert([{
+    await this.supabase.from('aggregate_logs').insert([{
       aggregate_id: aggregateId,
       event_type: type,
       details

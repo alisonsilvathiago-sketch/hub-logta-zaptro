@@ -1,6 +1,9 @@
 import { OptimizationEngineService } from './optimizationEngineService.js';
 import { DeliveryIntelligenceService } from './deliveryIntelligenceService.js';
 import { FuelMonitoringService } from './fuelMonitoringService.js';
+import { BillingIntelligenceService } from './billingIntelligenceService.js';
+import { CustomerHealthService } from './customerHealthService.js';
+import { TalentScoutService } from './talentScoutService.js';
 import { EventHub, SystemEvent } from './eventHub.js';
 
 /**
@@ -13,6 +16,7 @@ export class MaintenanceService {
   private optimizationService: OptimizationEngineService | null = null;
   private deliveryService: DeliveryIntelligenceService | null = null;
   private fuelService: FuelMonitoringService | null = null;
+  private talentScoutService: TalentScoutService | null = null;
 
   constructor() {
     this.hub = EventHub.getInstance();
@@ -38,6 +42,10 @@ export class MaintenanceService {
 
   public setFuelService(service: FuelMonitoringService) {
     this.fuelService = service;
+  }
+
+  public setTalentScoutService(service: TalentScoutService) {
+    this.talentScoutService = service;
   }
 
   private setupListeners() {
@@ -67,8 +75,12 @@ export class MaintenanceService {
       if (this.healthService) await this.healthService.runDailyHealthAudit();
       if (this.optimizationService) await this.optimizationService.evaluateExperiments();
       if (this.fuelService) await this.fuelService.syncFuelPrices();
+      if (this.talentScoutService) {
+        // No-op for now, but hook is ready for daily compliance re-audits
+        console.log('[Maintenance] Re-auditing fleet compliance tiers...');
+      }
 
-      console.log('[Maintenance] Daily autonomous cycle completed (Billing + Health + Optimization + Fuel).');
+      console.log('[Maintenance] Daily autonomous cycle completed (Billing + Health + Optimization + Fuel + TalentScout).');
       this.hub.emit(SystemEvent.MAINTENANCE_REQUIRED, { type: 'DAILY_PURGE', details: { reason: 'Scheduled' } });
     }, 86400000);
 

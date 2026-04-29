@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import '@shared/index.css';
+import ErrorBoundary from '@shared/components/ErrorBoundary';
 import { AuthProvider } from './core/context/AuthContext';
 import { TenantProvider } from './core/context/TenantContext';
 import { ToastProvider } from './core/context/ToastContext';
@@ -17,7 +18,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <SystemConfigProvider>
             <ToastProvider>
               <SyncProvider>
-                <App />
+                <ErrorBoundary>
+                  <App />
+                </ErrorBoundary>
               </SyncProvider>
             </ToastProvider>
           </SystemConfigProvider>

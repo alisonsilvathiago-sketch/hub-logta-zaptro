@@ -3,7 +3,7 @@ import {
   ChevronLeft, ChevronRight, Search, Filter, Plus,
   Calendar as CalendarIcon, CheckCircle2, Clock, 
   Video, User, MoreHorizontal, X, Edit3, Trash2,
-  Check, CalendarDays, CalendarRange, List, Sparkles
+  Check, CalendarDays, CalendarRange, List, Sparkles, FileText
 } from 'lucide-react';
 import { 
   format, addMonths, subMonths, startOfMonth, 
@@ -87,9 +87,10 @@ const Agenda: React.FC = () => {
     const loadDocs = async () => {
       try {
         const docs = await googleCalendarApi.getRecentDocs();
-        setRecentDocs(docs || []);
+        setRecentDocs(Array.isArray(docs) ? docs : []);
       } catch (err) {
         console.error('Failed to load docs');
+        setRecentDocs([]);
       }
     };
     
@@ -116,27 +117,31 @@ const Agenda: React.FC = () => {
 
       // Normalize Events
       const normalizedEvents: Event[] = [
-        ...(meetings || []).map(m => ({
-          id: m.id,
-          title: m.title || 'Reunião',
-          type: 'reuniao' as const,
-          start_at: m.scheduled_at ? parseISO(m.scheduled_at) : new Date(),
-          status: 'pendente' as const,
-          responsible_id: 'system',
-          responsible_name: 'Equipe Logta',
-          description: m.meet_link,
-          color: '#3B82F6',
-          hasMeet: true
-        })),
+        ...(meetings || []).map(m => {
+          const startDate = m.scheduled_at ? parseISO(m.scheduled_at) : new Date();
+          return {
+            id: m.id,
+            title: m.title || 'Reunião',
+            type: 'reuniao' as const,
+            start_at: isNaN(startDate.getTime()) ? new Date() : startDate,
+            status: 'pendente' as const,
+            responsible_id: 'system',
+            responsible_name: 'Equipe Logta',
+            description: m.meet_link,
+            color: '#3B82F6',
+            hasMeet: true
+          };
+        }),
         ...(tasks || []).map(t => {
           const collab = collabWithColors.find(c => c.id === t.created_by);
           const title = t.title || 'Tarefa sem título';
           const isCRM = title.toLowerCase().includes('follow') || title.toLowerCase().includes('cliente');
+          const dueDate = t.due_at ? parseISO(t.due_at) : new Date();
           return {
             id: t.id,
             title: title,
             type: (isCRM ? 'crm' : 'tarefa') as any,
-            start_at: t.due_at ? parseISO(t.due_at) : new Date(),
+            start_at: isNaN(dueDate.getTime()) ? new Date() : dueDate,
             status: t.status as any,
             responsible_id: t.created_by || 'system',
             responsible_name: collab?.full_name || 'Equipe',
@@ -279,9 +284,9 @@ const Agenda: React.FC = () => {
                     <h4 style={styles.cardEventTitle}>{e.title}</h4>
                     <div style={styles.cardEventFooter}>
                       <div style={{...styles.miniAvatar, backgroundColor: e.color}}>
-                        {e.responsible_avatar ? <img src={e.responsible_avatar} style={styles.miniAvatarImg} /> : e.responsible_name[0]}
+                        {e.responsible_avatar ? <img src={e.responsible_avatar} style={styles.miniAvatarImg} /> : (e.responsible_name || 'U')[0]}
                       </div>
-                      <span style={styles.cardEventUser}>{e.responsible_name.split(' ')[0]}</span>
+                      <span style={styles.cardEventUser}>{(e.responsible_name || 'Equipe').split(' ')[0]}</span>
                     </div>
                   </div>
                 ))}
@@ -462,7 +467,7 @@ const Agenda: React.FC = () => {
           <div style={styles.teamList}>
             {collaborators.slice(0, 5).map(c => (
               <div key={c.id} style={styles.teamItem}>
-                <div style={{...styles.teamAvatar, backgroundColor: c.color}}>{c.full_name[0]}</div>
+                <div style={{...styles.teamAvatar, backgroundColor: c.color}}>{(c.full_name || 'U')[0]}</div>
                 <span style={styles.teamName}>{c.full_name}</span>
                 <div style={{...styles.statusDot, backgroundColor: '#10B981'}} />
               </div>
@@ -484,7 +489,14 @@ const Agenda: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={styles.docName}>{doc.name}</span>
-                  <span style={{ fontSize: '10px', color: '#94A3B8' }}>{format(parseISO(doc.modifiedTime), 'd MMM', { locale: ptBR })}</span>
+                  <span style={{ fontSize: '10px', color: '#94A3B8' }}>
+                    {doc.modifiedTime ? (
+                      (() => {
+                        const d = parseISO(doc.modifiedTime);
+                        return isNaN(d.getTime()) ? '-' : format(d, 'd MMM', { locale: ptBR });
+                      })()
+                    ) : '-'}
+                  </span>
                 </div>
               </div>
             )) : (
@@ -609,7 +621,7 @@ const Agenda: React.FC = () => {
       <LogtaModal 
         isOpen={isDetailsOpen} 
         onClose={() => setIsDetailsOpen(false)}
-        width="450px"
+        size="md"
         title={selectedEvent?.type === 'reuniao' ? 'Detalhes da Reunião' : 'Detalhes da Tarefa'}
       >
         {selectedEvent && (
@@ -680,7 +692,7 @@ const Agenda: React.FC = () => {
       <LogtaModal 
         isOpen={isCreateOpen} 
         onClose={() => setIsCreateOpen(false)}
-        width="500px"
+        size="md"
         title="Agendar Nova Atividade"
       >
         <div style={styles.createModalBody}>

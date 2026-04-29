@@ -20,7 +20,7 @@ export interface SegmentConfig {
 
 export const SEGMENT_CONFIGS: Record<string, SegmentConfig> = {
   'Transporte Rodoviário (Carga Geral)': {
-    primaryLabel: 'Logística de Cargas',
+    primaryLabel: 'Logita de Cargas',
     secondaryLabel: 'Distribuição Nacional',
     mainIcon: Truck,
     specialKpi: 'Tonelagem Total',
@@ -35,7 +35,7 @@ export const SEGMENT_CONFIGS: Record<string, SegmentConfig> = {
     specialKpiIcon: Zap,
     terminology: { drivers: 'Motoristas', fleet: 'Caminhões Frio', load: 'Perecíveis', destinations: 'Pontos de Venda' }
   },
-  'Logística e Armazenagem': {
+  'Logita e Armazenagem': {
     primaryLabel: 'Intralogística',
     secondaryLabel: 'Gestão de CD e Estoque',
     mainIcon: Package,
@@ -60,7 +60,7 @@ export const SEGMENT_CONFIGS: Record<string, SegmentConfig> = {
     terminology: { drivers: 'Entregadores', fleet: 'VUCs/Motos', load: 'Pacotes', destinations: 'Consumidores' }
   },
   'Transporte de Grãos / Agronegócio': {
-    primaryLabel: 'Logística Agro',
+    primaryLabel: 'Logita Agro',
     secondaryLabel: 'Escoamento de Safra',
     mainIcon: Tractor,
     specialKpi: 'Volume (Sacas/Kg)',
@@ -68,7 +68,7 @@ export const SEGMENT_CONFIGS: Record<string, SegmentConfig> = {
     terminology: { drivers: 'Caminhoneiros', fleet: 'Bitrens/Graneleiros', load: 'Safra', destinations: 'Porto/Silagem' }
   },
   'E-commerce e Courier': {
-    primaryLabel: 'E-commerce Log',
+    primaryLabel: 'E-commerce Logita',
     secondaryLabel: 'Fulfillment & Shippings',
     mainIcon: ShoppingCart,
     specialKpi: 'Pacotes por Hora',

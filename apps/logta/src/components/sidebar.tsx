@@ -102,7 +102,7 @@ const Sidebar: React.FC = () => {
             flexShrink: 0,
           }}
         >
-          <Sparkles size={16} color="#fff" />
+          <img src="/logita-logo.png" alt="Logita" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 8 }} />
         </div>
         <div
           style={{
@@ -113,8 +113,8 @@ const Sidebar: React.FC = () => {
             transition: 'opacity 0.18s ease, max-width 0.25s ease',
           }}
         >
-          <p style={{ margin: 0, color: TEXT_MAIN, fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em' }}>Logta</p>
-          <p style={{ margin: 0, color: TEXT_MUTED, fontSize: 10, fontWeight: 600, textTransform: 'uppercase' }}>Black Purple UI</p>
+          <p style={{ margin: 0, color: TEXT_MAIN, fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em' }}>Logita</p>
+          <p style={{ margin: 0, color: TEXT_MUTED, fontSize: 10, fontWeight: 600, textTransform: 'uppercase' }}>Logistics Intelligence</p>
         </div>
       </div>
 

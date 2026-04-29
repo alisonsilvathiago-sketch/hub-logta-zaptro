@@ -64,9 +64,9 @@ const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ isOpen, onClose }) =>
           { id: 'c1', type: 'client', name: 'João Ricardo Pereira', email: 'joao@silva.com', owner: 'Silva Logta', path: '/master/clientes' },
           { id: 'e1', type: 'company', name: 'Logta Soluções', subdomain: 'logta', path: '/master/companies' }
         ].filter(r => 
-          r.name.toLowerCase().includes(lowerSearch) || 
-          (r as any).plate?.toLowerCase().includes(lowerSearch) ||
-          (r as any).owner?.toLowerCase().includes(lowerSearch)
+          (r.name || '').toLowerCase().includes(lowerSearch) || 
+          ((r as any).plate || '').toLowerCase().includes(lowerSearch) ||
+          ((r as any).owner || '').toLowerCase().includes(lowerSearch)
         );
 
         setResults([...staticShortcuts.filter(s => s.name.toLowerCase().includes(lowerSearch)), ...mockResults]);

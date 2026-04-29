@@ -156,10 +156,24 @@ const Login: React.FC = () => {
   return (
     <div style={styles.page}>
       <div style={styles.leftSide} className="hide-mobile">
-        <Truck size={48} color="#38BDF8" style={{ marginBottom: '24px' }} />
-        <h2 style={{ fontSize: '24px', fontWeight: '800' }}>Logta Logistics</h2>
-        <p style={{ color: '#94A3B8', textAlign: 'center', maxWidth: '300px', marginTop: '12px' }}>
-          O controle total da sua transportadora em um único lugar.
+        <div style={{
+          width: '100px',
+          height: '100px',
+          borderRadius: '24px',
+          background: 'rgba(255,255,255,0.02)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '32px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          overflow: 'hidden'
+        }}>
+          <img src="/logita-logo.png" alt="Logita" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        </div>
+        <h2 style={{ fontSize: '38px', fontWeight: '900', letterSpacing: '-0.05em' }}>Logita</h2>
+        <p style={{ color: '#94A3B8', textAlign: 'center', maxWidth: '300px', marginTop: '8px', fontSize: '16px', fontWeight: '500' }}>
+          Intelligence & Logistics Control
         </p>
       </div>
 
@@ -167,6 +181,18 @@ const Login: React.FC = () => {
         <div style={styles.formContainer}>
           <h1 style={styles.title}>Bem-vindo de volta</h1>
           <p style={styles.subtitle}>Acesse sua conta para gerenciar sua frota.</p>
+
+          <div style={{
+            backgroundColor: 'rgba(56, 189, 248, 0.1)',
+            border: '1px solid rgba(56, 189, 248, 0.2)',
+            padding: '12px',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            fontSize: '13px'
+          }}>
+            <p style={{ margin: 0, color: '#38BDF8', fontWeight: '700' }}>Teste de Acesso:</p>
+            <p style={{ margin: '4px 0 0', color: '#94A3B8' }}>User: logta@teste.com | Pass: 123456</p>
+          </div>
 
           {error && <div style={styles.error}><AlertCircle size={18} /> {error}</div>}
 

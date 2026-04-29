@@ -17,12 +17,13 @@ import MasterBilling from './Billing';
 import InteractionsTab from './Interactions';
 import EvolutionManager from './EvolutionManager';
 import HubNotifications from '../../pages/HubNotifications';
-import MasterStaff from './Staff';
+import { useNavigate } from 'react-router-dom';
 
 const MasterSettings: React.FC = () => {
   const { profile } = useAuth();
   const { configs: globalConfigs, refreshConfigs } = useSystemConfig();
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Get initial tab from URL or default to 'geral'
   const queryParams = new URLSearchParams(location.search);
@@ -119,7 +120,13 @@ const MasterSettings: React.FC = () => {
           color={primaryColor} setColor={setPrimaryColor}
         />
       );
-      case 'equipe': return <MasterStaff />;
+      case 'equipe': return (
+        <div style={styles.tabContent}>
+          <h3 style={styles.tabTitle}>Equipe Master Hub</h3>
+          <p style={styles.tabSub}>A gestão de membros agora é centralizada no Team Hub para melhor governança.</p>
+          <button style={{...styles.saveBtn, marginTop: '24px'}} onClick={() => navigate('/master/team')}>Ir para Team Hub</button>
+        </div>
+      );
       case 'financeiro': return <MasterBilling summaryOnly={true} />;
       case 'interacoes': return <InteractionsTab />;
       case 'evolution': return <EvolutionManager />;

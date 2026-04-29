@@ -23,6 +23,7 @@ import Modal from '../components/Modal';
 import { getSegmentConfig } from '../utils/segmentLabels';
 import FinanceCalculator from '../components/FinanceCalculator';
 import { Thermometer } from 'lucide-react';
+import { FuelDashboardCard } from '@shared/components/FuelIntelligence';
 
 import { 
   RHDashboard, 
@@ -63,6 +64,7 @@ const Dashboard: React.FC = () => {
     expectedRevenue: 0
   });
   const [activities, setActivities] = useState<any[]>([]);
+  const [fuelPrices, setFuelPrices] = useState<any[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [calcDisplay, setCalcDisplay] = useState('0');
@@ -139,6 +141,10 @@ const Dashboard: React.FC = () => {
         .eq('company_id', profile.company_id);
       
       setCalendarEvents(events || []);
+
+      // Fetch Fuel Prices
+      const { data: fuelData } = await supabase.from('fuel_prices').select('*').limit(4);
+      setFuelPrices(fuelData || []);
     } catch (err) {
       console.error('Error fetching admin metrics:', err);
     } finally {
@@ -303,6 +309,10 @@ const Dashboard: React.FC = () => {
             )}
           </div>
         ))}
+        <FuelDashboardCard 
+          prices={fuelPrices} 
+          onClick={() => window.open('http://localhost:5175/master/logistica?tab=combustivel', '_blank')} 
+        />
       </div>
 
       {/* Charts Row */}

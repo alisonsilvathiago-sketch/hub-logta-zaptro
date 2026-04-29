@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send, Smile, Paperclip, Mic, User, Headset, ShieldCheck, Building2, Wallet, Plus } from 'lucide-react';
+import { 
+  MessageSquare, X, Send, Smile, Paperclip, 
+  Headset, ShieldCheck, Building2, Wallet, Plus, 
+  ChevronRight, LifeBuoy, FileText, DollarSign,
+  User, CheckCheck, Clock
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function ChatWidget() {
@@ -10,44 +15,36 @@ export default function ChatWidget() {
   const [chat, setChat] = useState<any[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 1. Inicializar Usuário e Conversa
+  // 1. Initialize User and check for Active Conversation
   useEffect(() => {
     const initChat = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
 
-      // Busca ou cria uma conversa de suporte para este usuário
-      let { data: conv } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('type', 'support')
-        .contains('metadata', { user_id: user.id })
-        .maybeSingle();
+      // In a real scenario, we'd fetch the company_id from the user's profile
+      // For now, let's assume a default company or try to find it
+      const { data: profile } = await supabase.from('profiles').select('company_id').eq('id', user.id).maybeSingle();
+      if (profile?.company_id) setCompanyId(profile.company_id);
 
-      if (!conv) {
-        const { data: newConv } = await supabase
-          .from('conversations')
-          .insert({ 
-            type: 'support', 
-            name: `Suporte: ${user.email}`,
-            metadata: { user_id: user.id, status: 'open' }
-          })
-          .select()
-          .single();
-        
-        if (newConv) {
-          conv = newConv;
-          // Adiciona o usuário como participante
-          await supabase.from('participants').insert({ conversation_id: newConv.id, user_id: user.id });
-        }
-      }
+      // Find existing open conversation in hub_conversations
+      const { data: conv } = await supabase
+        .from('hub_conversations')
+        .select('id, status, department')
+        .eq('user_id', user.id)
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (conv) {
         setConversationId(conv.id);
+        setSelectedDept(conv.department);
+        setStep('chat');
         fetchMessages(conv.id, user.id);
         subscribeToMessages(conv.id, user.id);
       }
@@ -58,7 +55,7 @@ export default function ChatWidget() {
 
   const fetchMessages = async (cid: string, uid: string) => {
     const { data } = await supabase
-      .from('messages')
+      .from('hub_messages')
       .select('*')
       .eq('conversation_id', cid)
       .order('created_at', { ascending: true });
@@ -66,10 +63,12 @@ export default function ChatWidget() {
     if (data) {
       setChat(data.map(m => ({
         id: m.id,
-        user: m.sender_id === uid ? 'Você' : 'Suporte',
-        text: m.content,
+        user: m.sender_type === 'customer' ? 'Você' : m.sender_type === 'agent' ? 'Atendente' : 'Sistema',
+        text: m.message_text,
         time: new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        isMe: m.sender_id === uid
+        isMe: m.sender_type === 'customer',
+        type: m.type,
+        metadata: m.metadata
       })));
     }
   };
@@ -80,7 +79,7 @@ export default function ChatWidget() {
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
-        table: 'messages', 
+        table: 'hub_messages', 
         filter: `conversation_id=eq.${cid}` 
       }, (payload) => {
         const newM = payload.new;
@@ -88,10 +87,12 @@ export default function ChatWidget() {
           if (prev.find(m => m.id === newM.id)) return prev;
           return [...prev, {
             id: newM.id,
-            user: newM.sender_id === uid ? 'Você' : 'Suporte',
-            text: newM.content,
+            user: newM.sender_type === 'customer' ? 'Você' : newM.sender_type === 'agent' ? 'Atendente' : 'Sistema',
+            text: newM.message_text,
             time: new Date(newM.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-            isMe: newM.sender_id === uid
+            isMe: newM.sender_type === 'customer',
+            type: newM.type,
+            metadata: newM.metadata
           }];
         });
       })
@@ -108,164 +109,223 @@ export default function ChatWidget() {
     }
   }, [chat, isOpen]);
 
+  const startConversation = async (dept: string) => {
+    if (!userId) return;
+    
+    setSelectedDept(dept);
+    
+    // 1. Create conversation in new hub_conversations table
+    const { data: conv, error: cErr } = await supabase
+      .from('hub_conversations')
+      .insert({
+        company_id: companyId,
+        user_id: userId,
+        department: dept,
+        status: 'open',
+        priority: 'medium'
+      })
+      .select()
+      .single();
+
+    if (cErr || !conv) return;
+
+    setConversationId(conv.id);
+    setStep('chat');
+
+    // 2. Create automatic welcome message
+    await supabase.from('hub_messages').insert({
+      conversation_id: conv.id,
+      sender_id: '00000000-0000-0000-0000-000000000000', // System ID
+      sender_type: 'system',
+      message_text: `Olá! 👋 Recebemos sua solicitação para o setor ${dept.toUpperCase()}. Um de nossos especialistas entrará em contato em breve.`,
+      type: 'system'
+    });
+
+    // 3. Create Support Ticket entry
+    await supabase.from('hub_tickets').insert({
+      conversation_id: conv.id,
+      category: dept
+    });
+
+    subscribeToMessages(conv.id, userId);
+  };
+
   const handleSend = async () => {
     if (!msg.trim() || !conversationId || !userId) return;
 
     const textToSend = msg;
     setMsg('');
 
-    await supabase.from('messages').insert({
+    await supabase.from('hub_messages').insert({
       conversation_id: conversationId,
       sender_id: userId,
-      content: textToSend,
+      sender_type: 'customer',
+      message_text: textToSend,
       type: 'text'
     });
-
-    if (step === 'welcome') {
-      setStep('chat');
-    }
-  };
-
-  const selectDept = async (dept: string) => {
-    if (!conversationId || !userId) return;
-    setSelectedDept(dept);
-    const text = `Quero falar com o setor: ${dept}`;
-    await supabase.from('messages').insert({
-      conversation_id: conversationId,
-      sender_id: userId,
-      content: text,
-      type: 'text',
-      metadata: { department: dept }
-    });
-    setStep('chat');
   };
 
   const departments = [
-    { name: 'Atendimento', icon: Headset, color: '#6366F1' },
-    { name: 'Suporte Técnico', icon: ShieldCheck, color: '#10B981' },
-    { name: 'Administração', icon: Building2, color: '#F59E0B' },
-    { name: 'Financeiro', icon: Wallet, color: '#EF4444' },
+    { id: 'suporte', name: 'Suporte Técnico', icon: Headset, color: '#6366F1', desc: 'Dúvidas e erros' },
+    { id: 'financeiro', name: 'Financeiro', icon: Wallet, color: '#10B981', desc: 'Boletos e créditos' },
+    { id: 'comercial', name: 'Comercial', icon: Building2, color: '#F59E0B', desc: 'Novos planos' },
+    { id: 'operacao', name: 'Operação', icon: ShieldCheck, color: '#EF4444', desc: 'Status de entregas' },
   ];
 
   return (
-    <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ position: 'fixed', bottom: '32px', right: '32px', zIndex: 10000, fontFamily: 'Inter, sans-serif' }}>
       {!isOpen && (
         <button 
           onClick={() => setIsOpen(true)}
           style={{
-            width: '64px', height: '64px', borderRadius: '22px',
-            background: 'linear-gradient(135deg, #6366F1, #4338CA)',
+            width: '72px', height: '72px', borderRadius: '24px',
+            background: 'linear-gradient(135deg, #6366F1 0%, #0F172A 100%)',
             color: '#fff', border: 'none', cursor: 'pointer',
-            boxShadow: '0 12px 40px rgba(99,102,241,0.4)',
+            boxShadow: '0 20px 40px rgba(99,102,241,0.4)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+            position: 'relative'
           }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1) translateY(-4px)'}
+          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08) translateY(-4px)'}
           onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
         >
-          <MessageSquare size={30} />
-          <span style={{ position: 'absolute', top: '-4px', right: '-4px', width: '22px', height: '22px', background: '#EF4444', border: '3px solid #fff', borderRadius: '50%', fontSize: '11px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>1</span>
+          <MessageSquare size={32} />
+          <div style={{ position: 'absolute', top: '-4px', right: '-4px', width: '24px', height: '24px', backgroundColor: '#EF4444', border: '4px solid #fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '900' }}>1</div>
         </button>
       )}
 
       {isOpen && (
         <div style={{
-          width: '400px', height: '600px', background: '#fff', borderRadius: '28px',
-          boxShadow: '0 25px 70px rgba(0,0,0,0.2)', border: '1px solid rgba(0,0,0,0.05)',
+          width: '420px', height: '640px', backgroundColor: '#fff', borderRadius: '32px',
+          boxShadow: '0 40px 100px rgba(0,0,0,0.25)', border: '1px solid rgba(0,0,0,0.05)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          animation: 'chatOpen 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+          animation: 'chatSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
         }}>
           <style>{`
-            @keyframes chatOpen {
-              from { opacity: 0; transform: scale(0.9) translateY(40px); }
-              to { opacity: 1; transform: scale(1) translateY(0); }
+            @keyframes chatSlideUp {
+              from { opacity: 0; transform: translateY(40px) scale(0.95); }
+              to { opacity: 1; transform: translateY(0) scale(1); }
             }
           `}</style>
           
-          <div style={{ padding: '24px', background: '#0D1B3E', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{ width: 44, height: 44, borderRadius: '14px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
-                <Headset size={22} />
+          <header style={{ padding: '28px', background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ width: 48, height: 48, borderRadius: '16px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <Headset size={24} />
               </div>
               <div>
-                <div style={{ fontSize: '15px', fontWeight: '900', letterSpacing: '-0.3px' }}>Suporte Master Hub</div>
-                <div style={{ fontSize: '11px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '700' }}>
-                  <div style={{ width: 6, height: 6, background: '#10B981', borderRadius: '50%', boxShadow: '0 0 8px #10B981' }} /> Online Agora
+                <div style={{ fontSize: '16px', fontWeight: '900', letterSpacing: '-0.3px' }}>Suporte Master Hub</div>
+                <div style={{ fontSize: '12px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', marginTop: '2px' }}>
+                  <div style={{ width: 6, height: 6, background: '#10B981', borderRadius: '50%', boxShadow: '0 0 10px #10B981' }} /> Equipe Online
                 </div>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', cursor: 'pointer', width: 32, height: 32, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <X size={18} />
+            <button onClick={() => setIsOpen(false)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', cursor: 'pointer', width: 36, height: 36, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <X size={20} />
             </button>
-          </div>
+          </header>
 
-          <div ref={scrollRef} style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', background: '#F8FAFC' }}>
-            {chat.length === 0 && step === 'welcome' && (
-               <div style={{ background: '#fff', padding: '16px', borderRadius: '24px', border: '1px solid #E2E8F0', fontSize: '14px', color: '#1A2340', lineHeight: '1.5' }}>
-                  Olá! Bem-vindo ao Suporte Master do Hub Logta/Zaptro. Como podemos ajudar hoje?
+          <div ref={scrollRef} style={{ flex: 1, padding: '28px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px', backgroundColor: '#F8FAFC' }}>
+            {step === 'welcome' && (
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', animation: 'fadeIn 0.5s ease' }}>
+                  <div style={{ background: '#fff', padding: '20px', borderRadius: '24px', border: '1px solid #E2E8F0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#0F172A', margin: '0 0 8px 0' }}>Olá! 👋</h3>
+                    <p style={{ fontSize: '14px', color: '#64748B', margin: 0, lineHeight: '1.6', fontWeight: '500' }}>
+                      Bem-vindo à Central de Comando. Escolha um departamento para iniciar seu atendimento imersivo.
+                    </p>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    {departments.map(dept => (
+                      <button 
+                        key={dept.id}
+                        onClick={() => startConversation(dept.id)}
+                        style={{
+                          padding: '20px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: '24px',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+                          cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 8px rgba(0,0,0,0.02)'
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.borderColor = dept.color;
+                          e.currentTarget.style.transform = 'translateY(-4px)';
+                          e.currentTarget.style.boxShadow = `0 10px 20px -5px ${dept.color}20`;
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.borderColor = '#E2E8F0';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.02)';
+                        }}
+                      >
+                        <dept.icon size={28} color={dept.color} />
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '13px', fontWeight: '900', color: '#0F172A' }}>{dept.name}</div>
+                          <div style={{ fontSize: '10px', color: '#94A3B8', fontWeight: '600' }}>{dept.desc}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                </div>
             )}
             
-            {chat.map(m => (
+            {step === 'chat' && chat.map(m => (
               <div key={m.id} style={{
                 alignSelf: m.isMe ? 'flex-end' : 'flex-start',
-                maxWidth: '85%', padding: '14px 18px', borderRadius: m.isMe ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                fontSize: '14px', lineHeight: '1.5',
-                background: m.isMe ? '#6366F1' : '#fff',
-                color: m.isMe ? '#fff' : '#1A2340',
-                boxShadow: m.isMe ? '0 10px 20px rgba(99,102,241,0.15)' : '0 4px 12px rgba(0,0,0,0.03)',
-                border: m.isMe ? 'none' : '1px solid #E2E8F0'
+                maxWidth: '85%', display: 'flex', flexDirection: 'column', gap: '4px'
               }}>
-                {m.text}
-                <div style={{ fontSize: '10px', marginTop: '6px', opacity: 0.6, textAlign: 'right', fontWeight: '600' }}>{m.time}</div>
+                <div style={{
+                  padding: '14px 20px', borderRadius: m.isMe ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
+                  fontSize: '15px', lineHeight: '1.6', fontWeight: '500',
+                  background: m.isMe ? 'linear-gradient(135deg, #6366F1 0%, #4338CA 100%)' : (m.type === 'system' ? '#F1F5F9' : '#fff'),
+                  color: m.isMe ? '#fff' : (m.type === 'system' ? '#64748B' : '#0F172A'),
+                  boxShadow: m.isMe ? '0 10px 25px rgba(99,102,241,0.2)' : '0 4px 15px rgba(0,0,0,0.05)',
+                  border: m.isMe ? 'none' : '1px solid #E2E8F0',
+                  fontStyle: m.type === 'system' ? 'italic' : 'normal'
+                }}>
+                  {m.type === 'payment_link' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <DollarSign size={20} /> <span style={{ fontWeight: '900' }}>Cobrança Gerada</span>
+                      </div>
+                      <div style={{ fontSize: '18px', fontWeight: '900' }}>R$ {m.metadata?.amount}</div>
+                      <button style={{ padding: '10px', borderRadius: '12px', border: 'none', backgroundColor: '#fff', color: '#6366F1', fontWeight: '900', fontSize: '12px', cursor: 'pointer' }}>PAGAR AGORA</button>
+                    </div>
+                  ) : m.text}
+                </div>
+                <div style={{ fontSize: '10px', opacity: 0.5, textAlign: m.isMe ? 'right' : 'left', fontWeight: '700', padding: '0 8px' }}>
+                  {m.user} • {m.time}
+                </div>
               </div>
             ))}
+          </div>
 
-            {step === 'department' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '8px' }}>
-                {departments.map(dept => (
-                  <button 
-                    key={dept.name}
-                    onClick={() => selectDept(dept.name)}
-                    style={{
-                      padding: '14px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: '24px',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-                      cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 8px rgba(0,0,0,0.02)'
-                    }}
-                  >
-                    <dept.icon size={20} color={dept.color} />
-                    <span style={{ fontSize: '12px', fontWeight: '800', color: '#1A2340' }}>{dept.name}</span>
-                  </button>
-                ))}
+          {step === 'chat' && (
+            <div style={{ padding: '24px', backgroundColor: '#fff', borderTop: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#F8FAFC', padding: '12px 20px', borderRadius: '22px', border: '1px solid #E2E8F0' }}>
+                <button style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer' }}><Plus size={20} /></button>
+                <input 
+                  value={msg} 
+                  onChange={e => setMsg(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSend()}
+                  placeholder="Descreva seu problema..." 
+                  style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '15px', color: '#0F172A', fontWeight: '600' }} 
+                />
+                <button 
+                  onClick={handleSend} 
+                  style={{ 
+                    background: '#6366F1', border: 'none', width: 44, height: 44, borderRadius: '14px', 
+                    color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                    cursor: 'pointer', boxShadow: '0 8px 16px rgba(99,102,241,0.3)', transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  <Send size={20} />
+                </button>
               </div>
-            )}
-          </div>
-
-          <div style={{ padding: '20px 24px', background: '#fff', borderTop: '1px solid #F1F5F9' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#F8FAFC', padding: '10px 18px', borderRadius: '18px', border: '1px solid #E2E8F0' }}>
-              <button style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer' }}><Plus size={20} /></button>
-              <input 
-                value={msg} 
-                onChange={e => setMsg(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSend()}
-                placeholder="Escreva sua dúvida..." 
-                style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '14px', color: '#1A2340' }} 
-              />
-              <button 
-                onClick={handleSend} 
-                style={{ 
-                  background: '#6366F1', border: 'none', width: 38, height: 38, borderRadius: '12px', 
-                  color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                  cursor: 'pointer', boxShadow: '0 4px 10px rgba(99,102,241,0.3)' 
-                }}
-              >
-                <Send size={18} />
-              </button>
+              <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '11px', color: '#94A3B8', fontWeight: '700', letterSpacing: '0.5px' }}>
+                HUB MASTER v4.0 • SISTEMA DE SUPORTE IMERSIVO
+              </div>
             </div>
-            <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '10px', color: '#94A3B8', fontWeight: '600' }}>
-              Hub Master v3.0 • Cérebro Logta & Zaptro
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>

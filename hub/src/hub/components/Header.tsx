@@ -3,10 +3,10 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Search, Bell, User, ChevronDown, 
   Settings, LogOut, Menu, Globe, ChevronRight,
-  Shield, Database, Link as LinkIcon, Zap, HardDrive, Users
+  Shield, Database, Link as LinkIcon, Zap, HardDrive, Users, Brain
 } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
-import SyncIndicator from '../components/SyncIndicator';
+import SyncIndicator from './SyncIndicator';
 
 const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ onMenuClick, isMobile }) => {
   const { profile, signOut } = useAuth();
@@ -39,7 +39,7 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
       'analytics': 'Analytics',
       'account': 'Meu Perfil',
       'agenda': 'Agenda Hub',
-      'chat': 'HubChat',
+      'hubchat': 'HubChat',
       'logistica': 'A Logística'
     };
 
@@ -116,7 +116,7 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
           </div>
           {!isMobile && (
             <div style={styles.userInfo}>
-              <span style={styles.userName}>{profile?.full_name?.split(' ')[0] || 'Admin'}</span>
+              <span style={styles.userName}>{(profile?.full_name || 'Admin').split(' ')[0]}</span>
               <ChevronDown size={14} color="#64748B" />
             </div>
           )}
@@ -157,6 +157,9 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
                 </div>
                 <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/security'); }}>
                   <Shield size={14} /> Segurança
+                </div>
+                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/intelligence'); }}>
+                  <Brain size={14} /> Operational Intelligence
                 </div>
               </div>
               
