@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { EventHub, SystemEvent } from './eventHub.js';
+import { OptimizationEngineService } from './optimizationEngineService.js';
 
 /**
  * DecisionEngineService: The "Cortex" of the Hub.
@@ -8,10 +9,12 @@ import { EventHub, SystemEvent } from './eventHub.js';
 export class DecisionEngineService {
   private hub: EventHub;
   private supabase: SupabaseClient;
+  private optimization: OptimizationEngineService;
 
-  constructor(supabaseUrl: string, supabaseKey: string) {
+  constructor(supabaseUrl: string, supabaseKey: string, optimization: OptimizationEngineService) {
     this.hub = EventHub.getInstance();
     this.supabase = createClient(supabaseUrl, supabaseKey);
+    this.optimization = optimization;
     
     this.setupListeners();
   }
@@ -51,22 +54,33 @@ export class DecisionEngineService {
       let selectedChannel = profile.preferred_channel || 'email';
       let delayMs = 0;
       let rationale = 'Default strategy.';
+      let experimentId = null;
+      let variantId = null;
 
-      // Decision Rule: If health is critical, prioritize WhatsApp (higher urgency)
-      if (company.health_score < 40) {
-        selectedChannel = 'whatsapp';
-        rationale = 'Critical health detected. Escalating to WhatsApp for higher urgency.';
-      }
+      // --- AB TESTING OVERRIDE ---
+      const activeExperiment = await this.optimization.getOptimalVariant('BILLING_STRATEGY');
+      if (activeExperiment) {
+        selectedChannel = activeExperiment.data.channel || selectedChannel;
+        rationale = `Experiment active: ${activeExperiment.id}.`;
+        experimentId = activeExperiment.experimentId;
+        variantId = activeExperiment.id;
+      } else {
+        // Decision Rule: If health is critical, prioritize WhatsApp (higher urgency)
+        if (company.health_score < 40) {
+          selectedChannel = 'whatsapp';
+          rationale = 'Critical health detected. Escalating to WhatsApp for higher urgency.';
+        }
 
-      // Decision Rule: If user pays at specific hours, delay message to hit that window
-      if (profile.preferred_payment_hour) {
-        const currentHour = new Date().getHours();
-        const targetHour = profile.preferred_payment_hour;
-        
-        if (currentHour !== targetHour) {
-          const hoursToWait = (targetHour - currentHour + 24) % 24;
-          delayMs = hoursToWait * 60 * 60 * 1000;
-          rationale += ` Optimizing for target payment window (Hour: ${targetHour}).`;
+        // Decision Rule: If user pays at specific hours, delay message to hit that window
+        if (profile.preferred_payment_hour) {
+          const currentHour = new Date().getHours();
+          const targetHour = profile.preferred_payment_hour;
+          
+          if (currentHour !== targetHour) {
+            const hoursToWait = (targetHour - currentHour + 24) % 24;
+            delayMs = hoursToWait * 60 * 60 * 1000;
+            rationale += ` Optimizing for target payment window (Hour: ${targetHour}).`;
+          }
         }
       }
 
@@ -75,7 +89,8 @@ export class DecisionEngineService {
         action: event.action,
         channel: selectedChannel,
         delay_ms: delayMs,
-        original_context: event.metadata
+        original_context: event.metadata,
+        variantId
       };
 
       await this.supabase.from('system_decision_logs').insert([{
@@ -83,7 +98,9 @@ export class DecisionEngineService {
         trigger_event: event.action,
         decision_taken: decision,
         rationale,
-        confidence: 0.9
+        confidence: 0.9,
+        experiment_id: experimentId,
+        variant_id: variantId
       }]);
 
       // 4. Emit the decision for WorkflowService to execute

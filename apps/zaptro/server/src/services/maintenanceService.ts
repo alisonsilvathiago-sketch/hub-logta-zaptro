@@ -1,5 +1,6 @@
 import { BillingIntelligenceService } from './billingIntelligenceService.js';
 import { CustomerHealthService } from './customerHealthService.js';
+import { OptimizationEngineService } from './optimizationEngineService.js';
 import { EventHub, SystemEvent } from './eventHub.js';
 
 /**
@@ -11,6 +12,7 @@ export class MaintenanceService {
   private hub: EventHub;
   private billingService: BillingIntelligenceService | null = null;
   private healthService: CustomerHealthService | null = null;
+  private optimizationService: OptimizationEngineService | null = null;
 
   constructor() {
     this.hub = EventHub.getInstance();
@@ -24,6 +26,10 @@ export class MaintenanceService {
 
   public setHealthService(service: CustomerHealthService) {
     this.healthService = service;
+  }
+
+  public setOptimizationService(service: OptimizationEngineService) {
+    this.optimizationService = service;
   }
 
   private setupListeners() {
@@ -55,8 +61,11 @@ export class MaintenanceService {
       if (this.healthService) {
         await this.healthService.runDailyHealthCheck();
       }
+      if (this.optimizationService) {
+        await this.optimizationService.evaluateExperiments();
+      }
       
-      console.log('[Maintenance] Daily autonomous cycle completed (Billing + Health).');
+      console.log('[Maintenance] Daily autonomous cycle completed (Billing + Health + Optimization).');
       this.hub.emit(SystemEvent.MAINTENANCE_REQUIRED, { type: 'DAILY_PURGE', details: { reason: 'Scheduled' } });
     }, 86400000);
   }

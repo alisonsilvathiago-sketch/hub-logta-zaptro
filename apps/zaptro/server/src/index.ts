@@ -15,6 +15,7 @@ import { IntelligenceService } from './services/intelligenceService.js';
 import { AutoAutomationService } from './services/autoAutomationService.js';
 import { BillingIntelligenceService } from './services/billingIntelligenceService.js';
 import { CustomerHealthService } from './services/customerHealthService.js';
+import { OptimizationEngineService } from './services/optimizationEngineService.js';
 import { DecisionEngineService } from './services/decisionEngineService.js';
 import { UnifiedApiService } from './services/unifiedApiService.js';
 import { EventHub } from './services/eventHub.js';
@@ -71,16 +72,18 @@ async function main() {
   const billingIntelligenceService = new BillingIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const unifiedApiService = new UnifiedApiService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const customerHealthService = new CustomerHealthService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const decisionEngineService = new DecisionEngineService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const optimizationEngineService = new OptimizationEngineService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const decisionEngineService = new DecisionEngineService(cfg.supabaseUrl, cfg.supabaseAnonKey, optimizationEngineService);
 
   // Link services to maintenance for the daily cycle
   maintenanceService.setBillingService(billingIntelligenceService);
   maintenanceService.setHealthService(customerHealthService);
+  maintenanceService.setOptimizationService(optimizationEngineService);
 
   // Register the Unified API Routes (HUB, ZAPTRO, LOGTA)
   unifiedApiService.registerRoutes(app, cfg.supabaseUrl, cfg.supabaseAnonKey);
 
-  console.log('[Intelligent Hub] Autonomous services, Intelligence Cortex, and Strategic Decision Cortex initialized...');
+  console.log('[Intelligent Hub] Autonomous services, Intelligence Cortex, and Self-Optimization Machine initialized...');
 
   app.listen(cfg.port, () => {
     // eslint-disable-next-line no-console
