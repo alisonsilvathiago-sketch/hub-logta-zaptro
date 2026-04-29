@@ -73,7 +73,29 @@ export class WorkflowService {
   }
 
   private async performAction(actionType: string, context: any) {
+    const cn = context.companyName || 'Hub';
+    const userName = context.userName || 'Cliente';
+    const to = context.email;
+
     switch (actionType) {
+      case 'BILLING_DUE_SOON':
+        console.log(`[WorkflowEngine] Sending BILLING_DUE_SOON email to ${to}...`);
+        await this.sendEmail('billing_due_soon', cn, to, { ...context, userName });
+        console.log(`[WorkflowEngine] [WHATSAPP SIMULATION] Sending reminder to ${userName}: Sua fatura vence em breve!`);
+        break;
+
+      case 'BILLING_OVERDUE':
+        console.log(`[WorkflowEngine] Sending BILLING_OVERDUE email to ${to}...`);
+        await this.sendEmail('billing_overdue_recovery', cn, to, { ...context, userName });
+        console.log(`[WorkflowEngine] [WHATSAPP SIMULATION] Sending recovery message to ${userName}: Vimos que sua fatura está pendente...`);
+        break;
+
+      case 'PAYMENT_CONFIRMED':
+        console.log(`[WorkflowEngine] Sending PAYMENT_CONFIRMED email to ${to}...`);
+        await this.sendEmail('payment_confirmed', cn, to, { ...context, userName });
+        console.log(`[WorkflowEngine] [WHATSAPP SIMULATION] Sending confirmation to ${userName}: Pagamento confirmado! Obrigado.`);
+        break;
+
       case 'PROCESS_LEAD_CONVERSION':
         await this.processLeadConversion({
           name: context.name,
@@ -81,14 +103,16 @@ export class WorkflowService {
           interest: context.source
         });
         break;
-      
-      case 'SEND_WELCOME_EMAIL':
-        // Individual email logic...
-        break;
 
       default:
-        console.log(`[WorkflowEngine] Action ${actionType} handled as generic worker task.`);
+        console.log(`[WorkflowEngine] Action ${actionType} handled as generic background task.`);
     }
+  }
+
+  private async sendEmail(kind: any, cn: string, to: string, vars: any) {
+    if (!to) return;
+    const { subject, html, text } = buildTransactionalEmail(kind, cn, vars);
+    await this.queue.enqueue({ to, subject, html, text });
   }
 
   /**

@@ -96,18 +96,20 @@ export class BillingIntelligenceService {
     console.log(`[BillingMachine] Generating autonomous charge for ${subscription.companies.name}...`);
     
     try {
-      // Logic: Call Asaas API to generate Pix/Boleto
       const method = subscription.companies.preferred_payment_method || 'PIX';
       
       // Emit event for WorkflowService to send the "Coming Soon" message
       this.hub.emit(SystemEvent.BEHAVIOR_OBSERVED, {
         action: 'BILLING_DUE_SOON',
         actorId: subscription.company_id,
-        metadata: { amount: subscription.value, method, dueDate: subscription.next_due_date }
+        metadata: { 
+          amount: subscription.value, 
+          method, 
+          dueDate: subscription.next_due_date,
+          email: subscription.companies.email,
+          companyName: subscription.companies.name
+        }
       });
-
-      // Simulation of API call to Asaas
-      // const charge = await asaas.createPayment(...)
       
       await this.supabase
         .from('companies')
@@ -122,10 +124,17 @@ export class BillingIntelligenceService {
   private async triggerRecoveryFlow(subscription: any) {
     console.log(`[BillingMachine] Triggering recovery flow for ${subscription.company_id}...`);
     
+    // Fetch email if not present
+    const { data: company } = await this.supabase.from('companies').select('email, name').eq('id', subscription.company_id).single();
+
     this.hub.emit(SystemEvent.BEHAVIOR_OBSERVED, {
       action: 'BILLING_OVERDUE',
       actorId: subscription.company_id,
-      metadata: { days_overdue: 1 } // Calculate actual days
+      metadata: { 
+        days_overdue: 1,
+        email: company?.email,
+        companyName: company?.name
+      }
     });
   }
 
@@ -133,10 +142,9 @@ export class BillingIntelligenceService {
     console.log(`[BillingMachine] Payment confirmed. Renewing subscription for ${companyId}...`);
     
     try {
-      // 1. Update subscription status
       const { data: sub } = await this.supabase
         .from('subscriptions')
-        .select('*')
+        .select('*, companies(email, name)')
         .eq('company_id', companyId)
         .single();
 
@@ -153,11 +161,14 @@ export class BillingIntelligenceService {
           })
           .eq('id', sub.id);
 
-        // 2. Notify system of evolution
-        this.hub.emit(SystemEvent.DECISION_MADE, {
-          logic: 'AutonomousRenewal',
-          outcome: { companyId, status: 'renewed' },
-          confidence: 1.0
+        // Notify system of evolution and trigger confirmation message
+        this.hub.emit(SystemEvent.BEHAVIOR_OBSERVED, {
+          action: 'PAYMENT_CONFIRMED',
+          actorId: companyId,
+          metadata: {
+            email: sub.companies?.email,
+            companyName: sub.companies?.name
+          }
         });
       }
     } catch (err) {

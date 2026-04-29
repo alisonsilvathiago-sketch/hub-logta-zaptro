@@ -34,7 +34,10 @@ export type TransactionalKind =
   | 'route_completed'
   | 'cargo_delayed'
   | 'user_added'
-  | 'permission_changed';
+  | 'permission_changed'
+  | 'billing_due_soon'
+  | 'billing_overdue_recovery'
+  | 'payment_confirmed';
 
 export function buildTransactionalEmail(
   kind: TransactionalKind,
@@ -99,20 +102,22 @@ export function buildTransactionalEmail(
         text: subject,
       };
     }
-    case 'payment_approved': {
+    case 'payment_approved':
+    case 'payment_confirmed': {
       const subject = `Pagamento confirmado — ${cn}`;
       const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
-        <p>O seu pagamento foi <strong style="color:#D9FF00;">aprovado</strong>.</p>
-        <p>${vars.detail ? esc(String(vars.detail)) : 'Obrigado pela confiança na plataforma.'}</p>`;
+        <p>O seu pagamento foi <strong style="color:#22c55e;">confirmado</strong> com sucesso.</p>
+        <p>Sua assinatura foi renovada e o acesso total aos recursos da plataforma <strong>${cn}</strong> continua ativo.</p>
+        <p>Obrigado por confiar no nosso ecossistema para impulsionar seus resultados.</p>`;
       return {
         subject,
-        html: zaptroDarkEmailLayout({
+        html: masterEmailLayout({
+          theme: 'SAFIRA',
           companyName: cn,
-          headline: 'Pagamento aprovado',
+          headline: 'Pagamento Confirmado',
           bodyHtml: body,
-          ctaLabel: typeof vars.ctaLabel === 'string' ? vars.ctaLabel : undefined,
+          ctaLabel: 'Acessar Painel',
           ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
-          signatureHtml,
         }),
         text: subject,
       };
@@ -525,6 +530,48 @@ export function buildTransactionalEmail(
           headline: 'Alerta de Logística',
           bodyHtml: body,
           ctaLabel: 'Rastrear Agora',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'billing_due_soon': {
+      const subject = `Lembrete de renovação — ${cn}`;
+      const dueDate = vars.dueDate ? String(vars.dueDate) : 'em breve';
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Sua assinatura na plataforma <strong>${cn}</strong> vence no dia <strong>${dueDate}</strong>.</p>
+        <p>Já deixamos a cobrança pronta para você. Mantenha seu fluxo de trabalho sem interrupções realizando o pagamento agora.</p>
+        <div style="background: rgba(56,189,248,0.05); padding: 20px; border-radius: 16px; border: 1px solid rgba(56,189,248,0.1); margin: 24px 0;">
+          <p style="margin: 0;"><strong>Valor:</strong> ${vars.amount || '—'}<br/>
+          <strong>Método:</strong> ${vars.method || 'PIX'}</p>
+        </div>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'SAFIRA',
+          companyName: cn,
+          headline: 'Próximo Vencimento',
+          bodyHtml: body,
+          ctaLabel: 'Pagar Agora',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'billing_overdue_recovery': {
+      const subject = `Importante: Pendência financeira — ${cn}`;
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Notamos que sua última fatura ainda não foi identificada no sistema.</p>
+        <p>Para evitar a suspensão dos seus serviços e garantir a continuidade das suas operações, regularize sua situação hoje mesmo.</p>
+        <p>Se tiver qualquer dúvida ou precisar de ajuda com o pagamento, responda a este e-mail.</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'RUBI',
+          companyName: cn,
+          headline: 'Pagamento Pendente',
+          bodyHtml: body,
+          ctaLabel: 'Regularizar Agora',
           ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
         }),
         text: subject,
