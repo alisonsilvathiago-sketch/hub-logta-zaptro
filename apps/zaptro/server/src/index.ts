@@ -12,6 +12,7 @@ import { WorkflowService } from './services/workflowService.js';
 import { MaintenanceService } from './services/maintenanceService.js';
 import { AutomationHandlers } from './services/automationHandlers.js';
 import { IntelligenceService } from './services/intelligenceService.js';
+import { AutoAutomationService } from './services/autoAutomationService.js';
 import { EventHub } from './services/eventHub.js';
 
 async function main() {
@@ -62,8 +63,9 @@ async function main() {
   const maintenanceService = new MaintenanceService();
   const automationHandlers = new AutomationHandlers();
   const intelligenceService = new IntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const autoAutomationService = new AutoAutomationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
-  console.log('[Intelligent Hub] Autonomous services, handlers, and Intelligence Cortex initialized...');
+  console.log('[Intelligent Hub] Autonomous services, Intelligence Cortex, and Auto-Automation Synthesizer initialized...');
 
   app.listen(cfg.port, () => {
     // eslint-disable-next-line no-console

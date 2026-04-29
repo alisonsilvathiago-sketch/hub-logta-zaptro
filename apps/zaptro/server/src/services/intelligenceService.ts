@@ -25,7 +25,16 @@ export class IntelligenceService {
 
     // 2. Decision Support: When a critical event happens, provide an automated decision
     this.hub.on(SystemEvent.LEAD_CREATED, (data) => {
+      this.hub.emit(SystemEvent.BEHAVIOR_OBSERVED, { action: 'LEAD_CREATED', actorId: data.actorId, metadata: data });
       this.makeAutomatedDecision('LEAD_ROUTING', data);
+    });
+
+    this.hub.on(SystemEvent.PAYMENT_RECEIVED, (data) => {
+      this.hub.emit(SystemEvent.BEHAVIOR_OBSERVED, { action: 'PAYMENT_RECEIVED', actorId: data.companyId, metadata: data });
+    });
+
+    this.hub.on(SystemEvent.LEAD_CONVERTED, (data) => {
+      this.hub.emit(SystemEvent.BEHAVIOR_OBSERVED, { action: 'LEAD_CONVERTED', actorId: data.actorId, metadata: data });
     });
 
     // 3. Error Recurrence Analysis: Learn from mistakes
