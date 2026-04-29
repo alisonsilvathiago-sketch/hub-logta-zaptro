@@ -30,6 +30,10 @@ export class DecisionEngineService {
         await this.decideGrowthStrategy(data);
       }
 
+      if (data.action === 'LEVEL_UP') {
+        await this.decideGamificationReward(data);
+      }
+
       if (data.action === 'PAYMENT_RECEIVED') {
         await this.updateBehavioralProfile(data.actorId, data.metadata);
       }
@@ -164,6 +168,55 @@ export class DecisionEngineService {
 
     } catch (err) {
       console.error('[DecisionEngine] Growth decision failed:', err);
+    }
+  }
+
+  /**
+   * Decides the best reward for a Level Up event
+   */
+  private async decideGamificationReward(event: any) {
+    const companyId = event.actorId;
+    const { newLevel, levelName } = event.metadata;
+    
+    try {
+      let reward = 'CONGRATULATIONS_MESSAGE';
+      let benefit = 'Nenhum';
+
+      if (newLevel === 2) {
+        reward = 'UNLOCK_BETA_FEATURES';
+        benefit = 'Acesso antecipado a novos módulos';
+      } else if (newLevel === 3) {
+        reward = 'PRIORITY_SUPPORT';
+        benefit = 'Suporte via WhatsApp 24/7';
+      } else if (newLevel === 4) {
+        reward = 'LEGENDARY_CREDIT';
+        benefit = 'R$ 200 em créditos de uso';
+      }
+
+      const decision = {
+        action: 'SEND_GAMIFICATION_REWARD',
+        level: newLevel,
+        level_name: levelName,
+        reward_type: reward,
+        benefit_description: benefit
+      };
+
+      await this.supabase.from('system_decision_logs').insert([{
+        company_id: companyId,
+        trigger_event: 'LEVEL_UP',
+        decision_taken: decision,
+        rationale: `Customer reached level ${newLevel} (${levelName}). Applying ${reward} strategy.`,
+        confidence: 0.95
+      }]);
+
+      this.hub.emit(SystemEvent.DECISION_MADE, {
+        logic: 'GamificationReward',
+        outcome: decision,
+        companyId
+      });
+
+    } catch (err) {
+      console.error('[DecisionEngine] Gamification reward decision failed:', err);
     }
   }
 

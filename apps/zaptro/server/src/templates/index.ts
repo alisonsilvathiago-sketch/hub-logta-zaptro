@@ -38,7 +38,8 @@ export type TransactionalKind =
   | 'billing_due_soon'
   | 'billing_overdue_recovery'
   | 'payment_confirmed'
-  | 'growth_invitation';
+  | 'growth_invitation'
+  | 'level_up_celebration';
 
 export function buildTransactionalEmail(
   kind: TransactionalKind,
@@ -597,6 +598,34 @@ export function buildTransactionalEmail(
           bodyHtml: body,
           ctaLabel: 'Copiar Link',
           ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'level_up_celebration': {
+      const subject = `VOCÊ SUBIU DE NÍVEL! Parabéns, ${esc(name)}! — ${cn}`;
+      const level = vars.level_name || 'MESTRE';
+      const benefit = vars.benefit_description || 'Novas funcionalidades desbloqueadas';
+      const body = `<p>Olá, <strong>${esc(name)}</strong>!</p>
+        <p>Seu engajamento e compromisso com o sucesso da sua operação levaram você a um novo patamar.</p>
+        <div style="text-align: center; margin: 32px 0;">
+          <p style="margin: 0; font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px;">Novo Nível Alcançado:</p>
+          <h2 style="margin: 8px 0; font-size: 32px; color: #D9FF00; font-weight: 800;">${level}</h2>
+        </div>
+        <p>Como reconhecimento, você acaba de desbloquear um novo benefício exclusivo:</p>
+        <p style="background: rgba(255,255,255,0.05); padding: 16px; border-left: 4px solid #D9FF00; font-weight: 600; color: #fff;">
+          🎁 ${benefit}
+        </p>
+        <p>Continue crescendo conosco. O próximo nível está logo ali!</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'PLATINUM',
+          companyName: cn,
+          headline: 'MILSTONE ALCANÇADO',
+          bodyHtml: body,
+          ctaLabel: 'Ver Meus Pontos',
+          ctaUrl: 'https://hub.zaptro.com.br/master/analytics',
         }),
         text: subject,
       };
