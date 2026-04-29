@@ -3,31 +3,53 @@ import { EventHub, SystemEvent } from './eventHub.js';
 import crypto from 'crypto';
 
 /**
- * AutoAutomationService: The "Synthesizer" that creates automations autonomously.
- * It watches sequences of events and builds new Hub Workflows.
+ * AutoAutomationMachine: The core engine that observes, learns, and generates automations.
+ * Implements a 5-layer architecture: Collection -> Patterns -> Synthesis -> Execution -> Evolution.
  */
 export class AutoAutomationService {
   private hub: EventHub;
   private supabase: SupabaseClient;
-  private recentActions: Map<string, string[]> = new Map(); // actorId -> actionQueue
+  private recentActions: Map<string, string[]> = new Map(); 
   private readonly SEQUENCE_WINDOW = 3;
-  private readonly AUTO_GEN_THRESHOLD = 5;
+  private readonly CONFIDENCE_THRESHOLD = 0.8;
+  private readonly HIT_THRESHOLD = 5;
 
   constructor(supabaseUrl: string, supabaseKey: string) {
     this.hub = EventHub.getInstance();
     this.supabase = createClient(supabaseUrl, supabaseKey);
-    this.setupObservation();
+    this.setupMachine();
   }
 
-  private setupObservation() {
-    // Watch all behavior to identify sequences
+  private setupMachine() {
+    // Layer 1: Continuous Observation
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
+      await this.recordOperationalEvent(data);
       const actorId = data.actorId || 'system_global';
-      await this.processActionForSequence(actorId, data.action);
+      await this.processBehaviorFlow(actorId, data.action);
     });
   }
 
-  private async processActionForSequence(actorId: string, action: string) {
+  /**
+   * Layer 1: Event Collection (The Eye)
+   */
+  private async recordOperationalEvent(data: any) {
+    try {
+      await this.supabase
+        .from('system_operational_events')
+        .insert([{
+          actor_id: data.actorId === 'system_global' ? null : data.actorId,
+          action_type: data.action,
+          metadata: data.metadata || {}
+        }]);
+    } catch (err) {
+      console.error('[AutomationMachine] Event logging failed:', err);
+    }
+  }
+
+  /**
+   * Layer 2: Pattern Engine (The Brain)
+   */
+  private async processBehaviorFlow(actorId: string, action: string) {
     if (!this.recentActions.has(actorId)) {
       this.recentActions.set(actorId, []);
     }
@@ -37,100 +59,102 @@ export class AutoAutomationService {
 
     if (queue.length >= this.SEQUENCE_WINDOW) {
       const currentSequence = queue.slice(-this.SEQUENCE_WINDOW);
-      await this.trackSequence(actorId, currentSequence);
-      queue.shift(); // Maintain window size
+      await this.analyzePattern(currentSequence);
+      queue.shift();
     }
   }
 
-  private async trackSequence(actorId: string, actions: string[]) {
+  private async analyzePattern(actions: string[]) {
     const sequenceStr = actions.join(' -> ');
     const hash = crypto.createHash('sha256').update(sequenceStr).digest('hex');
 
     try {
-      const { data: existing } = await this.supabase
-        .from('behavioral_sequences')
-        .select('id, occurrence_count, is_synthesized')
-        .eq('sequence_hash', hash)
+      const { data: pattern } = await this.supabase
+        .from('system_behavioral_patterns')
+        .select('*')
+        .eq('pattern_hash', hash)
         .maybeSingle();
 
-      if (existing) {
-        if (existing.is_synthesized) return;
+      if (pattern) {
+        const newHits = pattern.hit_count + 1;
+        const confidence = Math.min(1, newHits / 10); // Simple confidence evolution
 
-        const newCount = existing.occurrence_count + 1;
         await this.supabase
-          .from('behavioral_sequences')
-          .update({ occurrence_count: newCount, last_triggered_at: new Date() })
-          .eq('id', existing.id);
+          .from('system_behavioral_patterns')
+          .update({ 
+            hit_count: newHits, 
+            confidence_score: confidence,
+            last_triggered_at: new Date() 
+          })
+          .eq('id', pattern.id);
 
-        if (newCount >= this.AUTO_GEN_THRESHOLD) {
-          await this.synthesizeAutomation(hash, actions);
+        // Layer 3: Synthesis Trigger
+        if (confidence >= this.CONFIDENCE_THRESHOLD && newHits >= this.HIT_THRESHOLD) {
+          await this.synthesizeWorkflow(hash, actions, confidence);
         }
       } else {
         await this.supabase
-          .from('behavioral_sequences')
+          .from('system_behavioral_patterns')
           .insert([{
-            actor_id: actorId === 'system_global' ? null : actorId,
-            sequence_hash: hash,
-            actions_json: actions,
-            occurrence_count: 1
+            pattern_hash: hash,
+            sequence_data: actions,
+            hit_count: 1,
+            confidence_score: 0.1
           }]);
       }
     } catch (err) {
-      console.error('[AutoAutomation] Error tracking sequence:', err);
+      console.error('[AutomationMachine] Pattern analysis failed:', err);
     }
   }
 
   /**
-   * Generates a new Workflow entry in the database based on detected behavior
+   * Layer 3: Automation Synthesis (The Creator)
    */
-  private async synthesizeAutomation(hash: string, actions: string[]) {
-    console.log(`[AutoAutomation] Synthesizing new workflow for sequence: ${actions.join(' -> ')}`);
-
+  private async synthesizeWorkflow(hash: string, actions: string[], confidence: number) {
     const trigger = actions[0];
     const finalAction = actions[actions.length - 1];
-    
-    const workflowName = `Auto: ${trigger} -> ${finalAction}`;
-    
+    const name = `Autonomous: ${trigger} → ${finalAction}`;
+
     try {
-      // 1. Create the workflow in suggested mode
-      const { data: workflow, error } = await this.supabase
+      // Check if workflow already exists for this pattern
+      const { data: existing } = await this.supabase
+        .from('hub_workflows')
+        .select('id')
+        .eq('trigger', trigger)
+        .eq('action', finalAction)
+        .eq('metadata->pattern_hash', hash)
+        .maybeSingle();
+
+      if (existing) return;
+
+      const { data: workflow } = await this.supabase
         .from('hub_workflows')
         .insert([{
-          name: workflowName,
-          trigger: trigger,
+          name,
+          trigger,
           action: finalAction,
-          is_active: false, // Start as suggested/inactive
+          is_active: false, // Default to suggested mode
           icon_name: 'Cpu',
           metadata: {
+            pattern_hash: hash,
+            confidence,
             is_auto_generated: true,
-            detected_sequence: actions,
-            generated_at: new Date(),
-            confidence: 0.85
+            sequence: actions
           }
         }])
         .select()
         .single();
 
-      if (error) throw error;
-
-      // 2. Mark sequence as synthesized
-      await this.supabase
-        .from('behavioral_sequences')
-        .update({ is_synthesized: true })
-        .eq('sequence_hash', hash);
-
-      // 3. Emit event so the system knows a new automation exists
-      this.hub.emit(SystemEvent.DECISION_MADE, {
-        logic: 'AutoWorkflowSynthesis',
-        outcome: { 
-          workflowId: workflow.id, 
-          message: `New automation suggested: ${workflowName}` 
-        },
-        confidence: 0.85
-      });
-
+      if (workflow) {
+        console.log(`[AutomationMachine] New machine-generated workflow synthesized: ${name}`);
+        this.hub.emit(SystemEvent.DECISION_MADE, {
+          logic: 'AutoSynthesis',
+          outcome: { id: workflow.id, name, confidence },
+          confidence
+        });
+      }
     } catch (err) {
-      console.error('[AutoAutomation] Failed to synthesize workflow:', err);
+      console.error('[AutomationMachine] Synthesis failed:', err);
     }
   }
 }
