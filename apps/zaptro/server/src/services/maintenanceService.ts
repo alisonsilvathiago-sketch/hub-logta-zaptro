@@ -1,3 +1,4 @@
+import { BillingIntelligenceService } from './billingIntelligenceService.js';
 import { EventHub, SystemEvent } from './eventHub.js';
 
 /**
@@ -7,11 +8,16 @@ import { EventHub, SystemEvent } from './eventHub.js';
  */
 export class MaintenanceService {
   private hub: EventHub;
+  private billingService: BillingIntelligenceService | null = null;
 
   constructor() {
     this.hub = EventHub.getInstance();
     this.setupListeners();
     this.startHeartbeat();
+  }
+
+  public setBillingService(service: BillingIntelligenceService) {
+    this.billingService = service;
   }
 
   private setupListeners() {
@@ -35,8 +41,11 @@ export class MaintenanceService {
       this.checkSystemHealth();
     }, 3600000);
 
-    // Deep cleanup every 24 hours
-    setInterval(() => {
+    // Deep cleanup and Billing Cycle every 24 hours
+    setInterval(async () => {
+      if (this.billingService) {
+        await this.billingService.runDailyBillingCycle();
+      }
       this.hub.emit(SystemEvent.MAINTENANCE_REQUIRED, { type: 'DAILY_PURGE', details: { reason: 'Scheduled' } });
     }, 86400000);
   }
