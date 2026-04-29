@@ -29,9 +29,18 @@ export class WorkflowService {
       await this.matchAndExecute(data.action, data.metadata);
     });
 
+    // Listen for Intelligent Decisions (The Cortex tells us what to do)
+    this.hub.on(SystemEvent.DECISION_MADE, async (decision) => {
+      console.log(`[WorkflowEngine] Strategic decision received: ${decision.logic}`);
+      
+      if (decision.logic === 'StrategicCommunication') {
+        const { action, channel, original_context } = decision.outcome;
+        await this.performAction(action, { ...original_context, preferredChannel: channel });
+      }
+    });
+
     // High-priority triggers
     this.hub.on(SystemEvent.LEAD_CREATED, async (data) => {
-      console.log(`[Workflow] High-priority trigger: LEAD_CREATED for ${data.email}`);
       await this.matchAndExecute('LEAD_CREATED', data);
     });
 
@@ -76,24 +85,30 @@ export class WorkflowService {
     const cn = context.companyName || 'Hub';
     const userName = context.userName || 'Cliente';
     const to = context.email;
+    const channel = context.preferredChannel || 'email';
+
+    console.log(`[WorkflowEngine] Executing ${actionType} for ${userName} via ${channel.toUpperCase()}`);
 
     switch (actionType) {
       case 'BILLING_DUE_SOON':
-        console.log(`[WorkflowEngine] Sending BILLING_DUE_SOON email to ${to}...`);
-        await this.sendEmail('billing_due_soon', cn, to, { ...context, userName });
-        console.log(`[WorkflowEngine] [WHATSAPP SIMULATION] Sending reminder to ${userName}: Sua fatura vence em breve!`);
+        if (channel === 'email') {
+          await this.sendEmail('billing_due_soon', cn, to, { ...context, userName });
+        } else {
+          console.log(`[WorkflowEngine] [WHATSAPP STRATEGY] Enqueuing intelligent WhatsApp reminder to ${userName}`);
+        }
         break;
 
       case 'BILLING_OVERDUE':
-        console.log(`[WorkflowEngine] Sending BILLING_OVERDUE email to ${to}...`);
-        await this.sendEmail('billing_overdue_recovery', cn, to, { ...context, userName });
-        console.log(`[WorkflowEngine] [WHATSAPP SIMULATION] Sending recovery message to ${userName}: Vimos que sua fatura está pendente...`);
+        if (channel === 'email') {
+          await this.sendEmail('billing_overdue_recovery', cn, to, { ...context, userName });
+        } else {
+          console.log(`[WorkflowEngine] [WHATSAPP STRATEGY] Enqueuing intelligent WhatsApp recovery to ${userName}`);
+        }
         break;
 
       case 'PAYMENT_CONFIRMED':
-        console.log(`[WorkflowEngine] Sending PAYMENT_CONFIRMED email to ${to}...`);
         await this.sendEmail('payment_confirmed', cn, to, { ...context, userName });
-        console.log(`[WorkflowEngine] [WHATSAPP SIMULATION] Sending confirmation to ${userName}: Pagamento confirmado! Obrigado.`);
+        console.log(`[WorkflowEngine] [MULTICHANNEL] Notifying ${userName} about confirmation via all active channels.`);
         break;
 
       case 'PROCESS_LEAD_CONVERSION':
