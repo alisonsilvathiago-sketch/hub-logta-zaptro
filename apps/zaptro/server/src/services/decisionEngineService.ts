@@ -42,6 +42,10 @@ export class DecisionEngineService {
         await this.decideRoutingCommunication(data);
       }
 
+      if (data.action === 'FUEL_PRICE_VARIATION_DETECTED') {
+        await this.decideFuelAlertStrategy(data);
+      }
+
       if (data.action === 'PAYMENT_RECEIVED') {
         await this.updateBehavioralProfile(data.actorId, data.metadata);
       }
@@ -311,6 +315,48 @@ export class DecisionEngineService {
 
     } catch (err) {
       console.error('[DecisionEngine] Routing communication decision failed:', err);
+    }
+  }
+
+  /**
+   * Decides how to communicate fuel price changes
+   */
+  private async decideFuelAlertStrategy(event: any) {
+    const { fuelType, newPrice, variation } = event.metadata;
+    
+    try {
+      const isIncrease = variation > 0;
+      const strategy = isIncrease ? 'FUEL_INCREASE_ALERT' : 'FUEL_DECREASE_NOTICE';
+      const rationale = isIncrease 
+        ? `Aumento de ${variation.toFixed(1)}% no ${fuelType}. Alertando gestores para ajuste de margem.` 
+        : `Queda de ${Math.abs(variation).toFixed(1)}% no ${fuelType}. Informando motoristas para economia.`;
+
+      const decision = {
+        action: 'SEND_FUEL_STATUS_NOTIFICATION',
+        strategy,
+        fuel_type: fuelType,
+        new_price: newPrice,
+        variation: variation.toFixed(2),
+        is_increase: isIncrease
+      };
+
+      // In this case, we alert all companies (Global Event)
+      await this.supabase.from('system_decision_logs').insert([{
+        company_id: null, // Global
+        trigger_event: 'FUEL_PRICE_VARIATION_DETECTED',
+        decision_taken: decision,
+        rationale,
+        confidence: 0.95
+      }]);
+
+      this.hub.emit(SystemEvent.DECISION_MADE, {
+        logic: 'FuelMarketCoordination',
+        outcome: decision,
+        companyId: 'GLOBAL'
+      });
+
+    } catch (err) {
+      console.error('[DecisionEngine] Fuel alert strategy failed:', err);
     }
   }
 

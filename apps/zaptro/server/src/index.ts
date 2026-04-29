@@ -23,6 +23,7 @@ import { DeliveryIntelligenceService } from './services/deliveryIntelligenceServ
 import { MasterOrchestratorService } from './services/masterOrchestratorService.js';
 import { LogisticsIntelligenceService } from './services/logisticsIntelligenceService.js';
 import { RouteOptimizationService } from './services/routeOptimizationService.js';
+import { FuelMonitoringService } from './services/fuelMonitoringService.js';
 import { UnifiedApiService } from './services/unifiedApiService.js';
 import { EventHub } from './services/eventHub.js';
 
@@ -86,17 +87,19 @@ async function main() {
   const masterOrchestratorService = new MasterOrchestratorService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const logisticsIntelligenceService = new LogisticsIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const routeOptimizationService = new RouteOptimizationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const fuelMonitoringService = new FuelMonitoringService(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
   // Link services to maintenance for the daily/hourly cycle
   maintenanceService.setBillingService(billingIntelligenceService);
   maintenanceService.setHealthService(customerHealthService);
   maintenanceService.setOptimizationService(optimizationEngineService);
   maintenanceService.setDeliveryService(deliveryIntelligenceService);
+  maintenanceService.setFuelService(fuelMonitoringService);
 
   // Register the Unified API Routes (HUB, ZAPTRO, LOGTA)
   unifiedApiService.registerRoutes(app, cfg.supabaseUrl, cfg.supabaseAnonKey);
 
-  console.log('[Intelligent Hub] Autonomous services, Master Operational Orchestrator (CEO), and Route Optimization Navigator initialized...');
+  console.log('[Intelligent Hub] Autonomous services, Master Operational Orchestrator (CEO), and Fuel Monitoring Economist initialized...');
 
   app.listen(cfg.port, () => {
     // eslint-disable-next-line no-console

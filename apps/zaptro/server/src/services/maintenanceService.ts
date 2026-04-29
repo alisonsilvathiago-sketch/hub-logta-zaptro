@@ -1,7 +1,6 @@
-import { BillingIntelligenceService } from './billingIntelligenceService.js';
-import { CustomerHealthService } from './customerHealthService.js';
 import { OptimizationEngineService } from './optimizationEngineService.js';
 import { DeliveryIntelligenceService } from './deliveryIntelligenceService.js';
+import { FuelMonitoringService } from './fuelMonitoringService.js';
 import { EventHub, SystemEvent } from './eventHub.js';
 
 /**
@@ -13,6 +12,7 @@ export class MaintenanceService {
   private healthService: CustomerHealthService | null = null;
   private optimizationService: OptimizationEngineService | null = null;
   private deliveryService: DeliveryIntelligenceService | null = null;
+  private fuelService: FuelMonitoringService | null = null;
 
   constructor() {
     this.hub = EventHub.getInstance();
@@ -34,6 +34,10 @@ export class MaintenanceService {
 
   public setDeliveryService(service: DeliveryIntelligenceService) {
     this.deliveryService = service;
+  }
+
+  public setFuelService(service: FuelMonitoringService) {
+    this.fuelService = service;
   }
 
   private setupListeners() {
@@ -59,17 +63,12 @@ export class MaintenanceService {
 
     // Deep cleanup and Billing Cycle every 24 hours
     setInterval(async () => {
-      if (this.billingService) {
-        await this.billingService.runDailyBillingCycle();
-      }
-      if (this.healthService) {
-        await this.healthService.runDailyHealthCheck();
-      }
-      if (this.optimizationService) {
-        await this.optimizationService.evaluateExperiments();
-      }
-      
-      console.log('[Maintenance] Daily autonomous cycle completed (Billing + Health + Optimization).');
+      if (this.billingService) await this.billingService.processDailyBilling();
+      if (this.healthService) await this.healthService.runDailyHealthAudit();
+      if (this.optimizationService) await this.optimizationService.evaluateExperiments();
+      if (this.fuelService) await this.fuelService.syncFuelPrices();
+
+      console.log('[Maintenance] Daily autonomous cycle completed (Billing + Health + Optimization + Fuel).');
       this.hub.emit(SystemEvent.MAINTENANCE_REQUIRED, { type: 'DAILY_PURGE', details: { reason: 'Scheduled' } });
     }, 86400000);
 
