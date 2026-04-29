@@ -197,8 +197,8 @@ const styles: Record<string, any> = {
   title: { fontSize: '36px', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-1.5px', marginBottom: '8px' },
   subtitle: { fontSize: '16px', color: 'var(--text-muted)', maxWidth: '600px' },
   headerActions: { display: 'flex', gap: '12px' },
-  addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' },
-  catBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '12px', fontWeight: '600', color: 'var(--text-main)', cursor: 'pointer' },
+  addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '24px', fontWeight: '600', cursor: 'pointer' },
+  catBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '24px', fontWeight: '600', color: 'var(--text-main)', cursor: 'pointer' },
 
   statsBar: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '40px' },
   statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '4px' },
@@ -206,10 +206,10 @@ const styles: Record<string, any> = {
   statValue: { fontSize: '28px', fontWeight: '700', color: 'var(--text-main)' },
 
   searchBar: { display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '20px' },
-  searchWrapper: { flex: 1, position: 'relative', display: 'flex', alignItems: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '16px', padding: '0 16px' },
+  searchWrapper: { flex: 1, position: 'relative', display: 'flex', alignItems: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '24px', padding: '0 16px' },
   searchInput: { flex: 1, padding: '16px', border: 'none', outline: 'none', fontSize: '14px', fontWeight: '600' },
   filters: { display: 'flex', gap: '10px' },
-  filterBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '0 20px', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '14px', fontSize: '13px', fontWeight: '700', color: '#64748b' },
+  filterBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '0 20px', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '22px', fontSize: '13px', fontWeight: '700', color: '#64748b' },
 
   grid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' },
   card: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid var(--border)', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column' },
@@ -235,9 +235,9 @@ const styles: Record<string, any> = {
   fRow: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
   fGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
   fLabel: { fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' },
-  input: { padding: '12px', borderRadius: '12px', border: '1px solid var(--border)', backgroundColor: '#f4f4f4', outline: 'none' },
-  textarea: { padding: '12px', borderRadius: '12px', border: '1px solid var(--border)', backgroundColor: '#f4f4f4', outline: 'none', minHeight: '100px', resize: 'none' },
-  submitBtn: { marginTop: '10px', padding: '16px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '14px', fontWeight: '600', cursor: 'pointer' }
+  input: { padding: '12px', borderRadius: '24px', border: '1px solid var(--border)', backgroundColor: '#f4f4f4', outline: 'none' },
+  textarea: { padding: '12px', borderRadius: '24px', border: '1px solid var(--border)', backgroundColor: '#f4f4f4', outline: 'none', minHeight: '100px', resize: 'none' },
+  submitBtn: { marginTop: '10px', padding: '16px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '600', cursor: 'pointer' }
 };
 
 export default MasterKnowledge;

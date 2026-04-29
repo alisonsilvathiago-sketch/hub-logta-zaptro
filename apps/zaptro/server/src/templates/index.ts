@@ -1,4 +1,5 @@
 import { zaptroDarkEmailLayout } from './zaptroDarkLayout.js';
+import { masterEmailLayout, type ThemeType } from './MasterLayout.js';
 
 function esc(s: string) {
   return s
@@ -12,14 +13,28 @@ export type TemplateVars = Record<string, string | number | undefined | null>;
 
 export type TransactionalKind =
   | 'welcome'
-  | 'account_confirmation'
-  | 'password_reset_notice'
-  | 'payment_approved'
-  | 'cargo_created'
-  | 'delivery_started'
-  | 'delivery_completed'
-  | 'route_notification'
-  | 'delivery_status';
+  | 'delivery_status'
+  | '2fa_code'
+  | 'new_login'
+  | 'password_reset'
+  | 'account_activation'
+  | 'payment_failed'
+  | 'invoice_overdue'
+  | 'subscription_cancelled'
+  | 'refund_processed'
+  | 'limit_reached'
+  | 'low_balance'
+  | 'new_lead'
+  | 'new_comment'
+  | 'appointment_reminder'
+  | 'new_company'
+  | 'system_error'
+  | 'infra_alert'
+  | 'backup_success'
+  | 'route_completed'
+  | 'cargo_delayed'
+  | 'user_added'
+  | 'permission_changed';
 
 export function buildTransactionalEmail(
   kind: TransactionalKind,
@@ -31,19 +46,21 @@ export function buildTransactionalEmail(
   const name = String(vars.userName ?? vars.clientName ?? 'Cliente').trim() || 'Cliente';
 
   switch (kind) {
-    case 'welcome': {
       const subject = `Bem-vindo à ${cn}`;
       const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
         <p>A sua conta Zaptro foi criada com sucesso. A partir de agora pode acompanhar rotas, equipa e operações num só lugar.</p>`;
+      
+      const theme: ThemeType = cn.toLowerCase().includes('hub') ? 'RUBI' : cn.toLowerCase().includes('logta') ? 'SAFIRA' : 'GOLD';
+
       return {
         subject,
-        html: zaptroDarkEmailLayout({
+        html: masterEmailLayout({
+          theme,
           companyName: cn,
-          headline: 'Conta activa',
+          headline: 'Conta ativa',
           bodyHtml: body,
           ctaLabel: typeof vars.ctaLabel === 'string' ? vars.ctaLabel : 'Abrir painel',
           ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
-          signatureHtml: signatureHtml,
         }),
         text: `${subject}\n\nOlá ${name}. A sua conta na ${cn} foi criada.`,
       };
@@ -168,13 +185,362 @@ export function buildTransactionalEmail(
         <p>O estado da sua entrega foi actualizado para <strong style="color:#D9FF00;">${st}</strong>.</p>`;
       return {
         subject,
-        html: zaptroDarkEmailLayout({
+        html: masterEmailLayout({
+          theme: 'SAFIRA',
           companyName: cn,
           headline: 'Estado da entrega',
           bodyHtml: body,
           ctaLabel: typeof vars.ctaLabel === 'string' ? vars.ctaLabel : 'Acompanhar envio',
           ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
-          signatureHtml,
+        }),
+        text: subject,
+      };
+    }
+    case '2fa_code': {
+      const subject = `Seu código de acesso — ${cn}`;
+      const code = vars.code ? esc(String(vars.code)) : '000000';
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Use o código abaixo para concluir seu acesso no sistema:</p>
+        <div style="font-size: 42px; font-weight: 800; color: #D9FF00; letter-spacing: 8px; padding: 24px; text-align: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; margin: 24px 0;">
+          ${code}
+        </div>
+        <p>Este código expira em 10 minutos. Se não foi você quem solicitou, recomendamos alterar sua senha imediatamente.</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({ theme: 'GOLD', companyName: cn, headline: 'Verificação 2FA', bodyHtml: body }),
+        text: `${subject}: ${code}`,
+      };
+    }
+    case 'new_login': {
+      const subject = `Novo login detectado — ${cn}`;
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Detectamos um novo acesso à sua conta em <strong>${vars.date || new Date().toLocaleString()}</strong>.</p>
+        <p style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+          <strong>Local:</strong> ${vars.location || 'Desconhecido'}<br/>
+          <strong>Dispositivo:</strong> ${vars.device || 'Desconhecido'}
+        </p>
+        <p>Se foi você, pode ignorar este alerta. Caso contrário, bloqueie sua conta agora.</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'GOLD',
+          companyName: cn,
+          headline: 'Alerta de Segurança',
+          bodyHtml: body,
+          ctaLabel: 'Não fui eu',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'payment_failed': {
+      const subject = `Falha no pagamento — ${cn}`;
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Não conseguimos processar a cobrança do seu plano em <strong>${cn}</strong>.</p>
+        <p>Para evitar a suspensão dos serviços, verifique seu método de pagamento no painel financeiro.</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'GOLD',
+          companyName: cn,
+          headline: 'Pagamento recusado',
+          bodyHtml: body,
+          ctaLabel: 'Regularizar agora',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'invoice_overdue': {
+      const subject = `Fatura pendente — ${cn}`;
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Identificamos que sua fatura no valor de <strong style="color:#ef4444;">${vars.amount || '—'}</strong> está vencida.</p>
+        <p>Evite o bloqueio das funcionalidades do sistema realizando o pagamento hoje.</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'RUBI',
+          companyName: cn,
+          headline: 'Fatura Vencida',
+          bodyHtml: body,
+          ctaLabel: 'Gerar 2ª via',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'limit_reached': {
+      const subject = `Limite atingido — ${cn}`;
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Você atingiu o limite de <strong>${vars.limit_name || 'uso'}</strong> do seu plano atual.</p>
+        <p>Para continuar utilizando todos os recursos sem interrupções, considere realizar um upgrade.</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'SAFIRA',
+          companyName: cn,
+          headline: 'Alerta de Uso',
+          bodyHtml: body,
+          ctaLabel: 'Ver planos',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'new_lead': {
+      const subject = `Novo Lead Recebido! — ${cn}`;
+      const body = `<p>Parabéns!</p>
+        <p>Um novo lead acabou de chegar através do seu canal de captação.</p>
+        <div style="background: rgba(217,255,0,0.05); padding: 20px; border-radius: 16px; border: 1px solid rgba(217,255,0,0.1);">
+          <p style="margin: 0;"><strong>Nome:</strong> ${vars.lead_name || '—'}<br/>
+          <strong>Interesse:</strong> ${vars.interest || '—'}</p>
+        </div>
+        <p>Recomendamos o contato em menos de 5 minutos para aumentar a chance de conversão.</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'GOLD',
+          companyName: cn,
+          headline: 'Nova Oportunidade',
+          bodyHtml: body,
+          ctaLabel: 'Ver no CRM',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'new_company': {
+      const subject = `Nova empresa cadastrada — HUB`;
+      const body = `<p>Um novo parceiro acaba de se registrar no ecossistema.</p>
+        <div style="background: rgba(239,68,68,0.05); padding: 20px; border-radius: 16px; border: 1px solid rgba(239,68,68,0.1);">
+          <p style="margin:0;"><strong>Empresa:</strong> ${vars.target_company_name || '—'}<br/>
+          <strong>Plano:</strong> ${vars.plan || '—'}</p>
+        </div>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'RUBI',
+          companyName: 'Logta Hub',
+          headline: 'Novo Cadastro',
+          bodyHtml: body,
+          ctaLabel: 'Gerenciar no Master',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'system_error': {
+      const subject = `ALERTA CRÍTICO: Erro no Sistema — HUB`;
+      const body = `<p>Detectamos uma falha crítica que requer atenção imediata.</p>
+        <div style="background: rgba(239,68,68,0.1); padding: 20px; border-radius: 12px; border: 1px solid rgba(239,68,68,0.2); font-family: monospace; font-size: 13px; color: #ef4444;">
+          <strong>Serviço:</strong> ${vars.service || 'Geral'}<br/>
+          <strong>Erro:</strong> ${vars.error_msg || 'Erro desconhecido'}
+        </div>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'RUBI',
+          companyName: 'Logta Hub',
+          headline: 'Falha detectada',
+          bodyHtml: body,
+        }),
+        text: subject,
+      };
+    }
+    case 'password_reset': {
+      const subject = `Redefinição de senha — ${cn}`;
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>
+        <p>Se foi você, clique no botão abaixo para escolher uma nova senha:</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: cn.toLowerCase().includes('hub') ? 'RUBI' : cn.toLowerCase().includes('logta') ? 'SAFIRA' : 'GOLD',
+          companyName: cn,
+          headline: 'Recuperar Acesso',
+          bodyHtml: body,
+          ctaLabel: 'Redefinir Senha',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'account_activation': {
+      const subject = `Ative sua conta — ${cn}`;
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Sua conta na plataforma <strong>${cn}</strong> está quase pronta.</p>
+        <p>Clique no botão abaixo para confirmar seu e-mail e ativar todos os recursos.</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: cn.toLowerCase().includes('hub') ? 'RUBI' : cn.toLowerCase().includes('logta') ? 'SAFIRA' : 'GOLD',
+          companyName: cn,
+          headline: 'Bem-vindo(a)!',
+          bodyHtml: body,
+          ctaLabel: 'Ativar Minha Conta',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'subscription_cancelled': {
+      const subject = `Assinatura cancelada — ${cn}`;
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Confirmamos o cancelamento da sua assinatura em <strong>${cn}</strong>.</p>
+        <p>Seus recursos premium permanecerão ativos até o final do ciclo atual. Sentiremos sua falta!</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'RUBI',
+          companyName: cn,
+          headline: 'Cancelamento Confirmado',
+          bodyHtml: body,
+          ctaLabel: 'Reativar Plano',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'refund_processed': {
+      const subject = `Reembolso processado — ${cn}`;
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>O reembolso referente à sua transação em <strong>${cn}</strong> foi processado com sucesso.</p>
+        <p>O valor deve aparecer na sua fatura ou conta em breve, dependendo do seu banco.</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({ theme: 'GOLD', companyName: cn, headline: 'Reembolso Efetuado', bodyHtml: body }),
+        text: subject,
+      };
+    }
+    case 'low_balance': {
+      const subject = `Saldo baixo detectado — ${cn}`;
+      const body = `<p>Atenção, <strong>${esc(name)}</strong>.</p>
+        <p>O saldo de créditos da sua conta está abaixo do limite recomendado.</p>
+        <p>Para evitar a interrupção de envios ou rotas, recarregue seu saldo agora.</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'GOLD',
+          companyName: cn,
+          headline: 'Alerta de Créditos',
+          bodyHtml: body,
+          ctaLabel: 'Recarregar Agora',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'new_comment': {
+      const subject = `Novo comentário em sua demanda — ${cn}`;
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p><strong>${vars.author || 'Alguém'}</strong> comentou no card que você está acompanhando:</p>
+        <div style="font-style: italic; color: #94a3b8; padding: 16px; border-left: 4px solid #6366f1; background: rgba(99,102,241,0.05); margin: 20px 0;">
+          "${vars.comment || '...'}"
+        </div>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'GOLD',
+          companyName: cn,
+          headline: 'Nova Interação',
+          bodyHtml: body,
+          ctaLabel: 'Ver Comentário',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'appointment_reminder': {
+      const subject = `Lembrete: Reunião agendada — ${cn}`;
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Passando para lembrar da nossa reunião agendada para:</p>
+        <div style="font-size: 20px; font-weight: 700; color: #D9FF00; margin: 20px 0;">
+          ${vars.date_time || 'Horário agendado'}
+        </div>
+        <p>Prepare suas dúvidas e nos vemos lá!</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'GOLD',
+          companyName: cn,
+          headline: 'Lembrete de Agenda',
+          bodyHtml: body,
+          ctaLabel: 'Entrar na Sala',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'infra_alert': {
+      const subject = `[ALERTA INFRA] ${vars.severity || 'INFO'}: ${vars.resource || 'Sistema'}`;
+      const body = `<p>Monitoramento detectou uma instabilidade no recurso: <strong>${vars.resource || 'Geral'}</strong>.</p>
+        <div style="background: rgba(239,68,68,0.1); padding: 20px; border-radius: 12px; color: #ef4444; font-family: monospace;">
+          <strong>Métrica:</strong> ${vars.metric || 'Desconhecida'}<br/>
+          <strong>Valor:</strong> ${vars.value || '0'}
+        </div>`;
+      return {
+        subject,
+        html: masterEmailLayout({ theme: 'RUBI', companyName: 'Master Hub', headline: 'Monitoramento HQ', bodyHtml: body }),
+        text: subject,
+      };
+    }
+    case 'backup_success': {
+      const subject = `Backup concluído com sucesso — Hub`;
+      const body = `<p>O backup diário de todas as instâncias foi finalizado.</p>
+        <p><strong>Tamanho:</strong> ${vars.size || '—'}<br/>
+        <strong>Destino:</strong> ${vars.storage || 'AWS S3 Cloud'}</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({ theme: 'RUBI', companyName: 'Master Hub', headline: 'Segurança de Dados', bodyHtml: body }),
+        text: subject,
+      };
+    }
+    case 'route_completed': {
+      const subject = `Rota finalizada com sucesso! — ${cn}`;
+      const body = `<p>Informamos que a rota <strong>#${vars.route_id || '—'}</strong> foi concluída.</p>
+        <p>Todas as entregas foram realizadas e o motorista já está em standby.</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'SAFIRA',
+          companyName: cn,
+          headline: 'Logística Concluída',
+          bodyHtml: body,
+          ctaLabel: 'Ver Relatório',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    case 'cargo_delayed': {
+      const subject = `Aviso de atraso na entrega — ${cn}`;
+      const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
+        <p>Identificamos um atraso na carga <strong>#${vars.cargo_id || '—'}</strong> devido a imprevistos na rota.</p>
+        <p>Nova previsão de entrega: <strong style="color: #38bdf8;">${vars.new_eta || 'A definir'}</strong>.</p>`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: 'SAFIRA',
+          companyName: cn,
+          headline: 'Alerta de Logística',
+          bodyHtml: body,
+          ctaLabel: 'Rastrear Agora',
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
+        }),
+        text: subject,
+      };
+    }
+    default: {
+      const subject = vars.subject ? String(vars.subject) : `Notificação — ${cn}`;
+      return {
+        subject,
+        html: masterEmailLayout({
+          theme: cn.toLowerCase().includes('hub') ? 'RUBI' : cn.toLowerCase().includes('logta') ? 'SAFIRA' : 'GOLD',
+          companyName: cn,
+          headline: vars.headline ? String(vars.headline) : 'Informativo',
+          bodyHtml: vars.body ? String(vars.body) : '<p>Você tem uma nova notificação do sistema.</p>',
+          ctaLabel: typeof vars.ctaLabel === 'string' ? vars.ctaLabel : undefined,
+          ctaUrl: typeof vars.ctaUrl === 'string' ? vars.ctaUrl : undefined,
         }),
         text: subject,
       };

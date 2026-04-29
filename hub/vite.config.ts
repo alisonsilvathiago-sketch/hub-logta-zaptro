@@ -13,8 +13,8 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@shared': path.resolve(__dirname, '../shared'),
+      '@core': path.resolve(__dirname, './src/core'),
       '@hub': path.resolve(__dirname, './src/hub'),
-      '@apps': path.resolve(__dirname, '../apps'),
     },
   },
   build: {

@@ -6,7 +6,7 @@ import {
   ShieldCheck, ShieldAlert, Zap
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
-import { toastSuccess, toastError } from '@core/lib/toast';
+import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 
 interface UserProfile {
   id: string;
@@ -28,7 +28,6 @@ const UserManagement: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch profiles with company names using a single query
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select(`
@@ -47,8 +46,7 @@ const UserManagement: React.FC = () => {
 
       setUsers(formatted);
     } catch (err) {
-      console.error('Error fetching users:', err);
-      toastError('Falha ao carregar lista de usuários');
+      toastError('Falha Crítica: Não foi possível sincronizar a base de usuários master.');
     } finally {
       setLoading(false);
     }
@@ -58,7 +56,8 @@ const UserManagement: React.FC = () => {
     fetchData();
   }, []);
 
-  const toggleZaptro = async (userId: string, current: boolean) => {
+  const toggleZaptro = async (userId: string, current: boolean, name: string) => {
+    const tid = toastLoading(`Modificando permissões de produto para ${name}...`);
     try {
       const { error } = await supabase
         .from('profiles')
@@ -69,10 +68,12 @@ const UserManagement: React.FC = () => {
         .eq('id', userId);
 
       if (error) throw error;
-      toastSuccess(`Acesso Zaptro ${!current ? 'concedido' : 'removido'} com sucesso!`);
+      toastSuccess(`Acesso Zaptro ${!current ? 'concedido' : 'revogado'} para ${name}.`);
       fetchData();
     } catch (err) {
-      toastError('Erro ao alterar permissão do produto');
+      toastError('Erro de Segurança: Falha ao modificar privilégios do usuário.');
+    } finally {
+      toastDismiss(tid);
     }
   };
 
@@ -92,28 +93,27 @@ const UserManagement: React.FC = () => {
       <header style={styles.header}>
         <div>
           <h1 style={styles.title}>Gestão Unificada de Usuários</h1>
-          <p style={styles.subtitle}>Controle de acesso e separação de produtos (Zaptro vs Logta).</p>
+          <p style={styles.subtitle}>Controle granular de acesso e distribuição de produtos no ecossistema.</p>
         </div>
         <div style={styles.headerActions}>
-           <button style={styles.refreshBtn} onClick={fetchData} title="Atualizar">
+           <button style={styles.refreshBtn} onClick={fetchData} title="Sincronizar Agora">
              <RefreshCw size={18} />
            </button>
         </div>
       </header>
 
-      {/* Stats Quick View */}
       <div style={styles.statsRow}>
          <div style={styles.statMini}>
-            <span style={styles.statMiniLabel}>Total Usuários</span>
+            <span style={styles.statMiniLabel}>Base Total</span>
             <span style={styles.statMiniValue}>{users.length}</span>
          </div>
          <div style={styles.statMini}>
-            <span style={styles.statMiniLabel}>Acesso Zaptro</span>
+            <span style={styles.statMiniLabel}>Licenças Zaptro</span>
             <span style={{...styles.statMiniValue, color: '#10b981'}}>{users.filter(u => u.tem_zaptro).length}</span>
          </div>
          <div style={styles.statMini}>
-            <span style={styles.statMiniLabel}>Acesso Logta Only</span>
-            <span style={{...styles.statMiniValue, color: '#64748b'}}>{users.filter(u => !u.tem_zaptro).length}</span>
+            <span style={styles.statMiniLabel}>Apenas Logta</span>
+            <span style={{...styles.statMiniValue, color: 'var(--text-muted)'}}>{users.filter(u => !u.tem_zaptro).length}</span>
          </div>
       </div>
 
@@ -122,7 +122,7 @@ const UserManagement: React.FC = () => {
           <Search size={18} color="#94a3b8" />
           <input 
             type="text" 
-            placeholder="Buscar por e-mail, nome ou empresa..." 
+            placeholder="Localizar por e-mail, nome ou transportadora..." 
             style={styles.searchInput}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -149,29 +149,29 @@ const UserManagement: React.FC = () => {
         {loading ? (
           <div style={styles.loadingBox}>
             <Loader2 className="animate-spin" size={32} color="var(--primary)" />
-            <span>Sincronizando base de usuários...</span>
+            <span>Consultando banco de dados master...</span>
           </div>
         ) : (
           <table style={styles.table}>
             <thead>
               <tr style={styles.tableHead}>
-                 <th style={styles.th}>USUÁRIO / IDENTIDADE</th>
+                 <th style={styles.th}>IDENTIDADE DO USUÁRIO</th>
                  <th style={styles.th}>VÍNCULO CORPORATIVO</th>
-                 <th style={styles.th}>FUNÇÃO</th>
-                 <th style={styles.th}>PRODUTO ZAPTRO</th>
-                 <th style={styles.th}>AÇÕES MASTER</th>
+                 <th style={styles.th}>PRIVILÉGIO</th>
+                 <th style={styles.th}>MODO ZAPTRO</th>
+                 <th style={{...styles.th, textAlign: 'right'}}>AÇÕES MASTER</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.length === 0 ? (
-                <tr><td colSpan={5} style={styles.emptyTd}>Nenhum usuário encontrado com os filtros aplicados.</td></tr>
+                <tr><td colSpan={5} style={styles.emptyTd}>Nenhum registro encontrado para esta busca.</td></tr>
               ) : filteredUsers.map(user => (
                 <tr key={user.id} style={styles.tr}>
                   <td style={styles.td}>
                      <div style={styles.userInfo}>
                         <div style={styles.avatar}>{(user.full_name || user.email)[0].toUpperCase()}</div>
                         <div>
-                           <div style={styles.userName}>{user.full_name || 'Usuário sem nome'}</div>
+                           <div style={styles.userName}>{user.full_name || 'Usuário Sem Nome'}</div>
                            <div style={styles.userEmail}><Mail size={12} /> {user.email}</div>
                         </div>
                      </div>
@@ -185,9 +185,8 @@ const UserManagement: React.FC = () => {
                   <td style={styles.td}>
                      <span style={{
                         ...styles.roleBadge,
-                        backgroundColor: user.role === 'ADMIN' ? '#fdf2f2' : user.role.startsWith('MASTER') ? 'rgba(217, 255, 0, 0.18)' : '#f1f5f9',
-                        color: user.role === 'ADMIN' ? '#991b1b' : user.role.startsWith('MASTER') ? '#000000' : '#475569'
-
+                        backgroundColor: user.role === 'ADMIN' ? '#fef2f2' : user.role.startsWith('MASTER') ? '#eff6ff' : '#f1f5f9',
+                        color: user.role === 'ADMIN' ? '#b91c1c' : user.role.startsWith('MASTER') ? 'var(--primary)' : '#475569'
                      }}>
                         {user.role}
                      </span>
@@ -196,21 +195,21 @@ const UserManagement: React.FC = () => {
                      <div 
                         style={{
                            ...styles.zaptroStatus,
-                           backgroundColor: user.tem_zaptro ? '#ecfdf5' : '#f4f4f4',
+                           backgroundColor: user.tem_zaptro ? '#ecfdf5' : '#f8fafc',
                            color: user.tem_zaptro ? '#10b981' : '#94a3b8',
-                           borderColor: user.tem_zaptro ? '#d1fae5' : '#e2e8f0',
+                           borderColor: user.tem_zaptro ? '#d1fae5' : 'var(--border)',
                            cursor: 'pointer'
                         }}
-                        onClick={() => toggleZaptro(user.id, user.tem_zaptro)}
+                        onClick={() => toggleZaptro(user.id, user.tem_zaptro, user.full_name || user.email)}
                      >
                         {user.tem_zaptro ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}
-                        <span>{user.tem_zaptro ? 'ACESSO LIBERADO' : 'SEM ACESSO'}</span>
+                        <span>{user.tem_zaptro ? 'AUTORIZADO' : 'BLOQUEADO'}</span>
                      </div>
                   </td>
-                  <td style={styles.td}>
+                  <td style={{...styles.td, textAlign: 'right'}}>
                      <div style={styles.actions}>
-                        <button style={styles.actionBtn} title="Editar Perfil"><Shield size={16} /></button>
-                        <button style={styles.actionBtn} title="Histórico de Acesso"><ExternalLink size={16} /></button>
+                        <button style={styles.actionBtn} title="Editar Segurança"><Shield size={16} /></button>
+                        <button style={styles.actionBtn} title="Logs de Auditoria"><ExternalLink size={16} /></button>
                      </div>
                   </td>
                 </tr>
@@ -224,48 +223,48 @@ const UserManagement: React.FC = () => {
 };
 
 const styles: Record<string, any> = {
-  container: { padding: '40px' },
+  container: { padding: '0', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-  title: { fontSize: '28px', fontWeight: '700', color: 'var(--primary)', letterSpacing: '-1.5px' },
-  subtitle: { color: 'var(--text-muted)', fontSize: '15px', fontWeight: '500' },
+  title: { fontSize: '28px', fontWeight: '500', color: 'var(--primary)', letterSpacing: '0.4px' },
+  subtitle: { color: 'var(--text-muted)', fontSize: '15px', fontWeight: '400', letterSpacing: '0.2px' },
   headerActions: { display: 'flex', gap: '12px' },
-  refreshBtn: { width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', color: 'var(--text-muted)' },
+  refreshBtn: { width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' },
   
   statsRow: { display: 'flex', gap: '20px', marginBottom: '32px' },
-  statMini: { backgroundColor: 'white', padding: '16px 24px', borderRadius: '16px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', minWidth: '160px' },
-  statMiniLabel: { fontSize: '11px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase' },
-  statMiniValue: { fontSize: '24px', fontWeight: '700', color: 'var(--primary)' },
+  statMini: { backgroundColor: 'white', padding: '20px 24px', borderRadius: '24px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', minWidth: '180px', boxShadow: 'var(--shadow-sm)' },
+  statMiniLabel: { fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' },
+  statMiniValue: { fontSize: '26px', fontWeight: '500', color: 'var(--primary)', letterSpacing: '0.2px', marginTop: '4px' },
 
-  controls: { display: 'flex', gap: '16px', marginBottom: '24px' },
-  searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'white', padding: '12px 24px', borderRadius: '16px', border: '1px solid var(--border)' },
-  searchInput: { border: 'none', outline: 'none', width: '100%', fontSize: '14px', fontWeight: '600' },
+  controls: { display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'center' },
+  searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'white', padding: '12px 20px', borderRadius: '14px', border: '1px solid var(--border)' },
+  searchInput: { border: 'none', outline: 'none', width: '100%', fontSize: '14px', fontWeight: '500', color: 'var(--text-main)', letterSpacing: '0.2px' },
   
-  filterGroup: { display: 'flex', backgroundColor: '#ebebeb', padding: '4px', borderRadius: '12px', gap: '4px' },
-  filterTab: { padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', background: 'none' },
-  activeFilter: { backgroundColor: 'white', color: 'var(--primary)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
+  filterGroup: { display: 'flex', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '12px', gap: '4px' },
+  filterTab: { padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '500', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', background: 'none', transition: 'all 0.2s', letterSpacing: '0.3px' },
+  activeFilter: { backgroundColor: 'white', color: 'var(--primary)', boxShadow: 'var(--shadow-sm)' },
 
-  listCard: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' },
+  listCard: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  tableHead: { backgroundColor: '#f4f4f4', borderBottom: '1px solid var(--border)' },
-  th: { padding: '16px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' },
+  tableHead: { backgroundColor: '#f8fafc', borderBottom: '1px solid var(--border)' },
+  th: { padding: '16px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' },
   tr: { borderBottom: '1px solid var(--border)', transition: 'background 0.2s' },
   td: { padding: '18px 24px' },
-  emptyTd: { padding: '48px', textAlign: 'center', color: '#94a3b8', fontWeight: '600' },
+  emptyTd: { padding: '64px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '500', fontSize: '15px' },
   
-  loadingBox: { padding: '64px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', color: '#64748b', fontWeight: '700' },
+  loadingBox: { padding: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '15px' },
 
   userInfo: { display: 'flex', alignItems: 'center', gap: '12px' },
-  avatar: { width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700' },
-  userName: { fontSize: '14px', fontWeight: '600', color: 'var(--primary)' },
-  userEmail: { fontSize: '12px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' },
+  avatar: { width: '40px', height: '40px', borderRadius: '12px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', fontSize: '16px' },
+  userName: { fontSize: '15px', fontWeight: '500', color: 'var(--text-main)', letterSpacing: '0.2px' },
+  userEmail: { fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px', fontWeight: '400', letterSpacing: '0.2px' },
 
-  companyBadge: { display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f4f4f4', borderRadius: '10px', color: '#475569', fontSize: '12px', fontWeight: '700', border: '1px solid #e2e8f0' },
-  roleBadge: { padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: '700' },
+  companyBadge: { display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f8fafc', borderRadius: '10px', color: 'var(--text-muted)', fontSize: '12px', fontWeight: '600', border: '1px solid var(--border)', letterSpacing: '0.3px' },
+  roleBadge: { padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: '600', letterSpacing: '0.5px' },
   
-  zaptroStatus: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '12px', fontSize: '11px', fontWeight: '700', border: '1px solid', width: 'fit-content' },
+  zaptroStatus: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '24px', fontSize: '11px', fontWeight: '600', border: '1px solid', width: 'fit-content', transition: 'all 0.2s', letterSpacing: '0.4px' },
   
-  actions: { display: 'flex', gap: '8px' },
-  actionBtn: { width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', color: '#94a3b8', cursor: 'pointer' }
+  actions: { display: 'flex', gap: '8px', justifyContent: 'flex-end' },
+  actionBtn: { width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', borderRadius: '10px', background: 'white', color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s' }
 };
 
 export default UserManagement;

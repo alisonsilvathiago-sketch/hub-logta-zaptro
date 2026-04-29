@@ -3,16 +3,16 @@ import type { CSSProperties } from 'react';
 /**
  * Shell Logta — paddings partilhados entre dashboard, header global e conteúdo.
  */
-export const LOGTA_PAGE_PAD_X = 'clamp(36px, 5.5vw, 96px)';
+export const LOGTA_PAGE_PAD_X = 'clamp(16px, 2.4vw, 32px)';
 
 /** Fundo único do miolo autenticado (header global + `LogtaPageView` / módulos). */
-export const LOGTA_SHELL_BG = '#f3f4f6';
+export const LOGTA_SHELL_BG = '#f3f0ff';
 
 /**
  * Padding vertical típico do corpo dentro de `<main>`.
  * O inset horizontal uniforme vem de `App.tsx` (`LOGTA_PAGE_PAD_X`).
  */
-export const LOGTA_PAGE_ROOT_PADDING = '24px 0 40px';
+export const LOGTA_PAGE_ROOT_PADDING = '14px 0 28px';
 
 /**
  * Invólucro base de todas as vistas autenticadas (lista, configurações, módulos):
@@ -29,7 +29,7 @@ export const LOGTA_PAGE_VIEW: CSSProperties = {
 };
 
 /** Padding superior da página do IntelligenceDashboard. */
-export const LOGTA_DASHBOARD_PAGE_PAD_TOP_PX = 20;
+export const LOGTA_DASHBOARD_PAGE_PAD_TOP_PX = 8;
 
 /** Espaçamento vertical único entre blocos dentro dos módulos (tabs, KPIs, secções). */
 export const LOGTA_MODULE_STACK_GAP_PX = 24;

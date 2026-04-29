@@ -13,17 +13,17 @@
   --zaptro-light: rgba(217, 255, 0, 0.15);
   --zaptro-glow: rgba(217, 255, 0, 0.25);
   
-  --bg-app: #FFFFFF;
+  --bg-app: #F6F7F8;
   --bg-surface: #FFFFFF;
   --bg-card: #FFFFFF;
-  --bg-deep: #FFFFFF;
+  --bg-deep: #F6F7F8;
   
-  --text-main: #000000;
-  --text-secondary: #334155;
-  --text-muted: #475569;
+  --text-main: #1F2937;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
   
-  --border: rgba(0, 0, 0, 0.06);
-  --border-light: rgba(0, 0, 0, 0.03);
+  --border: #E5E7EB;
+  --border-light: #F3F4F6;
   
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -117,9 +117,9 @@ body {
  * `data-zaptro-theme` é definido em `ZaptroThemeProvider`. Em TS use também `zaptroCardSurfaceStyle()`.
  */
 .zaptro-card-surface {
-  border-radius: 28px;
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   background: #ffffff;
   box-sizing: border-box;
 }
@@ -174,7 +174,7 @@ html[data-zaptro-theme='dark'] .zaptro-card-surface {
 /* Premium Components */
 .card {
   background: var(--bg-card);
-  border-radius: var(--radius-lg);
+  border-radius: 12px;
   padding: 24px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);

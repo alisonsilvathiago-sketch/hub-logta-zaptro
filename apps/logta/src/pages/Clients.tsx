@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import StatCard from '@/shared/components/StatCard';
-import SEOManager from '@/shared/components/SEOManager';
-import { supabase } from '@/shared/lib/supabase';
+import StatCard from '@shared/components/StatCard';
+import SEOManager from '@shared/components/SEOManager';
+import { supabase } from '../lib/supabase';
 import { 
   Users, Building2, Search, FileText, Target, CheckCircle2, LayoutDashboard,
   Filter, MoreVertical, MessageCircle, Clock, ExternalLink, DollarSign, CreditCard, RotateCcw, XCircle, Zap, Plus, RefreshCw, Loader2, Shield
 } from 'lucide-react';
-import Modal from '@/shared/components/Modal';
+import Modal from '@shared/components/Modal';
 
 const COLORS = {
   primary: '#1E293B',

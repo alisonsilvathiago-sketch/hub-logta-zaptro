@@ -5,6 +5,9 @@ export interface Profile {
   role: 'USER' | 'ADMIN' | 'MASTER' | 'MASTER_ADMIN';
   company_id?: string;
   avatar_url?: string;
+  phone?: string;
+  bio?: string;
+  updated_at?: string;
 }
 
 export type SubscriptionStatus = 'ATIVO' | 'SUSPENSO' | 'BLOQUEADO' | 'trial' | 'past_due' | 'unpaid' | 'canceled';

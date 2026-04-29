@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { getLogtaHomePath } from '../utils/logtaRbac';
 import type { UserRole } from '../types';
+import { profileHasLogtaErpAccess } from '../utils/authProductGate';
 import { 
   Lock, Mail, ArrowRight, Eye, EyeOff, Loader2,
   AlertCircle, Truck
@@ -132,7 +133,17 @@ const Login: React.FC = () => {
         return;
       }
 
-      const { data: prof } = await supabase.from('profiles').select('role').eq('id', uid).maybeSingle();
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('role,tem_logta,metadata')
+        .eq('id', uid)
+        .maybeSingle();
+
+      if (!profileHasLogtaErpAccess(prof)) {
+        await supabase.auth.signOut();
+        setError('Sua conta não possui o produto Logta ativo. Fale com o administrador para liberar acesso.');
+        return;
+      }
       const home = getLogtaHomePath((prof?.role as UserRole | undefined) ?? undefined);
       navigate(home, { replace: true });
     } catch (err: any) {

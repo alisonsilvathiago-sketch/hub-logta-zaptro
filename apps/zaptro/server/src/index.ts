@@ -4,6 +4,9 @@ import { loadConfig } from './config.js';
 import { createEmailLogger } from './logging/emailLog.js';
 import { createMailQueue } from './queue/createMailQueue.js';
 import { registerMailRoutes } from './routes/mailRoutes.js';
+import { registerCalendarRoutes } from './routes/calendarRoutes.js';
+import { registerNotificationRoutes } from './routes/notificationRoutes.js';
+import { registerGoogleRoutes } from './routes/googleRoutes.js';
 
 async function main() {
   const cfg = loadConfig();
@@ -25,7 +28,7 @@ async function main() {
   );
   app.use(express.json({ limit: '600kb' }));
 
-  app.get('/', (req, res) => {
+  app.get('/', (_req, res) => {
     res.send(`
       <div style="font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #0f172a; color: white;">
         <h1 style="color: #38bdf8;">Zaptro Mail API</h1>
@@ -39,6 +42,9 @@ async function main() {
   });
 
   registerMailRoutes(app, cfg, logger, queue);
+  registerCalendarRoutes(app, cfg);
+  registerNotificationRoutes(app, cfg, logger, queue);
+  registerGoogleRoutes(app, cfg);
 
   app.listen(cfg.port, () => {
     // eslint-disable-next-line no-console

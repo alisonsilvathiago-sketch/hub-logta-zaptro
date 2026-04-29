@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import SEOManager from '../components/SEOManager';
 import { supabase } from '../lib/supabase';
-import { supabase } from '../lib/supabase';
 
 const LogtaWelcome: React.FC = () => {
   const [searchParams] = useSearchParams();

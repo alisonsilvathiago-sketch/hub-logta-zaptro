@@ -16,7 +16,9 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const fetchCompanyData = async (forceById?: string) => {
-    const idToFetch = forceById || profile?.company_id;
+    const impersonatedId = localStorage.getItem('hub-impersonate-tenant');
+    const idToFetch = forceById || impersonatedId || profile?.company_id;
+    
     if (authLoading && !forceById) return;
     if (!idToFetch) {
        setIsLoading(false);

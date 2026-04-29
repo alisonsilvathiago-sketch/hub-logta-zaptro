@@ -1,45 +1,48 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Navigation } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import * as LucideIcons from 'lucide-react';
-
+import { LogOut, Sparkles, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getSidebarNavForRole, type SidebarNavItem } from '../utils/logtaRbac';
 
 /** Distância do cartão lateral à borda do ecrã. */
 export const SIDEBAR_FLOAT_INSET_PX = 16;
 /** Largura do cartão quando encolhido (só ícones). */
-export const SIDEBAR_COLLAPSED_PX = 72;
+export const SIDEBAR_COLLAPSED_PX = 82;
 /** Largura ao passar o rato (ícone + rótulo). */
-export const SIDEBAR_EXPANDED_PX = 252;
+export const SIDEBAR_EXPANDED_PX = 260;
 /** Margem esquerda do conteúdo principal: inset + cartão + respiro até ao conteúdo. */
 export const SIDEBAR_MAIN_OFFSET_PX = SIDEBAR_FLOAT_INSET_PX + SIDEBAR_COLLAPSED_PX + 16;
 
-/** Cartão lateral — alinhado ao `--radius-xl` / módulos Logta */
-const RADIUS_OUTER = 24;
-const RADIUS_ITEM = 12;
-const TEXT_MUTED = '#6B7280';
-const MENU_PANEL_SHADOW =
-  '0 22px 55px rgba(15, 23, 42, 0.08), 0 8px 22px rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(148, 163, 184, 0.14)';
-const TEXT_ACTIVE = '#FFFFFF';
-const PILL_ACTIVE_BG = '#8B5CF6';
-const LOGTA_TEXT = '#111827';
-const PURPLE = '#8B5CF6';
-const PURPLE_SOFT = 'rgba(139, 92, 246, 0.1)';
+const PANEL_RADIUS = 24;
+const ITEM_RADIUS = 12;
+const PANEL_BG = '#0a0a10';
+const PANEL_BG_ALT = '#121222';
+const PANEL_BORDER = 'rgba(255,255,255,0.08)';
+const PURPLE = '#8b5cf6';
+const PURPLE_SOFT = 'rgba(139,92,246,0.22)';
+const TEXT_MAIN = '#f8f8ff';
+const TEXT_MUTED = '#a2a0c2';
+
 function NavIcon({ item }: { item: SidebarNavItem }) {
   const Cmp = (LucideIcons as Record<string, React.ComponentType<{ size?: number; strokeWidth?: number }>>)[item.icon] ?? LucideIcons.Circle;
-  return <Cmp size={20} strokeWidth={2} />;
+  return <Cmp size={18} strokeWidth={2.1} />;
 }
 
 const Sidebar: React.FC = () => {
   const [hovered, setHovered] = useState(false);
-  const { signOut, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { profile, signOut } = useAuth();
 
   const menuItems = getSidebarNavForRole(profile?.role);
   const expanded = hovered;
   const width = expanded ? SIDEBAR_EXPANDED_PX : SIDEBAR_COLLAPSED_PX;
+
+  const fullName = profile?.full_name?.trim() || 'Operador';
+  const firstName = useMemo(() => fullName.split(/\s+/)[0], [fullName]);
+  const roleLabel = profile?.role?.replaceAll('_', ' ') || 'broker';
+
   return (
     <aside
       onMouseEnter={() => setHovered(true)}
@@ -50,232 +53,256 @@ const Sidebar: React.FC = () => {
         top: SIDEBAR_FLOAT_INSET_PX,
         bottom: SIDEBAR_FLOAT_INSET_PX,
         width,
-        zIndex: 1100,
+        zIndex: 1200,
+        borderRadius: PANEL_RADIUS,
+        overflow: 'hidden',
+        border: `1px solid ${PANEL_BORDER}`,
+        background: `linear-gradient(165deg, ${PANEL_BG} 0%, ${PANEL_BG_ALT} 100%)`,
+        boxShadow: '0 22px 60px rgba(2, 6, 23, 0.5)',
+        transition: 'width 0.25s cubic-bezier(0.22, 1, 0.36, 1)',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-        backgroundColor: 'transparent',
-        borderRadius: RADIUS_OUTER,
-        boxShadow: 'none',
-        transition: 'width 0.24s cubic-bezier(0.22, 1, 0.36, 1)',
       }}
     >
       <div
+        role="button"
+        tabIndex={0}
+        title={!expanded ? 'Dashboard' : undefined}
+        onClick={() => navigate('/dashboard')}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            navigate('/dashboard');
+          }
+        }}
         style={{
-          flex: 1,
-          minHeight: 0,
+          margin: '14px 10px 10px',
+          borderRadius: 14,
+          minHeight: 54,
+          border: '1px solid rgba(255,255,255,0.12)',
+          background: 'rgba(255,255,255,0.04)',
           display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          boxSizing: 'border-box',
-          backgroundColor: '#FFFFFF',
-          borderRadius: RADIUS_OUTER,
-          boxShadow: MENU_PANEL_SHADOW,
-          transition: 'box-shadow 0.22s ease',
-          border: '1px solid rgba(226, 232, 240, 0.95)',
+          alignItems: 'center',
+          justifyContent: expanded ? 'flex-start' : 'center',
+          gap: 12,
+          padding: expanded ? '0 14px' : '0 12px',
+          cursor: 'pointer',
         }}
       >
-        {/* Logo no topo do painel — respiro moderado (evita 56px que empurrava o conteúdo) */}
         <div
-          role="button"
-          tabIndex={0}
-          title="Logta — Início"
-          onClick={() => navigate('/dashboard')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              navigate('/dashboard');
-            }
-          }}
           style={{
-            flexShrink: 0,
-            marginTop: 18,
-            marginBottom: 16,
-            padding: expanded ? '0 12px' : '0 10px',
+            width: 34,
+            height: 34,
+            borderRadius: 11,
+            background: `linear-gradient(135deg, ${PURPLE} 0%, #a78bfa 100%)`,
+            boxShadow: `0 10px 25px ${PURPLE_SOFT}`,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: expanded ? 'flex-start' : 'center',
-            gap: 12,
-            cursor: 'pointer',
+            justifyContent: 'center',
+            flexShrink: 0,
           }}
         >
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 14,
-              flexShrink: 0,
-              background: `linear-gradient(135deg, ${PURPLE}, #a78bfa)`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: `0 6px 20px ${PURPLE_SOFT}`,
-            }}
-          >
-            <Navigation size={22} color="#fff" strokeWidth={2.2} />
-          </div>
-          <span
-            style={{
-              fontSize: 18,
-              fontWeight: 900,
-              color: LOGTA_TEXT,
-              letterSpacing: '-0.03em',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              opacity: expanded ? 1 : 0,
-              maxWidth: expanded ? 200 : 0,
-              transition: 'opacity 0.16s ease, max-width 0.24s cubic-bezier(0.22, 1, 0.36, 1)',
-            }}
-          >
-            Logta
-          </span>
+          <Sparkles size={16} color="#fff" />
         </div>
+        <div
+          style={{
+            minWidth: 0,
+            opacity: expanded ? 1 : 0,
+            maxWidth: expanded ? 170 : 0,
+            overflow: 'hidden',
+            transition: 'opacity 0.18s ease, max-width 0.25s ease',
+          }}
+        >
+          <p style={{ margin: 0, color: TEXT_MAIN, fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em' }}>Logta</p>
+          <p style={{ margin: 0, color: TEXT_MUTED, fontSize: 10, fontWeight: 600, textTransform: 'uppercase' }}>Black Purple UI</p>
+        </div>
+      </div>
 
       <nav
         style={{
           flex: 1,
           minHeight: 0,
-          backgroundColor: '#FFFFFF',
-          padding: expanded ? '0 12px 10px' : '0 10px 10px',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          padding: expanded ? '8px 10px' : '8px 8px',
           display: 'flex',
           flexDirection: 'column',
           gap: 8,
-          overflowY: 'auto',
-          overflowX: 'hidden',
         }}
       >
-        {menuItems.map((item, index) => {
+        {menuItems.map((item) => {
           const isActive = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
           return (
-            <div
-              key={`${item.path}-${index}`}
-              role="button"
-              tabIndex={0}
+            <button
+              key={item.path}
+              type="button"
               title={!expanded ? item.label : undefined}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  navigate(item.path);
-                }
-              }}
+              onClick={() => navigate(item.path)}
               style={{
+                position: 'relative',
+                border: 'none',
                 display: 'flex',
                 alignItems: 'center',
-                gap: expanded ? 12 : 0,
                 justifyContent: expanded ? 'flex-start' : 'center',
-                padding: expanded ? '11px 14px' : '11px 10px',
-                borderRadius: RADIUS_ITEM,
+                gap: 12,
+                minHeight: 44,
+                borderRadius: ITEM_RADIUS,
+                padding: expanded ? '0 13px' : 0,
+                background: isActive ? `linear-gradient(135deg, ${PURPLE} 0%, #6d28d9 100%)` : 'transparent',
+                color: isActive ? '#fff' : TEXT_MUTED,
                 cursor: 'pointer',
-                color: isActive ? TEXT_ACTIVE : TEXT_MUTED,
-                backgroundColor: isActive ? PILL_ACTIVE_BG : 'transparent',
-                fontWeight: 600,
-                fontSize: 14,
-                letterSpacing: expanded ? '-0.01em' : 0,
-                transition: 'background-color 0.18s ease, color 0.18s ease, transform 0.18s ease',
-                flexShrink: 0,
-                outline: 'none',
-              }}
-              onClick={() => navigate(item.path)}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.backgroundColor = '#F3F4F6';
-                  e.currentTarget.style.color = '#111827';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = TEXT_MUTED;
-                }
+                fontFamily: 'inherit',
+                fontSize: 13.5,
+                fontWeight: 700,
+                boxShadow: isActive ? '0 10px 24px rgba(124,58,237,0.3)' : 'none',
               }}
             >
-              <span
-                style={{
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 24,
-                  height: 24,
-                }}
-              >
+              {isActive && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    left: 6,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 4,
+                    height: 22,
+                    borderRadius: 4,
+                    backgroundColor: '#f8f8ff',
+                    opacity: 0.75,
+                  }}
+                />
+              )}
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, flexShrink: 0 }}>
                 <NavIcon item={item} />
               </span>
               <span
                 style={{
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
                   opacity: expanded ? 1 : 0,
-                  maxWidth: expanded ? 200 : 0,
-                  transition: 'opacity 0.16s ease, max-width 0.24s cubic-bezier(0.22, 1, 0.36, 1)',
+                  maxWidth: expanded ? 170 : 0,
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  transition: 'opacity 0.18s ease, max-width 0.25s ease',
                 }}
               >
                 {item.label}
               </span>
-            </div>
+            </button>
           );
         })}
       </nav>
 
       <div
         style={{
-          padding: expanded ? '10px 12px 14px' : '10px 10px 14px',
-          borderTop: '1px solid #f1f5f9',
-          flexShrink: 0,
-          backgroundColor: '#FFFFFF',
+          padding: expanded ? '12px 10px 12px' : '12px 8px 12px',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          background: 'rgba(10,10,16,0.75)',
+          backdropFilter: 'blur(8px)',
         }}
       >
         <div
-          role="button"
-          tabIndex={0}
-          title={!expanded ? 'Sair da Conta' : undefined}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              void signOut();
-            }
-          }}
           style={{
+            borderRadius: 12,
+            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'rgba(255,255,255,0.04)',
+            minHeight: 48,
             display: 'flex',
             alignItems: 'center',
-            gap: expanded ? 12 : 0,
             justifyContent: expanded ? 'flex-start' : 'center',
-            padding: expanded ? '11px 14px' : '11px 10px',
-            borderRadius: RADIUS_ITEM,
-            cursor: 'pointer',
-            color: TEXT_MUTED,
-            fontWeight: 600,
-            fontSize: 14,
-            transition: 'background-color 0.18s ease, color 0.18s ease',
-          }}
-          onClick={() => void signOut()}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#fef2f2';
-            e.currentTarget.style.color = '#b91c1c';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = TEXT_MUTED;
+            gap: 10,
+            padding: expanded ? '0 10px' : '0 6px',
           }}
         >
-          <span style={{ flexShrink: 0, width: 24, height: 24, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <LogOut size={20} strokeWidth={2} />
-          </span>
-          <span
+          <div
             style={{
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              opacity: expanded ? 1 : 0,
-              maxWidth: expanded ? 200 : 0,
-              transition: 'opacity 0.16s ease, max-width 0.24s cubic-bezier(0.22, 1, 0.36, 1)',
+              width: 30,
+              height: 30,
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, #27272a 0%, #09090b 100%)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: '#ede9fe',
+              fontSize: 12,
+              fontWeight: 900,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
-            Sair da Conta
-          </span>
+            {firstName.slice(0, 1).toUpperCase()}
+          </div>
+          <div
+            style={{
+              opacity: expanded ? 1 : 0,
+              maxWidth: expanded ? 160 : 0,
+              overflow: 'hidden',
+              transition: 'opacity 0.18s ease, max-width 0.25s ease',
+            }}
+          >
+            <p style={{ margin: 0, color: TEXT_MAIN, fontSize: 13, fontWeight: 800, whiteSpace: 'nowrap' }}>{firstName}</p>
+            <p style={{ margin: 0, color: TEXT_MUTED, fontSize: 10, fontWeight: 600, textTransform: 'lowercase', whiteSpace: 'nowrap' }}>
+              {roleLabel}
+            </p>
+          </div>
         </div>
+        <button
+          type="button"
+          title={!expanded ? 'Sair' : undefined}
+          onClick={() => void signOut()}
+          style={{
+            border: 'none',
+            borderRadius: 12,
+            minHeight: 42,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: expanded ? 'flex-start' : 'center',
+            gap: 10,
+            color: '#fca5a5',
+            background: 'rgba(239,68,68,0.1)',
+            padding: expanded ? '0 12px' : 0,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            fontSize: 13,
+            fontWeight: 700,
+          }}
+        >
+          <LogOut size={16} />
+          <span
+            style={{
+              opacity: expanded ? 1 : 0,
+              maxWidth: expanded ? 120 : 0,
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              transition: 'opacity 0.18s ease, max-width 0.25s ease',
+            }}
+          >
+            Sair
+          </span>
+        </button>
       </div>
-      </div>
+      <button
+        type="button"
+        aria-label="Expandir menu"
+        style={{
+          position: 'absolute',
+          top: 14,
+          right: 10,
+          width: 26,
+          height: 26,
+          borderRadius: 8,
+          border: '1px solid rgba(255,255,255,0.14)',
+          backgroundColor: 'rgba(255,255,255,0.06)',
+          color: '#c4b5fd',
+          display: expanded ? 'none' : 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+        }}
+      >
+        <Menu size={14} />
+      </button>
     </aside>
   );
 };

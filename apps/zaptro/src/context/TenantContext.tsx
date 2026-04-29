@@ -34,17 +34,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   useEffect(() => {
-    // 🛡️ MODO REPARO: Se for o admin, libera uma empresa fake para o sistema rodar
-    if (profile?.email === 'admteste@teste.com') {
-      setCompanyState({
-        id: '00000000-0000-0000-0000-000000000000',
-        name: 'Zaptro Admin',
-        plan: 'MASTER',
-        status: 'ATIVO',
-        billing_status: 'paid'
-      } as any);
-      setIsLoading(false);
-    } else if (!authLoading) {
+    if (!authLoading) {
       fetchCompanyData();
     }
   }, [profile, authLoading]);

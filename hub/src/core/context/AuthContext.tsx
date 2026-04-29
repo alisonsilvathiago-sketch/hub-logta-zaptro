@@ -11,6 +11,8 @@ interface AuthContextType {
   isLoggingIn: boolean;
   isLoggingOut: boolean;
   setIsLoggingIn: (val: boolean) => void;
+  impersonate: (companyId: string, origin?: string) => void;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,9 +51,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     setIsLoggingOut(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    localStorage.removeItem('hub-dev-session');
+    await new Promise(resolve => setTimeout(resolve, 1000));
     await supabase.auth.signOut();
     window.location.href = '/';
+  };
+
+  const impersonate = (companyId: string, origin: string = 'logta') => {
+    // No monorepo, redirecionamos para a porta do app correspondente ou via subdominio
+    localStorage.setItem('hub-impersonate-tenant', companyId);
+    
+    // Porta 5173 = Logta, Porta 5174 = Zaptro
+    const port = origin === 'zaptro' ? '5174' : '5173';
+    
+    window.open(`http://localhost:${port}/master/connect?tenant=${companyId}&dev=true`, '_blank');
+  };
+
+  const refreshProfile = async () => {
+    if (user?.id) await fetchProfile(user.id);
   };
 
   const isMaster = profile?.role === 'MASTER' || profile?.role === 'MASTER_ADMIN' || profile?.role === 'ADMIN';
@@ -65,7 +82,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isMaster,
       isLoggingIn,
       isLoggingOut,
-      setIsLoggingIn
+      setIsLoggingIn,
+      impersonate,
+      refreshProfile
     }}>
       {children}
     </AuthContext.Provider>

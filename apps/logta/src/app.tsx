@@ -21,7 +21,6 @@ import Reports from './product-logta/pages/Reports';
 import IntelligenceDashboard from './product-logta/pages/IntelligenceDashboard';
 import DriverPortal from './product-logta/pages/DriverPortal';
 import Drivers from './product-logta/pages/Drivers';
-import DriverProfile from './product-logta/pages/DriverProfile';
 import UserManagement from './product-logta/pages/UserManagement';
 import CompanySettings from './product-logta/pages/CompanySettings';
 import DriverMobileApp from './product-logta/pages/DriverMobileApp';
@@ -36,6 +35,7 @@ import UserProfile from './pages/UserProfile';
 import Checkout from './pages/Checkout';
 import LogtaWelcome from './pages/LogtaWelcome';
 import SSOLogin from './pages/SSOLogin';
+import MasterConnect from './pages/MasterConnect';
 import { getContext } from './utils/domains';
 
 function AppRootIndex() {
@@ -51,7 +51,7 @@ const App: React.FC = () => {
   const context = getContext();
 
   const isCheckoutDomain = context === 'CHECKOUT' || window.location.hostname.includes('play.');
-  const isPublic = ['/', '/login'].some((p) => location.pathname === p);
+  const isPublic = ['/', '/login', '/master/connect'].some((p) => location.pathname === p);
   const isMobileApp = location.pathname.startsWith('/app-motorista');
 
   /** Miolo autenticado: sempre sidebar + header global + mesmo fundo (inclui `/dashboard`). */
@@ -141,6 +141,7 @@ const App: React.FC = () => {
                 element={isCheckoutDomain ? <Checkout /> : <Navigate to="/" replace />} 
               />
               <Route path="/login" element={<Login />} />
+              <Route path="/master/connect" element={<MasterConnect />} />
               <Route path="/welcome" element={<LogtaWelcome />} />
               <Route path="/sso" element={<SSOLogin />} />
 

@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_PROJECT_URL = 'https://zvqsqcxtowqoyqxjapoq.supabase.co';
+const SUPABASE_PROJECT_URL = 'https://rrjnkmgkhbtapumgmhhr.supabase.co';
 
 const DEFAULT_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2cXNxY3h0b3dxb3lxeGphcG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MDMzNTksImV4cCI6MjA5MTI3OTM1OX0.P6QfkVNtJA8dAVwOPTYlA8U9GYFn2xxYz4Pl_dpXCqQ';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyam5rbWdraGJ0YXB1bWdtaGhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MTI5NTcsImV4cCI6MjA5MjI4ODk1N30.nRyOwEH3Rz13hax8o5T3pQva3i_9px1EXY82F2lsuKQ';
 
 function resolveSupabaseUrl(): string {
   const fromEnv = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();

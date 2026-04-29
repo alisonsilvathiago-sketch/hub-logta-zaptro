@@ -17,15 +17,15 @@ L.Icon.Default.mergeOptions({
 const S: Record<string, React.CSSProperties> = {
   page: { padding: '32px 60px', background: 'var(--content-bg)', height: '100%', fontFamily: 'Inter, sans-serif', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexShrink: 0, padding: '0' },
-  title: { fontSize: '24px', fontWeight: '900', letterSpacing: '-1px', color: '#0F172A' },
-  subtitle: { color: '#64748B', fontSize: '13px' },
+  title: { fontSize: '24px', fontWeight: '900', letterSpacing: '-1px', color: '#1F2937' },
+  subtitle: { color: '#6B7280', fontSize: '13px' },
   layout: { display: 'flex', gap: '24px', flex: 1, minHeight: 0, padding: '0' },
   sidebar: { width: '340px', display: 'flex', flexDirection: 'column', gap: '20px', flexShrink: 0, overflowY: 'auto', paddingRight: '8px' },
-  mapWrapper: { flex: 1, background: '#ffffff', borderRadius: '24px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', position: 'relative' },
-  card: { background: '#ffffff', borderRadius: '24px', border: '1px solid #E2E8F0', padding: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
-  inputGroup: { display: 'flex', alignItems: 'center', gap: '10px', background: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '12px 14px' },
-  badge: (bg: string, color: string) => ({ padding: '4px 12px', borderRadius: '24px', fontSize: '10px', fontWeight: '900', display: 'inline-flex', alignItems: 'center', gap: '6px', background: bg, color: color }),
-  listItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '16px', border: '1px solid #F1F5F9', background: '#ffffff', marginBottom: '10px', cursor: 'pointer', transition: 'all 0.2s' },
+  mapWrapper: { flex: 1, background: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', position: 'relative' },
+  card: { background: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', padding: '20px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
+  inputGroup: { display: 'flex', alignItems: 'center', gap: '10px', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' },
+  badge: (bg: string, color: string) => ({ padding: '4px 12px', borderRadius: '8px', fontSize: '10px', fontWeight: '900', display: 'inline-flex', alignItems: 'center', gap: '6px', background: bg, color: color }),
+  listItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', border: '1px solid #F3F4F6', background: '#FFFFFF', marginBottom: '10px', cursor: 'pointer', transition: 'all 0.2s' },
 };
 
 export default function GlobalLogistics() {

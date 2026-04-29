@@ -294,10 +294,10 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
   scrollAreaTop,
   breadcrumb,
 }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { signOut, profile, onlineUsers, user, refreshProfile, isMaster } = useAuth();
+  const { signOut, profile, onlineUsers, user, refreshProfile, isMaster, stopImpersonating } = useAuth();
   const { company, isLoading: tenantLoading, fetchCompanyData } = useTenant();
+  
+  const isImpersonating = !!localStorage.getItem('hub-impersonate-tenant');
   const [planRechecking, setPlanRechecking] = useState(false);
   const { palette, toggleMode, canCustomizeTenant } = useZaptroTheme();
   
@@ -1668,6 +1668,45 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
                 : {}),
             }}
           >
+            {isImpersonating && (
+              <div style={{
+                backgroundColor: '#000000',
+                color: '#D9FF00',
+                padding: '12px 24px',
+                marginBottom: 20,
+                borderRadius: 20,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                fontSize: '13px',
+                fontWeight: '800',
+                boxShadow: '0 10px 30px rgba(217, 255, 0, 0.1)',
+                border: '1px solid rgba(217, 255, 0, 0.2)',
+                flexShrink: 0
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <ShieldCheck size={16} color="#D9FF00" />
+                  <span>MODO MASTER ATIVO: Administrando {company?.name || 'Empresa'}</span>
+                </div>
+                <button 
+                  onClick={() => stopImpersonating?.()}
+                  style={{
+                    backgroundColor: '#D9FF00',
+                    color: '#000000',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '6px 16px',
+                    fontSize: '11px',
+                    fontWeight: '900',
+                    cursor: 'pointer',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}
+                >
+                  ENCERRAR ACESSO
+                </button>
+              </div>
+            )}
             {children}
           </div>
         </div>

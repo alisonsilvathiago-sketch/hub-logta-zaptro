@@ -16,6 +16,8 @@ export function loadConfig() {
     redisUrl: process.env.REDIS_URL || '',
     logDir,
     publicResetRpm: Number(process.env.ZAPTRO_PUBLIC_RESET_RPM || 20),
+    googleClientEmail: process.env.GOOGLE_CLIENT_EMAIL || '',
+    googlePrivateKey: process.env.GOOGLE_PRIVATE_KEY || '',
   };
 }
 

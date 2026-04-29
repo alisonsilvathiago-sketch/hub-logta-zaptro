@@ -72,7 +72,7 @@ const StaffPerformance: React.FC = () => {
     tarefas: s.tasks_done
   }));
 
-  const COLORS = ['#D9FF00', '#10b981', '#f59e0b', '#ef4444'];
+  const COLORS = ['#6366F1', '#10b981', '#f59e0b', '#ef4444'];
 
   return (
     <div style={styles.container} className="animate-fade-in">
@@ -101,7 +101,7 @@ const StaffPerformance: React.FC = () => {
       {activeTab === 'ANALYTICS' ? (
         <div className="animate-slide-up">
            <div style={styles.statsGrid}>
-              <div style={{...styles.statCard, borderLeft: '4px solid #D9FF00'}}>
+              <div style={{...styles.statCard, borderLeft: '4px solid #6366F1'}}>
                  <div style={styles.statLabel}>Eficiência do Time</div>
                  <div style={styles.statMain}>
                     <div style={styles.statValue}>94%</div>
@@ -141,9 +141,9 @@ const StaffPerformance: React.FC = () => {
                           <XAxis dataKey="name" axisLine={false} tickLine={false} style={{fontSize: '12px', fontWeight: 'bold'}} />
                           <YAxis axisLine={false} tickLine={false} style={{fontSize: '12px'}} />
                           <Tooltip 
-                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
+                            contentStyle={{borderRadius: '24px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
                           />
-                          <Bar dataKey="acoes" fill="#D9FF00" radius={[4, 4, 0, 0]} barSize={40} />
+                          <Bar dataKey="acoes" fill="#6366F1" radius={[4, 4, 0, 0]} barSize={40} />
                        </BarChart>
                     </ResponsiveContainer>
                  </div>
@@ -266,51 +266,51 @@ const StaffPerformance: React.FC = () => {
 const styles: Record<string, any> = {
   container: { padding: '0', minHeight: '100vh', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' },
-  bread: { fontSize: '10px', fontWeight: '700', color: '#D9FF00', marginBottom: '4px', opacity: 0.6 },
-  title: { fontSize: '28px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: '-1px' },
-  subtitle: { color: '#64748b', fontSize: '15px', fontWeight: '500' },
+  bread: { fontSize: '10px', fontWeight: '600', color: '#6366F1', marginBottom: '4px', letterSpacing: '0.8px', textTransform: 'uppercase' },
+  title: { fontSize: '28px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: '0.4px' },
+  subtitle: { color: '#64748b', fontSize: '15px', fontWeight: '400', letterSpacing: '0.2px' },
   
-  tabSwitch: { display: 'flex', backgroundColor: '#ebebeb', padding: '4px', borderRadius: '12px', gap: '4px' },
-  tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', fontSize: '13px', fontWeight: '700', color: '#64748b', cursor: 'pointer', transition: 'all 0.2s' },
-  tabActive: { backgroundColor: 'white', color: '#D9FF00', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
+  tabSwitch: { display: 'flex', backgroundColor: '#ebebeb', padding: '4px', borderRadius: '24px', gap: '4px' },
+  tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', fontSize: '13px', fontWeight: '600', color: '#64748b', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.2px' },
+  tabActive: { backgroundColor: 'white', color: '#6366F1', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontWeight: '500' },
 
   statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' },
   statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
-  statLabel: { fontSize: '12px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '12px' },
+  statLabel: { fontSize: '12px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.8px' },
   statMain: { display: 'flex', alignItems: 'baseline', gap: '12px' },
-  statValue: { fontSize: '32px', fontWeight: '700', color: '#000000' },
-  trendUp: { fontSize: '12px', fontWeight: '600', color: '#10b981', display: 'flex', alignItems: 'center', gap: '2px' },
-  trendDown: { fontSize: '12px', fontWeight: '600', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '2px' },
-  statSub: { fontSize: '11px', color: '#94a3b8', marginTop: '4px', fontWeight: '600' },
+  statValue: { fontSize: '32px', fontWeight: '500', color: '#000000', letterSpacing: '0.4px' },
+  trendUp: { fontSize: '12px', fontWeight: '600', color: '#10b981', display: 'flex', alignItems: 'center', gap: '2px', letterSpacing: '0.2px' },
+  trendDown: { fontSize: '12px', fontWeight: '600', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '2px', letterSpacing: '0.2px' },
+  statSub: { fontSize: '11px', color: '#94a3b8', marginTop: '4px', fontWeight: '500', letterSpacing: '0.2px' },
 
   chartRow: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '32px' },
   chartCard: { backgroundColor: 'white', padding: '24px', borderRadius: '28px', border: '1px solid #e8e8e8' },
-  chartTitle: { fontSize: '16px', fontWeight: '700', color: '#000000', marginBottom: '24px' },
+  chartTitle: { fontSize: '16px', fontWeight: '600', color: '#000000', marginBottom: '24px', letterSpacing: '0.3px' },
 
   taskActions: { display: 'flex', justifyContent: 'space-between', marginBottom: '24px' },
-  searchBox: { display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'white', padding: '12px 20px', borderRadius: '16px', border: '1px solid #e2e8f0', width: '350px' },
-  searchInput: { border: 'none', outline: 'none', fontSize: '14px', fontWeight: '600', width: '100%' },
-  addTaskBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: '#D9FF00', color: '#000000', border: 'none', borderRadius: '14px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(217, 255, 0, 0.2)' },
+  searchBox: { display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'white', padding: '12px 20px', borderRadius: '24px', border: '1px solid #e2e8f0', width: '350px' },
+  searchInput: { border: 'none', outline: 'none', fontSize: '14px', fontWeight: '500', width: '100%', letterSpacing: '0.2px' },
+  addTaskBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: '#6366F1', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)', letterSpacing: '0.3px' },
 
   taskGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' },
   taskColumn: { display: 'flex', flexDirection: 'column', gap: '16px' },
   colHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px' },
   badge: { backgroundColor: '#ebebeb', color: '#64748b', fontSize: '10px', fontWeight: '700', padding: '4px 8px', borderRadius: '6px' },
   taskList: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  taskCardItem: { backgroundColor: 'white', padding: '20px', borderRadius: '20px', border: '1px solid #e8e8e8', boxShadow: '0 1px 2px rgba(0,0,0,0.02)', cursor: 'grab' },
+  taskCardItem: { backgroundColor: 'white', padding: '20px', borderRadius: '24px', border: '1px solid #e8e8e8', boxShadow: '0 1px 2px rgba(0,0,0,0.02)', cursor: 'grab' },
   taskPriority: { marginBottom: '8px' },
   taskTitle: { fontSize: '15px', fontWeight: '600', color: '#000000', margin: '0 0 8px 0' },
   taskDesc: { fontSize: '12px', color: '#6b7280', margin: '0 0 16px 0', lineHeight: '1.5' },
   taskFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e8e8e8', paddingTop: '12px' },
   taskMeta: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94a3b8', fontWeight: '600' },
-  userIcon: { width: '24px', height: '24px', borderRadius: '6px', backgroundColor: 'rgba(217, 255, 0, 0.18)', color: '#D9FF00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '700' },
+  userIcon: { width: '24px', height: '24px', borderRadius: '6px', backgroundColor: 'rgba(99, 102, 241, 0.18)', color: '#6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '700' },
 
   form: { display: 'flex', flexDirection: 'column', gap: '20px' },
   inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  labelForm: { fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' },
-  input: { padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: '#f4f4f4', fontWeight: '600', outline: 'none' },
+  labelForm: { fontSize: '11px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px' },
+  input: { padding: '14px', borderRadius: '24px', border: '1px solid #e2e8f0', backgroundColor: '#f4f4f4', fontWeight: '500', outline: 'none', letterSpacing: '0.2px' },
   row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
-  submitBtn: { padding: '18px', backgroundColor: '#D9FF00', color: '#000000', border: 'none', borderRadius: '14px', fontWeight: '700', cursor: 'pointer', marginTop: '12px', boxShadow: '0 10px 15px -3px rgba(217, 255, 0, 0.2)' }
+  submitBtn: { padding: '18px', backgroundColor: '#6366F1', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '600', cursor: 'pointer', marginTop: '12px', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)', letterSpacing: '0.4px', textTransform: 'uppercase' }
 };
 
 export default StaffPerformance;

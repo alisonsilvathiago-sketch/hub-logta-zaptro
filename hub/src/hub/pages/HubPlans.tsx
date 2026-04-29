@@ -181,7 +181,7 @@ const MasterPlans: React.FC = () => {
       {/* FOOTER: SIMULAÇÃO */}
       <div style={styles.exampleCard}>
           <div style={styles.exHeader}>
-             <div style={styles.exIcon}><Smartphone size={20} color="#D9FF00" /></div>
+             <div style={styles.exIcon}><Smartphone size={20} color="#6366F1" /></div>
              <h3 style={styles.exTitle}>Motor de Receita Híbrida Ativo</h3>
           </div>
           <p style={styles.exDesc}>Logta permite venda combinada: SaaS (Recorrência) + WhatsApp (Addon) + Créditos (Consumo) + Cursos (Info).</p>
@@ -263,7 +263,7 @@ const MasterPlans: React.FC = () => {
 const styles: Record<string, any> = {
   container: { padding: '40px', backgroundColor: 'transparent', minHeight: '100vh' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '48px' },
-  badge: { display: 'inline-block', padding: '4px 12px', backgroundColor: 'rgba(217, 255, 0, 0.18)', color: '#D9FF00', borderRadius: '30px', fontSize: '10px', fontWeight: '700', marginBottom: '8px', letterSpacing: '1px' },
+  badge: { display: 'inline-block', padding: '4px 12px', backgroundColor: 'rgba(99, 102, 241, 0.18)', color: '#6366F1', borderRadius: '30px', fontSize: '10px', fontWeight: '700', marginBottom: '8px', letterSpacing: '1px' },
   title: { fontSize: '40px', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-2px', marginBottom: '8px' },
   subtitle: { fontSize: '16px', color: 'var(--text-muted)', fontWeight: '500' },
   headerActions: { display: 'flex', gap: '12px' },
@@ -287,13 +287,13 @@ const styles: Record<string, any> = {
   editBtn: { flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #e2e8f0', backgroundColor: 'white', fontSize: '12px', fontWeight: '600', color: '#1e293b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' },
   trashBtn: { width: '38px', height: '38px', borderRadius: '10px', border: '1px solid #fee2e2', backgroundColor: '#fef2f2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
 
-  addPlanCard: { border: '2px dashed var(--border)', borderRadius: '32px', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: '16px', cursor: 'pointer', padding: '40px', backgroundColor: 'transparent', transition: 'all 0.2s', ':hover': { borderColor: 'var(--primary)', backgroundColor: 'rgba(217, 255, 0, 0.18)' } } as any,
+  addPlanCard: { border: '2px dashed var(--border)', borderRadius: '32px', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: '16px', cursor: 'pointer', padding: '40px', backgroundColor: 'transparent', transition: 'all 0.2s', ':hover': { borderColor: 'var(--primary)', backgroundColor: 'rgba(99, 102, 241, 0.18)' } } as any,
   addIcon: { width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#ebebeb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' },
   addText: { fontSize: '14px', fontWeight: '600', color: '#64748b', textAlign: 'center' as const, maxWidth: '120px' },
 
   exampleCard: { marginTop: '40px', padding: '24px', borderRadius: '24px', backgroundColor: 'white', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' as const, gap: '12px' },
   exHeader: { display: 'flex', alignItems: 'center', gap: '12px' },
-  exIcon: { width: '40px', height: '40px', backgroundColor: 'rgba(217, 255, 0, 0.18)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  exIcon: { width: '40px', height: '40px', backgroundColor: 'rgba(99, 102, 241, 0.18)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   exTitle: { fontSize: '16px', fontWeight: '700', color: '#1e293b' },
   exDesc: { fontSize: '14px', color: '#64748b', fontWeight: '500' },
 

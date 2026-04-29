@@ -11,6 +11,7 @@ interface ModalProps {
   maxWidth?: string;
   padding?: string;
   hideTitle?: boolean; // Nova prop para remover o texto do header azul
+  width?: string;      // Alias para maxWidth
   primaryAction?: {
     label: string;
     onClick: () => void;
@@ -31,21 +32,24 @@ const Modal: React.FC<ModalProps> = ({
   subtitle, 
   icon, 
   children, 
-  maxWidth = '600px', // Reduzido para ser mais compacto
-  padding = '24px',   // Padding interno reduzido
+  maxWidth = '1100px', // Landscape por padrão
+  width,               // Alias para maxWidth
+  padding = '32px',   // Padding interno para respiro
   hideTitle = false,
   primaryAction,
   secondaryAction
 }) => {
   if (!isOpen) return null;
 
+  const actualMaxWidth = width || maxWidth;
+
   return (
     <div 
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(15, 23, 42, 0.4)', // Menos opaco para ser mais leve
-        backdropFilter: 'blur(8px)',
+        background: 'rgba(15, 23, 42, 0.45)',
+        backdropFilter: 'blur(10px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -59,58 +63,59 @@ const Modal: React.FC<ModalProps> = ({
       <div 
         style={{
           background: '#fff',
-          borderRadius: '24px', // Mais moderno e compacto
+          borderRadius: '28px', 
           width: '100%',
-          maxWidth: maxWidth,
-          boxShadow: '0 30px 60px -12px rgba(0,0,0,0.25)',
+          maxWidth: actualMaxWidth,
+          boxShadow: '0 40px 80px -12px rgba(0,0,0,0.3)',
           position: 'relative',
-          animation: 'modalFadeIn 0.3s ease-out',
+          animation: 'modalFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: '85vh'
+          maxHeight: '90vh'
         }}
       >
-        {/* HEADER SECTION - THE PREMIUM BLUE STRIP (Finer now) */}
+        {/* HEADER SECTION - THE PREMIUM BLUE STRIP */}
         <div style={{
-          background: 'linear-gradient(135deg, #6366F1 0%, #0F172A 100%)',
-          padding: hideTitle ? '12px 24px' : '20px 24px', // Faixa mais fina
+          background: 'linear-gradient(135deg, #4F46E5 0%, #1E1B4B 100%)',
+          padding: '24px 32px',
           position: 'relative',
           display: 'flex',
           alignItems: 'center',
-          gap: '16px',
+          gap: '18px',
           flexShrink: 0
         }}>
           {!hideTitle && (
             <>
               {icon && (
                 <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '10px',
-                  background: 'rgba(255,255,255,0.2)',
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '14px',
+                  background: 'rgba(255,255,255,0.15)',
                   color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  flexShrink: 0
+                  flexShrink: 0,
+                  boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.1)'
                 }}>
-                  {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement, { size: 18 }) : icon}
+                  {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement, { size: 24 }) : icon}
                 </div>
               )}
               
               <div style={{ flex: 1 }}>
                 <h2 style={{ 
-                  fontSize: '18px', 
+                  fontSize: '20px', 
                   fontWeight: '800', 
                   color: '#fff', 
                   margin: 0, 
-                  fontFamily: 'Inter, sans-serif'
+                  letterSpacing: '-0.02em'
                 }}>
                   {title}
                 </h2>
                 {subtitle && (
-                  <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', margin: 0, fontWeight: '500' }}>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', margin: '4px 0 0', fontWeight: '500' }}>
                     {subtitle}
                   </p>
                 )}
@@ -121,15 +126,11 @@ const Modal: React.FC<ModalProps> = ({
           <button 
             onClick={onClose}
             style={{
-              position: 'absolute',
-              top: '50%',
-              right: '20px',
-              transform: 'translateY(-50%)',
-              background: 'rgba(255,255,255,0.1)',
+              background: 'rgba(0,0,0,0.2)',
               border: 'none',
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
               cursor: 'pointer',
               color: '#fff',
               display: 'flex',
@@ -137,10 +138,10 @@ const Modal: React.FC<ModalProps> = ({
               justifyContent: 'center',
               transition: 'all 0.2s'
             }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.3)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.2)'}
           >
-            <X size={18} strokeWidth={2.5} />
+            <X size={20} strokeWidth={2.5} />
           </button>
         </div>
 

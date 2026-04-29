@@ -219,7 +219,7 @@ const MasterNotifications: React.FC = () => {
            <div style={styles.historyList}>
               {history.map(n => (
                  <div key={n.id} style={styles.historyItem}>
-                    <div style={{...styles.priorityDot, backgroundColor: n.priority === 'CRITICAL' ? '#ef4444' : n.priority === 'HIGH' ? '#f59e0b' : '#D9FF00'}} />
+                    <div style={{...styles.priorityDot, backgroundColor: n.priority === 'CRITICAL' ? '#ef4444' : n.priority === 'HIGH' ? '#f59e0b' : '#6366F1'}} />
                     <div style={styles.historyContent}>
                        <div style={styles.hTitleRow}>
                           <span style={styles.hTitle}>{n.title}</span>
@@ -244,13 +244,13 @@ const MasterNotifications: React.FC = () => {
 const styles = {
   container: { padding: '40px', display: 'flex', flexDirection: 'column' as const, gap: '32px' },
   header: { display: 'flex', flexDirection: 'column' as const, gap: '12px' },
-  title: { fontSize: '28px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: '-1px' },
-  subtitle: { fontSize: '16px', color: '#6b7280', margin: 0 },
+  title: { fontSize: '28px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: '0.4px' },
+  subtitle: { fontSize: '16px', color: '#6b7280', margin: 0, fontWeight: '400', letterSpacing: '0.2px' },
   
   grid: { display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px' },
   card: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #e2e8f0', padding: '32px', height: 'fit-content' },
   cardHeader: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' },
-  cardTitle: { fontSize: '18px', fontWeight: '700', color: '#000000', margin: 0 },
+  cardTitle: { fontSize: '18px', fontWeight: '600', color: '#000000', margin: 0, letterSpacing: '0.3px' },
   
   form: { display: 'flex', flexDirection: 'column' as const, gap: '20px' },
   tabGroup: { display: 'flex', gap: '8px', backgroundColor: '#ebebeb', padding: '6px', borderRadius: '16px', marginBottom: '8px' },
@@ -259,22 +259,22 @@ const styles = {
   
   field: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
   row: { display: 'flex', gap: '16px' },
-  label: { fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
-  input: { padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', fontSize: '15px', color: '#000000', fontWeight: '700', outline: 'none', backgroundColor: '#f4f4f4' },
-  textarea: { padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', fontSize: '15px', color: '#000000', fontWeight: '700', outline: 'none', backgroundColor: '#f4f4f4', minHeight: '100px', resize: 'none' as const },
-  select: { padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', fontSize: '15px', color: '#000000', fontWeight: '700', outline: 'none', backgroundColor: '#f4f4f4' },
-  submitBtn: { padding: '16px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px' },
+  label: { fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.8px' },
+  input: { padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', fontSize: '15px', color: '#000000', fontWeight: '500', outline: 'none', backgroundColor: '#f4f4f4', letterSpacing: '0.2px' },
+  textarea: { padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', fontSize: '15px', color: '#000000', fontWeight: '500', outline: 'none', backgroundColor: '#f4f4f4', minHeight: '100px', resize: 'none' as const, letterSpacing: '0.2px' },
+  select: { padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', fontSize: '15px', color: '#000000', fontWeight: '500', outline: 'none', backgroundColor: '#f4f4f4', letterSpacing: '0.2px' },
+  submitBtn: { padding: '16px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px', letterSpacing: '0.5px' },
   
   historyList: { display: 'flex', flexDirection: 'column' as const, gap: '16px' },
   historyItem: { display: 'flex', gap: '16px', padding: '20px', borderRadius: '24px', border: '1px solid #e8e8e8', backgroundColor: '#fff', transition: 'all 0.2s' },
   priorityDot: { width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0, marginTop: '6px' },
   historyContent: { flex: 1 },
   hTitleRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
-  hTitle: { fontSize: '14px', fontWeight: '600', color: '#1e293b' },
-  hMsg: { fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: '0 0 12px 0' },
+  hTitle: { fontSize: '14px', fontWeight: '600', color: '#1e293b', letterSpacing: '0.2px' },
+  hMsg: { fontSize: '13px', color: '#64748b', lineHeight: '1.5', margin: '0 0 12px 0', letterSpacing: '0.1px' },
   hMeta: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  hTarget: { fontSize: '10px', fontWeight: '700', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px' },
-  hTime: { fontSize: '11px', color: '#cbd5e1', fontWeight: '600' },
+  hTarget: { fontSize: '10px', fontWeight: '600', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', letterSpacing: '0.5px', textTransform: 'uppercase' },
+  hTime: { fontSize: '11px', color: '#cbd5e1', fontWeight: '500', letterSpacing: '0.2px' },
   deleteBtn: { padding: '4px', background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer' },
   emptyHist: { textAlign: 'center' as const, padding: '40px', color: '#94a3b8', fontSize: '14px' },
   loader: { padding: '100px', textAlign: 'center' as const, color: 'var(--primary)', fontWeight: '600' }

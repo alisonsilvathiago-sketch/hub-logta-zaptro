@@ -39,6 +39,25 @@ export default defineConfig([
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/exhaustive-deps': 'warn',
       'react-refresh/only-export-components': 'off',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@apps/*', '@hub/*', '@core/*'],
+              message: 'Logta deve permanecer isolado; não importe código de outros produtos.',
+            },
+            {
+              group: ['../zaptro/**', '../../zaptro/**', '../../../zaptro/**'],
+              message: 'Logta deve permanecer isolado; não importe código de apps/zaptro.',
+            },
+            {
+              group: ['../hub/**', '../../hub/**', '../../../hub/**'],
+              message: 'Logta deve permanecer isolado; não importe código de hub.',
+            },
+          ],
+        },
+      ],
     },
   },
 ])

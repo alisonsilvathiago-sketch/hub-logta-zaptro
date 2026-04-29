@@ -78,7 +78,7 @@ const MasterMarketplace: React.FC = () => {
             </div>
          </div>
          <div style={styles.statCard}>
-            <div style={{...styles.statIcon, backgroundColor: 'rgba(217, 255, 0, 0.12)'}}><BarChart2 size={24} color="#D9FF00" /></div>
+            <div style={{...styles.statIcon, backgroundColor: 'rgba(99, 102, 241, 0.12)'}}><BarChart2 size={24} color="#6366F1" /></div>
             <div>
                <p style={styles.statLabel}>Receita Add-ons (Mês)</p>
                <h3 style={styles.statValue}>R$ 12.450</h3>
@@ -165,15 +165,15 @@ const styles = {
   headerInfo: { display: 'flex', flexDirection: 'column' as const, gap: '4px' },
   title: { fontSize: '28px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: '-1.2px' },
   subtitle: { fontSize: '15px', color: '#6b7280', margin: 0 },
-  primaryBtn: { backgroundColor: 'var(--primary)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '16px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 16px rgba(217, 255, 0, 0.2)' },
+  primaryBtn: { backgroundColor: 'var(--primary)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '24px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)' },
   
   statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' },
   statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '20px' },
-  statIcon: { width: '56px', height: '56px', borderRadius: '18px', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  statIcon: { width: '56px', height: '56px', borderRadius: '22px', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   statLabel: { fontSize: '12px', fontWeight: '600', color: '#64748b', margin: 0, textTransform: 'uppercase' as const },
   statValue: { fontSize: '24px', fontWeight: '700', color: '#000000', margin: '4px 0 0 0' },
 
-  refinement: { backgroundColor: 'white', padding: '16px', borderRadius: '20px', border: '1px solid #e2e8f0', display: 'flex' },
+  refinement: { backgroundColor: 'white', padding: '16px', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex' },
   searchWrap: { display: 'flex', alignItems: 'center', gap: '12px', padding: '0 16px', borderRight: '1px solid #e8e8e8', width: '400px' },
   searchInput: { border: 'none', outline: 'none', fontSize: '14px', fontWeight: '600', color: '#000000', width: '100%' },
 
@@ -184,7 +184,7 @@ const styles = {
   td: { padding: '20px 32px', fontSize: '14px', color: '#334155' },
   
   appCell: { display: 'flex', gap: '16px', alignItems: 'center' },
-  iconThumb: { width: '40px', height: '40px', backgroundColor: '#f4f4f4', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e8e8e8' },
+  iconThumb: { width: '40px', height: '40px', backgroundColor: '#f4f4f4', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e8e8e8' },
   appInfo: { display: 'flex', flexDirection: 'column' as const },
   appName: { fontSize: '14px', fontWeight: '700', color: '#000000' },
   appType: { fontSize: '10px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase' as const },

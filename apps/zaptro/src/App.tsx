@@ -103,7 +103,7 @@ const Home = lazy(() => import('./pages/Home'));
 const BlogPage = lazy(() => import('./pages/BlogPage'));
 const HelpCenter = lazy(() => import('./pages/HelpCenter'));
 const PlansPage = lazy(() => import('./pages/PlansPage'));
-const Login = lazy(() => import('./pages/Login'));
+const Login = lazy(() => import('./pages/WhatsAppLogin'));
 const ZaptroRegister = lazy(() => import('./pages/ZaptroRegister'));
 const SSOLogin = lazy(() => import('./pages/SSOLogin'));
 const ZaptroHomeNovoDesign = lazy(() => import('./pages/ZaptroHomeNovoDesign'));
@@ -130,6 +130,8 @@ const ZaptroPublicQuote = lazy(() => import('./pages/ZaptroPublicQuote'));
 const ZaptroPublicTrack = lazy(() => import('./pages/ZaptroPublicTrack'));
 const ZaptroVehicleProfile = lazy(() => import('./pages/ZaptroVehicleProfile'));
 const ZaptroLeadProfile = lazy(() => import('./pages/ZaptroLeadProfile'));
+const MasterConnect = lazy(() => import('./pages/MasterConnect'));
+
 
 const ZaptroGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile, isLoading } = useAuth();
@@ -196,6 +198,8 @@ const App: React.FC = () => {
         <Route path="/registrar" element={<ZaptroRegister />} />
         <Route path="/registre" element={<ZaptroRegister />} />
         <Route path="/sso" element={<SSOLogin />} />
+        <Route path="/master/connect" element={<MasterConnect />} />
+
         
         {/* Public Help & Support Routes */}
         <Route path="/ajuda" element={<HelpCenter />} />

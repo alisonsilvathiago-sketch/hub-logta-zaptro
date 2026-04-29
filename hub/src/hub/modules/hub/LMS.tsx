@@ -229,8 +229,8 @@ const styles = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: '20px', fontWeight: '600', color: 'var(--text-main)' },
   subtitle: { fontSize: '14px', color: 'var(--text-muted)' },
-  addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' },
-  tabNav: { display: 'flex', gap: '8px', padding: '6px', backgroundColor: '#ebebeb', borderRadius: '14px', width: 'fit-content' },
+  addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '24px', fontWeight: '700', cursor: 'pointer' },
+  tabNav: { display: 'flex', gap: '8px', padding: '6px', backgroundColor: '#ebebeb', borderRadius: '22px', width: 'fit-content' },
   tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '10px', border: 'none', background: 'none', color: '#64748b', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' },
   tabActive: { backgroundColor: 'white', color: 'var(--primary)', boxShadow: 'var(--shadow-sm)' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px', marginTop: '16px' },
@@ -238,7 +238,7 @@ const styles = {
   cardHeader: { position: 'relative' as const, height: '160px', backgroundColor: '#f4f4f4' },
   cover: { width: '100%', height: '100%', objectFit: 'cover' as const },
   placeholderCover: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1' },
-  statusBadge: { position: 'absolute' as const, top: '12px', right: '12px', padding: '4px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: '700' },
+  statusBadge: { position: 'absolute' as const, top: '12px', right: '12px', padding: '4px 10px', borderRadius: '24px', fontSize: '10px', fontWeight: '700' },
   cardBody: { padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' as const },
   cTitle: { fontSize: '16px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '8px' },
   cDesc: { fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.5', marginBottom: '16px' },
@@ -254,9 +254,9 @@ const styles = {
   fGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
   fGroup: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
   fLabel: { fontSize: '13px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
-  input: { padding: '14px', borderRadius: '14px', border: '1px solid var(--border)', backgroundColor: '#f4f4f4', color: 'var(--text-main)', outline: 'none' },
-  textarea: { padding: '14px', borderRadius: '14px', border: '1px solid var(--border)', backgroundColor: '#f4f4f4', color: 'var(--text-main)', outline: 'none', height: '100px', resize: 'none' as const },
-  submitBtn: { marginTop: '12px', padding: '16px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '14px', fontWeight: '600', cursor: 'pointer' }
+  input: { padding: '14px', borderRadius: '22px', border: '1px solid var(--border)', backgroundColor: '#f4f4f4', color: 'var(--text-main)', outline: 'none' },
+  textarea: { padding: '14px', borderRadius: '22px', border: '1px solid var(--border)', backgroundColor: '#f4f4f4', color: 'var(--text-main)', outline: 'none', height: '100px', resize: 'none' as const },
+  submitBtn: { marginTop: '12px', padding: '16px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '600', cursor: 'pointer' }
 };
 
 export default MasterLMS;

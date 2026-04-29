@@ -2,22 +2,22 @@
 
 :root {
   /* Unified Premium Theme (Light Mode) */
-  --primary: #7c3aed; 
-  --primary-light: #f4f4f4;
-  --primary-glow: rgba(124, 58, 237, 0.1);
-  --accent: #000000;
+  --primary: #8b5cf6;
+  --primary-light: #f3e8ff;
+  --primary-glow: rgba(139, 92, 246, 0.18);
+  --accent: #0b0b12;
   
-  --bg-app: #f4f4f4;
-  --bg-surface: #ffffff;
-  --bg-card: #ffffff;
-  --bg-deep: #f4f4f4;
+  --bg-app: #f3f0ff;
+  --bg-surface: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-deep: #ece7ff;
   
-  --text-main: #000000;
-  --text-secondary: #222222;
-  --text-muted: #555555;
+  --text-main: #111827;
+  --text-secondary: #575476;
+  --text-muted: #908bb6;
   
-  --border: #e2e8f0;
-  --border-light: #f4f4f4;
+  --border: #e9e4ff;
+  --border-light: #f4f0ff;
   
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -25,10 +25,10 @@
   --radius-xl: 24px;
   --radius-2xl: 32px;
   
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02);
-  --shadow-premium: 0 20px 40px -10px rgba(124, 58, 237, 0.12);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05);
+  --shadow-premium: 0 20px 40px -10px rgba(99, 102, 241, 0.1);
   
   --sidebar-width-expanded: 280px;
   --sidebar-width-collapsed: 80px;
@@ -130,32 +130,32 @@ body {
 /* Premium Components */
 .card {
   background: var(--bg-card);
-  border-radius: 24px;
+  border-radius: 12px;
   padding: 24px;
-  border: 1px solid #e9e4f7;
-  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition: all 0.3s ease;
 }
 
 .card:hover {
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--shadow-md);
   transform: translateY(-4px);
-  border-color: #d8d2f0;
+  border-color: var(--primary);
 }
 
 .logta-card {
   background: #ffffff;
-  border-radius: 32px;
-  border: 1px solid #f1f5f9;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
 .logta-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   border-color: var(--primary-glow);
 }
 
@@ -280,18 +280,18 @@ input:focus {
 /* Standardized Metric Card */
 .metric-card {
   background: #ffffff;
-  border-radius: 24px;
-  border: 1px solid #e9e4f7;
+  border-radius: 12px;
+  border: 1px solid var(--border);
   padding: 22px 22px 18px;
-  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--shadow-sm);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: default;
 }
 
 .metric-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 25px 50px -12px rgba(124, 58, 237, 0.15);
-  border-color: rgba(124, 58, 237, 0.3);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
 }
 
 .metric-card .icon-box {
@@ -448,4 +448,1124 @@ tr:hover td {
 }
 .logta-fleet-map .leaflet-control-attribution a {
   color: #475569;
+}
+
+/* Black + Purple shell */
+.logta-topbar {
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid #e7e2fb;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.logta-topbar-search {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  border: 1px solid #ebe7ff;
+  background: #f8f6ff;
+  padding: 0 10px;
+  min-height: 40px;
+  color: #7c3aed;
+}
+
+.logta-topbar-search input {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  font-size: 13px;
+  color: #111827;
+}
+
+.logta-topbar-search input:focus {
+  box-shadow: none;
+}
+
+.logta-topbar-kbd {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 9px;
+  border: 1px solid #ddd6fe;
+  background: #ffffff;
+  color: #7c3aed;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 6px;
+}
+
+.logta-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logta-topbar-icon-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #e9e4ff;
+  border-radius: 11px;
+  background: #f8f6ff;
+  color: #7c3aed;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logta-topbar-user {
+  border: 1px solid #e9e4ff;
+  background: #11101b;
+  color: #ede9fe;
+  border-radius: 13px;
+  padding: 4px 6px 4px 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logta-topbar-user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: linear-gradient(145deg, #8b5cf6 0%, #6d28d9 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.logta-topbar-user-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  text-align: left;
+}
+
+.logta-topbar-user-text strong {
+  font-size: 12px;
+}
+
+.logta-topbar-user-text small {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+/* Dashboard (cards + maps) */
+.logta-dashboard-shell {
+  width: 100%;
+  max-width: 1450px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.logta-welcome-card {
+  border-radius: 22px;
+  border: 1px solid #e8e2ff;
+  background: #ffffff;
+  padding: 20px 24px;
+}
+
+.logta-welcome-card h1 {
+  font-size: clamp(22px, 2.3vw, 30px);
+  margin: 0;
+  color: #0b0b12;
+  letter-spacing: -0.03em;
+}
+
+.logta-welcome-card p {
+  margin: 4px 0 0;
+  color: #6b6687;
+  font-size: 14px;
+}
+
+.logta-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(340px, 1fr) minmax(360px, 1.2fr);
+  gap: 14px;
+}
+
+.logta-dashboard-stack {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.logta-dashboard-card {
+  border-radius: 18px;
+  border: 1px solid #e8e2ff;
+  background: #ffffff;
+  padding: 15px 16px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.logta-dashboard-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.logta-dashboard-card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.logta-dashboard-card-title h3 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.03em;
+}
+
+.logta-dashboard-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 1px solid #ede9fe;
+  background: #f7f5ff;
+  color: #7c3aed;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logta-dashboard-card-head button {
+  border: none;
+  background: transparent;
+  color: #5b556f;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.logta-kpi-rows {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.logta-kpi-rows div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: #575476;
+}
+
+.logta-kpi-rows strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.logta-kpi-highlight {
+  margin: 12px 0 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.logta-kpi-highlight strong {
+  color: #16a34a;
+  font-size: 32px;
+  letter-spacing: -0.02em;
+}
+
+.logta-kpi-highlight span {
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.logta-cards-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.logta-cards-row {
+  display: grid;
+  grid-template-columns: 86px minmax(120px, 1fr) minmax(110px, auto);
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.logta-cards-row span {
+  color: #4b5563;
+  font-weight: 700;
+}
+
+.logta-cards-row strong {
+  color: #111827;
+  font-size: 13px;
+}
+
+.logta-cards-row small {
+  color: #575476;
+  font-size: 12px;
+}
+
+.logta-loads-mini-card {
+  margin-top: 10px;
+  border: 1px solid #ece8ff;
+  border-radius: 13px;
+  padding: 10px;
+}
+
+.logta-loads-mini-card > strong {
+  font-size: 17px;
+  color: #111827;
+}
+
+.logta-loads-mini-route {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  color: #575476;
+  font-size: 12px;
+}
+
+.logta-chip-status {
+  border-radius: 999px;
+  background: #ede9fe;
+  color: #5b21b6;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.logta-loads-mini-card p {
+  margin: 8px 0 0;
+  color: #6d28d9;
+  font-size: 12px;
+}
+
+.logta-map-card-surface {
+  margin-top: 11px;
+  min-height: 250px;
+  border-radius: 16px;
+  border: 1px solid #e8e2ff;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 75% 80%, rgba(156, 163, 175, 0.25) 0 20%, transparent 22%),
+    radial-gradient(circle at 28% 30%, rgba(148, 163, 184, 0.18) 0 15%, transparent 18%),
+    linear-gradient(115deg, transparent 46%, #e9e5f8 46%, #e9e5f8 48%, transparent 48%),
+    linear-gradient(180deg, #f9f8ff 0%, #f2efff 100%);
+}
+
+.logta-map-card-surface::before,
+.logta-map-card-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.logta-map-card-surface::before {
+  background:
+    linear-gradient(145deg, transparent 0 43%, #ede9fe 43% 45%, transparent 45% 100%),
+    linear-gradient(30deg, transparent 0 41%, #ede9fe 41% 43%, transparent 43% 100%);
+  opacity: 0.7;
+}
+
+.logta-map-card-surface::after {
+  background:
+    linear-gradient(90deg, transparent 0 92%, rgba(255, 255, 255, 0.62) 92% 100%),
+    linear-gradient(180deg, transparent 0 93%, rgba(255, 255, 255, 0.56) 93% 100%);
+}
+
+.logta-map-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  background: #11101b;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.2);
+  z-index: 3;
+}
+
+.logta-map-controls {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 4;
+}
+
+.logta-map-controls button {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1px solid #ddd6fe;
+  background: rgba(255, 255, 255, 0.85);
+  color: #4c1d95;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Loads page */
+.logta-loads-shell {
+  width: 100%;
+  max-width: 1450px;
+  margin: 0 auto;
+  border-radius: 26px;
+  border: 1px solid #e6e0fc;
+  background: #ffffff;
+  min-height: calc(100vh - 145px);
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.logta-loads-list-panel {
+  border-right: 1px solid #efeafe;
+  padding: 18px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.logta-loads-title-wrap h2 {
+  margin: 0;
+  font-size: 34px;
+  letter-spacing: -0.02em;
+  color: #111827;
+}
+
+.logta-loads-search {
+  margin-top: 14px;
+  border: 1px solid #ece8ff;
+  border-radius: 11px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  color: #7c3aed;
+}
+
+.logta-loads-search input {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-size: 13px;
+  padding: 0;
+}
+
+.logta-loads-filter-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.logta-loads-filter-row > button {
+  border: 1px solid #eee8ff;
+  background: #f8f6ff;
+  color: #5c547f;
+  border-radius: 9px;
+  min-height: 33px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.logta-loads-filter-row > button span {
+  min-width: 18px;
+  border-radius: 999px;
+  background: #ece7ff;
+  color: #6d28d9;
+  font-size: 11px;
+  padding: 2px 6px;
+}
+
+.logta-loads-filter-row > button.is-active {
+  background: #facc15;
+  border-color: #facc15;
+  color: #111827;
+}
+
+.logta-loads-filter-row .logta-filter-icon {
+  width: 33px;
+  justify-content: center;
+  padding: 0;
+}
+
+.logta-loads-list {
+  margin-top: 14px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 2px;
+}
+
+.logta-load-item {
+  text-align: left;
+  border: 1px solid #ece8ff;
+  background: #fcfbff;
+  border-radius: 14px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.logta-load-item.is-selected {
+  border-color: #93c5fd;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.28);
+}
+
+.logta-load-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logta-load-item-row strong {
+  font-size: 26px;
+  color: #111827;
+}
+
+.logta-load-status {
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 9px;
+}
+
+.logta-load-status.is-in-transit {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.logta-load-status.is-delivered {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.logta-load-status.is-upcoming {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.logta-load-item-route {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.logta-load-item-route span {
+  font-size: 11px;
+  color: #6b6687;
+  line-height: 1.35;
+}
+
+.logta-load-item-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logta-load-item-user img {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.logta-load-item-user strong {
+  font-size: 13px;
+  color: #111827;
+}
+
+.logta-load-item-user small {
+  color: #908bb6;
+  font-size: 11px;
+}
+
+.logta-load-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #6d28d9;
+}
+
+.logta-primary-dark-btn {
+  margin-top: 12px;
+  border: none;
+  min-height: 40px;
+  border-radius: 11px;
+  background: #11101b;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.logta-loads-map-panel {
+  position: relative;
+  background: #f9f8ff;
+  padding: 14px;
+}
+
+.logta-load-map-toolbar {
+  position: absolute;
+  top: 16px;
+  right: 14px;
+  display: inline-flex;
+  gap: 7px;
+  z-index: 5;
+}
+
+.logta-load-map-toolbar button {
+  min-height: 33px;
+  border-radius: 9px;
+  border: 1px solid #ebe7ff;
+  background: #ffffff;
+  color: #555272;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+}
+
+.logta-load-map-toolbar button.is-active {
+  background: #facc15;
+  border-color: #facc15;
+  color: #111827;
+}
+
+.logta-load-detail-card {
+  position: absolute;
+  top: 16px;
+  left: 14px;
+  width: 320px;
+  max-width: calc(100% - 28px);
+  border-radius: 16px;
+  border: 1px solid #eae5ff;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.1);
+  z-index: 6;
+  padding: 12px;
+}
+
+.logta-load-detail-top {
+  font-size: 13px;
+  color: #111827;
+}
+
+.logta-load-detail-tabs {
+  margin-top: 10px;
+  display: inline-flex;
+  border: 1px solid #ece8ff;
+  background: #f8f6ff;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.logta-load-detail-tabs button {
+  border: none;
+  background: transparent;
+  color: #5f597d;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  min-height: 28px;
+  padding: 0 10px;
+}
+
+.logta-load-detail-tabs button.is-active {
+  background: #facc15;
+  color: #111827;
+}
+
+.logta-load-detail-card ul {
+  margin: 13px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.logta-load-detail-card li {
+  display: flex;
+  gap: 10px;
+}
+
+.logta-load-detail-card li .dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid #3b82f6;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.logta-load-detail-card li .dot.is-done {
+  background: #111827;
+  border-color: #111827;
+}
+
+.logta-load-detail-card li strong {
+  font-size: 13px;
+  color: #111827;
+}
+
+.logta-load-detail-card li p {
+  margin: 2px 0;
+  font-size: 12px;
+  color: #585274;
+}
+
+.logta-load-detail-card li small {
+  color: #908bb6;
+  font-size: 11px;
+}
+
+.logta-load-map-surface {
+  height: 100%;
+  min-height: 560px;
+  border-radius: 18px;
+  border: 1px solid #e9e4ff;
+  overflow: hidden;
+  position: relative;
+  background:
+    linear-gradient(120deg, transparent 46%, #ece8ff 46%, #ece8ff 47.7%, transparent 47.7%),
+    linear-gradient(18deg, transparent 38%, #ede9ff 38%, #ede9ff 39.7%, transparent 39.7%),
+    linear-gradient(180deg, #f9f8ff 0%, #f1ecff 100%);
+}
+
+.logta-load-map-surface svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.logta-load-map-surface svg path {
+  fill: none;
+  stroke: #3b82f6;
+  stroke-width: 4.3;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+}
+
+.logta-route-point {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+}
+
+.logta-route-point .dot-marker {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #11101b;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logta-route-point .bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  border-radius: 10px;
+  border: 1px solid #e9e4ff;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.1);
+  color: #4c4668;
+  font-size: 11px;
+  line-height: 1.25;
+  min-width: 136px;
+  max-width: 210px;
+  padding: 6px 8px;
+}
+
+/* Tractors page */
+.logta-tractors-shell {
+  width: 100%;
+  max-width: 1450px;
+  margin: 0 auto;
+  border-radius: 24px;
+  border: 1px solid #e6e0fc;
+  background: #ffffff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.logta-tractors-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.logta-tractors-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 32px;
+  letter-spacing: -0.03em;
+}
+
+.logta-tractors-header > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logta-tractors-header > div > span {
+  min-width: 24px;
+  text-align: center;
+  border-radius: 999px;
+  background: #facc15;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 2px 7px;
+}
+
+.logta-tractors-tabs {
+  display: inline-flex;
+  border: 1px solid #ebe7ff;
+  border-radius: 10px;
+  background: #f7f5ff;
+  padding: 3px;
+  gap: 3px;
+}
+
+.logta-tractors-tabs button {
+  border: none;
+  border-radius: 8px;
+  min-height: 32px;
+  background: transparent;
+  color: #5c547f;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0 10px;
+}
+
+.logta-tractors-tabs button.is-active {
+  background: #ffffff;
+  color: #4c1d95;
+}
+
+.logta-tractors-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.logta-tractors-search {
+  min-width: 240px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #ece8ff;
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 0 11px;
+  color: #7c3aed;
+}
+
+.logta-tractors-search input {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-size: 13px;
+  padding: 0;
+}
+
+.logta-tractors-toolbar > button {
+  border: 1px solid #ece8ff;
+  background: #faf9ff;
+  color: #5d5681;
+  border-radius: 10px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.logta-tractors-toolbar > button.is-dark {
+  background: #11101b;
+  border-color: #11101b;
+  color: #fff;
+}
+
+.logta-tractors-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.logta-tractors-filters input,
+.logta-tractors-filters select {
+  border: 1px solid #ece8ff;
+  background: #faf9ff;
+  min-height: 40px;
+  border-radius: 10px;
+  color: #5b556f;
+  font-size: 12px;
+}
+
+.logta-tractors-table-wrap {
+  border: 1px solid #ece8ff;
+  border-radius: 12px;
+  overflow: auto;
+}
+
+.logta-tractors-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1040px;
+}
+
+.logta-tractors-table th {
+  background: #f9f8ff;
+  color: #7c739d;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 11px 10px;
+  border-bottom: 1px solid #eee9ff;
+}
+
+.logta-tractors-table td {
+  padding: 11px 10px;
+  border-bottom: 1px solid #f1edff;
+  color: #332f49;
+  font-size: 12px;
+}
+
+.logta-table-unit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #111827;
+  font-weight: 700;
+}
+
+.logta-mini-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid #e8e2ff;
+  background: #ffffff;
+  color: #5f597d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logta-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.logta-pill.is-available {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.logta-pill.is-unavailable {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.logta-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logta-maintenance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.logta-maintenance-grid article {
+  border: 1px solid #ece8ff;
+  border-radius: 14px;
+  background: #faf9ff;
+  padding: 13px;
+}
+
+.logta-maintenance-grid article header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.logta-maintenance-grid article header strong {
+  color: #111827;
+  font-size: 12px;
+}
+
+.logta-maintenance-grid article header span {
+  color: #6d28d9;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.logta-maintenance-grid article h3 {
+  margin: 8px 0 0;
+  color: #201c35;
+  font-size: 16px;
+}
+
+.logta-maintenance-grid article p {
+  margin: 5px 0 0;
+  color: #5f597d;
+  font-size: 13px;
+}
+
+.logta-maintenance-grid article footer {
+  margin-top: 10px;
+  color: #7c739d;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logta-fuel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.logta-fuel-grid article {
+  border: 1px solid #ece8ff;
+  border-radius: 14px;
+  background: #faf9ff;
+  padding: 14px;
+}
+
+.logta-fuel-grid article header {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #6d28d9;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.logta-fuel-grid article strong {
+  display: block;
+  margin-top: 8px;
+  color: #111827;
+  font-size: 24px;
+  letter-spacing: -0.03em;
+}
+
+.logta-fuel-grid article small {
+  display: block;
+  margin-top: 3px;
+  color: #7c739d;
+  font-size: 12px;
+}
+
+@media (max-width: 1180px) {
+  .logta-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .logta-loads-shell {
+    grid-template-columns: 1fr;
+  }
+  .logta-loads-list-panel {
+    border-right: none;
+    border-bottom: 1px solid #efeafe;
+    min-height: 380px;
+  }
+  .logta-loads-map-panel {
+    min-height: 560px;
+  }
+  .logta-load-map-surface {
+    min-height: 500px;
+  }
+}
+
+@media (max-width: 860px) {
+  .logta-topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .logta-topbar-actions {
+    justify-content: flex-end;
+  }
+  .logta-dashboard-card-title h3 {
+    font-size: 23px;
+  }
+  .logta-cards-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .logta-kpi-highlight strong {
+    font-size: 24px;
+  }
+  .logta-tractors-filters {
+    grid-template-columns: 1fr;
+  }
 }

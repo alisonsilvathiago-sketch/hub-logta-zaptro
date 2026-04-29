@@ -218,14 +218,14 @@ const styles = {
   header: { display: 'flex', flexDirection: 'column' as const, gap: '16px' },
   backBtn: { background: 'none', border: 'none', color: '#64748b', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', width: 'fit-content' },
   cHeaderInfo: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', border: '1px solid #e2e8f0' },
-  badge: { display: 'inline-block', padding: '6px 14px', backgroundColor: '#ebebeb', color: '#1e293b', fontSize: '10px', fontWeight: '700', borderRadius: '12px', marginBottom: '16px', letterSpacing: '0.5px' },
+  badge: { display: 'inline-block', padding: '6px 14px', backgroundColor: '#ebebeb', color: '#1e293b', fontSize: '10px', fontWeight: '700', borderRadius: '24px', marginBottom: '16px', letterSpacing: '0.5px' },
   title: { fontSize: '28px', fontWeight: '700', color: '#000000', margin: '0 0 12px 0', letterSpacing: '-1px' },
   subtitle: { fontSize: '16px', color: '#6b7280', margin: 0, lineHeight: '1.6' },
 
   content: { display: 'flex', flexDirection: 'column' as const, gap: '24px' },
   sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   secTitle: { fontSize: '18px', fontWeight: '700', color: '#000000' },
-  addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', backgroundColor: '#000000', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' },
+  addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', backgroundColor: '#000000', color: 'white', border: 'none', borderRadius: '24px', fontWeight: '700', cursor: 'pointer' },
 
   moduleList: { display: 'flex', flexDirection: 'column' as const, gap: '24px' },
   moduleCard: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid #e2e8f0', overflow: 'hidden' },
@@ -238,7 +238,7 @@ const styles = {
   iconBtn: { padding: '8px', borderRadius: '10px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' },
 
   lessonList: { display: 'flex', flexDirection: 'column' as const, padding: '12px' },
-  lessonItem: { display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px', borderRadius: '16px', transition: 'background 0.2s' },
+  lessonItem: { display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px', borderRadius: '24px', transition: 'background 0.2s' },
   lessonIcon: { width: '32px', height: '32px', backgroundColor: '#ebebeb', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' },
   lessonInfo: { flex: 1, display: 'flex', flexDirection: 'column' as const, gap: '4px' },
   lessonName: { fontSize: '14px', fontWeight: '700', color: '#1e293b' },
@@ -250,11 +250,11 @@ const styles = {
   fGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
   fGroup: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
   fLabel: { fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
-  input: { padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', backgroundColor: '#f4f4f4', color: '#000000', fontWeight: '700', outline: 'none', width: '100%' },
-  textarea: { padding: '14px', borderRadius: '14px', border: '1px solid #e2e8f0', backgroundColor: '#f4f4f4', color: '#000000', fontWeight: '700', outline: 'none', height: '100px', resize: 'none' as const },
-  submitBtn: { padding: '16px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '14px', fontWeight: '700', cursor: 'pointer' },
+  input: { padding: '14px', borderRadius: '22px', border: '1px solid #e2e8f0', backgroundColor: '#f4f4f4', color: '#000000', fontWeight: '700', outline: 'none', width: '100%' },
+  textarea: { padding: '14px', borderRadius: '22px', border: '1px solid #e2e8f0', backgroundColor: '#f4f4f4', color: '#000000', fontWeight: '700', outline: 'none', height: '100px', resize: 'none' as const },
+  submitBtn: { padding: '16px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '700', cursor: 'pointer' },
   storageBox: { display: 'flex', gap: '8px' },
-  uploadBtn: { width: '48px', backgroundColor: '#1e293b', color: 'white', border: 'none', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }
+  uploadBtn: { width: '48px', backgroundColor: '#1e293b', color: 'white', border: 'none', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }
 };
 
 export default MasterCourseDetail;

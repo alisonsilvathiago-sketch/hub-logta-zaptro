@@ -34,6 +34,19 @@ const WhatsAppLogin: React.FC = () => {
     e.preventDefault();
     const em = email.trim().toLowerCase();
     const pw = password.trim();
+
+    // ⚡ BYPASS PARA DESENVOLVIMENTO LOCAL
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocal && em === 'zaptro@teste.com' && pw === '123456') {
+      localStorage.setItem('hub-dev-session', JSON.stringify({
+        email: em,
+        role: 'ADMIN',
+        full_name: 'Zaptro Admin (Local)'
+      }));
+      window.location.href = '/inicio';
+      return;
+    }
+
     if (!em) {
       notifyZaptro('warning', 'E-mail obrigatório', 'Preencha o e-mail Zaptro para entrar.');
       return;
