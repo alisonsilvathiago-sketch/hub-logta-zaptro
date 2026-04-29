@@ -1,3 +1,4 @@
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { EventHub, SystemEvent } from './eventHub.js';
 
 /**
@@ -6,19 +7,20 @@ import { EventHub, SystemEvent } from './eventHub.js';
  */
 export class IntelligenceService {
   private hub: EventHub;
-  private history: any[] = [];
-  private readonly MAX_HISTORY = 1000;
+  private supabase: SupabaseClient;
 
-  constructor() {
+  constructor(supabaseUrl: string, supabaseKey: string) {
     this.hub = EventHub.getInstance();
+    this.supabase = createClient(supabaseUrl, supabaseKey);
+    
     this.setupIntelligence();
   }
 
   private setupIntelligence() {
     // 1. Behavioral Learning: Observe all actions to find patterns
-    this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, (data) => {
-      this.recordBehavior(data);
-      this.analyzePatterns();
+    this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
+      await this.recordInPersistentMemory('BEHAVIOR', data.action, data);
+      await this.analyzePatterns(data.action);
     });
 
     // 2. Decision Support: When a critical event happens, provide an automated decision
@@ -26,41 +28,94 @@ export class IntelligenceService {
       this.makeAutomatedDecision('LEAD_ROUTING', data);
     });
 
-    // 3. Self-Optimization: Trigger periodic internal optimizations
+    // 3. Error Recurrence Analysis: Learn from mistakes
+    this.hub.on(SystemEvent.ERROR_CRITICAL, async (data) => {
+      const key = `error_${data.service}_${data.message.substring(0, 50).replace(/\s/g, '_')}`;
+      await this.recordInPersistentMemory('ERROR', key, data);
+      await this.analyzeErrorRecurrence(key);
+    });
+
+    // 4. Self-Optimization: Trigger periodic internal optimizations
     setInterval(() => {
       this.optimizeSystemFlux();
     }, 14400000); // Every 4 hours
   }
 
-  private recordBehavior(data: any) {
-    this.history.push({ ...data, timestamp: new Date() });
-    if (this.history.length > this.MAX_HISTORY) {
-      this.history.shift();
+  /**
+   * Persists an observation in the system's "Smart Memory"
+   */
+  private async recordInPersistentMemory(type: string, key: string, metadata: any) {
+    try {
+      const { data, error } = await this.supabase
+        .from('system_intelligence_memory')
+        .select('id, occurrence_count')
+        .eq('key_identifier', key)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        // Update existing memory
+        await this.supabase
+          .from('system_intelligence_memory')
+          .update({ 
+            occurrence_count: data.occurrence_count + 1,
+            last_seen: new Date(),
+            metadata: { ...metadata, updated_at: new Date() }
+          })
+          .eq('id', data.id);
+      } else {
+        // Create new memory entry
+        await this.supabase
+          .from('system_intelligence_memory')
+          .insert([{
+            pattern_type: type,
+            key_identifier: key,
+            metadata,
+            occurrence_count: 1
+          }]);
+      }
+    } catch (err) {
+      console.error('[Intelligence] Failed to record in memory:', err);
     }
   }
 
   /**
-   * Pattern Analysis: Detects if a user/system does the same thing repeatedly
-   * to suggest or automate it.
+   * Pattern Analysis: Checks persistent memory to find strong patterns
    */
-  private analyzePatterns() {
-    // Simple logic: if a user repeats an action 5 times in a short window, 
-    // we mark it as a "Strong Pattern" for potential automation.
-    const lastActions = this.history.slice(-10);
-    const actionCounts = lastActions.reduce((acc: any, curr) => {
-      acc[curr.action] = (acc[curr.action] || 0) + 1;
-      return acc;
-    }, {});
+  private async analyzePatterns(action: string) {
+    const { data } = await this.supabase
+      .from('system_intelligence_memory')
+      .select('occurrence_count')
+      .eq('key_identifier', action)
+      .maybeSingle();
 
-    for (const [action, count] of Object.entries(actionCounts)) {
-      if (count >= 5) {
-        console.log(`[Intelligence] Detected frequent pattern for: ${action}. Automating future instances.`);
-        this.hub.emit(SystemEvent.DECISION_MADE, {
-          logic: 'PatternRecognition',
-          outcome: { action, automationSuggested: true },
-          confidence: 0.95
-        });
-      }
+    if (data && data.occurrence_count >= 10) {
+      console.log(`[Intelligence] Strong behavioral pattern detected for "${action}".`);
+      this.hub.emit(SystemEvent.DECISION_MADE, {
+        logic: 'MemoryPatternAnalysis',
+        outcome: { action, recommendation: 'Automate repetitive flow' },
+        confidence: 0.98
+      });
+    }
+  }
+
+  /**
+   * Error Recurrence Analysis: If an error repeats, mark it for auto-fix
+   */
+  private async analyzeErrorRecurrence(key: string) {
+    const { data } = await this.supabase
+      .from('system_intelligence_memory')
+      .select('occurrence_count')
+      .eq('key_identifier', key)
+      .maybeSingle();
+
+    if (data && data.occurrence_count >= 3) {
+      console.warn(`[Intelligence] Recurring error detected: ${key}. Suggesting automated remediation.`);
+      this.hub.emit(SystemEvent.MAINTENANCE_REQUIRED, {
+        type: 'AUTO_FIX_RECURRING_ERROR',
+        details: { key, occurrences: data.occurrence_count }
+      });
     }
   }
 
@@ -74,7 +129,6 @@ export class IntelligenceService {
     let confidence = 0;
 
     if (type === 'LEAD_ROUTING') {
-      // Logic: Decisions based on historical conversion rates (simulated)
       outcome = { routeTo: context.source.includes('log') ? 'Logta' : 'Zaptro' };
       confidence = 0.88;
     }
@@ -86,15 +140,8 @@ export class IntelligenceService {
     });
   }
 
-  /**
-   * Optimization: Cleans up internal structures and adjusts timing
-   */
   private optimizeSystemFlux() {
     console.log('[Intelligence] Running system self-optimization...');
-    
-    // Logic: Reduce maintenance window if system is under high load
-    // Logic: Consolidate logs or clear temporary caches
-    
     this.hub.emit(SystemEvent.MAINTENANCE_REQUIRED, {
       type: 'INTERNAL_OPTIMIZATION',
       details: { optimizedAt: new Date() }

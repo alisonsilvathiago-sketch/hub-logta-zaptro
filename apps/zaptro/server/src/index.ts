@@ -61,7 +61,7 @@ async function main() {
   const workflowService = new WorkflowService(cfg, queue);
   const maintenanceService = new MaintenanceService();
   const automationHandlers = new AutomationHandlers();
-  const intelligenceService = new IntelligenceService();
+  const intelligenceService = new IntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
   console.log('[Intelligent Hub] Autonomous services, handlers, and Intelligence Cortex initialized...');
 
