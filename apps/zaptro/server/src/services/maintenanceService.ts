@@ -1,18 +1,18 @@
 import { BillingIntelligenceService } from './billingIntelligenceService.js';
 import { CustomerHealthService } from './customerHealthService.js';
 import { OptimizationEngineService } from './optimizationEngineService.js';
+import { DeliveryIntelligenceService } from './deliveryIntelligenceService.js';
 import { EventHub, SystemEvent } from './eventHub.js';
 
 /**
  * MaintenanceService: Ensures the Hub stays healthy and autonomous.
- * It performs "self-healing" tasks like cleaning up old logs, 
- * checking for orphaned data, and notifying about critical errors.
  */
 export class MaintenanceService {
   private hub: EventHub;
   private billingService: BillingIntelligenceService | null = null;
   private healthService: CustomerHealthService | null = null;
   private optimizationService: OptimizationEngineService | null = null;
+  private deliveryService: DeliveryIntelligenceService | null = null;
 
   constructor() {
     this.hub = EventHub.getInstance();
@@ -30,6 +30,10 @@ export class MaintenanceService {
 
   public setOptimizationService(service: OptimizationEngineService) {
     this.optimizationService = service;
+  }
+
+  public setDeliveryService(service: DeliveryIntelligenceService) {
+    this.deliveryService = service;
   }
 
   private setupListeners() {
@@ -68,6 +72,13 @@ export class MaintenanceService {
       console.log('[Maintenance] Daily autonomous cycle completed (Billing + Health + Optimization).');
       this.hub.emit(SystemEvent.MAINTENANCE_REQUIRED, { type: 'DAILY_PURGE', details: { reason: 'Scheduled' } });
     }, 86400000);
+
+    // Watchdog Cycle (Every 1 hour)
+    setInterval(async () => {
+      if (this.deliveryService) {
+        await this.deliveryService.runDeliveryAudit();
+      }
+    }, 3600000);
   }
 
   private async checkSystemHealth() {

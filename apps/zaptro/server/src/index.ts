@@ -19,6 +19,7 @@ import { OptimizationEngineService } from './services/optimizationEngineService.
 import { DecisionEngineService } from './services/decisionEngineService.js';
 import { GrowthEngineService } from './services/growthEngineService.js';
 import { GamificationService } from './services/gamificationService.js';
+import { DeliveryIntelligenceService } from './services/deliveryIntelligenceService.js';
 import { UnifiedApiService } from './services/unifiedApiService.js';
 import { EventHub } from './services/eventHub.js';
 
@@ -78,16 +79,18 @@ async function main() {
   const decisionEngineService = new DecisionEngineService(cfg.supabaseUrl, cfg.supabaseAnonKey, optimizationEngineService);
   const growthEngineService = new GrowthEngineService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const gamificationService = new GamificationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const deliveryIntelligenceService = new DeliveryIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
-  // Link services to maintenance for the daily cycle
+  // Link services to maintenance for the daily/hourly cycle
   maintenanceService.setBillingService(billingIntelligenceService);
   maintenanceService.setHealthService(customerHealthService);
   maintenanceService.setOptimizationService(optimizationEngineService);
+  maintenanceService.setDeliveryService(deliveryIntelligenceService);
 
   // Register the Unified API Routes (HUB, ZAPTRO, LOGTA)
   unifiedApiService.registerRoutes(app, cfg.supabaseUrl, cfg.supabaseAnonKey);
 
-  console.log('[Intelligent Hub] Autonomous services, Intelligence Cortex, and Engagement Gamification Machine initialized...');
+  console.log('[Intelligent Hub] Autonomous services, Intelligence Cortex, and Delivery Guardian Machine initialized...');
 
   app.listen(cfg.port, () => {
     // eslint-disable-next-line no-console

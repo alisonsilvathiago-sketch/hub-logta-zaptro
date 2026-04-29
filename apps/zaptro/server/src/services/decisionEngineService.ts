@@ -67,14 +67,18 @@ export class DecisionEngineService {
 
       // --- AB TESTING OVERRIDE ---
       const activeExperiment = await this.optimization.getOptimalVariant('BILLING_STRATEGY');
-      if (activeExperiment) {
+      if (activeExperiment && !event.metadata.is_retry) {
         selectedChannel = activeExperiment.data.channel || selectedChannel;
         rationale = `Experiment active: ${activeExperiment.id}.`;
         experimentId = activeExperiment.experimentId;
         variantId = activeExperiment.id;
       } else {
-        // Decision Rule: If health is critical, prioritize WhatsApp (higher urgency)
-        if (company.health_score < 40) {
+        // Strategic Retry Logic: If the previous attempt didn't work (not read/not paid), escalate.
+        if (event.metadata.is_retry) {
+          selectedChannel = 'whatsapp';
+          rationale = `Retry detected (Previous: ${event.metadata.previous_status}). Escalating to WhatsApp for guaranteed delivery.`;
+        } else if (company.health_score < 40) {
+          // Decision Rule: If health is critical, prioritize WhatsApp (higher urgency)
           selectedChannel = 'whatsapp';
           rationale = 'Critical health detected. Escalating to WhatsApp for higher urgency.';
         }
