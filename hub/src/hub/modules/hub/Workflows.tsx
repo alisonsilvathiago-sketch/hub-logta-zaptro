@@ -328,6 +328,10 @@ const WorkflowManagement: React.FC = () => {
                 <option value="lead_converted">Lead Convertido</option>
                 <option value="payment_received">Pagamento Recebido</option>
                 <option value="subscription_expired">Assinatura Expirada</option>
+                <option value="LOGISTICS_DELAY_DETECTED">Atraso Logístico</option>
+                <option value="SECURITY_CRITICAL_ALERT">Alerta de Segurança</option>
+                <option value="DOCUMENT_ERROR_DETECTED">Erro de Documentação</option>
+                <option value="DELIVERY_LOCATION_MISMATCH_DETECTED">Divergência de GPS</option>
                 <option value="webhook_received">Webhook Externo</option>
               </select>
             </div>
@@ -341,6 +345,11 @@ const WorkflowManagement: React.FC = () => {
                 <option value="">Selecione uma ação...</option>
                 <option value="provision_company">Provisionar Empresa</option>
                 <option value="send_email">Enviar E-mail</option>
+                <option value="SEND_LOGISTICS_DELAY_NOTICE">Notificar Atraso</option>
+                <option value="ESCALATE_TO_SECURITY_AUDIT">Auditoria de Segurança</option>
+                <option value="NOTIFY_SECURITY_BREACH">Alertar Invasão/Falha</option>
+                <option value="BLOCK_OPERATIONAL_FLOW">Bloquear Fluxo Operacional</option>
+                <option value="BLOCK_AND_REQUIRE_VISUAL_OVERRIDE">Bloquear e Exigir Foto</option>
                 <option value="create_subscription">Criar Assinatura</option>
                 <option value="block_access">Bloquear Acesso</option>
               </select>

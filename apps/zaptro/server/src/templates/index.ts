@@ -52,6 +52,7 @@ export function buildTransactionalEmail(
   const name = String(vars.userName ?? vars.clientName ?? 'Cliente').trim() || 'Cliente';
 
   switch (kind) {
+    case 'welcome': {
       const subject = `Bem-vindo à ${cn}`;
       const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
         <p>A sua conta Zaptro foi criada com sucesso. A partir de agora pode acompanhar rotas, equipa e operações num só lugar.</p>`;

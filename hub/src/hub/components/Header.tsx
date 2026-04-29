@@ -123,14 +123,41 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
           
           {dropdownOpen && (
             <div style={styles.dropdown} onClick={e => e.stopPropagation()}>
-              <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/profile'); }}>
-                <User size={14} /> Meu Perfil
+              <div style={styles.dropdownSection}>
+                <div style={styles.dropdownSectionTitle}>CONTA</div>
+                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/profile'); }}>
+                  <User size={14} /> Meu Perfil
+                </div>
+                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/settings'); }}>
+                  <Settings size={14} /> Configuração Master
+                </div>
               </div>
-              <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/settings'); }}>
-                <Settings size={14} /> Configuração Master
+
+              <div style={styles.divider} />
+
+              <div style={styles.dropdownSection}>
+                <div style={styles.dropdownSectionTitle}>ADMINISTRAÇÃO</div>
+                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/automacoes'); }}>
+                  <Zap size={14} /> Automações & Integrações
+                </div>
+                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/admins'); }}>
+                  <Users size={14} /> Usuários Hub
+                </div>
               </div>
-              <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/settings?tab=interacoes'); }}>
-                <LinkIcon size={14} /> Interações & Hub
+
+              <div style={styles.divider} />
+
+              <div style={styles.dropdownSection}>
+                <div style={styles.dropdownSectionTitle}>SISTEMA</div>
+                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/infrastructure'); }}>
+                  <Database size={14} /> Infraestrutura
+                </div>
+                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/backup'); }}>
+                  <HardDrive size={14} /> Backups do Ecossistema
+                </div>
+                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/security'); }}>
+                  <Shield size={14} /> Segurança
+                </div>
               </div>
               
               <div style={styles.divider} />

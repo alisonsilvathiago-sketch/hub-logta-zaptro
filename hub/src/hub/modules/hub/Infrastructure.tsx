@@ -67,12 +67,14 @@ const InfrastructureManagement: React.FC = () => {
   };
 
   const services = [
-    { name: 'Core API (Edge)', status: 'operational', latency: '124ms', load: '12%', icon: <Activity size={18} /> },
-    { name: 'Supabase DB', status: 'operational', latency: '45ms', load: '8%', icon: <Server size={18} /> },
-    { name: 'Asaas Gateway', status: 'operational', latency: '210ms', load: '5%', icon: <CreditCard size={18} /> },
-    { name: 'Evolution API', status: 'operational', latency: '340ms', load: '22%', icon: <MessageSquare size={18} /> },
-    { name: 'Mail Service', status: 'operational', latency: '88ms', load: '2%', icon: <Mail size={18} /> },
-    { name: 'Zaptro CDN', status: 'operational', latency: '12ms', load: '1%', icon: <Globe size={18} /> },
+    { name: 'Autonomous Navigator', status: 'operational', latency: '24ms', load: '4%', icon: <Globe size={18} /> },
+    { name: 'Fulfillment Guardian', status: 'operational', latency: '12ms', load: '1%', icon: <ShieldCheck size={18} /> },
+    { name: 'Operational Brain', status: 'operational', latency: '45ms', load: '12%', icon: <Cpu size={18} /> },
+    { name: 'WhatsApp (Evolution API)', status: 'operational', latency: '142ms', load: '28%', icon: <MessageSquare size={18} /> },
+    { name: 'Google Workspace Sync', status: 'operational', latency: '85ms', load: '2%', icon: <Globe size={18} /> },
+    { name: 'Shield Security', status: 'operational', latency: '8ms', load: '2%', icon: <ShieldCheck size={18} /> },
+    { name: 'Audit Engine', status: 'operational', latency: '32ms', load: '5%', icon: <CheckCircle2 size={18} /> },
+    { name: 'Workflow Performer', status: 'operational', latency: '15ms', load: '3%', icon: <Layers size={18} /> },
   ];
 
   return (

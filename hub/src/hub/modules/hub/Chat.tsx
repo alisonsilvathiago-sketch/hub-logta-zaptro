@@ -31,8 +31,9 @@ const HubChat: React.FC = () => {
   // Mocked data for the Slack-like experience
   const [messages, setMessages] = useState<any[]>([
     { id: 1, sender: 'Alison Thiago', avatar: null, text: 'Pessoal, a rota de hoje para São Paulo já foi confirmada?', time: new Date(Date.now() - 3600000), status: 'read' },
-    { id: 2, sender: 'Sistema Logta', avatar: null, text: '✅ Rota SP-01 atualizada: 5 entregas pendentes.', time: new Date(Date.now() - 3000000), status: 'read', type: 'system' },
-    { id: 3, sender: 'Suporte Zaptro', avatar: null, text: 'Acabei de subir o patch para o checkout.', time: new Date(Date.now() - 1200000), status: 'read' }
+    { id: 2, sender: 'Navigator AI', avatar: null, text: '🤖 Rota SP-01 otimizada: Economia de 12% em combustível detectada. Enviando para motorista.', time: new Date(Date.now() - 3000000), status: 'read', type: 'system' },
+    { id: 3, sender: 'Guardian AI', avatar: null, text: '⚠️ Alerta de Geofencing: Veículo ABC-1234 fora do perímetro em Osasco. Bloqueio operacional preventivo ativado.', time: new Date(Date.now() - 1500000), status: 'read', type: 'system' },
+    { id: 4, sender: 'Suporte Zaptro', avatar: null, text: 'Acabei de subir o patch para o checkout.', time: new Date(Date.now() - 1200000), status: 'read' }
   ]);
 
   const [users] = useState([
@@ -40,7 +41,8 @@ const HubChat: React.FC = () => {
     { id: 'u2', name: 'João Silva', status: 'away', email: 'joao@hub.com', team: 'Dev' },
     { id: 'u3', name: 'Maria Souza', status: 'offline', email: 'maria@hub.com', team: 'Design' },
     { id: 'u4', name: 'Suporte Zaptro', status: 'online', email: 'suporte@zaptro.com', team: 'Ops' },
-    { id: 'u5', name: 'Bot Logta', status: 'online', email: 'bot@logta.com', team: 'AI' }
+    { id: 'u5', name: 'Navigator AI', status: 'online', email: 'navigator@hub.ai', team: 'Autonomous' },
+    { id: 'u6', name: 'Guardian AI', status: 'online', email: 'guardian@hub.ai', team: 'Autonomous' }
   ]);
 
   const channels = [

@@ -32,7 +32,7 @@ export class EventHub {
 
   private constructor() {
     this.emitter = new EventEmitter();
-    this.emitter.setMaxListeners(20); // Scale as needed
+    this.emitter.setMaxListeners(100); // Scale for autonomous service mesh
   }
 
   public static getInstance(): EventHub {

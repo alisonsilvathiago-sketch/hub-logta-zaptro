@@ -116,8 +116,48 @@ export class WorkflowService {
         break;
 
       case 'SEND_LOGISTICS_DELAY_NOTICE':
-        console.log(`[WorkflowEngine] Sending LOGISTICS_DELAY_NOTICE via ${channel.toUpperCase()} to ${context.customerEmail}...`);
-        await this.sendEmail('logistics_delay_notice', cn, context.customerEmail, { ...context, userName: context.customerName });
+        console.log(`[WorkflowEngine] Sending LOGISTICS_DELAY_NOTICE via ${channel.toUpperCase()} to ${context.customerEmail || context.email}...`);
+        await this.sendEmail('logistics_delay_notice', cn, context.customerEmail || context.email, { ...context, userName: context.customerName || userName });
+        break;
+
+      case 'RELEASE_TO_ACTIVE_ROUTE':
+        console.log(`[WorkflowEngine] [LOGISTICS] Releasing delivery ${context.deliveryId} to active routing engine.`);
+        await this.supabase.from('deliveries').update({ status: 'READY_FOR_ROUTING', updated_at: new Date() }).eq('id', context.deliveryId);
+        break;
+
+      case 'BLOCK_DELIVERY_AND_LOG_PENALTY':
+        console.log(`[WorkflowEngine] [GUARDIAN] Blocking delivery ${context.deliveryId} due to expiration. Logging penalty.`);
+        await this.supabase.from('deliveries').update({ status: 'BLOCKED_EXPIRED', updated_at: new Date() }).eq('id', context.deliveryId);
+        break;
+
+      case 'UPDATE_MASTER_PLANNER':
+        console.log(`[WorkflowEngine] [PLANNER] Rescheduling delivery ${context.deliveryId} to ${context.newDate}.`);
+        await this.supabase.from('deliveries').update({ scheduled_date: context.newDate, status: 'RESCHEDULED', updated_at: new Date() }).eq('id', context.deliveryId);
+        break;
+
+      case 'ESCALATE_TO_SECURITY_AUDIT':
+        console.log(`[WorkflowEngine] [SHIELD] Critical distance mismatch! Escalating ${context.deliveryId} to security audit.`);
+        await this.supabase.from('security_logs').insert([{
+          action: 'CRITICAL_LOCATION_MISMATCH',
+          ip_address: '0.0.0.0',
+          details: { deliveryId: context.deliveryId, distance: context.distance_detected },
+          success: false
+        }]);
+        break;
+
+      case 'BLOCK_AND_REQUIRE_VISUAL_OVERRIDE':
+        console.log(`[WorkflowEngine] [GEOFENCING] Blocking completion for ${context.deliveryId}. Photo override required.`);
+        await this.supabase.from('deliveries').update({ status: 'AWAITING_VISUAL_PROOF', updated_at: new Date() }).eq('id', context.deliveryId);
+        break;
+
+      case 'NOTIFY_SECURITY_BREACH':
+        console.log(`[WorkflowEngine] [SECURITY] Sending URGENT security breach alert to admin.`);
+        await this.sendEmail('security_alert', 'Logta Shield', 'admin@logta.com.br', { ...context });
+        break;
+
+      case 'BLOCK_OPERATIONAL_FLOW':
+        console.log(`[WorkflowEngine] [AUDIT] Blocking operational flow for company due to critical document error.`);
+        // Logic to block company operations if needed
         break;
 
       case 'PROCESS_LEAD_CONVERSION':

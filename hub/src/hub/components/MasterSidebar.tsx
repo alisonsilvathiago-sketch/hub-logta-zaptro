@@ -25,19 +25,7 @@ const MasterSidebar: React.FC = () => {
       items: [
         { label: 'Empresas', icon: Building2, path: '/master/companies' },
         { label: 'Faturamento', icon: CreditCard, path: '/master/billing' },
-        { label: 'Automações', icon: Zap, path: '/master/automacoes' },
         { label: 'Relatórios', icon: FileText, path: '/master/reports' },
-      ]
-    },
-    {
-      title: 'SISTEMA',
-      items: [
-        { label: 'Usuários Hub', icon: Users, path: '/master/admins' },
-        { label: 'Infraestrutura', icon: Database, path: '/master/infrastructure' },
-        { label: 'Backups', icon: HardDrive, path: '/master/backup' },
-        { label: 'Segurança', icon: Shield, path: '/master/security' },
-        { label: 'Integrações', icon: Link, path: '/master/integracoes' },
-        { label: 'Configurações', icon: UserCircle, path: '/master/settings' },
       ]
     }
   ];
