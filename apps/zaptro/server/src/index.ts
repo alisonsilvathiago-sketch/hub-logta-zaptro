@@ -7,6 +7,11 @@ import { registerMailRoutes } from './routes/mailRoutes.js';
 import { registerCalendarRoutes } from './routes/calendarRoutes.js';
 import { registerNotificationRoutes } from './routes/notificationRoutes.js';
 import { registerGoogleRoutes } from './routes/googleRoutes.js';
+import { registerWebhookRoutes } from './routes/webhookRoutes.js';
+import { WorkflowService } from './services/workflowService.js';
+import { MaintenanceService } from './services/maintenanceService.js';
+import { AutomationHandlers } from './services/automationHandlers.js';
+import { EventHub } from './services/eventHub.js';
 
 async function main() {
   const cfg = loadConfig();
@@ -45,6 +50,18 @@ async function main() {
   registerCalendarRoutes(app, cfg);
   registerNotificationRoutes(app, cfg, logger, queue);
   registerGoogleRoutes(app, cfg);
+  registerWebhookRoutes(app);
+
+  // --- Intelligent Hub Initialization ---
+  // Initialize the Event Hub (Singleton)
+  const eventHub = EventHub.getInstance();
+
+  // Initialize Autonomous Services (they start listening to events automatically)
+  const workflowService = new WorkflowService(cfg, queue);
+  const maintenanceService = new MaintenanceService();
+  const automationHandlers = new AutomationHandlers();
+
+  console.log('[Intelligent Hub] Autonomous services and handlers initialized...');
 
   app.listen(cfg.port, () => {
     // eslint-disable-next-line no-console

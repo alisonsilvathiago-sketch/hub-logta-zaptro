@@ -2,14 +2,40 @@ import { GoogleIntegrationService } from './googleService.js';
 import { buildTransactionalEmail, type TransactionalKind } from '../templates/index.js';
 import type { MailQueue } from '../queue/createMailQueue.js';
 import type { AppConfig } from '../config.js';
+import { EventHub, SystemEvent } from './eventHub.js';
 
 export class WorkflowService {
   private googleService: GoogleIntegrationService;
   private queue: MailQueue;
+  private hub: EventHub;
 
   constructor(cfg: AppConfig, queue: MailQueue) {
     this.googleService = new GoogleIntegrationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
     this.queue = queue;
+    this.hub = EventHub.getInstance();
+    
+    this.setupAutomation();
+  }
+
+  /**
+   * Set up autonomous listeners for system events
+   */
+  private setupAutomation() {
+    // When a lead is created, trigger the conversion workflow automatically
+    this.hub.on(SystemEvent.LEAD_CREATED, async (data) => {
+      console.log(`[Workflow] Auto-triggering conversion for lead: ${data.email}`);
+      await this.processLeadConversion({
+        name: data.name,
+        email: data.email,
+        interest: data.source
+      });
+    });
+
+    // When a payment is received, trigger a "Thank You" and update status
+    this.hub.on(SystemEvent.PAYMENT_RECEIVED, async (data) => {
+      console.log(`[Workflow] Processing payment event for user: ${data.userId}`);
+      // Add autonomous payment reaction logic here
+    });
   }
 
   /**
@@ -77,8 +103,13 @@ export class WorkflowService {
       }
     );
 
-    // We'll send this to a hardcoded admin or fetch from DB
-    // For now, let's assume the notification route provides the target_email
+    // Emit confirmation event that the lead has been "processed" autonomously
+    this.hub.emit(SystemEvent.LEAD_CONVERTED, {
+      leadId: leadData.email,
+      userId: 'system',
+      plan: leadData.interest || 'discovery'
+    });
+
     return { meetLink, leadEmail, adminEmail };
   }
 }
