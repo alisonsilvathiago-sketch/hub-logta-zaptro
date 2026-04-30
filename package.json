@@ -1,0 +1,15 @@
+{
+  "name": "hub-logta-zaptro-root",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Monorepo for Logta and Zaptro",
+  "scripts": {
+    "install:hub": "cd hub && npm install",
+    "build:hub": "cd hub && npm run build",
+    "build": "npm run install:hub && npm run build:hub",
+    "dev:hub": "cd hub && npm run dev"
+  },
+  "devDependencies": {
+    "vite": "^8.0.10"
+  }
+}

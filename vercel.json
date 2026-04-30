@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm ci --prefix hub",
-  "buildCommand": "npm run build --prefix hub",
+  "installCommand": "npm run install:hub",
+  "buildCommand": "npm run build:hub",
   "outputDirectory": "hub/dist",
   "rewrites": [
     {
