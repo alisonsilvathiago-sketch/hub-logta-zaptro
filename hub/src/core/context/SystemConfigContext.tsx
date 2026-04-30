@@ -6,6 +6,7 @@ interface SystemConfigs {
   supportEmail: string;
   primaryColor: string;
   allowRegistration: boolean;
+  systemLockdown: boolean;
   googleServiceAccountKey: any;
   [key: string]: any;
 }
@@ -33,6 +34,7 @@ export const SystemConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
         supportEmail: 'suporte@logta.com.br',
         primaryColor: '#6366F1',
         allowRegistration: true,
+        systemLockdown: false,
         googleServiceAccountKey: null
       };
 
@@ -44,6 +46,8 @@ export const SystemConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
           configMap.supportEmail = item.value;
         } else if (item.key === 'allow_registration') {
           configMap.allowRegistration = item.value === 'true';
+        } else if (item.key === 'system_lockdown') {
+          configMap.systemLockdown = item.value === 'true';
         } else if (item.key === 'GOOGLE_SERVICE_ACCOUNT_KEY') {
           configMap.googleServiceAccountKey = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
         } else {

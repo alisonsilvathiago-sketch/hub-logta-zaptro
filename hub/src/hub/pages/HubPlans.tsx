@@ -252,7 +252,7 @@ const MasterPlans: React.FC = () => {
             </div>
 
             <button style={styles.saveBtnModal} onClick={handleSaveProduct}>
-               {selectedProduct?.id ? 'Confirmar Alterações 💾' : 'Lançar Oferta no Mercado 🚀'}
+               {selectedProduct?.id ? 'Confirmar Alterações ' : 'Lançar Oferta no Mercado '}
             </button>
          </div>
       </LogtaModal>

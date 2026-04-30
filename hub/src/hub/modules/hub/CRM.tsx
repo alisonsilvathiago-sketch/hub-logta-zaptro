@@ -16,10 +16,16 @@ import {
 } from 'recharts';
 import { supabase } from '@core/lib/supabase';
 import LogtaModal from '@shared/components/Modal';
+import ShortcutTooltip from '@shared/components/ShortcutTooltip';
+import Button from '@shared/components/Button';
 import Pagination from '@shared/components/Pagination';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 
+import Kbd from '@shared/components/Kbd';
+import { getPlatform } from '@core/lib/platform';
+
 const MasterCRM: React.FC = () => {
+  const platform = getPlatform();
 
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
@@ -144,74 +150,95 @@ const MasterCRM: React.FC = () => {
                 style={{...styles.toggleBtn, ...(viewMode === 'kanban' ? styles.toggleActive : {})}}
                 onClick={() => setViewMode('kanban')}
               >
-                <Kanban size={14} /> Kanban
+                <Kanban size={14} /> 
+                <span>Kanban</span>
+                <Kbd style={{ fontSize: '9px', marginLeft: '6px', opacity: 0.6 }}>1</Kbd>
               </button>
               <button 
                 style={{...styles.toggleBtn, ...(viewMode === 'list' ? styles.toggleActive : {})}}
                 onClick={() => setViewMode('list')}
               >
-                <List size={14} /> Lista
+                <List size={14} /> 
+                <span>Lista</span>
+                <Kbd style={{ fontSize: '9px', marginLeft: '6px', opacity: 0.6 }}>2</Kbd>
               </button>
             </div>
-            <button style={styles.addBtn} onClick={() => setIsLeadModalOpen(true)}>
-              <UserPlus size={18} /> Nova Lead ⚡
-            </button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <ShortcutTooltip shortcut="n" ctrl>
+                <Button 
+                  variant="primary" 
+                  icon={<Plus size={18} />} 
+                  label={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>Nova Lead</span>
+                      <div style={{ display: 'flex', gap: '2px', opacity: 0.8 }}>
+                        <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '9px', padding: '0 4px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF' }}>{platform.cmd}</Kbd>
+                        <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '9px', padding: '0 4px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF' }}>N</Kbd>
+                      </div>
+                    </div>
+                  } 
+                  onClick={() => setIsLeadModalOpen(true)} 
+                  style={{ color: '#FFFFFF' }}
+                />
+              </ShortcutTooltip>
+            </div>
           </div>
         </div>
       </header>
-          <div style={styles.statsGrid}>
-            <div style={styles.statCard}>
-              <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
-                <Target size={20} color="#6366F1" />
-              </div>
-              <div style={styles.statContent}>
-                <p style={styles.statLabel}>Pipeline Total</p>
-                <h3 style={styles.statValue}>R$ {(leads.reduce((acc, curr) => acc + (Number(curr.potential_value) || 0), 0) / 1000).toFixed(1)}k</h3>
-              </div>
-              <div style={{...styles.statTrend, color: '#10B981'}}>
-                +12% <TrendingUp size={12} />
-              </div>
-            </div>
 
-            <div style={styles.statCard}>
-              <div style={{...styles.statIconBox, backgroundColor: '#6366F1'}}>
-                <CheckCircle size={20} color="#FFFFFF" />
-              </div>
-              <div style={styles.statContent}>
-                <p style={styles.statLabel}>Taxa de Conversão</p>
-                <h3 style={styles.statValue}>18.4%</h3>
-              </div>
-              <div style={{...styles.statTrend, color: '#64748B'}}>
-                Média do trimestre
-              </div>
-            </div>
-
-            <div style={styles.statCard}>
-              <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
-                <Zap size={20} color="#6366F1" />
-              </div>
-              <div style={styles.statContent}>
-                <p style={styles.statLabel}>Leads em Risco</p>
-                <h3 style={styles.statValue}>12</h3>
-              </div>
-              <div style={{...styles.statTrend, color: '#64748B'}}>
-                Sem contato há 7+ dias
-              </div>
-            </div>
-
-            <div style={styles.statCard}>
-              <div style={{...styles.statIconBox, backgroundColor: '#4F46E5'}}>
-                <Star size={20} color="#FFFFFF" />
-              </div>
-              <div style={styles.statContent}>
-                <p style={styles.statLabel}>Ticket Médio SaaS</p>
-                <h3 style={styles.statValue}>R$ 1.450</h3>
-              </div>
-              <div style={{...styles.statTrend, color: '#64748B'}}>
-                Mix de planos
-              </div>
-            </div>
+      <div style={styles.statsGrid}>
+        <div style={styles.statCard}>
+          <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
+            <Target size={20} color="#6366F1" />
           </div>
+          <div style={styles.statContent}>
+            <p style={styles.statLabel}>Pipeline Total</p>
+            <h3 style={styles.statValue}>R$ {(leads.reduce((acc, curr) => acc + (Number(curr.potential_value) || 0), 0) / 1000).toFixed(1)}k</h3>
+          </div>
+          <div style={{...styles.statTrend, color: '#10B981'}}>
+            +12% <TrendingUp size={12} />
+          </div>
+        </div>
+
+        <div style={styles.statCard}>
+          <div style={{...styles.statIconBox, backgroundColor: '#6366F1'}}>
+            <CheckCircle size={20} color="#FFFFFF" />
+          </div>
+          <div style={styles.statContent}>
+            <p style={styles.statLabel}>Taxa de Conversão</p>
+            <h3 style={styles.statValue}>18.4%</h3>
+          </div>
+          <div style={{...styles.statTrend, color: '#64748B'}}>
+            Média do trimestre
+          </div>
+        </div>
+
+        <div style={styles.statCard}>
+          <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
+            <Zap size={20} color="#6366F1" />
+          </div>
+          <div style={styles.statContent}>
+            <p style={styles.statLabel}>Leads em Risco</p>
+            <h3 style={styles.statValue}>12</h3>
+          </div>
+          <div style={{...styles.statTrend, color: '#64748B'}}>
+            Sem contato há 7+ dias
+          </div>
+        </div>
+
+        <div style={styles.statCard}>
+          <div style={{...styles.statIconBox, backgroundColor: '#4F46E5'}}>
+            <Star size={20} color="#FFFFFF" />
+          </div>
+          <div style={styles.statContent}>
+            <p style={styles.statLabel}>Ticket Médio SaaS</p>
+            <h3 style={styles.statValue}>R$ 1.450</h3>
+          </div>
+          <div style={{...styles.statTrend, color: '#64748B'}}>
+            Mix de planos
+          </div>
+        </div>
+      </div>
 
           {viewMode === 'kanban' ? (
             <div style={styles.kanbanBoard}>
@@ -475,7 +502,7 @@ const styles = {
   title: { fontSize: '26px', fontWeight: '600', color: '#111827', margin: 0, letterSpacing: '-0.5px' },
   subtitle: { color: '#6B7280', fontSize: '14px', fontWeight: '400' },
   headerActions: { display: 'flex', gap: '20px', alignItems: 'center' },
-  addBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 28px', backgroundColor: '#111827', color: '#D9FF00', border: 'none', borderRadius: '16px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)', transition: 'all 0.2s', letterSpacing: '0.4px' },
+  addBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 28px', backgroundColor: '#111827', color: '#FFFFFF', border: 'none', borderRadius: '16px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)', transition: 'all 0.2s', letterSpacing: '0.4px' },
   
   tabSwitch: { display: 'flex', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '16px', gap: '4px' },
   tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', border: 'none', borderRadius: '12px', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '700', color: '#64748b', transition: 'all 0.2s' },

@@ -34,33 +34,30 @@ class ErrorBoundary extends Component<Props, State> {
             <div style={styles.iconBox}>
               <AlertTriangle size={48} color="#EF4444" />
             </div>
-            <h1 style={styles.title}>Ops! Detectamos uma falha de renderização.</h1>
+            <h1 style={styles.title}>Ops! Algo não saiu como o esperado</h1>
             <p style={styles.desc}>
-              O sistema inteligente do Hub encontrou um erro inesperado neste módulo. 
-              Não se preocupe, seus dados estão seguros.
+              Ocorreu um erro crítico na interface. Nossa inteligência já foi notificada e estamos trabalhando para resolver.
             </p>
-            
-            <div style={styles.errorLog}>
-               <code>{this.state.error?.message || 'Erro desconhecido'}</code>
-            </div>
-
+            {this.state.error && (
+              <div style={styles.errorLog}>
+                {this.state.error.toString()}
+              </div>
+            )}
             <div style={styles.actions}>
               <button 
-                style={styles.primaryBtn} 
-                onClick={() => window.location.reload()}
+                onClick={() => window.location.reload()} 
+                style={styles.primaryBtn}
               >
-                <RefreshCw size={18} /> RECARREGAR PÁGINA
+                <RefreshCw size={18} style={{ marginRight: '8px' }} />
+                Tentar Novamente
               </button>
               <button 
-                style={styles.secondaryBtn} 
-                onClick={() => window.location.href = '/master'}
+                onClick={() => window.location.href = '/'} 
+                style={styles.secondaryBtn}
               >
-                <Home size={18} /> VOLTAR AO INÍCIO
+                <Home size={18} style={{ marginRight: '8px' }} />
+                Início
               </button>
-            </div>
-            
-            <div style={styles.footer}>
-               <MessageSquare size={14} /> Nosso time técnico já foi notificado automaticamente.
             </div>
           </div>
         </div>

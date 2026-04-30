@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite --host localhost --port 5173 --strictPort",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.102.1",
@@ -21,7 +23,9 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.1",
+    "jsdom": "^26.1.0",
     "typescript": "~6.0.2",
-    "vite": "^8.0.4"
+    "vite": "^8.0.4",
+    "vitest": "^3.2.4"
   }
 }

@@ -78,10 +78,10 @@ const ToastItem: React.FC<{ toast: Toast; onClose: () => void; index: number }> 
   };
 
   const colors = {
-    success: { border: '#D1FAE5', bg: '#F0FDF4' },
-    error: { border: '#FEE2E2', bg: '#FEF2F2' },
-    warning: { border: '#FEF3C7', bg: '#FFFBEB' },
-    info: { border: '#E0E7FF', bg: '#EEF2FF' }
+    success: { border: 'rgba(16, 185, 129, 0.45)', bg: 'rgba(16, 185, 129, 0.18)' },
+    error: { border: 'rgba(239, 68, 68, 0.45)', bg: 'rgba(239, 68, 68, 0.18)' },
+    warning: { border: 'rgba(245, 158, 11, 0.45)', bg: 'rgba(245, 158, 11, 0.18)' },
+    info: { border: 'rgba(99, 102, 241, 0.45)', bg: 'rgba(99, 102, 241, 0.18)' }
   };
 
   const config = colors[toast.type];
@@ -91,9 +91,9 @@ const ToastItem: React.FC<{ toast: Toast; onClose: () => void; index: number }> 
       className="toast-enter"
       style={{
         ...styles.toast,
-        backgroundColor: 'white',
+        backgroundColor: '#0F172A',
         border: `1px solid ${config.border}`,
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        boxShadow: '0 20px 25px -5px rgba(2, 6, 23, 0.55), 0 10px 10px -5px rgba(2, 6, 23, 0.35)',
         animation: isExiting ? 'toast-slide-out 0.3s ease-in forwards' : undefined,
         zIndex: 1000 - index
       }}
@@ -110,7 +110,7 @@ const ToastItem: React.FC<{ toast: Toast; onClose: () => void; index: number }> 
       </div>
 
       <button onClick={handleClose} style={styles.closeBtn}>
-        <X size={16} color="#94A3B8" />
+        <X size={16} color="#E2E8F0" />
       </button>
     </div>
   );
@@ -159,11 +159,11 @@ const styles: Record<string, any> = {
     margin: 0,
     fontSize: '14px',
     fontWeight: '600',
-    color: '#0F172A',
+    color: '#FFFFFF',
     lineHeight: '1.4'
   },
   closeBtn: {
-    background: 'none',
+    background: 'rgba(255,255,255,0.06)',
     border: 'none',
     padding: '4px',
     cursor: 'pointer',

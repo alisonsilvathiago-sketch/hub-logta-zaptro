@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { CloudUpload, FileText, Download, Trash2, Plus, RefreshCw, X } from 'lucide-react';
 
 interface FileUploaderProps {
+  companyId: string;
   clientId: string;
   module: 'crm' | 'chat' | 'financeiro' | 'documentos' | 'outros';
   referenceId: string;
@@ -24,13 +25,15 @@ const formatSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-export default function UnifiedFileUploader({ clientId, module, referenceId, onAction }: FileUploaderProps) {
+export default function UnifiedFileUploader({ companyId, clientId, module, referenceId, onAction }: FileUploaderProps) {
   const [files, setFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    fetchFiles();
+    if (clientId && module && referenceId) {
+      fetchFiles();
+    }
   }, [clientId, module, referenceId]);
 
   const fetchFiles = async () => {
@@ -40,8 +43,7 @@ export default function UnifiedFileUploader({ clientId, module, referenceId, onA
         .from('files')
         .select('*')
         .eq('client_id', clientId)
-        .eq('module', module)
-        .eq('reference_id', referenceId)
+        .eq('category', module)
         .order('created_at', { ascending: false });
       setFiles(data || []);
     } finally {
@@ -51,7 +53,7 @@ export default function UnifiedFileUploader({ clientId, module, referenceId, onA
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !companyId) return;
 
     if (file.size > 20 * 1024 * 1024) {
       alert('Arquivo muito grande (máx 20MB)');
@@ -60,25 +62,31 @@ export default function UnifiedFileUploader({ clientId, module, referenceId, onA
 
     setUploading(true);
     try {
-      const fileName = `${Date.now()}-${file.name}`;
-      const filePath = `${clientId}/${module}/${referenceId}/${fileName}`;
+      const date = new Date().toISOString().split('T')[0];
+      const filePath = `${companyId}/clientes/${clientId}/${module}/${date}-${file.name}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('hub-storage')
-        .upload(filePath, file);
+        .from('hub-drive')
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
       const { error: dbError } = await supabase
         .from('files')
         .insert({
+          company_id: companyId,
           client_id: clientId,
-          module: module,
-          reference_id: referenceId,
+          category: module,
+          entity_type: 'cliente',
           name: file.name,
           path: filePath,
           type: file.type,
-          size: file.size
+          size: file.size,
+          metadata: { 
+            source: 'unified_uploader', 
+            reference_id: referenceId,
+            auto_archived: true 
+          }
         });
 
       if (dbError) throw dbError;
@@ -96,7 +104,7 @@ export default function UnifiedFileUploader({ clientId, module, referenceId, onA
   const handleDownload = async (file: any) => {
     try {
       const { data, error } = await supabase.storage
-        .from('hub-storage')
+        .from('hub-drive')
         .createSignedUrl(file.path, 60);
 
       if (error) throw error;
@@ -111,7 +119,7 @@ export default function UnifiedFileUploader({ clientId, module, referenceId, onA
     if (!confirm('Deseja excluir este arquivo?')) return;
 
     try {
-      await supabase.storage.from('hub-storage').remove([file.path]);
+      await supabase.storage.from('hub-drive').remove([file.path]);
       await supabase.from('files').delete().eq('id', file.id);
       fetchFiles();
       if (onAction) onAction();
@@ -125,15 +133,15 @@ export default function UnifiedFileUploader({ clientId, module, referenceId, onA
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h3 style={{ fontSize: '16px', fontWeight: '900', color: COLORS.primary }}>Arquivos Vinculados</h3>
-          <p style={{ fontSize: '12px', color: COLORS.muted }}>Gestão unificada para o módulo {module?.toUpperCase()}</p>
+          <h3 style={{ fontSize: '16px', fontWeight: '900', color: COLORS.primary }}>Arquivos & Documentos</h3>
+          <p style={{ fontSize: '12px', color: COLORS.muted }}>Sincronizado automaticamente com o Hub Drive</p>
         </div>
         <label style={{ 
           background: COLORS.accent, color: '#fff', padding: '10px 20px', borderRadius: '12px', 
           fontSize: '13px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' 
         }}>
           {uploading ? <RefreshCw className="animate-spin" size={16} /> : <Plus size={16} />}
-          SUBIR ARQUIVO
+          ADICIONAR
           <input type="file" style={{ display: 'none' }} onChange={handleUpload} disabled={uploading} />
         </label>
       </div>
@@ -172,7 +180,7 @@ export default function UnifiedFileUploader({ clientId, module, referenceId, onA
           padding: '40px', textAlign: 'center', background: '#F8FAFC', borderRadius: '20px', border: '2px dashed #E2E8F0' 
         }}>
           <CloudUpload size={32} color="#CBD5E1" style={{ marginBottom: '12px' }} />
-          <div style={{ fontSize: '13px', fontWeight: '700', color: '#94A3B8' }}>Nenhum arquivo anexado.</div>
+          <div style={{ fontSize: '13px', fontWeight: '700', color: '#94A3B8' }}>Pasta vazia.</div>
         </div>
       )}
     </div>

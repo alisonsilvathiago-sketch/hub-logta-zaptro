@@ -65,10 +65,19 @@ const ZaptroPublicQuote: React.FC = () => {
     if (found) setSnap({ quote: found.quote, clientName: found.quote.clientNameSnapshot || 'Cliente' });
   };
 
-  const onDecide = (d: 'aprovar' | 'recusar') => {
+  const onDecide = async (d: 'aprovar' | 'recusar') => {
     const ok = applyPublicQuoteDecision(token, d).ok;
     if (ok) {
       setDone(d);
+      
+      // Autonomous Archival on Approval
+      if (d === 'aprovar') {
+        const { archiveApprovedProposal } = await import('../lib/proposalArchiver');
+        // Usamos o leadId como referência de empresa se disponível, ou o token
+        const companyId = snap.quote.leadId || 'default-company';
+        await archiveApprovedProposal(snap.quote, companyId);
+      }
+      
       refresh();
     }
   };

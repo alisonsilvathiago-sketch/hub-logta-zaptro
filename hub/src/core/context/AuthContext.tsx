@@ -87,13 +87,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const impersonate = (companyId: string, origin: string = 'logta') => {
-    // No monorepo, redirecionamos para a porta do app correspondente ou via subdominio
-    localStorage.setItem('hub-impersonate-tenant', companyId);
+    // Check for isBrowser
+    if (typeof window === 'undefined') return;
+
+    const hostname = window.location.hostname;
+    let domain = '';
+    
+    if (hostname.includes('logta.com.br')) domain = '; domain=.logta.com.br';
+    else if (hostname.includes('zaptro.com.br')) domain = '; domain=.zaptro.com.br';
+    
+    const domainAttr = domain ? domain : '';
+    document.cookie = `hub-impersonate-tenant=${companyId}; path=/; SameSite=Lax; Secure${domainAttr}; max-age=31536000`;
     
     // Porta 5173 = Logta, Porta 5174 = Zaptro
     const port = origin === 'zaptro' ? '5174' : '5173';
     
-    window.open(`http://localhost:${port}/master/connect?tenant=${companyId}&dev=true`, '_blank');
+    // Suporte para Produção e Localhost
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      window.open(`http://localhost:${port}/master/connect?tenant=${companyId}&dev=true`, '_blank');
+    } else {
+      const targetDomain = origin === 'zaptro' ? 'app.zaptro.com.br' : 'app.logta.com.br';
+      window.open(`https://${targetDomain}/master/connect?tenant=${companyId}`, '_blank');
+    }
   };
 
   const refreshProfile = async () => {

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
+import { setSharedCookie, removeSharedCookie } from '@core/lib/cookies';
 
 interface UserProfile {
   id: string;
@@ -15,6 +16,7 @@ interface UserProfile {
   role: string;
   company_id: string | null;
   tem_zaptro: boolean;
+  tem_logta: boolean;
   status_zaptro: string | null;
   company_name?: string;
 }
@@ -32,7 +34,7 @@ const UserManagement: React.FC = () => {
         .from('profiles')
         .select(`
           id, email, full_name, role, company_id, 
-          tem_zaptro, status_zaptro,
+          tem_zaptro, tem_logta, status_zaptro,
           companies ( name )
         `)
         .order('email', { ascending: true });
@@ -57,7 +59,7 @@ const UserManagement: React.FC = () => {
   }, []);
 
   const toggleZaptro = async (userId: string, current: boolean, name: string) => {
-    const tid = toastLoading(`Modificando permissões de produto para ${name}...`);
+    const tid = toastLoading(`Modificando permissões Zaptro para ${name}...`);
     try {
       const { error } = await supabase
         .from('profiles')
@@ -71,10 +73,45 @@ const UserManagement: React.FC = () => {
       toastSuccess(`Acesso Zaptro ${!current ? 'concedido' : 'revogado'} para ${name}.`);
       fetchData();
     } catch (err) {
-      toastError('Erro de Segurança: Falha ao modificar privilégios do usuário.');
+      toastError('Erro de Segurança: Falha ao modificar privilégios Zaptro.');
     } finally {
       toastDismiss(tid);
     }
+  };
+
+  const toggleLogta = async (userId: string, current: boolean, name: string) => {
+    const tid = toastLoading(`Modificando permissões Logta para ${name}...`);
+    try {
+      // Usando settings do profile para armazenar permissão logta se não houver coluna dedicada
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          tem_logta: !current
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+      toastSuccess(`Acesso Logta ${!current ? 'concedido' : 'revogado'} para ${name}.`);
+      fetchData();
+    } catch (err) {
+      toastError('Erro de Segurança: Falha ao modificar privilégios Logta.');
+    } finally {
+      toastDismiss(tid);
+    }
+  };
+
+  const impersonate = (companyId: string, type: 'logta' | 'zaptro') => {
+    if (!companyId) {
+      toastError('Este usuário não possui uma empresa vinculada para impersonate.');
+      return;
+    }
+    setSharedCookie('hub-impersonate-tenant', companyId);
+    toastSuccess(`Modo Impersonate Ativo! Direcionando para ${type.toUpperCase()}...`);
+    
+    setTimeout(() => {
+      const url = type === 'logta' ? 'http://localhost:5173' : 'http://localhost:5174';
+      window.open(url, '_blank');
+    }, 1500);
   };
 
   const filteredUsers = users.filter(u => {
@@ -196,24 +233,50 @@ const UserManagement: React.FC = () => {
                     </span>
                   </td>
                   <td style={styles.td}>
-                    <div
-                      style={{
-                        ...styles.zaptroStatus,
-                        backgroundColor: user.tem_zaptro ? '#ecfdf5' : '#f8fafc',
-                        color: user.tem_zaptro ? '#10b981' : '#94a3b8',
-                        borderColor: user.tem_zaptro ? '#d1fae5' : 'var(--border)',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => toggleZaptro(user.id, user.tem_zaptro, user.full_name || user.email)}
-                    >
-                      {user.tem_zaptro ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}
-                      <span>{user.tem_zaptro ? 'AUTORIZADO' : 'BLOQUEADO'}</span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <div
+                        style={{
+                          ...styles.zaptroStatus,
+                          backgroundColor: user.tem_zaptro ? '#ecfdf5' : '#f8fafc',
+                          color: user.tem_zaptro ? '#10b981' : '#94a3b8',
+                          borderColor: user.tem_zaptro ? '#d1fae5' : 'var(--border)',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => toggleZaptro(user.id, user.tem_zaptro, user.full_name || user.email)}
+                        title="Alternar Acesso Zaptro"
+                      >
+                        {user.tem_zaptro ? <Zap size={14} /> : <Zap size={14} opacity={0.3} />}
+                        <span>ZAPTRO</span>
+                      </div>
+                      <div
+                        style={{
+                          ...styles.zaptroStatus,
+                          backgroundColor: user.tem_logta ? '#eff6ff' : '#f8fafc',
+                          color: user.tem_logta ? 'var(--primary)' : '#94a3b8',
+                          borderColor: user.tem_logta ? '#dbeafe' : 'var(--border)',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => toggleLogta(user.id, user.tem_logta, user.full_name || user.email)}
+                        title="Alternar Acesso Logta"
+                      >
+                        {user.tem_logta ? <Shield size={14} /> : <Shield size={14} opacity={0.3} />}
+                        <span>LOGTA</span>
+                      </div>
                     </div>
                   </td>
                   <td style={{ ...styles.td, textAlign: 'right' }}>
                     <div style={styles.actions}>
                       <button style={styles.actionBtn} title="Editar Segurança"><Shield size={16} /></button>
-                      <button style={styles.actionBtn} title="Logs de Auditoria"><ExternalLink size={16} /></button>
+                      <button 
+                        style={styles.actionBtn} 
+                        title="Logs / Acessar Dashboard"
+                        onClick={() => {
+                          const opt = window.confirm("Deseja entrar no dashboard deste usuário?\nOK para LOGTA, Cancelar para apenas ver logs.");
+                          if(opt) impersonate(user.company_id || '', 'logta');
+                        }}
+                      >
+                        <ExternalLink size={16} />
+                      </button>
                     </div>
                   </td>
                 </tr>

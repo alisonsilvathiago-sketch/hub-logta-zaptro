@@ -5,29 +5,33 @@ import {
   Building2, Users, CreditCard, FileText,
   Link, Zap, HardDrive, Database, Shield,
   LogOut, Box, ChevronRight, UserCircle, CalendarDays,
-  DollarSign
+  DollarSign, Archive
 } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
+
+import Kbd from '@shared/components/Kbd';
+import { getPlatform } from '@core/lib/platform';
 
 const MasterSidebar: React.FC = () => {
   const { signOut } = useAuth();
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
+  const platform = getPlatform();
 
   const menuStructure = [
-    { label: 'Dashboard', icon: LayoutDashboard, path: '/master' },
-    { label: 'CRM & Expansão', icon: TrendingUp, path: '/master/crm' },
+    { label: 'Dashboard', icon: LayoutDashboard, path: '/master', shortcut: 'H' },
+    { label: 'CRM & Expansão', icon: TrendingUp, path: '/master/crm', shortcut: 'C' },
     { label: 'Agenda Ruby', icon: CalendarDays, path: '/master/agenda' },
     { label: 'HubChat', icon: MessageSquare, path: '/master/hubchat' },
     { label: 'Clientes Hub', icon: Users, path: '/master/clientes' },
-    { label: 'Logística', icon: Truck, path: '/master/logistica' },
+    { label: 'Logística', icon: Truck, path: '/master/logistica', shortcut: 'L' },
     {
       title: 'OPERAÇÕES',
       items: [
-        { label: 'Empresas', icon: Building2, path: '/master/companies' },
-        { label: 'Faturamento & Financeiro', icon: CreditCard, path: '/master/billing' },
-        { label: 'Inteligência & Relatórios', icon: FileText, path: '/master/reports' },
-        { label: 'Infra & Segurança', icon: HardDrive, path: '/master/infrastructure' },
+        { label: 'Empresas', icon: Building2, path: '/master/companies', shortcut: 'E' },
+        { label: 'Financeiro', icon: CreditCard, path: '/master/billing', shortcut: 'F' },
+        { label: 'Hub Drive', icon: Archive, path: '/master/drive', shortcut: 'D' },
+        { label: 'Infra & Segurança', icon: HardDrive, path: '/master/infrastructure', shortcut: 'B' },
         { label: 'Workflows & Automações', icon: Zap, path: '/master/automacoes' },
       ]
     }
@@ -58,13 +62,13 @@ const MasterSidebar: React.FC = () => {
                 {isHovered && <div style={styles.groupTitle}>{section.title}</div>}
                 <div style={styles.groupItems}>
                   {section.items.map((item, i) => (
-                    <MenuLink key={i} item={item} isHovered={isHovered} location={location} />
+                    <MenuLink key={i} item={item} isHovered={isHovered} location={location} platform={platform} />
                   ))}
                 </div>
               </div>
             );
           }
-          return <MenuLink key={idx} item={section} isHovered={isHovered} location={location} />;
+          return <MenuLink key={idx} item={section} isHovered={isHovered} location={location} platform={platform} />;
         })}
       </nav>
 
@@ -78,7 +82,7 @@ const MasterSidebar: React.FC = () => {
   );
 };
 
-const MenuLink = ({ item, isHovered, location }: any) => {
+const MenuLink = ({ item, isHovered, location, platform }: any) => {
   const isActive = location.pathname === item.path || (item.path !== '/master' && location.pathname.startsWith(item.path));
   return (
     <NavLink
@@ -91,7 +95,17 @@ const MenuLink = ({ item, isHovered, location }: any) => {
       title={!isHovered ? item.label : ''}
     >
       <item.icon size={22} style={{ flexShrink: 0 }} />
-      {isHovered && <span style={styles.menuLabel}>{item.label}</span>}
+      {isHovered && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginLeft: '12px' }}>
+          <span style={styles.menuLabel}>{item.label}</span>
+          {item.shortcut && (
+            <div style={{ display: 'flex', gap: '2px', opacity: 0.6 }}>
+              <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '8px', padding: '0 4px' }}>{platform.cmd}</Kbd>
+              <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '8px', padding: '0 4px' }}>{item.shortcut}</Kbd>
+            </div>
+          )}
+        </div>
+      )}
       {isActive && !isHovered && <div style={styles.activeDot} />}
     </NavLink>
   );

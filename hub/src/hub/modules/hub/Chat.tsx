@@ -5,16 +5,18 @@ import {
   Plus, Bell, Info, Smile, Image as ImageIcon,
   Check, CheckCheck, Clock, Shield, Users, Pin, ChevronRight, X,
   Search as SearchIcon, ArrowLeft, Archive, Trash2, VolumeX, Settings,
-  CreditCard, DollarSign, Zap, LifeBuoy, Filter, AlertCircle, Headphones
+  CreditCard, DollarSign, Zap, LifeBuoy, Filter, AlertCircle, Headphones,
+  Brain, PieChart, Activity, TrendingUp, UserCheck, ShieldAlert
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale/pt-BR';
 import { supabase } from '@core/lib/supabase';
 import { googleCalendarApi } from '@core/lib/googleCalendarApi';
 import { toastSuccess, toastError, toastInfo } from '@core/lib/toast';
+import Button from '@shared/components/Button';
 
 const HubChat: React.FC = () => {
-  const [selectedChannel, setSelectedChannel] = useState({ id: 'operacao', name: 'Operação Logta', type: 'channel', department: 'operacao' });
+  const [selectedChannel, setSelectedChannel] = useState({ id: 'assistant', name: 'Hub Assistant', type: 'ai', department: 'intelligence' });
   const [message, setMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -23,33 +25,36 @@ const HubChat: React.FC = () => {
   const [driveFiles, setDriveFiles] = useState<any[]>([]);
   const [isDocsLoading, setIsDocsLoading] = useState(false);
   
-  // UI states for header actions and sidebars
+  const handleOpenDrive = () => {
+    setIsDriveModalOpen(true);
+    toastInfo('Sincronizando com Google Drive...');
+  };
+  
+  // UI states
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const [isPinnedOpen, setIsPinnedOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-  const [isInfoOpen, setIsInfoOpen] = useState(true); // Default open for better overview
-  const [activeView, setActiveView] = useState<'chats' | 'tickets'>('chats');
+  const [isInfoOpen, setIsInfoOpen] = useState(true);
+  const [activeView, setActiveView] = useState<'chats' | 'tickets' | 'ai'>('ai');
+  const [isTyping, setIsTyping] = useState(false);
   
-  // Mocked data with contextId for filtering
+  // State for tickets (Support)
+  const [tickets, setTickets] = useState([
+    { id: 't-1023', name: 'Ticket #1023 - Financeiro', customer: 'João Silva', company: 'Transp. XP', status: 'open', priority: 'high', sla: '08:45:12', dept: 'financeiro', created_at: new Date(Date.now() - 86400000) },
+    { id: 't-1024', name: 'Ticket #1024 - Suporte', customer: 'Empresa ABC', company: 'ABC Ltda', status: 'pending', priority: 'medium', sla: '11:20:00', dept: 'suporte', created_at: new Date(Date.now() - 43200000) }
+  ]);
+
+  // Messages with robust types
   const [messages, setMessages] = useState<any[]>([
-    // Mensagens com contexto de departamento
+    { id: 'ai-init', sender: 'Hub Assistant', contextId: 'assistant', text: 'Olá! Sou o assistente inteligente do Hub. Como posso te ajudar hoje? Tente perguntar sobre "relatórios", "usuários ativos" ou "erros no sistema".', time: new Date(), status: 'read', type: 'system' },
+    
+    // Initial Operation Messages
     { id: 1, sender: 'Alison Thiago', contextId: 'operacao', text: 'Pessoal, a rota de hoje para São Paulo já foi confirmada?', time: new Date(Date.now() - 3600000), status: 'read', type: 'agent' },
     { id: 2, sender: 'Navigator AI', contextId: 'operacao', text: '🤖 Rota SP-01 otimizada: Economia de 12% em combustível detectada.', time: new Date(Date.now() - 3000000), status: 'read', type: 'system' },
-    { id: 3, sender: 'CRM Lead Bot', contextId: 'crm', text: 'Novo lead vindo do Facebook Ads: "Transportes LTDA"', time: new Date(Date.now() - 7200000), status: 'read', type: 'system' },
-    { id: 4, sender: 'Maria Souza', contextId: 'crm', text: 'Já estou entrando em contato com a Transportes LTDA.', time: new Date(Date.now() - 7000000), status: 'read', type: 'agent' },
-    { id: 5, sender: 'Bank API', contextId: 'financeiro', text: 'Confirmação de recebimento: NF-2024-001 liquidada.', time: new Date(Date.now() - 10000000), status: 'read', type: 'system' },
-    { id: 6, sender: 'Alison Thiago', contextId: 'financeiro', text: 'Favor conciliar o extrato do Bradesco de ontem.', time: new Date(Date.now() - 9500000), status: 'read', type: 'agent' },
     
-    // Mensagens Diretas (DMs) - Alison
-    { id: 10, sender: 'Alison Thiago', contextId: 'u1', text: 'Este é o meu canal privado de notas.', time: new Date(Date.now() - 500000), status: 'read', type: 'agent' },
-    
-    // Mensagens Diretas (DMs) - João
-    { id: 20, sender: 'João Silva', contextId: 'u2', text: 'Preciso de ajuda com o meu acesso ao Zaptro.', time: new Date(Date.now() - 1000000), status: 'read', type: 'agent' },
-    { id: 21, sender: 'Alison Thiago', contextId: 'u2', text: 'Olá João, vou resetar sua senha agora mesmo.', time: new Date(Date.now() - 800000), status: 'read', type: 'agent' },
-
     // Support Ticket Simulation
     { id: 41, sender: 'João Silva', contextId: 't-1023', text: 'Olá, preciso de ajuda com o faturamento da Transportadora XP.', time: new Date(Date.now() - 5000000), type: 'customer' },
-    { id: 42, sender: 'System', contextId: 't-1023', text: '🤖 Olá João! Recebemos sua solicitação. O departamento FINANCEIRO foi notificado.', time: new Date(Date.now() - 4900000), type: 'system' }
+    { id: 42, sender: 'Hub Support', contextId: 't-1023', text: '🤖 Olá João! Recebemos sua solicitação. O departamento FINANCEIRO foi notificado.', time: new Date(Date.now() - 4900000), type: 'system' }
   ]);
 
   const [users] = useState([
@@ -60,26 +65,62 @@ const HubChat: React.FC = () => {
   ]);
 
   const channels = [
-    { id: 'operacao', name: 'Operação Logta', lastMsg: 'Status da frota atualizado', time: '14:30', unread: 2, dept: 'operacao' },
-    { id: 'crm', name: 'Vendas / CRM', lastMsg: 'Novo lead qualificado', time: '12:15', unread: 0, dept: 'comercial' },
-    { id: 'financeiro', name: 'Financeiro', lastMsg: 'Relatório mensal disponível', time: 'Ontem', unread: 0, dept: 'financeiro' }
-  ];
-
-  const tickets = [
-    { id: 't-1023', name: 'Ticket #1023 - Financeiro', customer: 'João Silva', company: 'Transp. XP', status: 'open', priority: 'high', sla: '08:45:12', dept: 'financeiro' },
-    { id: 't-1024', name: 'Ticket #1024 - Suporte', customer: 'Empresa ABC', company: 'ABC Ltda', status: 'pending', priority: 'medium', sla: '11:20:00', dept: 'suporte' }
+    { id: 'assistant', name: 'Hub Assistant', lastMsg: 'Sua IA de suporte e dados', time: 'Agora', unread: 0, dept: 'ai', icon: <Brain size={18} /> },
+    { id: 'operacao', name: 'Operação Logta', lastMsg: 'Status da frota atualizado', time: '14:30', unread: 2, dept: 'operacao', icon: <Hash size={18} /> },
+    { id: 'crm', name: 'Vendas / CRM', lastMsg: 'Novo lead qualificado', time: '12:15', unread: 0, dept: 'comercial', icon: <TrendingUp size={18} /> },
+    { id: 'financeiro', name: 'Financeiro', lastMsg: 'Relatório mensal disponível', time: 'Ontem', unread: 0, dept: 'financeiro', icon: <DollarSign size={18} /> }
   ];
 
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Filter messages based on current selection
   const filteredMessages = messages.filter(m => m.contextId === selectedChannel.id);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [filteredMessages, selectedChannel]);
+  }, [filteredMessages, selectedChannel, isTyping]);
+
+  const simulateAIResponse = (userText: string) => {
+    setIsTyping(true);
+    setTimeout(() => {
+      let aiResponse: any = {
+        id: Date.now() + 1,
+        sender: 'Hub Assistant',
+        contextId: 'assistant',
+        time: new Date(),
+        status: 'sent',
+        type: 'system'
+      };
+
+      const input = userText.toLowerCase();
+
+      if (input.includes('relatório') || input.includes('analytics') || input.includes('vendas')) {
+        aiResponse.text = 'Gerando relatório consolidado de vendas e performance...';
+        aiResponse.report = {
+          title: 'Resumo Operacional - Abril 2024',
+          metrics: [
+            { label: 'Receita Total', value: 'R$ 1.240.000', trend: '+12%', color: '#10B981' },
+            { label: 'Novos Clientes', value: '42', trend: '+5%', color: '#6366F1' },
+            { label: 'Conversão', value: '18.4%', trend: '-2%', color: '#F59E0B' }
+          ],
+          chartData: [65, 78, 90, 85, 95, 110, 120]
+        };
+      } else if (input.includes('usuário') || input.includes('ativos')) {
+        aiResponse.text = 'Atualmente temos 142 usuários ativos no ecossistema (Logta + Zaptro).';
+        aiResponse.metadata = { type: 'users_online', count: 142 };
+      } else if (input.includes('erro') || input.includes('problema') || input.includes('crítico')) {
+        aiResponse.text = 'Detectei 3 alertas de sistema pendentes de revisão na Infraestrutura.';
+        aiResponse.metadata = { type: 'system_errors', errors: ['API Timeout (Zaptro)', 'Redis High Memory', 'Latência DB > 200ms'] };
+      } else if (input.includes('suporte') || input.includes('ajuda')) {
+        aiResponse.text = 'Você pode gerenciar todos os chamados na aba de "Suporte" ao lado. Deseja que eu abra um novo ticket para você?';
+      } else {
+        aiResponse.text = 'Entendi seu ponto. Estou processando os dados do sistema para te dar uma resposta precisa sobre isso.';
+      }
+
+      setMessages(prev => [...prev, aiResponse]);
+      setIsTyping(false);
+    }, 1500);
+  };
 
   const handleSendMessage = (type: string = 'text', customText?: string, metadata?: any) => {
     const textToSend = customText || message;
@@ -95,36 +136,21 @@ const HubChat: React.FC = () => {
       type: type === 'text' ? 'agent' : type,
       metadata: metadata || {}
     };
-    setMessages([...messages, newMessage]);
-    if (!customText) setMessage('');
     
-    if (type === 'payment') {
-      toastSuccess('Link de pagamento enviado com sucesso!');
-      setIsPaymentModalOpen(false);
+    setMessages(prev => [...prev, newMessage]);
+    if (!customText) setMessage('');
+
+    // If talking to Assistant, trigger AI
+    if (selectedChannel.id === 'assistant' && type === 'text') {
+      simulateAIResponse(textToSend);
     }
   };
 
-  const startChatWithUser = (user: any) => {
-    setSelectedChannel({ id: user.id, name: user.name, type: 'dm', department: 'comercial' });
-    setIsDrawerOpen(false);
-  };
-
-  const handleOpenDrive = async () => {
-    setIsDriveModalOpen(true);
-    setIsDocsLoading(true);
-    try {
-      const docs = await googleCalendarApi.getRecentDocs();
-      setDriveFiles(docs || []);
-    } catch (err) {
-      toastError('Erro ao carregar Google Drive');
-    } finally {
-      setIsDocsLoading(false);
-    }
-  };
-
-  const handleSelectDriveFile = (file: any) => {
-    handleSendMessage('file', `Compartilhou: ${file.name}`, { url: file.webViewLink });
-    setIsDriveModalOpen(false);
+  const handleSelectChannel = (ch: any) => {
+    setSelectedChannel(ch);
+    if (ch.id === 'assistant') setActiveView('ai');
+    else if (ch.type === 'ticket') setActiveView('tickets');
+    else setActiveView('chats');
   };
 
   const selectedUserInfo = users.find(u => u.name === selectedChannel.name) || users[0];
@@ -135,17 +161,21 @@ const HubChat: React.FC = () => {
       <aside style={styles.sidebar}>
         <div style={styles.sidebarHeader}>
           <h2 style={styles.sidebarTitle}>HubChat</h2>
-          <button style={styles.newChatBtn} onClick={() => setIsDrawerOpen(true)}>
-            <Plus size={20} />
-          </button>
+          <div style={styles.aiBadge}>MASTER IA</div>
         </div>
 
         <div style={styles.viewSwitcher}>
           <button 
+            style={{...styles.switchBtn, ...(activeView === 'ai' ? styles.switchBtnActive : {})}}
+            onClick={() => handleSelectChannel(channels[0])}
+          >
+            <Brain size={16} /> Inteligência
+          </button>
+          <button 
             style={{...styles.switchBtn, ...(activeView === 'chats' ? styles.switchBtnActive : {})}}
             onClick={() => setActiveView('chats')}
           >
-            <MessageSquare size={16} /> Conversas
+            <MessageSquare size={16} /> Equipe
           </button>
           <button 
             style={{...styles.switchBtn, ...(activeView === 'tickets' ? styles.switchBtnActive : {})}}
@@ -156,22 +186,12 @@ const HubChat: React.FC = () => {
           </button>
         </div>
 
-        <div style={styles.searchBox}>
-          <Search size={16} color="rgba(255,255,255,0.4)" />
-          <input 
-            placeholder="Buscar..." 
-            style={styles.searchInput} 
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
-
         <div style={styles.sidebarContent}>
-          {activeView === 'chats' ? (
+          {activeView === 'ai' || activeView === 'chats' ? (
             <>
               <div style={styles.section}>
                 <div style={styles.sectionHeader}>
-                  <span style={styles.sectionLabel}>Canais Internos</span>
+                  <span style={styles.sectionLabel}>Canais & Inteligência</span>
                 </div>
                 <div style={styles.channelList}>
                   {channels.map(ch => (
@@ -179,16 +199,19 @@ const HubChat: React.FC = () => {
                       key={ch.id} 
                       style={{
                         ...styles.channelItem,
-                        backgroundColor: selectedChannel.id === ch.id ? 'rgba(255,255,255,0.1)' : 'transparent',
-                        opacity: selectedChannel.id === ch.id ? 1 : 0.7
+                        backgroundColor: selectedChannel.id === ch.id ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
+                        borderLeft: selectedChannel.id === ch.id ? '3px solid #6366F1' : '3px solid transparent'
                       }}
-                      onClick={() => setSelectedChannel({ id: ch.id, name: ch.name, type: 'channel', department: ch.dept })}
+                      onClick={() => handleSelectChannel(ch)}
                     >
-                      <Hash size={18} color={selectedChannel.id === ch.id ? '#6366F1' : 'rgba(255,255,255,0.4)'} />
+                      <div style={{...styles.channelIconBox, color: selectedChannel.id === ch.id ? '#6366F1' : 'rgba(255,255,255,0.4)'}}>
+                        {ch.icon}
+                      </div>
                       <div style={styles.channelInfo}>
                         <span style={styles.channelName}>{ch.name}</span>
                         <span style={styles.lastMsgText}>{ch.lastMsg}</span>
                       </div>
+                      {ch.unread > 0 && <div style={styles.unreadDot} />}
                     </div>
                   ))}
                 </div>
@@ -196,16 +219,15 @@ const HubChat: React.FC = () => {
 
               <div style={styles.section}>
                 <div style={styles.sectionHeader}>
-                  <span style={styles.sectionLabel}>Mensagens Diretas</span>
+                  <span style={styles.sectionLabel}>Conversas Diretas</span>
                 </div>
                 <div style={styles.dmList}>
-                  {users.slice(0, 4).map(user => (
+                  {users.map(user => (
                     <div 
                       key={user.id} 
                       style={{
                         ...styles.dmItem,
                         backgroundColor: selectedChannel.id === user.id ? 'rgba(255,255,255,0.1)' : 'transparent',
-                        opacity: selectedChannel.id === user.id ? 1 : 0.7
                       }}
                       onClick={() => setSelectedChannel({ id: user.id, name: user.name, type: 'dm', department: 'comercial' })}
                     >
@@ -225,7 +247,8 @@ const HubChat: React.FC = () => {
           ) : (
             <div style={styles.ticketList}>
               <div style={styles.sectionHeader}>
-                <span style={styles.sectionLabel}>Tickets em Aberto</span>
+                <span style={styles.sectionLabel}>Suporte Operacional</span>
+                <button style={styles.newTicketBtn}><Plus size={14} /> Novo</button>
               </div>
               {tickets.map(tk => (
                 <div 
@@ -243,8 +266,11 @@ const HubChat: React.FC = () => {
                   </div>
                   <div style={styles.ticketBody}>
                     <span style={styles.ticketCust}>{tk.company} • {tk.customer}</span>
-                    <div style={styles.slaBox}>
-                      <Clock size={10} /> {tk.sla}
+                    <div style={styles.ticketMeta}>
+                      <div style={styles.slaBox}>
+                        <Clock size={10} /> {tk.sla}
+                      </div>
+                      <div style={styles.statusTagSidebar}>{(tk.status || '').toUpperCase()}</div>
                     </div>
                   </div>
                 </div>
@@ -259,170 +285,212 @@ const HubChat: React.FC = () => {
         <header style={styles.chatHeader}>
           <div style={styles.headerInfo}>
             <div style={styles.avatarWrapperHeader}>
-              <div style={styles.avatarHeader}>
-                {selectedChannel.type === 'channel' ? <Hash size={20} /> : selectedChannel.type === 'ticket' ? <LifeBuoy size={20} /> : selectedChannel.name[0]}
+              <div style={{...styles.avatarHeader, backgroundColor: selectedChannel.id === 'assistant' ? 'var(--bg-active)' : '#F1F5F9'}}>
+                {selectedChannel.id === 'assistant' ? <Brain size={24} color="var(--accent)" /> : selectedChannel.type === 'ticket' ? <LifeBuoy size={20} /> : <Hash size={20} />}
               </div>
             </div>
             <div>
-              <h3 style={styles.headerTitle}>{selectedChannel.name}</h3>
+              <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                <h3 style={styles.headerTitle}>{selectedChannel.name}</h3>
+                {selectedChannel.id === 'assistant' && <div style={styles.aiStatusBadge}>OFFICIAL AI</div>}
+              </div>
               <span style={styles.headerSubtitle}>
-                {selectedChannel.type === 'ticket' ? `SLA Ativo: ${tickets.find(t=>t.id===selectedChannel.id)?.sla}` : `Departamento: ${selectedChannel.department.toUpperCase()}`}
+                {selectedChannel.type === 'ai' ? 'Analista de Dados & Assistente Virtual' : selectedChannel.type === 'ticket' ? `Ticket Ativo • SLA ${tickets.find(t=>t.id===selectedChannel.id)?.sla}` : `Hub / ${(selectedChannel.department || '').toUpperCase()}`}
               </span>
             </div>
           </div>
           <div style={styles.headerActions}>
-            <button style={{...styles.headerIconBtn, color: isMembersOpen ? '#6366F1' : '#94A3B8'}} onClick={() => { setIsMembersOpen(!isMembersOpen); setIsInfoOpen(false); setIsPinnedOpen(false); }}><Users size={18} /></button>
-            <button style={{...styles.headerIconBtn, color: isPinnedOpen ? '#6366F1' : '#94A3B8'}} onClick={() => { setIsPinnedOpen(!isPinnedOpen); setIsMembersOpen(false); setIsInfoOpen(false); }}><Pin size={18} /></button>
-            <button style={styles.headerIconBtn} onClick={() => toastInfo(`Notificações configuradas.`)}><Bell size={18} /></button>
-            <button style={{...styles.headerIconBtn, color: isInfoOpen ? '#6366F1' : '#94A3B8'}} onClick={() => { setIsInfoOpen(!isInfoOpen); setIsMembersOpen(false); setIsPinnedOpen(false); }}><Info size={18} /></button>
-            <button style={styles.headerIconBtn} onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}><MoreVertical size={18} /></button>
+            <button style={styles.headerIconBtn}><Search size={18} /></button>
+            <button style={styles.headerIconBtn}><Pin size={18} /></button>
+            <button style={{...styles.headerIconBtn, color: isInfoOpen ? '#6366F1' : '#94A3B8'}} onClick={() => setIsInfoOpen(!isInfoOpen)}><Info size={18} /></button>
+            <button style={styles.headerIconBtn}><MoreVertical size={18} /></button>
           </div>
         </header>
 
         {/* MESSAGES LIST SCROLLABLE */}
         <div style={styles.messageContainer} ref={scrollRef}>
-          <div style={styles.chatStartNotice}>
-            <div style={styles.startAvatar}>{selectedChannel.name[0]}</div>
-            <h4 style={styles.startTitle}>{selectedChannel.type === 'ticket' ? `Suporte: ${selectedChannel.name}` : `Conversa com ${selectedChannel.name}`}</h4>
-            <p style={styles.startDesc}>
-              {selectedChannel.type === 'ticket' 
-                ? 'Histórico de atendimento unificado com Logta e Zaptro.' 
-                : 'As mensagens aqui são exclusivas para a equipe interna do HUB.'}
-            </p>
-          </div>
+          {selectedChannel.id === 'assistant' && (
+            <div style={styles.aiWelcomeBox}>
+              <div style={styles.aiIconLarge}><Brain size={48} /></div>
+              <h2 style={styles.aiWelcomeTitle}>Hub Intelligence Center</h2>
+              <p style={styles.aiWelcomeDesc}>Posso gerar relatórios, analisar erros e gerenciar tickets em tempo real. Como posso ajudar?</p>
+              <div style={styles.aiShortcuts}>
+                <Button variant="secondary" size="sm" icon={<BarChart2 size={16} />} label="Relatórios" onClick={() => handleSendMessage('text', 'Me mostra os relatórios do sistema')} />
+                <Button variant="secondary" size="sm" icon={<Users size={16} />} label="Usuários" onClick={() => handleSendMessage('text', 'Quantos usuários ativos hoje?')} />
+                <Button variant="secondary" size="sm" icon={<AlertCircle size={16} />} label="Erros" onClick={() => handleSendMessage('text', 'Quais erros estão acontecendo?')} />
+              </div>
+            </div>
+          )}
 
           {filteredMessages.map((msg, i) => (
             <div key={msg.id} style={styles.messageWrapper}>
-              <div style={{...styles.messageAvatar, backgroundColor: msg.type === 'system' ? '#F1F5F9' : '#F8FAFC'}}>
-                {msg.type === 'system' ? '🤖' : msg.sender[0]}
+              <div style={{...styles.messageAvatar, backgroundColor: msg.sender === 'Hub Assistant' ? 'rgba(99, 102, 241, 0.1)' : '#F8FAFC'}}>
+                {msg.sender === 'Hub Assistant' ? <Brain size={18} color="#6366F1" /> : msg.sender[0]}
               </div>
               <div style={styles.messageContent}>
                 <div style={styles.messageHeader}>
                   <span style={styles.messageSender}>{msg.sender}</span>
                   <span style={styles.messageTime}>{format(msg.time, 'HH:mm')}</span>
-                  {msg.type === 'agent' && <span style={styles.agentTag}>Atendente</span>}
                 </div>
                 
-                {msg.type === 'file' ? (
-                  <div style={styles.fileCard}>
-                    <FileText size={24} color="#6366F1" />
-                    <div>
-                      <div style={styles.fileName}>{msg.text.split(': ')[1]}</div>
-                      <div style={styles.fileLabel}>Google Drive • Visualizar</div>
+                <div style={styles.messageText}>{msg.text}</div>
+
+                {msg.report && (
+                  <div style={styles.reportCard}>
+                    <div style={styles.reportHeader}>
+                      <BarChart2 size={18} />
+                      <span>{msg.report.title}</span>
                     </div>
-                  </div>
-                ) : msg.type === 'payment' ? (
-                  <div style={styles.paymentCard}>
-                    <div style={styles.paymentIcon}><DollarSign size={20} /></div>
-                    <div style={styles.paymentBody}>
-                      <div style={styles.paymentTitle}>Pagamento Gerado</div>
-                      <div style={styles.paymentVal}>R$ {msg.metadata?.amount || '0,00'} • {msg.metadata?.method?.toUpperCase()}</div>
-                      <button style={styles.payBtn}>Ver Detalhes</button>
+                    <div style={styles.metricsGrid}>
+                      {msg.report.metrics.map((m: any) => (
+                        <div key={m.label} style={styles.metricItem}>
+                          <span style={styles.metricLabel}>{m.label}</span>
+                          <div style={styles.metricValRow}>
+                            <span style={{...styles.metricValue, color: m.color}}>{m.value}</span>
+                            <span style={styles.metricTrend}>{m.trend}</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                    <div style={styles.chartPlaceholder}>
+                       <div style={{display: 'flex', alignItems: 'flex-end', gap: '8px', height: '60px'}}>
+                          {msg.report.chartData.map((v: number, idx: number) => (
+                            <div key={idx} style={{flex: 1, height: `${(v/120)*100}%`, backgroundColor: '#6366F1', borderRadius: '4px', opacity: 0.2 + (idx * 0.1)}} />
+                          ))}
+                       </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      fullWidth 
+                      label="Ver Detalhes Analíticos" 
+                      onClick={() => toastInfo('Abrindo visualização completa de dados...')} 
+                    />
                   </div>
-                ) : (
-                  <div style={{
-                    ...styles.messageText,
-                    color: msg.type === 'system' ? '#64748B' : '#334155',
-                    fontStyle: msg.type === 'system' ? 'italic' : 'normal',
-                    backgroundColor: msg.type === 'system' ? '#F8FAFC' : 'transparent',
-                    padding: msg.type === 'system' ? '12px 16px' : '0',
-                    borderRadius: '12px'
-                  }}>{msg.text}</div>
+                )}
+
+                {msg.metadata?.type === 'system_errors' && (
+                  <div style={styles.errorAlertBox}>
+                    {msg.metadata.errors.map((err: string) => (
+                      <div key={err} style={styles.errorLine}>
+                        <ShieldAlert size={14} color="#EF4444" />
+                        <span>{err}</span>
+                      </div>
+                    ))}
+                    <Button 
+                      variant="danger" 
+                      size="sm" 
+                      label="Tentar Auto-Correção" 
+                      onClick={() => toastInfo('Iniciando protocolos de correção...')} 
+                    />
+                  </div>
                 )}
               </div>
             </div>
           ))}
+          {isTyping && (
+             <div style={styles.typingIndicator}>
+               <Brain size={16} className="animate-pulse" />
+               <span>Hub Assistant está analisando os dados...</span>
+             </div>
+          )}
         </div>
 
         {/* INPUT FIXED AT BOTTOM */}
         <footer style={styles.chatFooter}>
           <div style={styles.inputWrapper}>
             <div style={styles.inputActions}>
-              <button style={styles.actionBtn} onClick={() => setIsPaymentModalOpen(true)} title="Financeiro"><DollarSign size={20} /></button>
-              <div style={styles.divider} />
-              <button style={styles.actionBtn} onClick={() => handleSendMessage('meet', 'Gerou um link do Google Meet', { url: 'meet.google.com/abc' })}><Video size={20} /></button>
-              <button style={styles.actionBtn} onClick={handleOpenDrive}><FileText size={20} /></button>
-              <button style={styles.actionBtn}><ImageIcon size={20} /></button>
+              <button style={styles.actionBtn} title="Insights de Dados"><Activity size={20} /></button>
+              <button style={styles.actionBtn} onClick={() => setIsPaymentModalOpen(true)} title="Gerar Cobrança"><DollarSign size={20} /></button>
+              <button style={styles.actionBtn} onClick={handleOpenDrive} title="Anexar do Drive"><FileText size={20} /></button>
             </div>
             
             <input 
               style={styles.mainInput} 
-              placeholder={`Escrever para ${selectedChannel.name}...`}
+              placeholder={selectedChannel.id === 'assistant' ? "Pergunte ao Hub Assistant..." : `Escrever para ${selectedChannel.name}...`}
               value={message}
               onChange={e => setMessage(e.target.value)}
               onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
             />
             
             <div style={styles.inputTools}>
-              <button style={styles.toolBtn}><Smile size={20} /></button>
-              <button style={styles.sendBtn} onClick={() => handleSendMessage()}><Send size={18} /></button>
+              <Button 
+                variant="primary" 
+                size="sm" 
+                icon={<Send size={18} />} 
+                label="" 
+                onClick={() => handleSendMessage()} 
+                style={{ padding: '10px' }}
+              />
             </div>
           </div>
         </footer>
       </div>
 
-      {/* RIGHT SIDEBAR (CLIENT PROFILE / INFO) */}
+      {/* RIGHT SIDEBAR (DYNAMIC CONTEXT) */}
       {isInfoOpen && (
         <aside style={styles.rightSidebar}>
           <div style={styles.rightSidebarHeader}>
-            <h3 style={styles.rightSidebarTitle}>Perfil do Cliente</h3>
+            <h3 style={styles.rightSidebarTitle}>Contexto Operacional</h3>
             <button style={styles.closeSidebarBtn} onClick={() => setIsInfoOpen(false)}><X size={18} /></button>
           </div>
           
           <div style={styles.rightSidebarContent}>
-            <div style={styles.profileHero}>
-              <div style={styles.heroAvatar}>{selectedUserInfo.name[0]}</div>
-              <h4 style={styles.heroName}>{selectedUserInfo.name}</h4>
-              <span style={styles.heroBadge}>{selectedUserInfo.role}</span>
-              <div style={styles.heroStatus}><div style={{...styles.statusDotSmall, backgroundColor: '#10B981'}} /> Online Agora</div>
-            </div>
-
-            <div style={styles.infoGrid}>
-              <div style={styles.infoRow}>
-                <span style={styles.infoLabel}>Empresa</span>
-                <span style={styles.infoValue}>{selectedUserInfo.team}</span>
-              </div>
-              <div style={styles.infoRow}>
-                <span style={styles.infoLabel}>Segmento</span>
-                <span style={styles.infoValue}>{selectedUserInfo.segment || 'Core Team'}</span>
-              </div>
-              <div style={styles.infoRow}>
-                <span style={styles.infoLabel}>Plano SaaS</span>
-                <span style={{...styles.infoValue, color: '#6366F1', fontWeight: '800'}}>{selectedUserInfo.plan || 'N/A'}</span>
-              </div>
-              <div style={styles.infoRow}>
-                <span style={styles.infoLabel}>Tempo de Casa</span>
-                <span style={styles.infoValue}>{selectedUserInfo.since || 'Recente'}</span>
-              </div>
-              <div style={styles.infoRow}>
-                <span style={styles.infoLabel}>Última Compra</span>
-                <span style={styles.infoValue}>15 de Abr, 2024</span>
-              </div>
-            </div>
-
-            <div style={styles.actionSection}>
-              <h5 style={styles.sectionSubTitle}>Ações Rápidas</h5>
-              <div style={styles.quickActions}>
-                <button style={styles.qBtn}><Zap size={14} /> Ativar Créditos</button>
-                <button style={styles.qBtn}><LifeBuoy size={14} /> Novo Ticket</button>
-                <button style={styles.qBtn}><DollarSign size={14} /> Ver Faturas</button>
-              </div>
-            </div>
-
-            <div style={styles.historySection}>
-              <h5 style={styles.sectionSubTitle}>Histórico de Tickets</h5>
-              <div style={styles.historyList}>
-                <div style={styles.historyItem}>
-                  <div style={styles.historyTop}><span>#982 - Falha Login</span> <span style={styles.historyStatus}>Resolvido</span></div>
-                  <span style={styles.historyDate}>Ontem • Atendente Maria</span>
+             {selectedChannel.type === 'ticket' ? (
+                <div style={styles.ticketContext}>
+                   <div style={styles.contextHeader}>
+                      <div style={styles.contextIcon}><LifeBuoy size={24} /></div>
+                      <div>
+                        <h4 style={styles.contextTitle}>{selectedChannel.name}</h4>
+                        <div style={styles.statusBadgeLarge}>STATUS: {(tickets.find(t=>t.id===selectedChannel.id)?.status || '').toUpperCase()}</div>
+                      </div>
+                   </div>
+                   <div style={styles.infoGrid}>
+                      <div style={styles.infoRow}><span style={styles.infoLabel}>Prioridade</span><span style={{color: '#EF4444', fontWeight: '900'}}>ALTA</span></div>
+                      <div style={styles.infoRow}><span style={styles.infoLabel}>SLA</span><span>01:14:45 restante</span></div>
+                      <div style={styles.infoRow}><span style={styles.infoLabel}>Atendente</span><span>Alison Thiago</span></div>
+                   </div>
+                   <div style={styles.actionSection}>
+                      <Button variant="primary" fullWidth icon={<Check size={16} />} label="Resolver Ticket" onClick={() => toastSuccess('Ticket resolvido com sucesso!')} />
+                      <Button variant="outline" fullWidth icon={<Users size={16} />} label="Transferir" style={{ marginTop: '8px' }} />
+                   </div>
                 </div>
-                <div style={styles.historyItem}>
-                  <div style={styles.historyTop}><span>#975 - Créditos</span> <span style={styles.historyStatus}>Resolvido</span></div>
-                  <span style={styles.historyDate}>Segunda • Atendente Alison</span>
+             ) : selectedChannel.id === 'assistant' ? (
+                <div style={styles.aiContext}>
+                   <div style={styles.aiStatusHeader}>
+                      <div style={styles.pulseDot} />
+                      <span>INTELIGÊNCIA ATIVA</span>
+                   </div>
+                   <p style={styles.aiContextDesc}>O Hub Assistant monitora constantemente Logta e Zaptro em busca de anomalias.</p>
+                   <div style={styles.aiStatsGrid}>
+                      <div style={styles.aiStat}>
+                         <span style={styles.statVal}>99.8%</span>
+                         <span style={styles.statLab}>Precisão IA</span>
+                      </div>
+                      <div style={styles.aiStat}>
+                         <span style={styles.statVal}>24ms</span>
+                         <span style={styles.statLab}>Latência</span>
+                      </div>
+                   </div>
+                   <div style={styles.historySection}>
+                      <h5 style={styles.sectionSubTitle}>Últimas Análises</h5>
+                      <div style={styles.miniLog}>● Relatório de Vendas mensal gerado</div>
+                      <div style={styles.miniLog}>● Backup de segurança validado</div>
+                      <div style={styles.miniLog}>● 12 leads processados no CRM</div>
+                   </div>
                 </div>
-              </div>
-            </div>
+             ) : (
+                <div style={styles.profileHero}>
+                  <div style={styles.heroAvatar}>{selectedUserInfo.name[0]}</div>
+                  <h4 style={styles.heroName}>{selectedUserInfo.name}</h4>
+                  <span style={styles.heroBadge}>{selectedUserInfo.role}</span>
+                  <div style={styles.heroStatus}><div style={{...styles.statusDotSmall, backgroundColor: '#10B981'}} /> Online Agora</div>
+                  
+                  <div style={styles.infoGrid}>
+                    <div style={styles.infoRow}><span style={styles.infoLabel}>Empresa</span><span style={styles.infoValue}>{selectedUserInfo.team}</span></div>
+                    <div style={styles.infoRow}><span style={styles.infoLabel}>Plano</span><span style={{color: '#6366F1'}}>{selectedUserInfo.plan || 'Enterprise'}</span></div>
+                  </div>
+                </div>
+             )}
           </div>
         </aside>
       )}
@@ -432,58 +500,24 @@ const HubChat: React.FC = () => {
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
             <div style={styles.modalHeader}>
-              <h3 style={styles.modalTitle}>Gerar Cobrança (Chat)</h3>
+              <h3 style={styles.modalTitle}>Gerar Cobrança Instantânea</h3>
               <button style={styles.closeBtn} onClick={() => setIsPaymentModalOpen(false)}><X size={20} /></button>
             </div>
             <div style={styles.modalBody}>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Valor da Cobrança</label>
-                <div style={styles.inputWithIcon}>
-                  <span>R$</span>
-                  <input placeholder="0,00" style={styles.inputInline} id="pay_amount" />
-                </div>
+                <label style={styles.label}>Valor (R$)</label>
+                <input placeholder="0,00" style={styles.modalInput} id="pay_amount" />
               </div>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Método de Pagamento</label>
-                <select style={styles.selectInline} id="pay_method">
-                  <option value="pix">PIX (Imediato)</option>
-                  <option value="boleto">Boleto Bancário</option>
-                  <option value="link">Link de Cartão</option>
-                </select>
-              </div>
-              <button style={styles.submitPayBtn} onClick={() => {
-                const amt = (document.getElementById('pay_amount') as HTMLInputElement).value;
-                const meth = (document.getElementById('pay_method') as HTMLSelectElement).value;
-                handleSendMessage('payment', `Gerou um link de pagamento de R$ ${amt}`, { amount: amt, method: meth });
-              }}>
-                Enviar Link no Chat
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* DRIVE MODAL */}
-      {isDriveModalOpen && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <div style={styles.modalHeader}>
-              <h3 style={styles.modalTitle}>Google Drive</h3>
-              <button style={styles.closeBtn} onClick={() => setIsDriveModalOpen(false)}><X size={20} /></button>
-            </div>
-            <div style={styles.modalBody}>
-              {isDocsLoading ? (
-                <div style={styles.loadingBox}>Sincronizando...</div>
-              ) : (
-                <div style={styles.driveGrid}>
-                  {driveFiles.map(file => (
-                    <div key={file.id} style={styles.driveFileItem} onClick={() => handleSelectDriveFile(file)}>
-                      <FileText size={24} color="#4285F4" />
-                      <div style={styles.driveFileName}>{file.name}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <Button 
+                variant="primary" 
+                fullWidth 
+                label="Enviar Link no Chat" 
+                onClick={() => {
+                  const amt = (document.getElementById('pay_amount') as HTMLInputElement).value;
+                  handleSendMessage('payment', `Gerou um link de pagamento de R$ ${amt}`, { amount: amt, method: 'pix' });
+                  setIsPaymentModalOpen(false);
+                }} 
+              />
             </div>
           </div>
         </div>
@@ -493,121 +527,151 @@ const HubChat: React.FC = () => {
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
-  container: { display: 'flex', height: '100%', backgroundColor: '#F8FAFC', overflow: 'hidden', width: '100%', position: 'absolute', top: 0, left: 0, bottom: 0, right: 0 },
+  container: { display: 'flex', height: '100%', backgroundColor: '#F1F5F9', overflow: 'hidden', width: '100%', position: 'absolute', top: 0, left: 0, bottom: 0, right: 0 },
   
   // SIDEBAR
-  sidebar: { width: '340px', backgroundColor: '#0F172A', borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', flexShrink: 0 },
+  sidebar: { width: '300px', backgroundColor: '#0F172A', display: 'flex', flexDirection: 'column', flexShrink: 0 },
   sidebarHeader: { padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  sidebarTitle: { fontSize: '24px', fontWeight: '900', color: 'white', letterSpacing: '-1px' },
-  newChatBtn: { width: '40px', height: '40px', borderRadius: '12px', border: 'none', backgroundColor: 'rgba(255,255,255,0.1)', color: 'white', cursor: 'pointer' },
+  sidebarTitle: { fontSize: '22px', fontWeight: '900', color: 'white', letterSpacing: '-1px', margin: 0 },
+  aiBadge: { fontSize: '10px', fontWeight: '900', backgroundColor: '#6366F1', color: 'white', padding: '2px 8px', borderRadius: '4px' },
   
-  viewSwitcher: { display: 'flex', gap: '4px', padding: '0 20px 20px' },
-  switchBtn: { flex: 1, padding: '10px', borderRadius: '12px', border: 'none', backgroundColor: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
+  viewSwitcher: { display: 'flex', gap: '4px', padding: '0 16px 20px', flexDirection: 'column' },
+  switchBtn: { width: '100%', padding: '12px 16px', borderRadius: '12px', border: 'none', backgroundColor: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '14px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', transition: '0.2s' },
   switchBtnActive: { backgroundColor: 'rgba(255,255,255,0.1)', color: 'white' },
-  ticketBadge: { backgroundColor: '#EF4444', color: 'white', fontSize: '10px', padding: '2px 6px', borderRadius: '8px' },
+  ticketBadge: { marginLeft: 'auto', backgroundColor: '#EF4444', color: 'white', fontSize: '10px', padding: '2px 6px', borderRadius: '8px' },
   
-  searchBox: { margin: '0 20px 20px', padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '10px' },
-  searchInput: { border: 'none', backgroundColor: 'transparent', fontSize: '14px', outline: 'none', width: '100%', color: 'white' },
-  sidebarContent: { flex: 1, overflowY: 'auto', padding: '0 12px 40px' },
-  section: { marginBottom: '32px' },
-  sectionHeader: { padding: '0 12px', marginBottom: '12px' },
-  sectionLabel: { fontSize: '11px', fontWeight: '900', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1px' },
+  sidebarContent: { flex: 1, overflowY: 'auto', padding: '0 8px 40px' },
+  section: { marginBottom: '24px' },
+  sectionHeader: { padding: '0 12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  sectionLabel: { fontSize: '11px', fontWeight: '800', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1px' },
   
-  channelItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '14px', cursor: 'pointer', transition: 'all 0.2s' },
+  channelList: { display: 'flex', flexDirection: 'column', gap: '2px' },
+  channelItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' },
+  channelIconBox: { width: '24px', display: 'flex', justifyContent: 'center' },
   channelInfo: { flex: 1, display: 'flex', flexDirection: 'column' },
-  channelName: { fontSize: '15px', fontWeight: '800', color: 'white' },
-  lastMsgText: { fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: '500' },
+  channelName: { fontSize: '14px', fontWeight: '700', color: 'white' },
+  lastMsgText: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  unreadDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#6366F1' },
   
-  dmItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '14px', cursor: 'pointer' },
-  avatarMini: { width: '38px', height: '38px', borderRadius: '14px', backgroundColor: 'rgba(255,255,255,0.1)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900' },
+  dmList: { display: 'flex', flexDirection: 'column', gap: '2px' },
+  dmItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer' },
+  avatarMini: { width: '32px', height: '32px', borderRadius: '10px', backgroundColor: 'rgba(255,255,255,0.1)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '12px' },
   avatarWrapper: { position: 'relative' },
-  statusDotInner: { width: '10px', height: '10px', borderRadius: '50%', position: 'absolute', bottom: '-2px', right: '-2px', border: '2px solid #0F172A' },
+  statusDotInner: { width: '8px', height: '8px', borderRadius: '50%', position: 'absolute', bottom: '-2px', right: '-2px', border: '2px solid #0F172A' },
   dmInfo: { display: 'flex', flexDirection: 'column' },
-  dmName: { fontSize: '15px', fontWeight: '800', color: 'white' },
-  dmTeam: { fontSize: '12px', color: 'rgba(255,255,255,0.4)' },
+  dmName: { fontSize: '14px', fontWeight: '700', color: 'white' },
+  dmTeam: { fontSize: '11px', color: 'rgba(255,255,255,0.4)' },
 
-  ticketItem: { padding: '16px', borderRadius: '16px', cursor: 'pointer', marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '8px' },
+  ticketItem: { padding: '14px', borderRadius: '12px', cursor: 'pointer', marginBottom: '6px', display: 'flex', flexDirection: 'column', gap: '6px' },
   ticketHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  ticketName: { fontSize: '14px', fontWeight: '800', color: 'white' },
-  priorityDot: { width: '8px', height: '8px', borderRadius: '50%' },
+  ticketName: { fontSize: '13px', fontWeight: '800', color: 'white' },
+  priorityDot: { width: '6px', height: '6px', borderRadius: '50%' },
   ticketBody: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  ticketCust: { fontSize: '12px', color: 'rgba(255,255,255,0.5)' },
-  slaBox: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#EF4444', fontWeight: '800' },
+  ticketCust: { fontSize: '11px', color: 'rgba(255,255,255,0.5)' },
+  ticketMeta: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' },
+  slaBox: { display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#EF4444', fontWeight: '800' },
+  statusTagSidebar: { fontSize: '9px', fontWeight: '900', color: 'white', opacity: 0.6 },
+  newTicketBtn: { backgroundColor: 'transparent', border: 'none', color: '#6366F1', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' },
 
   // CHAT AREA
-  chatArea: { flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'white' },
+  chatArea: { flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'white', margin: '12px', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' },
   chatHeader: { padding: '16px 24px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   headerInfo: { display: 'flex', alignItems: 'center', gap: '16px' },
-  avatarHeader: { width: '44px', height: '44px', borderRadius: '14px', backgroundColor: '#F1F5F9', color: '#6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900' },
+  avatarHeader: { width: '44px', height: '44px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900' },
   headerTitle: { fontSize: '18px', fontWeight: '900', color: '#0F172A', margin: 0 },
   headerSubtitle: { fontSize: '12px', color: '#94A3B8', fontWeight: '700' },
   headerActions: { display: 'flex', gap: '4px' },
-  headerIconBtn: { width: '40px', height: '40px', borderRadius: '12px', border: 'none', backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
+  headerIconBtn: { width: '36px', height: '36px', borderRadius: '10px', border: 'none', backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#94A3B8' },
+  aiStatusBadge: { fontSize: '9px', fontWeight: '900', backgroundColor: 'rgba(99, 102, 241, 0.1)', color: '#6366F1', padding: '2px 6px', borderRadius: '4px' },
 
-  messageContainer: { flex: 1, padding: '32px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '24px' },
-  chatStartNotice: { padding: '40px 0', textAlign: 'center', borderBottom: '1px solid #F1F5F9', marginBottom: '20px' },
-  startAvatar: { width: '80px', height: '80px', borderRadius: '24px', backgroundColor: '#F8FAFC', color: '#6366F1', fontSize: '32px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', border: '2px solid #F1F5F9' },
-  startTitle: { fontSize: '20px', fontWeight: '900', marginBottom: '8px' },
-  startDesc: { fontSize: '14px', color: '#94A3B8', maxWidth: '320px', margin: '0 auto' },
+  messageContainer: { flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '24px' },
+  aiWelcomeBox: { textAlign: 'center', padding: '40px 20px', borderBottom: '1px solid #F1F5F9', marginBottom: '20px' },
+  aiIconLarge: { width: '80px', height: '80px', borderRadius: '24px', backgroundColor: 'rgba(99, 102, 241, 0.05)', color: '#6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' },
+  aiWelcomeTitle: { fontSize: '24px', fontWeight: '900', color: '#0F172A', marginBottom: '8px' },
+  aiWelcomeDesc: { fontSize: '14px', color: '#64748B', maxWidth: '400px', margin: '0 auto 24px' },
+  aiShortcuts: { display: 'flex', justifyContent: 'center', gap: '12px' },
+  shortcutBtn: { padding: '10px 20px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: 'white', fontSize: '13px', fontWeight: '800', color: '#334155', cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', gap: '8px' },
   
   messageWrapper: { display: 'flex', gap: '16px' },
-  messageAvatar: { width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#6366F1', fontSize: '14px', flexShrink: 0 },
+  messageAvatar: { width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#6366F1', fontSize: '13px', flexShrink: 0 },
   messageContent: { flex: 1 },
-  messageHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' },
-  messageSender: { fontSize: '15px', fontWeight: '900', color: '#0F172A' },
-  messageTime: { fontSize: '11px', color: '#CBD5E1', fontWeight: '700' },
-  agentTag: { fontSize: '10px', backgroundColor: '#EEF2FF', color: '#6366F1', padding: '2px 8px', borderRadius: '100px', fontWeight: '800', textTransform: 'uppercase' },
+  messageHeader: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' },
+  messageSender: { fontSize: '14px', fontWeight: '900', color: '#0F172A' },
+  messageTime: { fontSize: '10px', color: '#CBD5E1', fontWeight: '700' },
   messageText: { fontSize: '15px', color: '#334155', lineHeight: '1.6', margin: 0 },
 
-  paymentCard: { marginTop: '12px', padding: '20px', borderRadius: '20px', background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', color: 'white', display: 'flex', gap: '16px', maxWidth: '340px' },
-  paymentIcon: { width: '44px', height: '44px', borderRadius: '14px', backgroundColor: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  paymentTitle: { fontSize: '13px', fontWeight: '700', opacity: 0.9 },
-  paymentVal: { fontSize: '18px', fontWeight: '900', marginBottom: '12px' },
-  payBtn: { padding: '8px 16px', borderRadius: '10px', border: 'none', backgroundColor: 'white', color: '#6366F1', fontWeight: '800', fontSize: '12px', cursor: 'pointer' },
+  reportCard: { marginTop: '16px', padding: '20px', borderRadius: '16px', border: '1px solid #E2E8F0', backgroundColor: '#F8FAFC', maxWidth: '500px' },
+  reportHeader: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: '800', color: '#0F172A', marginBottom: '16px' },
+  metricsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' },
+  metricItem: { display: 'flex', flexDirection: 'column', gap: '4px' },
+  metricLabel: { fontSize: '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' },
+  metricValRow: { display: 'flex', alignItems: 'baseline', gap: '4px' },
+  metricValue: { fontSize: '16px', fontWeight: '900' },
+  metricTrend: { fontSize: '9px', fontWeight: '700', opacity: 0.7 },
+  chartPlaceholder: { marginBottom: '16px' },
+  fullReportBtn: { width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#6366F1', fontWeight: '800', fontSize: '12px', cursor: 'pointer' },
 
-  chatFooter: { padding: '0 32px 32px' },
-  inputWrapper: { padding: '12px', backgroundColor: '#F8FAFC', borderRadius: '20px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '12px' },
-  inputActions: { display: 'flex', gap: '8px' },
-  mainInput: { flex: 1, border: 'none', backgroundColor: 'transparent', outline: 'none', fontSize: '15px', fontWeight: '600' },
-  sendBtn: { width: '44px', height: '44px', borderRadius: '14px', backgroundColor: '#6366F1', color: 'white', border: 'none', cursor: 'pointer' },
+  errorAlertBox: { marginTop: '12px', padding: '16px', borderRadius: '12px', backgroundColor: '#FEF2F2', border: '1px solid #FEE2E2', display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' },
+  errorLine: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', color: '#991B1B' },
+  fixBtn: { padding: '8px 12px', borderRadius: '8px', border: 'none', backgroundColor: '#EF4444', color: 'white', fontSize: '11px', fontWeight: '800', cursor: 'pointer', alignSelf: 'flex-start' },
+
+  typingIndicator: { display: 'flex', alignItems: 'center', gap: '10px', color: '#6366F1', fontSize: '12px', fontWeight: '700' },
+
+  chatFooter: { padding: '0 24px 24px' },
+  inputWrapper: { padding: '8px 12px', backgroundColor: '#F8FAFC', borderRadius: '16px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '12px' },
+  inputActions: { display: 'flex', gap: '4px' },
+  actionBtn: { width: '36px', height: '36px', borderRadius: '10px', border: 'none', backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#94A3B8' },
+  mainInput: { flex: 1, border: 'none', backgroundColor: 'transparent', outline: 'none', fontSize: '15px', fontWeight: '600', color: '#0F172A' },
+  sendBtn: { width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#6366F1', color: 'white', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 
   // RIGHT SIDEBAR
-  rightSidebar: { width: '360px', backgroundColor: 'white', borderLeft: '1px solid #F1F5F9', display: 'flex', flexDirection: 'column' },
+  rightSidebar: { width: '320px', backgroundColor: 'white', borderLeft: '1px solid #F1F5F9', display: 'flex', flexDirection: 'column' },
   rightSidebarHeader: { padding: '24px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  rightSidebarTitle: { fontSize: '16px', fontWeight: '900' },
-  profileHero: { padding: '32px 24px', textAlign: 'center', borderBottom: '1px solid #F1F5F9' },
-  heroAvatar: { width: '72px', height: '72px', borderRadius: '24px', backgroundColor: '#6366F1', color: 'white', fontSize: '28px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' },
-  heroName: { fontSize: '18px', fontWeight: '900', margin: '0 0 4px' },
-  heroBadge: { fontSize: '11px', color: '#6366F1', fontWeight: '800', textTransform: 'uppercase', backgroundColor: '#EEF2FF', padding: '4px 12px', borderRadius: '100px' },
+  rightSidebarTitle: { fontSize: '15px', fontWeight: '900', margin: 0 },
+  rightSidebarContent: { flex: 1, overflowY: 'auto' },
+  
+  ticketContext: { padding: '24px' },
+  contextHeader: { display: 'flex', gap: '16px', marginBottom: '24px' },
+  contextIcon: { width: '48px', height: '48px', borderRadius: '16px', backgroundColor: '#F1F5F9', color: '#6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  contextTitle: { fontSize: '16px', fontWeight: '900', margin: '0 0 4px' },
+  statusBadgeLarge: { fontSize: '10px', fontWeight: '900', color: '#6366F1', letterSpacing: '0.5px' },
+  
+  primaryActionBtn: { width: '100%', padding: '14px', borderRadius: '12px', backgroundColor: '#6366F1', color: 'white', border: 'none', fontWeight: '800', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '10px' },
+  secondaryActionBtn: { width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontWeight: '800', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' },
+
+  aiContext: { padding: '24px' },
+  aiStatusHeader: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', fontWeight: '900', color: '#10B981', marginBottom: '16px' },
+  pulseDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981' },
+  aiContextDesc: { fontSize: '13px', color: '#64748B', lineHeight: '1.6', marginBottom: '24px' },
+  aiStatsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' },
+  aiStat: { padding: '16px', borderRadius: '12px', backgroundColor: '#F8FAFC', textAlign: 'center' },
+  statVal: { display: 'block', fontSize: '18px', fontWeight: '900', color: '#0F172A' },
+  statLab: { fontSize: '10px', fontWeight: '800', color: '#94A3B8' },
+  miniLog: { fontSize: '12px', color: '#64748B', marginBottom: '8px' },
+
+  profileHero: { padding: '32px 24px', textAlign: 'center' },
+  heroAvatar: { width: '64px', height: '64px', borderRadius: '20px', backgroundColor: '#6366F1', color: 'white', fontSize: '24px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' },
+  heroName: { fontSize: '16px', fontWeight: '900', margin: '0 0 4px' },
+  heroBadge: { fontSize: '10px', color: '#6366F1', fontWeight: '800', textTransform: 'uppercase', backgroundColor: '#EEF2FF', padding: '3px 10px', borderRadius: '100px' },
   heroStatus: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', color: '#10B981', fontWeight: '700', marginTop: '12px' },
   
-  infoGrid: { padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', borderBottom: '1px solid #F1F5F9' },
+  infoGrid: { padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' },
   infoRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  infoLabel: { fontSize: '12px', color: '#94A3B8', fontWeight: '700' },
-  infoValue: { fontSize: '13px', color: '#0F172A', fontWeight: '800' },
+  infoLabel: { fontSize: '11px', color: '#94A3B8', fontWeight: '700' },
+  infoValue: { fontSize: '12px', color: '#0F172A', fontWeight: '800' },
 
-  actionSection: { padding: '24px' },
-  sectionSubTitle: { fontSize: '12px', fontWeight: '900', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '16px' },
-  quickActions: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  qBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px', border: '1px solid #F1F5F9', backgroundColor: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: '700', color: '#334155' },
-
-  historySection: { padding: '24px', flex: 1, overflowY: 'auto' },
-  historyList: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  historyItem: { padding: '12px', borderRadius: '12px', backgroundColor: '#F8FAFC' },
-  historyTop: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '800', marginBottom: '4px' },
-  historyStatus: { color: '#10B981' },
-  historyDate: { fontSize: '11px', color: '#94A3B8' },
-
-  modalOverlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 },
-  modalContent: { backgroundColor: 'white', borderRadius: '28px', width: '400px', padding: '0', overflow: 'hidden' },
-  modalHeader: { padding: '24px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between' },
-  modalBody: { padding: '24px' },
-  formGroup: { marginBottom: '16px' },
-  label: { fontSize: '12px', fontWeight: '800', color: '#94A3B8', display: 'block', marginBottom: '8px' },
-  inputInline: { flex: 1, border: 'none', outline: 'none', fontSize: '24px', fontWeight: '900' },
-  inputWithIcon: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '24px', fontWeight: '900' },
-  selectInline: { width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #E2E8F0', outline: 'none', fontWeight: '700' },
-  submitPayBtn: { width: '100%', padding: '16px', borderRadius: '16px', backgroundColor: '#6366F1', color: 'white', border: 'none', fontWeight: '900', fontSize: '15px', cursor: 'pointer', marginTop: '12px' }
+  modalOverlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 },
+  modalContent: { backgroundColor: 'white', borderRadius: '24px', width: '360px', padding: '24px' },
+  modalHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '24px' },
+  modalTitle: { fontSize: '18px', fontWeight: '900' },
+  modalInput: { width: '100%', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '24px', fontWeight: '900', outline: 'none' },
+  formGroup: { marginBottom: '20px' },
+  label: { fontSize: '12px', fontWeight: '800', color: '#94A3B8', marginBottom: '8px', display: 'block' },
+  submitPayBtn: { width: '100%', padding: '16px', borderRadius: '16px', backgroundColor: '#6366F1', color: 'white', border: 'none', fontWeight: '900', fontSize: '15px', cursor: 'pointer' },
+  closeBtn: { background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' },
+  closeSidebarBtn: { background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }
 };
 
 export default HubChat;
+
+

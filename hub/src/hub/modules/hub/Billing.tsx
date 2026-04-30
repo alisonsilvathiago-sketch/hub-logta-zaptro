@@ -86,7 +86,11 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
     try {
       if (activeTab === 'faturamento' || activeTab === 'dashboard') fetchCharges();
       if (activeTab === 'planos' || activeTab === 'dashboard') fetchPlans();
-      const { data: cos } = await supabase.from('companies').select('id, name, status, origin, plan_id');
+      
+      const { data: cos } = await supabase
+        .from('companies')
+        .select('*, subscriptions(*)');
+        
       setCompanies(cos || []);
     } catch (err) {
       console.error(err);
@@ -263,10 +267,22 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
     }, 0);
 
     const activeTenants = (companies || []).filter(c => c?.status === 'active').length;
-    const blockedTenants = (companies || []).filter(c => c?.status === 'blocked').length;
+    const blockedTenants = (companies || []).filter(c => c?.status === 'blocked' || c?.status === 'expired').length;
+    
+    // Empresas em Carência (Expira mas < 3 dias)
+    const graceTenants = (companies || []).filter(c => {
+      const sub = c.subscriptions?.[0];
+      if (!sub || sub.status !== 'active') return false;
+      const expiry = new Date(sub.expires_at);
+      const today = new Date();
+      const graceLimit = new Date(expiry);
+      graceLimit.setDate(graceLimit.getDate() + 3);
+      return today > expiry && today <= graceLimit;
+    }).length;
+
     const churn = (companies || []).length > 0 ? (blockedTenants / companies.length) * 100 : 0;
 
-    return { mrr, activeTenants, churn };
+    return { mrr, activeTenants, blockedTenants, graceTenants, churn };
   };
 
   const metrics = calculateMetrics();
@@ -384,61 +400,136 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
               </div>
 
               <div style={styles.statCard} className="hover-scale">
-                <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
-                  <AlertTriangle size={20} color="#6366F1" />
+                <div style={{...styles.statIconBox, backgroundColor: '#F59E0B15'}}>
+                  <Clock size={20} color="#F59E0B" />
                 </div>
                 <div style={styles.statContent}>
-                  <p style={styles.statLabel}>Churn Rate (Global)</p>
-                  <h3 style={styles.statValue}>{metrics.churn.toFixed(1)}%</h3>
+                  <p style={styles.statLabel}>Em Carência (Buffer)</p>
+                  <h3 style={styles.statValue}>{metrics.graceTenants}</h3>
+                </div>
+                <div style={{...styles.statTrend, color: '#F59E0B'}}>
+                  3 DIAS
+                </div>
+              </div>
+
+              <div style={styles.statCard} className="hover-scale">
+                <div style={{...styles.statIconBox, backgroundColor: '#EF444415'}}>
+                  <Ban size={20} color="#EF4444" />
+                </div>
+                <div style={styles.statContent}>
+                  <p style={styles.statLabel}>Inativos / Bloqueados</p>
+                  <h3 style={styles.statValue}>{metrics.blockedTenants}</h3>
                 </div>
                 <div style={{...styles.statTrend, color: '#EF4444'}}>
-                  ALERTA
+                  CHURN
                 </div>
               </div>
             </div>
 
             <div style={styles.chartGrid}>
               <div style={styles.chartCard}>
-                <h3 style={styles.chartTitle}><Target size={16} /> DISTRIBUIÇÃO POR PRODUTO</h3>
-                <div style={{ height: 300 }}>
+                <div style={styles.chartHeaderInner}>
+                  <h3 style={styles.chartTitle}><Target size={16} color="var(--accent)" /> DISTRIBUIÇÃO POR PRODUTO</h3>
+                  <div style={styles.chartTag}>REAL-TIME</div>
+                </div>
+                <div style={{ height: 320, position: 'relative' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={productData}
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={5}
+                        innerRadius={85}
+                        outerRadius={115}
+                        paddingAngle={8}
                         dataKey="value"
+                        stroke="none"
                       >
                         {productData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip />
-                      <Legend verticalAlign="bottom" height={36} />
+                      <Tooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div style={styles.customTooltip}>
+                                <div style={{...styles.tooltipDot, backgroundColor: payload[0].payload.color}} />
+                                <span style={styles.tooltipLabel}>{payload[0].name}</span>
+                                <span style={styles.tooltipValue}>{payload[0].value}%</span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend 
+                        verticalAlign="bottom" 
+                        align="center"
+                        iconType="circle"
+                        formatter={(value) => <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>{value}</span>}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
+                  <div style={styles.pieCenterLabel}>
+                    <div style={styles.pieCenterValue}>100%</div>
+                    <div style={styles.pieCenterText}>ATIVOS</div>
+                  </div>
                 </div>
               </div>
 
               <div style={styles.chartCard}>
-                <h3 style={styles.chartTitle}><Zap size={16} /> CRESCIMENTO DE RECEITA (ASAAS)</h3>
-                <div style={{ height: 300 }}>
+                <div style={styles.chartHeaderInner}>
+                  <h3 style={styles.chartTitle}><Zap size={16} color="#6366F1" /> CRESCIMENTO DE RECEITA (ASAAS)</h3>
+                  <div style={{...styles.chartTag, backgroundColor: '#E0E7FF', color: '#4338CA'}}>ASAAS SYNC</div>
+                </div>
+                <div style={{ height: 320 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[
+                    <AreaChart data={[
                         { name: 'Jan', value: 4000 },
                         { name: 'Fev', value: 3000 },
                         { name: 'Mar', value: 2000 },
                         { name: 'Abr', value: metrics.mrr },
                     ]}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: 'var(--text-secondary)'}} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: 'var(--text-secondary)'}} />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}
+                      <defs>
+                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                      <XAxis 
+                        dataKey="name" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{fontSize: 11, fill: '#94A3B8', fontWeight: '700'}} 
+                        dy={10}
                       />
-                      <Bar dataKey="value" fill="var(--accent)" radius={[6, 6, 0, 0]} />
-                    </BarChart>
+                      <YAxis 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{fontSize: 11, fill: '#94A3B8', fontWeight: '700'}} 
+                      />
+                      <Tooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div style={styles.customTooltip}>
+                                <span style={styles.tooltipLabel}>Receita:</span>
+                                <span style={styles.tooltipValue}>R$ {payload[0].value.toLocaleString()}</span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="#6366F1" 
+                        strokeWidth={4}
+                        fillOpacity={1} 
+                        fill="url(#colorValue)" 
+                      />
+                    </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </div>
@@ -695,7 +786,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
           title={chargeModalType === 'plan' ? 'Novo Plano Recorrente' : 'Gerar Cobrança Direta'}
           subtitle="Preencha os dados para gerar o link ou código de pagamento."
           icon={<LinkIcon />}
-          width="1100px"
+          size="xl"
           primaryAction={{
             label: 'CONFIRMAR E GERAR COBRANÇA',
             onClick: handleGenerateCharge,
@@ -1113,7 +1204,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
           title="Visualização de Fatura Master"
           subtitle={`Referência: ${selectedCharge?.asaas_id || 'Interna'}`}
           icon={<FileText color="#6366F1" />}
-          width="1000px"
+          size="xl"
         >
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
                 {/* LEFT: BOLETO PREVIEW */}
@@ -1209,7 +1300,7 @@ const styles: Record<string, any> = {
   tabLink: { padding: '10px 24px', borderRadius: '16px', fontSize: '14px', fontWeight: '700', color: 'var(--text-secondary)', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' },
   tabActive: { backgroundColor: 'white', color: 'var(--accent)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' },
 
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '40px' },
+  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' },
   statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '32px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden' },
   statIconBox: { width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   statContent: { flex: 1 },
@@ -1217,14 +1308,61 @@ const styles: Record<string, any> = {
   statValue: { fontSize: '24px', fontWeight: '800', color: 'var(--secondary)', margin: 0 },
   statTrend: { fontSize: '10px', fontWeight: '800', padding: '4px 10px', borderRadius: '8px', backgroundColor: 'var(--bg-secondary)' },
 
-  chartGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' },
-  chartCard: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
-  chartTitle: { fontSize: '16px', fontWeight: '700', color: 'var(--secondary)', marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '12px' },
+  chartGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '40px' },
+  chartCard: { backgroundColor: '#FFF', padding: '32px', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
+  chartHeaderInner: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
+  chartTitle: { fontSize: '13px', fontWeight: '800', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, letterSpacing: '0.5px' },
+  chartTag: { padding: '4px 10px', backgroundColor: '#F1F5F9', color: '#64748B', borderRadius: '8px', fontSize: '10px', fontWeight: '800' },
+  
+  customTooltip: { backgroundColor: '#FFF', padding: '12px 16px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '10px' },
+  tooltipDot: { width: '8px', height: '8px', borderRadius: '50%' },
+  tooltipLabel: { fontSize: '12px', fontWeight: '700', color: '#64748B' },
+  tooltipValue: { fontSize: '14px', fontWeight: '800', color: '#0F172A' },
+
+  pieCenterLabel: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' },
+  pieCenterValue: { fontSize: '28px', fontWeight: '900', color: '#0F172A', lineHeight: '1' },
+  pieCenterText: { fontSize: '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' },
 
   tableCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
   table: { width: '100%', borderCollapse: 'collapse' },
+  thead: { backgroundColor: 'var(--bg-secondary)' },
   th: { padding: '20px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' },
+  tr: { borderBottom: '1px solid var(--bg-secondary)', transition: 'all 0.2s' },
   td: { padding: '24px', borderBottom: '1px solid var(--bg-secondary)' },
+  loadingTd: { padding: '42px 24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '700' },
+  rowActions: { display: 'flex', justifyContent: 'flex-end', gap: '10px' },
+  actionIconBtn: { width: '36px', height: '36px', borderRadius: '10px', border: '1px solid var(--border)', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' },
+
+  card: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', padding: '28px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
+  headerTitleRow: { marginBottom: '20px' },
+  kpiBrief: { display: 'flex', alignItems: 'stretch', gap: '12px' },
+  miniKpi: { minWidth: '210px', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '6px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' },
+  subActionsRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', gap: '16px' },
+  subTabContainer: { display: 'flex', gap: '8px', backgroundColor: 'var(--bg-secondary)', borderRadius: '14px', padding: '6px' },
+  subTabBtn: { border: 'none', borderRadius: '10px', padding: '10px 16px', fontSize: '12px', fontWeight: '800', letterSpacing: '0.6px', backgroundColor: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' },
+
+  plansGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' },
+  planCard: { backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px', display: 'flex', flexDirection: 'column', minHeight: '340px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
+  planCardHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' },
+  planIcon: { width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--bg-active)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  planTypeTag: { fontSize: '10px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-secondary)', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px', padding: '5px 10px' },
+  planCardTitle: { fontSize: '16px', fontWeight: '800', color: 'var(--secondary)', margin: '0 0 10px' },
+  planPrice: { display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '14px' },
+  currency: { fontSize: '13px', fontWeight: '800', color: 'var(--text-secondary)' },
+  amount: { fontSize: '30px', fontWeight: '900', color: 'var(--secondary)', lineHeight: 1 },
+  period: { fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)' },
+  planFeatures: { display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' },
+  featureItem: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' },
+  planActionBtn: { border: '1px solid var(--border)', borderRadius: '10px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' },
+  planCell: { display: 'flex', flexDirection: 'column', gap: '4px' },
+  creditsText: { fontSize: '13px', fontWeight: '700', color: 'var(--secondary)' },
+  detailsSection: { backgroundColor: 'white', borderRadius: '20px', border: '1px solid var(--border)', padding: '18px' },
+
+  formGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  input: { width: '100%', height: '44px', borderRadius: '12px', border: '1px solid var(--border)', padding: '0 12px', fontSize: '14px', fontWeight: '600', color: 'var(--secondary)', backgroundColor: 'white', outline: 'none' },
+  productGrid: { display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '10px', marginTop: '10px' },
+  productCardMini: { border: '1px solid var(--border)', borderRadius: '12px', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none', transition: 'all 0.2s' },
+  methodBtn: { border: '1px solid var(--border)', borderRadius: '12px', backgroundColor: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '44px', transition: 'all 0.2s' },
 
   planName: { fontSize: '16px', fontWeight: '700', color: 'var(--secondary)', marginBottom: '4px' },
   planBrand: { fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600' },

@@ -1,5 +1,8 @@
 import React from 'react';
 import { X, Loader2 } from 'lucide-react';
+import Button from './Button';
+import Kbd from './Kbd';
+import { getPlatform } from '../lib/platform';
 
 interface ModalProps {
   isOpen: boolean;
@@ -11,6 +14,8 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'; 
   padding?: string;
   hideHeader?: boolean;
+  hideTitle?: boolean;
+  maxWidth?: string;
   primaryAction?: {
     label: string;
     onClick: () => void;
@@ -34,12 +39,16 @@ const Modal: React.FC<ModalProps> = ({
   size = 'md',
   padding = '32px',
   hideHeader = false,
+  hideTitle = false,
+  maxWidth,
   primaryAction,
   secondaryAction
 }) => {
+  const platform = getPlatform();
   if (!isOpen) return null;
 
   const getWidth = () => {
+    if (maxWidth) return maxWidth;
     switch(size) {
       case 'sm': return '440px';
       case 'md': return '640px';
@@ -112,15 +121,17 @@ const Modal: React.FC<ModalProps> = ({
             )}
             
             <div style={{ flex: 1 }}>
-              <h2 style={{ 
-                fontSize: '22px', 
-                fontWeight: '700', 
-                color: '#1E1B4B', 
-                margin: 0, 
-                letterSpacing: '-0.4px'
-              }}>
-                {title}
-              </h2>
+              {!hideTitle && (
+                <h2 style={{ 
+                  fontSize: '22px', 
+                  fontWeight: '700', 
+                  color: '#1E1B4B', 
+                  margin: 0, 
+                  letterSpacing: '-0.4px'
+                }}>
+                  {title}
+                </h2>
+              )}
               {subtitle && (
                 <p style={{ color: '#64748B', fontSize: '14px', margin: '4px 0 0', fontWeight: '500', letterSpacing: '0.2px' }}>
                   {subtitle}
@@ -133,18 +144,21 @@ const Modal: React.FC<ModalProps> = ({
               style={{
                 background: 'var(--bg-overlay)',
                 border: '1px solid var(--border)',
-                width: '36px',
+                width: 'auto',
                 height: '36px',
+                padding: '0 12px',
                 borderRadius: '12px',
                 cursor: 'pointer',
                 color: '#94A3B8',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                gap: '8px',
                 transition: 'all 0.2s',
               }}
               className="hover-scale"
             >
+              <Kbd style={{ fontSize: '9px', padding: '0 4px', height: '18px', minWidth: '18px' }}>Esc</Kbd>
               <X size={20} strokeWidth={2.5} />
             </button>
           </div>
@@ -170,52 +184,29 @@ const Modal: React.FC<ModalProps> = ({
             borderTop: '1px solid var(--border)'
           }}>
             {secondaryAction && (
-              <button 
+              <Button 
+                variant="secondary"
+                label={secondaryAction.label}
                 onClick={secondaryAction.onClick}
-                style={{
-                  padding: '12px 24px',
-                  borderRadius: '16px',
-                  border: '1px solid var(--border)',
-                  background: '#fff',
-                  color: '#64748B',
-                  fontWeight: '700',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  letterSpacing: '0.2px'
-                }}
-                className="hover-scale"
-              >
-                {secondaryAction.label}
-              </button>
+              />
             )}
             
             {primaryAction && (
-              <button 
+              <Button 
+                variant={primaryAction.danger ? 'danger' : 'primary'}
+                label={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span>{primaryAction.label}</span>
+                    <div style={{ display: 'flex', gap: '2px', opacity: 0.8 }}>
+                      <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '9px', padding: '0 4px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF' }}>{platform.cmd}</Kbd>
+                      <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '9px', padding: '0 4px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF' }}>↵</Kbd>
+                    </div>
+                  </div>
+                }
                 onClick={primaryAction.onClick}
-                disabled={primaryAction.loading || primaryAction.disabled}
-                style={{
-                  padding: '12px 28px',
-                  borderRadius: '16px',
-                  border: 'none',
-                  background: primaryAction.danger ? '#EF4444' : '#6366F1',
-                  color: '#fff',
-                  fontWeight: '800',
-                  fontSize: '14px',
-                  cursor: (primaryAction.loading || primaryAction.disabled) ? 'not-allowed' : 'pointer',
-                  boxShadow: primaryAction.danger ? '0 10px 20px rgba(239,68,68,0.25)' : '0 10px 20px rgba(99, 102, 241, 0.25)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px',
-                  opacity: (primaryAction.loading || primaryAction.disabled) ? 0.7 : 1,
-                  transition: 'all 0.2s',
-                  letterSpacing: '0.3px'
-                }}
-                className="hover-scale"
-              >
-                {primaryAction.loading ? <Loader2 className="animate-spin" size={18} /> : primaryAction.label}
-              </button>
+                loading={primaryAction.loading}
+                disabled={primaryAction.disabled}
+              />
             )}
           </div>
         )}
@@ -225,8 +216,6 @@ const Modal: React.FC<ModalProps> = ({
             from { opacity: 0; transform: translateY(30px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
           }
-          .animate-spin { animation: spin 1s linear infinite; }
-          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
           .hover-scale:hover { transform: scale(1.02); filter: brightness(1.05); }
           .hover-scale:active { transform: scale(0.98); }
         `}</style>
@@ -236,4 +225,3 @@ const Modal: React.FC<ModalProps> = ({
 };
 
 export default Modal;
-

@@ -10,7 +10,7 @@ const isMaster = (role?: string) =>
 
 /**
  * Produto Zaptro: instância WhatsApp / painel WaaS.
- * 🚀 MODO SIMPLIFICADO: Se for ADMIN ou MASTER, tem acesso total.
+ *  MODO SIMPLIFICADO: Se for ADMIN ou MASTER, tem acesso total.
  */
 export const profileHasZaptroProductAccess = (p: AccessSlice): boolean => {
   if (!p) return false;

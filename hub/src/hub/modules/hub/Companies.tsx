@@ -44,6 +44,7 @@ const CompanyManagement: React.FC = () => {
   const [companyVehicles, setCompanyVehicles] = useState<any[]>([]);
   const [companyWhatsApp, setCompanyWhatsApp] = useState<any[]>([]);
   const [companyPayments, setCompanyPayments] = useState<any[]>([]);
+  const [companyIntegrations, setCompanyIntegrations] = useState<any[]>([]);
   const [companyLogs, setCompanyLogs] = useState<any[]>([]);
   const [companySecurityLogs, setCompanySecurityLogs] = useState<any[]>([]);
   const [companyMetrics, setCompanyMetrics] = useState<any>(null);
@@ -118,11 +119,12 @@ const CompanyManagement: React.FC = () => {
 
   const fetchCompanySpecificData = async (companyId: string) => {
     try {
-      const [uRes, rRes, vRes, wRes, pRes, lRes, sRes] = await Promise.all([
+      const [uRes, rRes, vRes, wRes, iRes, pRes, lRes, sRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('company_id', companyId),
         supabase.from('routes').select('*, driver:motoristas(nome), vehicle:vehicles(plate)').eq('company_id', companyId).limit(5),
         supabase.from('vehicles').select('*').eq('company_id', companyId),
         supabase.from('whatsapp_instances').select('*').eq('company_id', companyId),
+        supabase.from('integrations').select('*').eq('company_id', companyId),
         supabase.from('master_payments').select('*').eq('company_id', companyId).order('created_at', { ascending: false }).limit(10),
         supabase.from('audit_log').select('*, profiles:actor_id(full_name)').eq('company_id', companyId).order('created_at', { ascending: false }).limit(10),
         supabase.from('security_logs').select('*').eq('company_id', companyId).order('created_at', { ascending: false }).limit(10)
@@ -132,6 +134,7 @@ const CompanyManagement: React.FC = () => {
       if (rRes.data) setCompanyRoutes(rRes.data);
       if (vRes.data) setCompanyVehicles(vRes.data);
       if (wRes.data) setCompanyWhatsApp(wRes.data);
+      if (iRes.data) setCompanyIntegrations(iRes.data);
       if (pRes.data) setCompanyPayments(pRes.data);
       if (lRes.data) setCompanyLogs(lRes.data);
       if (sRes.data) setCompanySecurityLogs(sRes.data);
@@ -142,6 +145,7 @@ const CompanyManagement: React.FC = () => {
         vehicles: vRes.data?.length || 0,
         drivers: new Set(rRes.data?.map(r => r.driver_id)).size || 0,
         whatsapp_active: wRes.data?.filter(i => i.status === 'open').length || 0,
+        integrations_active: iRes.data?.filter(i => i.status === 'active').length || 0,
         total_billed: pRes.data?.filter(p => p.status === 'received' || p.status === 'pago').reduce((acc, p) => acc + parseFloat(p.amount), 0) || 0
       });
 
@@ -982,7 +986,7 @@ const CompanyManagement: React.FC = () => {
         subtitle="Provisionamento automático de infraestrutura e banco de dados isolado."
         icon={<Globe />}
         primaryAction={{
-          label: 'ATIVAR INSTÂNCIA AGORA 🔥',
+          label: 'ATIVAR INSTÂNCIA AGORA ',
           onClick: handleCreateCompany,
           loading: saving
         }}

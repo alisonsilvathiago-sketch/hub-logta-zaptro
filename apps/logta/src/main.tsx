@@ -6,8 +6,11 @@ import App from './App'
 import { TenantProvider } from './context/TenantContext'
 import { AuthProvider } from './context/AuthContext'
 import ErrorBoundary from './components/ErrorBoundary'
+import CommandPalette from './components/CommandPalette'
+import ShortcutHelp from './components/ShortcutHelp'
 import './index.css'
 import { SystemConfigProvider } from './context/SystemConfigContext'
+import { KeyboardProvider } from './providers/KeyboardProvider'
 
 /** Em dev, usa sempre `localhost` (Vite / `.env.development` / redirects Supabase). Evita `127.0.0.1` vs `localhost`. */
 if (import.meta.env.DEV && typeof window !== 'undefined') {
@@ -56,6 +59,9 @@ if (rootElement) {
     <StrictMode>
       <ErrorBoundary>
         <BrowserRouter>
+          <KeyboardProvider />
+          <CommandPalette />
+          <ShortcutHelp />
           <Toaster
             position="bottom-center"
             containerStyle={{

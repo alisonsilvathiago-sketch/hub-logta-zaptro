@@ -235,7 +235,7 @@ const MasterFinanceiro: React.FC = () => {
                       style={styles.reconcileBtn}
                       onClick={(e) => { e.stopPropagation(); setSelectedPayment(p); setIsConciliationModalOpen(true); }}
                    >
-                      Conciliar ⚡
+                      Conciliar 
                    </button>
                 </td>
               </tr>

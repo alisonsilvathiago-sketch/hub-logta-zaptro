@@ -60,7 +60,7 @@ export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
   auth: {
     persistSession: true,
     storageKey: 'logta-auth-token',
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storage: cookieStorage,
     flowType: 'pkce',
     autoRefreshToken: true,
     detectSessionInUrl: true,

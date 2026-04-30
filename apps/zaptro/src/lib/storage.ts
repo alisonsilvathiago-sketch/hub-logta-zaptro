@@ -3,40 +3,66 @@ import { supabase } from './supabase';
 export interface FileUploadParams {
   file: File;
   companyId: string;
-  category: 'rh' | 'veiculos' | 'documentos' | 'usuarios';
+  category: string;
   userId: string;
+  entityId?: string;
+  entityType?: 'cliente' | 'veiculo' | 'zaptro' | 'staff';
 }
 
-export const uploadFile = async ({ file, companyId, category, userId }: FileUploadParams) => {
+/**
+ * Uploads a file to the Hub Drive with automated hierarchical organization.
+ * Integrated with Zaptro & Logta.
+ */
+export const uploadFile = async ({ 
+  file, 
+  companyId, 
+  category = 'documentos', 
+  userId,
+  entityId,
+  entityType = 'zaptro'
+}: FileUploadParams) => {
   try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-    const filePath = `empresa_${companyId}/${category}/${fileName}`;
+    const date = new Date().toISOString().split('T')[0];
+    let filePath = '';
 
-    // 1. Upload para o Supabase Storage
+    // 1. Definição do Path Automático (Padrão Hub Drive)
+    if (entityType === 'cliente') {
+      filePath = `${companyId}/clientes/${entityId}/${category}/${date}-${file.name}`;
+    } else if (entityType === 'veiculo') {
+      filePath = `${companyId}/veiculos/${entityId}/${category}/${file.name}`;
+    } else if (entityType === 'staff') {
+      filePath = `${companyId}/staff/${entityId}/${category}/${file.name}`;
+    } else {
+      filePath = `${companyId}/zaptro/${category}/${date}-${file.name}`;
+    }
+
+    // 2. Upload para o Supabase Storage (Bucket Centralizado)
     const { data: storageData, error: storageError } = await supabase.storage
-      .from('logta-files')
-      .upload(filePath, file);
+      .from('hub-drive')
+      .upload(filePath, file, { upsert: true });
 
     if (storageError) throw storageError;
 
-    // 2. Gerar URL pública (ou assinada, mas aqui usaremos pública se o bucket for público, 
-    // ou usaremos a referência para gerar assinada depois)
-    const { data: { publicUrl } } = supabase.storage
-      .from('logta-files')
-      .getPublicUrl(filePath);
-
-    // 3. Salvar referência no Banco de Dados
+    // 3. Registro no Banco de Dados (Metadados Estruturados para o Drive)
     const { data: dbData, error: dbError } = await supabase
       .from('files')
       .insert([
         {
           company_id: companyId,
           user_id: userId,
-          file_name: file.name,
-          storage_path: filePath,
-          url: publicUrl,
-          category
+          name: file.name,
+          path: filePath,
+          size: file.size,
+          type: file.type,
+          category: category,
+          entity_type: entityType,
+          client_id: entityType === 'cliente' ? entityId : null,
+          vehicle_id: entityType === 'veiculo' ? entityId : null,
+          metadata: { 
+            source: 'zaptro_app', 
+            auto_archived: true,
+            original_category: category 
+          }
         }
       ])
       .select()
@@ -44,9 +70,18 @@ export const uploadFile = async ({ file, companyId, category, userId }: FileUplo
 
     if (dbError) throw dbError;
 
-    return { data: dbData, url: publicUrl };
+    // 4. Log de Auditoria no Hub
+    await supabase.from('file_logs').insert({
+      file_id: dbData.id,
+      action: 'AUTO_ARCHIVE',
+      user_id: userId,
+      company_id: companyId,
+      details: `Arquivo ${file.name} arquivado automaticamente via Zaptro App.`
+    });
+
+    return { data: dbData, path: filePath };
   } catch (error: any) {
-    console.error('Erro no upload:', error.message);
+    console.error('Erro no upload Hub Drive:', error.message);
     throw error;
   }
 };

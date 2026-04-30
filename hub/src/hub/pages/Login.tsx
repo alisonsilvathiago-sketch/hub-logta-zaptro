@@ -14,7 +14,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'forgot'>('login');
 
-  // ⚡ REDIRECT IF ALREADY LOGGED IN
+  //  REDIRECT IF ALREADY LOGGED IN
   useEffect(() => {
     const devSession = localStorage.getItem('hub-dev-session');
     if (devSession) {
@@ -29,7 +29,7 @@ const Login: React.FC = () => {
     });
   }, []);
 
-  // ⚡ DEV BYPASS FOR LOCALHOST
+  //  DEV BYPASS FOR LOCALHOST
   const isDev = window.location.hostname === 'localhost';
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -39,7 +39,7 @@ const Login: React.FC = () => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // ⚡ BYPASS CHECK
+    //  BYPASS CHECK
     if (isDev && normalizedEmail === 'adm@teste.com' && password === '123456') {
       localStorage.setItem('hub-dev-session', JSON.stringify({
         email: normalizedEmail,

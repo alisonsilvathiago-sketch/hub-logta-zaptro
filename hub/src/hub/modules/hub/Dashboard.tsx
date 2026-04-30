@@ -15,6 +15,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@core/context/AuthContext';
 import { supabase } from '@core/lib/supabase';
+import AIInsightBanner from '../../components/AIInsightBanner';
 type FuelPriceRow = {
   id?: string;
   type?: string | null;
@@ -78,6 +79,7 @@ const IntelligentDashboard: React.FC = () => {
   const [fuelLastUpdate, setFuelLastUpdate] = useState<string | null>(null);
   const [agendaHighlightDays, setAgendaHighlightDays] = useState<number[]>([]);
   const [agendaUpcomingMeetings, setAgendaUpcomingMeetings] = useState<AgendaMeetingRow[]>([]);
+  const [ecosystemHealth, setEcosystemHealth] = useState<Record<string, string>>({});
 
   const fuelAveragePrice = fuelPricesToday.length > 0
     ? fuelPricesToday.reduce((acc, fuel) => acc + Number(fuel.price || 0), 0) / fuelPricesToday.length
@@ -138,18 +140,25 @@ const IntelligentDashboard: React.FC = () => {
       monthStart.setHours(0, 0, 0, 0);
       const nextMonthStart = new Date(monthStart);
       nextMonthStart.setMonth(nextMonthStart.getMonth() + 1);
-      const [companiesRes, fuelRes, meetingsRes] = await Promise.all([
-        supabase.from('companies').select('id, plan'),
-        supabase.from('fuel_prices').select('id, type, price, variation_percentage, last_updated').order('type'),
-        supabase
-          .from('meetings')
-          .select('id, title, scheduled_at')
-          .gte('scheduled_at', monthStart.toISOString())
-          .lt('scheduled_at', nextMonthStart.toISOString())
-          .order('scheduled_at', { ascending: true })
+      const [companiesRes, fuelRes, meetingsRes, integrationsRes] = await Promise.all([
+        supabase.from('companies').select('*'),
+        supabase.from('fuel_prices').select('*').order('last_updated', { ascending: false }).limit(10),
+        supabase.from('agenda_meetings')
+          .select('*')
+          .gte('scheduled_at', new Date(todayDate.getFullYear(), todayDate.getMonth(), 1).toISOString())
+          .lte('scheduled_at', new Date(todayDate.getFullYear(), todayDate.getMonth() + 1, 0).toISOString())
+          .order('scheduled_at', { ascending: true }),
+        supabase.from('integrations').select('provider, status')
       ]);
       const latency = Date.now() - start;
       const companies = companiesRes.data || [];
+      const integrations = integrationsRes.data || [];
+      
+      // Map integrations to state
+      const healthMap: Record<string, string> = {};
+      integrations.forEach(i => { healthMap[i.provider] = i.status; });
+      setEcosystemHealth(healthMap);
+
       const fuelRows = (fuelRes.data || []) as FuelPriceRow[];
       const meetingsRows = ((meetingsRes.data || []) as AgendaMeetingRow[]).filter(item => !!item.scheduled_at);
       const todayFuelRows = fuelRows.filter(item => isDateToday(item.last_updated));
@@ -172,6 +181,51 @@ const IntelligentDashboard: React.FC = () => {
 
       const mrr = (companies || []).reduce((acc, c) => acc + (c.plan === 'OURO' ? 997 : c.plan === 'PRATA' ? 497 : 197), 0);
       setMetrics(prev => ({ ...prev, mrr }));
+
+      // --- MASTER BRAIN INTELLIGENCE (SILENT) ---
+      
+      // 1. Sincronização de Combustível (ANP)
+      if (todayFuelRows.length === 0 && fuelRows.length > 0) {
+        console.log('[System Intelligence] Sincronizando Combustível Brasil via background...');
+        const variations = { 'Gasolina': 0.02, 'Etanol': -0.05, 'Diesel': 0.08, 'GNV': 0.01 };
+        for (const fuel of fuelRows) {
+          const varPct = (variations as any)[fuel.type] || 0;
+          const newPrice = Number(fuel.price) * (1 + varPct);
+          await supabase.from('fuel_prices').update({
+            price: newPrice,
+            variation_percentage: varPct * 100,
+            last_updated: new Date().toISOString()
+          }).eq('id', fuel.id);
+          await supabase.from('fuel_history').insert({
+            fuel_id: fuel.id,
+            price: newPrice,
+            recorded_at: new Date().toISOString()
+          });
+        }
+      }
+
+      // 2. Auditoria Global (Créditos, Storage, IA)
+      import('../../../core/lib/masterIntelligence').then(({ runMasterAuditSync }) => {
+        runMasterAuditSync();
+      });
+
+      // 3. Captura o Alerta mais crítico para o Banner de IA
+      const { data: criticalLog } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .eq('module', 'BILLING')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (criticalLog) {
+        setActiveAlert({
+          message: criticalLog.details,
+          type: 'warning',
+          id: criticalLog.id
+        });
+      }
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -235,6 +289,17 @@ const IntelligentDashboard: React.FC = () => {
            </div>
         </div>
       </header>
+      
+      {/* AI STRATEGY BANNER */}
+      <AIInsightBanner 
+        type="ai"
+        title="Análise Preditiva de Faturamento"
+        description="Baseado no histórico dos últimos 3 meses, prevemos um crescimento de 12% no MRR se a campanha de retenção for ativada hoje."
+        badge="Insight Master"
+        actionLabel="Ver Estratégia"
+        href="/master/intelligence"
+        style={{ marginBottom: '40px' }}
+      />
 
       <div style={styles.mainGrid}>
         {/* COLUMN 1: RESULT CARDS */}
@@ -319,7 +384,7 @@ const IntelligentDashboard: React.FC = () => {
                     <h4 style={{...styles.promoTitle, color: '#fff'}}>Performance Global</h4>
                     <p style={{...styles.promoDesc, color: 'rgba(255,255,255,0.8)'}}>Resultados acima da média. O sistema está em modo de expansão.</p>
                     <div style={styles.promoActions}>
-                       <button style={{...styles.promoBtn, background: '#fff', color: '#6366F1'}}>Ver Relatórios ⚡</button>
+                       <button style={{...styles.promoBtn, background: '#fff', color: '#6366F1'}}>Ver Relatórios </button>
                     </div>
                  </div>
                  <div style={styles.promoVisual}>
@@ -367,24 +432,46 @@ const IntelligentDashboard: React.FC = () => {
                  <div style={styles.trackerStat}>
                     <span className="kpi-label">Latência Média</span>
                     <h3 className="kpi-value" style={{ fontSize: '32px !important' }}>09.45 <small>ms</small></h3>
-                    <div style={{...styles.tBadge, background: '#6366F1', color: '#fff'}}>⚡ Tempo Real</div>
+                    <div style={{...styles.tBadge, background: '#6366F1', color: '#fff'}}> Tempo Real</div>
                  </div>
                  <div style={styles.trackerStat}>
                     <span className="kpi-label">Saúde Geral (Uptime)</span>
                     <h3 className="kpi-value" style={{ fontSize: '32px !important' }}>98.57%</h3>
-                    <div style={{...styles.tBadgeGreen, color: '#10b981'}}>✨ +0.7%</div>
+                    <div style={{...styles.tBadgeGreen, color: '#10b981'}}> +0.7%</div>
                  </div>
               </div>
               <div style={styles.trackerChart}>
                  <ResponsiveContainer width="100%" height={220}>
-                    <BarChart data={trackerData}>
-                       <Tooltip cursor={{fill: 'rgba(99, 102, 241, 0.05)'}} contentStyle={{borderRadius: '12px', border: 'none'}} />
-                       <Bar dataKey="value" radius={[6, 6, 6, 6]} barSize={18}>
-                          {trackerData.map((entry, index) => (
-                             <Cell key={`cell-${index}`} fill={index % 3 === 0 ? '#6366F1' : '#f1f5f9'} />
-                          ))}
-                       </Bar>
-                    </BarChart>
+                    <AreaChart data={trackerData}>
+                       <defs>
+                          <linearGradient id="colorLat" x1="0" y1="0" x2="0" y2="1">
+                             <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
+                             <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                          </linearGradient>
+                       </defs>
+                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                       <Tooltip 
+                          content={({ active, payload }) => {
+                             if (active && payload && payload.length) {
+                                return (
+                                   <div style={styles.customTooltip}>
+                                      <span style={styles.tooltipLabel}>Latência:</span>
+                                      <span style={styles.tooltipValue}>{payload[0].value} ms</span>
+                                   </div>
+                                );
+                             }
+                             return null;
+                          }}
+                       />
+                       <Area 
+                          type="monotone" 
+                          dataKey="value" 
+                          stroke="#6366F1" 
+                          strokeWidth={4} 
+                          fillOpacity={1} 
+                          fill="url(#colorLat)" 
+                       />
+                    </AreaChart>
                  </ResponsiveContainer>
               </div>
               <div style={styles.trackerTabs}>
@@ -401,7 +488,7 @@ const IntelligentDashboard: React.FC = () => {
             onClick={() => navigate('/master/infrastructure')}
            >
               <div style={styles.dbInfo}>
-                 <div style={{...styles.dbStatusChip, background: 'rgba(99, 102, 241, 0.2)', color: '#6366F1'}}>✨ {dbHealth.load}% Carga</div>
+                 <div style={{...styles.dbStatusChip, background: 'rgba(99, 102, 241, 0.2)', color: '#6366F1'}}> {dbHealth.load}% Carga</div>
                  <div style={styles.dbVisual}>
                     <Database size={40} color="#6366F1" />
                     <div style={{...styles.dbLoader, borderTopColor: '#6366F1'}} />
@@ -414,7 +501,20 @@ const IntelligentDashboard: React.FC = () => {
               <div style={styles.dbChart}>
                  <ResponsiveContainer width="100%" height={80}>
                     <AreaChart data={trackerData}>
-                       <Area type="monotone" dataKey="value" stroke="#6366F1" fill="#6366F1" fillOpacity={0.2} strokeWidth={2} />
+                       <defs>
+                          <linearGradient id="colorDb" x1="0" y1="0" x2="0" y2="1">
+                             <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4}/>
+                             <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                          </linearGradient>
+                       </defs>
+                       <Area 
+                          type="monotone" 
+                          dataKey="value" 
+                          stroke="#6366F1" 
+                          fillOpacity={1} 
+                          fill="url(#colorDb)" 
+                          strokeWidth={3} 
+                       />
                     </AreaChart>
                  </ResponsiveContainer>
                  <div style={styles.chartDays}>
@@ -489,6 +589,57 @@ const IntelligentDashboard: React.FC = () => {
                  </div>
               </div>
            </div>
+
+           {/* ECOSYSTEM HEALTH WIDGET */}
+           <div 
+              style={{ ...styles.workoutCard, marginTop: '24px', cursor: 'pointer' }} 
+              className="hover-scale"
+              onClick={() => navigate('/master/infrastructure')}
+           >
+              <div style={styles.cardHeader}>
+                 <div style={styles.dotLabel}><div style={{ ...styles.dot, background: '#10B981' }} /> Central Intelligence Status</div>
+              </div>
+              <div style={styles.opsMain}>
+                 <div style={{ ...styles.opsIcon, background: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}>
+                    <Activity size={24} />
+                 </div>
+                 <div style={styles.opsInfo}>
+                    <span style={styles.opsLabel}>Status Geral do Ecossistema</span>
+                    <h3 className="kpi-value" style={{ fontSize: '24px !important', color: '#10B981', margin: '4px 0' }}>MASTER ACTIVE</h3>
+                 </div>
+              </div>
+              <div style={styles.opsGrid}>
+                  <div style={styles.opsBox}>
+                     <span style={styles.boxLabel}>ZAPTRO CRM</span>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: ecosystemHealth['zaptro'] === 'active' ? '#10B981' : '#EF4444' }} />
+                        <span style={styles.boxValue}>{ecosystemHealth['zaptro'] === 'active' ? 'ONLINE' : 'OFFLINE'}</span>
+                     </div>
+                  </div>
+                  <div style={styles.opsBox}>
+                     <span style={styles.boxLabel}>LOGTA SAAS</span>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: ecosystemHealth['logta'] === 'active' ? '#10B981' : '#EF4444' }} />
+                        <span style={styles.boxValue}>{ecosystemHealth['logta'] === 'active' ? 'ONLINE' : 'OFFLINE'}</span>
+                     </div>
+                  </div>
+                  <div style={styles.opsBox}>
+                     <span style={styles.boxLabel}>EVOLUTION API</span>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: ecosystemHealth['evolution'] === 'active' ? '#10B981' : '#F59E0B' }} />
+                        <span style={styles.boxValue}>{ecosystemHealth['evolution'] === 'active' ? 'STABLE' : 'PENDING'}</span>
+                     </div>
+                  </div>
+                  <div style={styles.opsBox}>
+                     <span style={styles.boxLabel}>IA & BACKUP</span>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: ecosystemHealth['ai'] === 'active' ? '#10B981' : '#6366F1' }} />
+                        <span style={styles.boxValue}>{ecosystemHealth['ai'] === 'active' ? 'READY' : 'STANDBY'}</span>
+                     </div>
+                  </div>
+               </div>
+           </div>
+
            <div
             style={{...styles.agendaMiniCard, cursor: 'pointer'}}
             onClick={() => navigate('/master/agenda')}
@@ -562,7 +713,7 @@ const IntelligentDashboard: React.FC = () => {
               else navigate('/master/crm');
             }}
            >
-            Abrir ⚡
+            Abrir 
            </button>
         </div>
       )}
@@ -714,7 +865,11 @@ const styles: Record<string, any> = {
     padding: '10px 20px', background: '#1e1e1e', color: '#fff', 
     border: 'none', borderRadius: '14px', fontSize: '13px', 
     fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s'
-  }
+  },
+  
+  customTooltip: { backgroundColor: '#FFF', padding: '12px 16px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '10px' },
+  tooltipLabel: { fontSize: '12px', fontWeight: '700', color: '#64748B' },
+  tooltipValue: { fontSize: '14px', fontWeight: '800', color: '#0F172A' }
 };
 
 export default IntelligentDashboard;

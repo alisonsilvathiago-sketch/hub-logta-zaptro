@@ -8,11 +8,15 @@ import {
 import { useAuth } from '@core/context/AuthContext';
 import SyncIndicator from './SyncIndicator';
 
+import Kbd from '@shared/components/Kbd';
+import { getPlatform } from '@core/lib/platform';
+
 const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ onMenuClick, isMobile }) => {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const platform = getPlatform();
 
   // Mapeamento de rotas para nomes amigáveis
   const getBreadcrumbs = () => {
@@ -93,7 +97,10 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
       <div style={styles.rightSection}>
         <div style={styles.iconAction} onClick={() => (window as any).toggleSpotlight?.()}>
           <Search size={20} />
-          <div style={styles.kbdHint}>⌘K</div>
+          <div style={styles.kbdHint}>
+            <Kbd style={{ height: '14px', minWidth: '14px', fontSize: '8px', padding: '0 2px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF', margin: 0 }}>{platform.cmd}</Kbd>
+            <Kbd style={{ height: '14px', minWidth: '14px', fontSize: '8px', padding: '0 2px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF', margin: 0 }}>K</Kbd>
+          </div>
         </div>
 
         <div style={styles.iconAction} onClick={() => navigate('/master/settings')}>
@@ -209,14 +216,18 @@ const styles: Record<string, any> = {
   notificationBadge: { position: 'absolute', top: '12px', right: '12px', width: '8px', height: '8px', backgroundColor: '#EF4444', borderRadius: '50%', border: '2px solid white' },
   kbdHint: { 
     position: 'absolute', 
-    bottom: '-20px', 
-    fontSize: '9px', 
-    fontWeight: '800', 
-    color: '#94A3B8',
-    backgroundColor: '#F1F5F9',
-    padding: '2px 4px',
-    borderRadius: '4px',
-    border: '1px solid #E2E8F0'
+    bottom: '-8px', 
+    left: '50%',
+    transform: 'translateX(-50%)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2px',
+    backgroundColor: '#0F172A',
+    padding: '2px 3px',
+    borderRadius: '6px',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+    zIndex: 10,
+    border: '1px solid rgba(255,255,255,0.1)'
   },
   
   userProfile: {

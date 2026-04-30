@@ -67,7 +67,7 @@ const MasterLMS: React.FC = () => {
       if (error) throw error;
       
       toastDismiss(tid);
-      toastSuccess('Curso Master criado com sucesso! 🚀');
+      toastSuccess('Curso Master criado com sucesso! ');
       setShowAddModal(false);
       fetchCourses();
     } catch (err: any) {

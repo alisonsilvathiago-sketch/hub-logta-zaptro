@@ -13,6 +13,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '../lib/toast';
 import { useAuth } from '../context/AuthContext';
+import UnifiedFileUploader from '@shared/components/UnifiedFileUploader';
 
 const styles: Record<string, any> = {
   container: { padding: '32px', backgroundColor: 'var(--bg-app)', minHeight: '100vh' },
@@ -87,6 +88,7 @@ const ClientProfile: React.FC = () => {
   const [client, setClient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [files, setFiles] = useState<any[]>([]);
 
   const canSeeValues = ['ADMIN', 'MASTER_ADMIN', 'FINANCEIRO'].includes(profile?.role || '');
 
@@ -121,9 +123,20 @@ const ClientProfile: React.FC = () => {
           since: '12/05/2023',
           totalSpent: 452800.00,
           pending: 12500.00,
-          ordersCount: 142
+          ordersCount: 142,
+          company_id: profile?.company_id || 'demo'
         });
       }
+
+      // Carregar Arquivos do Cliente no Drive
+      const { data: driveFiles } = await supabase
+        .from('files')
+        .select('*')
+        .eq('metadata->>client_id', id)
+        .order('created_at', { ascending: false });
+      
+      setFiles(driveFiles || []);
+
       setLoading(false);
     };
     loadClient();
@@ -362,26 +375,58 @@ const ClientProfile: React.FC = () => {
             
             {activeTab === 'docs' && (
                <div style={styles.historyList}>
-                  <div style={{...styles.statCard, marginBottom: '20px'}}>
-                     <div style={{display: 'flex', gap: '16px', alignItems: 'center'}}>
-                        <div style={{width: '40px', height: '40px', backgroundColor: '#fef2f2', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center'}}><FileText color="#ef4444" size={20} /></div>
-                        <div>
-                           <p style={{margin: 0, fontSize: '14px', fontWeight: '600'}}>Contrato_Prestacao_Servicos.pdf</p>
-                           <p style={{margin: 0, fontSize: '11px', color: '#94a3b8'}}>Assinado em 12/04/2026</p>
-                        </div>
-                     </div>
-                     <button style={{...styles.btnAction, padding: '8px'}}><Download size={16} /></button>
+                  <div style={{ marginBottom: '32px' }}>
+                     <UnifiedFileUploader 
+                        companyId={client?.company_id || 'demo'}
+                        entityType="CLIENTE"
+                        entityId={id || ''}
+                        onUploadComplete={() => {
+                          toastSuccess('Documento arquivado com sucesso no Hub Drive!');
+                          // Recarregar lista
+                          supabase.from('files').select('*').eq('metadata->>client_id', id).then(({data}) => setFiles(data || []));
+                        }}
+                     />
                   </div>
-                  <div style={styles.statCard}>
-                     <div style={{display: 'flex', gap: '16px', alignItems: 'center'}}>
-                        <div style={{width: '40px', height: '40px', backgroundColor: 'rgba(217, 255, 0, 0.12)', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center'}}><FileText color="#D9FF00" size={20} /></div>
-                        <div>
-                           <p style={{margin: 0, fontSize: '14px', fontWeight: '600'}}>Comprovante_Entrega_9921.jpg</p>
-                           <p style={{margin: 0, fontSize: '11px', color: '#94a3b8'}}>Anexado via WhatsApp</p>
-                        </div>
-                     </div>
-                     <button style={{...styles.btnAction, padding: '8px'}}><Download size={16} /></button>
-                  </div>
+
+                  {files.length === 0 ? (
+                    <div style={{ padding: '40px', textAlign: 'center', backgroundColor: 'white', borderRadius: '24px', border: '1px dashed var(--border)' }}>
+                       <FileText size={48} color="var(--text-muted)" style={{ opacity: 0.2, marginBottom: '16px' }} />
+                       <p style={{ color: 'var(--text-muted)', margin: 0 }}>Nenhum documento arquivado para este cliente.</p>
+                       <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>Arraste arquivos acima para salvá-los permanentemente no Drive.</p>
+                    </div>
+                  ) : (
+                    files.map((file, idx) => (
+                      <div key={file.id || idx} style={styles.statCard}>
+                         <div style={{display: 'flex', gap: '16px', alignItems: 'center'}}>
+                            <div style={{
+                              width: '40px', 
+                              height: '40px', 
+                              backgroundColor: file.type?.includes('pdf') ? '#fef2f2' : 'rgba(217, 255, 0, 0.12)', 
+                              borderRadius: '12px', 
+                              display: 'flex', 
+                              justifyContent: 'center', 
+                              alignItems: 'center'
+                            }}>
+                              <FileText color={file.type?.includes('pdf') ? '#ef4444' : '#D9FF00'} size={20} />
+                            </div>
+                            <div>
+                               <p style={{margin: 0, fontSize: '14px', fontWeight: '600'}}>{file.name}</p>
+                               <p style={{margin: 0, fontSize: '11px', color: '#94a3b8'}}>
+                                  {file.metadata?.entity_type || 'Documento'} · {(file.size / 1024).toFixed(1)} KB
+                               </p>
+                            </div>
+                         </div>
+                         <div style={{ display: 'flex', gap: '8px' }}>
+                            <button 
+                              style={{...styles.btnAction, padding: '8px'}}
+                              onClick={() => window.open(`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/hub-drive/${file.path}`, '_blank')}
+                            >
+                              <Download size={16} />
+                            </button>
+                         </div>
+                      </div>
+                    ))
+                  )}
                </div>
             )}
         </main>

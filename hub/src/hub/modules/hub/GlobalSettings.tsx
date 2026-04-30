@@ -18,6 +18,7 @@ import InteractionsTab from './Interactions';
 import EvolutionManager from './EvolutionManager';
 import HubNotifications from '../../pages/HubNotifications';
 import { useNavigate } from 'react-router-dom';
+import Button from '@shared/components/Button';
 
 const MasterSettings: React.FC = () => {
   const { profile } = useAuth();
@@ -37,6 +38,7 @@ const MasterSettings: React.FC = () => {
   const [supportEmail, setSupportEmail] = useState('');
   const [primaryColor, setPrimaryColor] = useState('');
   const [allowRegistration, setAllowRegistration] = useState(true);
+  const [systemLockdown, setSystemLockdown] = useState(false);
 
   // Sync local state when global configs load
   useEffect(() => {
@@ -45,6 +47,7 @@ const MasterSettings: React.FC = () => {
       setSupportEmail(globalConfigs.supportEmail);
       setPrimaryColor(globalConfigs.primaryColor);
       setAllowRegistration(globalConfigs.allowRegistration);
+      setSystemLockdown(globalConfigs.systemLockdown || false);
     }
   }, [globalConfigs]);
 
@@ -71,7 +74,8 @@ const MasterSettings: React.FC = () => {
         { key: 'PLATFORM_NAME', value: platformName },
         { key: 'SUPPORT_EMAIL', value: supportEmail },
         { key: 'PRIMARY_COLOR', value: primaryColor },
-        { key: 'ALLOW_REGISTRATION', value: allowRegistration.toString() }
+        { key: 'ALLOW_REGISTRATION', value: allowRegistration.toString() },
+        { key: 'SYSTEM_LOCKDOWN', value: systemLockdown.toString() }
       ];
 
       for (const entry of configEntries) {
@@ -91,7 +95,7 @@ const MasterSettings: React.FC = () => {
 
       await refreshConfigs();
       toastDismiss(tid);
-      toastSuccess('Configurações Globais Propagadas com Sucesso! O ecossistema foi atualizado. 🚀');
+      toastSuccess('Configurações Globais Propagadas com Sucesso! O ecossistema foi atualizado. ');
     } catch (err: any) {
       toastDismiss(tid);
       toastError(`Falha Crítica ao Salvar: ${err.message}. Verifique a conexão com o banco de dados.`);
@@ -103,7 +107,6 @@ const MasterSettings: React.FC = () => {
   const tabs = [
     { id: 'geral', label: 'Geral & Branding', icon: <Globe size={18} /> },
     { id: 'equipe', label: 'Equipe Master', icon: <Users size={18} /> },
-    { id: 'financeiro', label: 'Faturamento Master', icon: <CreditCard size={18} /> },
     { id: 'interacoes', label: 'Interações & Hub', icon: <LinkIcon size={18} /> },
     { id: 'evolution', label: 'Evolution API Hub', icon: <Smartphone size={18} /> },
     { id: 'notificacoes', label: 'Central de Alertas', icon: <Bell size={18} /> },
@@ -118,16 +121,16 @@ const MasterSettings: React.FC = () => {
           email={supportEmail} setEmail={setSupportEmail}
           reg={allowRegistration} setReg={setAllowRegistration}
           color={primaryColor} setColor={setPrimaryColor}
+          lockdown={systemLockdown} setLockdown={setSystemLockdown}
         />
       );
       case 'equipe': return (
         <div style={styles.tabContent}>
           <h3 style={styles.tabTitle}>Equipe Master Hub</h3>
           <p style={styles.tabSub}>A gestão de membros agora é centralizada no Team Hub para melhor governança.</p>
-          <button style={{...styles.saveBtn, marginTop: '24px'}} onClick={() => navigate('/master/team')}>Ir para Team Hub</button>
+          <Button variant="primary" label="Ir para Team Hub" onClick={() => navigate('/master/team')} style={{ marginTop: '24px' }} />
         </div>
       );
-      case 'financeiro': return <MasterBilling summaryOnly={true} />;
       case 'interacoes': return <InteractionsTab />;
       case 'evolution': return <EvolutionManager />;
       case 'notificacoes': return <HubNotifications />;
@@ -146,9 +149,13 @@ const MasterSettings: React.FC = () => {
         </div>
         <div style={styles.headerActions}>
            <button style={styles.refreshBtn} onClick={refreshConfigs} disabled={loading}><RefreshCw size={18} className={loading ? 'animate-spin' : ''} /></button>
-           <button style={styles.saveBtn} onClick={handleSaveAll} disabled={loading}>
-              <Save size={18} /> {loading ? 'Propagando...' : 'Propagar Alterações'}
-           </button>
+           <Button 
+             variant="primary" 
+             icon={<Save size={18} />} 
+             label={loading ? 'Propagando...' : 'Propagar Alterações'} 
+             onClick={handleSaveAll} 
+             disabled={loading} 
+           />
         </div>
       </header>
 
@@ -189,7 +196,7 @@ const MasterSettings: React.FC = () => {
 
 // --- SUB-COMPONENTES ---
 
-const GeralTab = ({ name, setName, email, setEmail, reg, setReg, color, setColor }: any) => {
+const GeralTab = ({ name, setName, email, setEmail, reg, setReg, color, setColor, lockdown, setLockdown }: any) => {
   return (
     <div style={styles.tabContent}>
        <div style={styles.tabHeader}>
@@ -225,7 +232,18 @@ const GeralTab = ({ name, setName, email, setEmail, reg, setReg, color, setColor
                 <option value="false">Restrito (Apenas Convite)</option>
              </select>
           </div>
-       </div>
+          <div style={styles.fGroup}>
+             <label style={{...styles.fLabel, color: lockdown ? '#EF4444' : '#94A3B8'}}>MASTER LOCKDOWN (GATEWAY)</label>
+             <select 
+               style={{...styles.input, backgroundColor: lockdown ? '#FEF2F2' : '#F8FAFC', borderColor: lockdown ? '#EF4444' : '#E2E8F0'}} 
+               value={lockdown.toString()} 
+               onChange={e => setLockdown(e.target.value === 'true')}
+             >
+                <option value="false">Operação Normal</option>
+                <option value="true">LOCKDOWN ATIVO (Restringir Acessos)</option>
+             </select>
+          </div>
+        </div>
 
        <div style={{...styles.card, marginTop: '32px', backgroundColor: '#f8fafc'}}>
           <div style={{display: 'flex', gap: '20px', alignItems: 'center'}}>
@@ -234,7 +252,7 @@ const GeralTab = ({ name, setName, email, setEmail, reg, setReg, color, setColor
                 <h4 style={{margin: 0, fontSize: '15px', fontWeight: '800'}}>Logo Principal (Master)</h4>
                 <p style={{margin: '4px 0 0', fontSize: '12px', color: '#64748b'}}>A logo enviada aqui será replicada em todas as áreas não customizadas.</p>
              </div>
-             <button style={{...styles.secondaryBtn, marginLeft: 'auto'}}>Alterar Logo</button>
+              <Button variant="outline" size="sm" label="Alterar Logo" style={{ marginLeft: 'auto' }} />
           </div>
        </div>
     </div>
@@ -285,11 +303,15 @@ const GoogleWorkspaceTab = () => {
           />
        </div>
 
-       <div style={{marginTop: '24px'}}>
-          <button style={styles.saveBtn} onClick={handleSaveKey} disabled={status === 'SAVING'}>
-             <Save size={18} /> Salvar Integração Google
-          </button>
-       </div>
+        <div style={{marginTop: '24px'}}>
+           <Button 
+             variant="primary" 
+             icon={<Save size={18} />} 
+             label="Salvar Integração Google" 
+             onClick={handleSaveKey} 
+             loading={status === 'SAVING'} 
+           />
+        </div>
     </div>
   );
 };
@@ -320,7 +342,7 @@ const CoreStatusTab = () => {
        <div style={styles.card}>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
              <h4 style={{margin: 0, fontSize: '16px', fontWeight: '600', letterSpacing: '0.3px'}}>Monitoramento de Carga</h4>
-             <button style={styles.secondaryBtn}>Reiniciar Serviços</button>
+             <Button variant="outline" size="sm" label="Reiniciar Serviços" />
           </div>
           <div style={{ height: '200px', backgroundColor: '#f8fafc', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
              Visualização Gráfica do Núcleo (Engine Analytics)
