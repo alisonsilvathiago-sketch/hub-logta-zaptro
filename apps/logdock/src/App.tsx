@@ -12,7 +12,7 @@ import {
   Bell, Layout, PanelLeft, MessageSquare, Gift, ChevronLeft, Edit2, Sun, Moon, ChevronUp, ChevronDown,
   Truck, Users as UsersIcon, ShieldAlert, Activity, Calendar, MapPin,
   Home, Files, Image, Mail, Phone, Sparkles, Mic, ArrowUp, Camera,
-  FolderPlus
+  FolderPlus, Brain, Tag, FolderOpen
 } from 'lucide-react';
 import { supabase } from '@shared/lib/supabase';
 import { useAuth } from '@shared/context/AuthContext';
@@ -43,7 +43,7 @@ import ReportsPage from './pages/Reports';
 // --- Styles ---
 const styles: Record<string, React.CSSProperties> = {
   dashboardContainer: { display: 'flex', width: '100vw', height: '100vh', backgroundColor: '#0F0F0F', overflow: 'hidden' },
-  miniSidebar: { width: '120px', height: '100vh', backgroundColor: '#141414', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', zIndex: 120, flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.05)' },
+  miniSidebar: { width: '84px', height: '100vh', backgroundColor: '#141414', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', zIndex: 120, flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.05)' },
   miniLogoBox: { marginBottom: '60px', cursor: 'pointer' },
   miniNav: { flex: 1, display: 'flex', flexDirection: 'column', gap: '32px' },
   miniNavItem: { background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s', outline: 'none' },
@@ -77,7 +77,7 @@ const styles: Record<string, React.CSSProperties> = {
   flyoutItemName: { fontSize: '14px', fontWeight: '800', color: '#FFFFFF' },
   flyoutItemDesc: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: '600' },
 
-  macProfilePopup: { position: 'absolute', top: '50px', right: 0, width: '320px', backgroundColor: '#1A1A1A', borderRadius: '14px', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', zIndex: 10000, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' },
+  macProfilePopup: { position: 'absolute', top: '72px', right: '40px', width: '320px', backgroundColor: '#1A1A1A', borderRadius: '14px', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', zIndex: 10000, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' },
   profileHeader: { padding: '24px' },
   profileInfoMain: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' },
   userBadgeLarge: { width: '48px', height: '48px', backgroundColor: '#0061FF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '900', color: '#FFF', overflow: 'hidden' },
@@ -1132,13 +1132,13 @@ const DashboardView: React.FC<DashboardProps> = ({
           {['Criar nova pasta', 'Enviar arquivos', 'Ver relatórios', 'Buscar motorista', 'Carga pendente'].map((text, i, arr) => (
             <React.Fragment key={text}>
               <span 
-                style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontWeight: 600, cursor: 'pointer', transition: '0.2s', letterSpacing: '0.3px' }} 
+                style={{ fontSize: '11px', color: theme === 'dark' ? 'rgba(255,255,255,0.3)' : '#64748B', fontWeight: 600, cursor: 'pointer', transition: '0.2s', letterSpacing: '0.3px' }} 
                 onMouseEnter={e => { e.currentTarget.style.color = '#0061FF'; }} 
-                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = theme === 'dark' ? 'rgba(255,255,255,0.3)' : '#64748B'; }}
               >
                 {text}
               </span>
-              {i < arr.length - 1 && <span style={{ color: 'rgba(255,255,255,0.1)', fontSize: '10px' }}>•</span>}
+              {i < arr.length - 1 && <span style={{ color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', fontSize: '10px' }}>•</span>}
             </React.Fragment>
           ))}
         </div>
@@ -2095,13 +2095,15 @@ const LogDockDashboard: React.FC = () => {
   const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState(false);
   const [currentFolder, setCurrentFolder] = useState<{ id: string, name: string } | null>(null);
   const [navigationPath, setNavigationPath] = useState<{ id: string, name: string }[]>([]);
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'large-grid'>('grid');
+  const [viewMode, setViewMode] = useState<string>('grid');
   const [sortField, setSortField] = useState<'name' | 'created_at' | 'size'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [recentFiles, setRecentFiles] = useState<any[]>([]);
   const [activeCollab, setActiveCollab] = useState<number | null>(null);
+  const [isOrganizingModalOpen, setIsOrganizingModalOpen] = useState(false);
+  const [isAutomatedFolderModalOpen, setIsAutomatedFolderModalOpen] = useState(false);
 
   const collaborators = [
     { id: 1, name: 'Ana Lima', email: 'ana.lima@empresa.com', phone: '(11) 98765-4321', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&auto=format&fit=crop&q=60', role: 'Designer', files: ['Dashboard Designs.fig', 'Cloud Dashboard.fig', 'Mobile App UI.fig'] },
@@ -3158,7 +3160,6 @@ const LogDockDashboard: React.FC = () => {
         
         <aside style={{ 
           ...currentStyles.miniSidebar,
-          width: isSidebarCollapsed ? '120px' : '280px', 
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flexShrink: 0, padding: '24px 0',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
@@ -3176,6 +3177,7 @@ const LogDockDashboard: React.FC = () => {
           {[
             { id: 'inicio',   icon: <Home size={22} />,      label: 'Início' },
             { id: 'arquivos', icon: <HardDrive size={22} />, label: 'Meu Drive' },
+            { id: 'central-inteligente', icon: <Brain size={22} />, label: 'Central Inteligente' },
             { id: 'lixeira',  icon: <Trash2 size={22} />,    label: 'Lixeira' },
           ].map(item => (
             <button
@@ -3333,20 +3335,21 @@ const LogDockDashboard: React.FC = () => {
         {/* TIER 2: EXPLORER / NAVIGATION TREE SIDEBAR */}
         <aside style={{ 
           width: isSidebarCollapsed ? '84px' : '320px', 
-          background: theme === 'dark' ? '#0F0F0F' : '#EBEBEB', 
+          background: theme === 'dark' ? '#0F0F0F' : '#F1F1F1', 
           color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#64748B', 
           display: 'flex', 
           flexDirection: 'column', 
-          borderRight: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1', 
+          borderRight: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #E2E8F0', 
           flexShrink: 0,
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
 
-          <div style={{ padding: '32px 24px', display: 'flex', alignItems: 'center', justifyContent: isSidebarCollapsed ? 'center' : 'space-between', borderBottom: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1' }}>
+          <div style={{ padding: isSidebarCollapsed ? '16px 10px' : '20px 24px', display: 'flex', alignItems: 'center', justifyContent: isSidebarCollapsed ? 'center' : 'space-between', borderBottom: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #E2E8F0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div 
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#D1D1D1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                onClick={(e) => { e.stopPropagation(); setIsSidebarCollapsed(!isSidebarCollapsed); }}
+                style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                title={isSidebarCollapsed ? 'Expandir painel' : 'Recolher painel'}
               >
                 {isSidebarCollapsed ? <ChevronRight size={18} color={theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#64748B'} /> : <ChevronLeft size={18} color={theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#64748B'} />}
               </div>
@@ -3836,6 +3839,7 @@ const LogDockDashboard: React.FC = () => {
               {activeTab === 'master' && <MasterHubPage />}
               {activeTab === 'portal-cliente' && <ClientPortalPage />}
               {activeTab === 'relatorios' && <ResultsMemoryPage />}
+              {activeTab === 'central-inteligente' && <IntelligentCentralView />}
               {activeTab === 'arquivos' && (
                 <FileExplorerView 
                   folders={filteredFolders} 
@@ -3843,6 +3847,14 @@ const LogDockDashboard: React.FC = () => {
                   currentPath={navigationPath} 
                   isNewMenuOpen={isNewMenuOpen}
                   setIsNewMenuOpen={setIsNewMenuOpen}
+                  viewMode={viewMode}
+                  setViewMode={setViewMode}
+                  isOrganizingModalOpen={isOrganizingModalOpen}
+                  setIsOrganizingModalOpen={setIsOrganizingModalOpen}
+                  isAutomatedFolderModalOpen={isAutomatedFolderModalOpen}
+                  setIsAutomatedFolderModalOpen={setIsAutomatedFolderModalOpen}
+                  selectedItems={selectedItems}
+                  setSelectedItems={setSelectedItems}
                   onFolderClick={(f) => {
                     setCurrentFolder(f);
                     setNavigationPath([...navigationPath, { id: f.id, name: f.name }]);
@@ -3990,6 +4002,40 @@ const LogDockDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {isNewFolderModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '400px', backgroundColor: theme === 'dark' ? '#1A1A1A' : '#FFF', borderRadius: '24px', padding: '32px', border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #EBEBEB', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 800, color: theme === 'dark' ? '#FFF' : '#0F172A', marginBottom: '8px' }}>Nova pasta</h2>
+            <p style={{ fontSize: '14px', color: '#64748B', marginBottom: '24px' }}>Digite um nome para a sua nova pasta.</p>
+            <input 
+              autoFocus
+              type="text" 
+              placeholder="Nome da pasta" 
+              value={newFolderName}
+              onChange={e => setNewFolderName(e.target.value)}
+              style={{ width: '100%', padding: '16px', backgroundColor: theme === 'dark' ? 'rgba(0,0,0,0.2)' : '#F8FAFC', border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #EBEBEB', borderRadius: '12px', color: theme === 'dark' ? '#FFF' : '#0F172A', fontSize: '15px', fontWeight: 600, outline: 'none', marginBottom: '24px' }}
+            />
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setIsNewFolderModalOpen(false)} style={{ padding: '12px 24px', backgroundColor: 'transparent', color: '#64748B', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer' }}>Cancelar</button>
+              <button 
+                onClick={() => {
+                  if(newFolderName.trim()) {
+                    setFolders([...folders, { id: Date.now().toString(), name: newFolderName, type: 'folder', parent_id: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), tenant_id: '1' }]);
+                    setNewFolderName('');
+                    setIsNewFolderModalOpen(false);
+                    toast.success(`Pasta "${newFolderName}" criada com sucesso!`);
+                  }
+                }}
+                style={{ padding: '12px 24px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer' }}
+              >
+                Criar pasta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
@@ -4046,6 +4092,108 @@ const DashboardMinimalView: React.FC<{ stats: any }> = ({ stats }) => {
   );
 };
 
+const IntelligentCentralView = () => {
+  const [activeFilter, setActiveFilter] = useState('todos');
+
+  const timelineData = [
+    {
+      date: 'Hoje',
+      items: [
+        { id: 1, type: 'financeiro', name: 'nota_fiscal_123.pdf', action: 'Movido para: Financeiro', link: 'Vinculado à entrega #123', tag: 'Urgente', time: 'Agora mesmo', reason: 'O sistema identificou que este arquivo é financeiro e organizou automaticamente.' },
+        { id: 2, type: 'entregas', name: 'comprovante_assinado.jpg', action: 'Movido para: Entregas', link: 'Vinculado ao Cliente XPTO', tag: 'Aprovado', time: 'Há 2 horas', reason: 'O sistema detectou uma assinatura de comprovante válida.' }
+      ]
+    },
+    {
+      date: 'Ontem',
+      items: [
+        { id: 3, type: 'clientes', name: 'contrato_social.pdf', action: 'Movido para: Clientes', link: 'Vinculado ao Cliente ABC', tag: 'Documentação', time: '14:30', reason: 'Documento jurídico identificado e classificado.' }
+      ]
+    }
+  ];
+
+  return (
+    <div style={{ padding: '48px 64px', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#F8F9FA' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Brain size={32} color="#0061FF" />
+            Central Inteligente
+          </h1>
+          <p style={{ fontSize: '15px', color: '#64748B', marginTop: '8px' }}>Histórico completo de automações e organizações feitas pela IA.</p>
+        </div>
+        <div style={{ display: 'flex', gap: '12px', backgroundColor: '#FFF', padding: '6px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          {['todos', 'financeiro', 'entregas', 'clientes'].map(f => (
+            <button 
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              style={{ padding: '8px 16px', borderRadius: '12px', border: 'none', backgroundColor: activeFilter === f ? '#0061FF' : 'transparent', color: activeFilter === f ? '#FFF' : '#64748B', fontWeight: 700, fontSize: '13px', cursor: 'pointer', textTransform: 'capitalize' }}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', paddingRight: '16px' }}>
+        <div style={{ position: 'relative', paddingLeft: '24px' }}>
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: '31px', width: '2px', backgroundColor: '#E2E8F0' }} />
+          
+          {timelineData.map(group => (
+            <div key={group.date} style={{ marginBottom: '40px', position: 'relative' }}>
+              <div style={{ position: 'absolute', left: '0', top: '2px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#0061FF', border: '4px solid #F8F9FA', zIndex: 10 }} />
+              <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#1E293B', marginLeft: '32px', marginBottom: '24px' }}>{group.date}</h2>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginLeft: '32px' }}>
+                {group.items.filter(i => activeFilter === 'todos' || i.type === activeFilter).map(item => (
+                  <div key={item.id} style={{ backgroundColor: '#FFF', borderRadius: '20px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #F1F1F1' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <FileText size={24} color="#3B82F6" />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A' }}>{item.name}</div>
+                          <div style={{ fontSize: '13px', color: '#64748B', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Clock size={14} /> {item.time}
+                          </div>
+                        </div>
+                      </div>
+                      <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#F8FAFC', color: '#0061FF', border: '1px solid #E2E8F0', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.backgroundColor='#EFF6FF'} onMouseLeave={e => e.currentTarget.style.backgroundColor='#F8FAFC'}>
+                        <FolderOpen size={16} />
+                        Abrir localização
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#F1F5F9', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: '#334155' }}>
+                        <Folder size={14} color="#64748B" /> {item.action}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#F1F5F9', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: '#334155' }}>
+                        <LinkIcon size={14} color="#64748B" /> {item.link}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#FEF2F2', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, color: '#EF4444' }}>
+                        <Tag size={14} color="#EF4444" /> {item.tag}
+                      </div>
+                    </div>
+
+                    <div style={{ backgroundColor: '#F8FAFC', borderLeft: '3px solid #0061FF', padding: '12px 16px', borderRadius: '0 12px 12px 0' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Brain size={16} color="#0061FF" />
+                        Decisão da IA
+                      </div>
+                      <p style={{ fontSize: '13px', color: '#64748B', marginTop: '4px', lineHeight: '1.5' }}>{item.reason}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const FileExplorerView: React.FC<{ 
   folders: any[], 
   files: any[], 
@@ -4055,10 +4203,34 @@ const FileExplorerView: React.FC<{
   onNewFolder: () => void,
   isDragging: boolean,
   isNewMenuOpen: boolean,
-  setIsNewMenuOpen: (val: boolean) => void
-}> = ({ folders, files, currentPath, onFolderClick, onBack, onNewFolder, isDragging, isNewMenuOpen, setIsNewMenuOpen }) => {
+  setIsNewMenuOpen: (val: boolean) => void,
+  viewMode: string,
+  setViewMode: (val: string) => void,
+  isOrganizingModalOpen: boolean,
+  setIsOrganizingModalOpen: (val: boolean) => void,
+  isAutomatedFolderModalOpen: boolean,
+  setIsAutomatedFolderModalOpen: (val: boolean) => void,
+  selectedItems: string[],
+  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>
+}> = ({ folders, files, currentPath, onFolderClick, onBack, onNewFolder, isDragging, isNewMenuOpen, setIsNewMenuOpen, viewMode, setViewMode, isOrganizingModalOpen, setIsOrganizingModalOpen, isAutomatedFolderModalOpen, setIsAutomatedFolderModalOpen, selectedItems, setSelectedItems }) => {
   const [isFolderMenuOpen, setIsFolderMenuOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareEmail, setShareEmail] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      toast.success(`${e.target.files.length} arquivo(s) enviado(s) com sucesso!`);
+      closeMenus();
+    }
+  };
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -4072,10 +4244,11 @@ const FileExplorerView: React.FC<{
 
   return (
     <div 
-      style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+      style={{ display: 'flex', flexDirection: 'column', gap: '24px', position: 'relative', flex: 1 }}
       onContextMenu={handleContextMenu}
       onClick={closeMenus}
     >
+      <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple style={{ display: 'none' }} />
       {/* BREADCRUMBS ROW */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 4px' }}>
         <span 
@@ -4106,6 +4279,7 @@ const FileExplorerView: React.FC<{
                 }}>
                   <button 
                     style={styles.dropdownItem}
+                    onClick={() => { onNewFolder(); closeMenus(); }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
@@ -4118,6 +4292,11 @@ const FileExplorerView: React.FC<{
                   <div style={styles.menuDivider} />
                   <button 
                     style={styles.dropdownItem}
+                    onClick={() => { 
+                      closeMenus();
+                      const toastId = toast.loading('Compactando pasta para download...');
+                      setTimeout(() => toast.success('Download iniciado!', { id: toastId }), 1500);
+                    }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
@@ -4128,6 +4307,12 @@ const FileExplorerView: React.FC<{
                   </button>
                   <button 
                     style={styles.dropdownItem}
+                    onClick={() => {
+                      closeMenus();
+                      const currentName = currentPath[currentPath.length - 1]?.name || '';
+                      setRenameValue(currentName);
+                      setIsRenameModalOpen(true);
+                    }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
@@ -4140,6 +4325,11 @@ const FileExplorerView: React.FC<{
                   <div style={styles.menuDivider} />
                   <button 
                     style={styles.dropdownItem}
+                    onClick={() => {
+                      closeMenus();
+                      setShareEmail('');
+                      setIsShareModalOpen(true);
+                    }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
@@ -4151,17 +4341,30 @@ const FileExplorerView: React.FC<{
                   </button>
                   <button 
                     style={styles.dropdownItem}
+                    onClick={() => {
+                      closeMenus();
+                      setIsOrganizingModalOpen(true);
+                      setTimeout(() => {
+                        setIsOrganizingModalOpen(false);
+                        toast.success('Pasta organizada inteligentemente!');
+                      }, 3000);
+                    }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <Folder size={18} color="rgba(255,255,255,0.5)" />
-                      <span>Organizar</span>
+                      <span>Organizar Inteligente</span>
                     </div>
                     <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
                   </button>
                   <button 
                     style={styles.dropdownItem}
+                    onClick={() => {
+                      closeMenus();
+                      const name = currentPath[currentPath.length - 1]?.name || 'Pasta';
+                      toast(`Nome: ${name}\nTamanho: 12.4 MB\nCriado: Hoje`, { icon: 'ℹ️' });
+                    }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
@@ -4174,7 +4377,14 @@ const FileExplorerView: React.FC<{
                   <div style={styles.menuDivider} />
                   <button 
                     style={{ ...styles.dropdownItem, color: '#EF4444' }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.05)'}
+                    onClick={() => {
+                      closeMenus();
+                      const confirm = window.confirm('Mover pasta para a lixeira?');
+                      if (confirm) {
+                        toast.success('Pasta movida para a lixeira.', { icon: '🗑️' });
+                      }
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -4214,13 +4424,34 @@ const FileExplorerView: React.FC<{
             <ArrowUp size={14} color="#0061FF" />
           </div>
 
+          {/* Size Select (only if not list) */}
+          {viewMode !== 'list' && (
+            <select 
+              value={viewMode}
+              onChange={e => setViewMode(e.target.value)}
+              style={{ padding: '8px 16px', borderRadius: '20px', border: '1px solid #E2E8F0', backgroundColor: '#FFF', fontSize: '13px', fontWeight: 600, color: '#334155', cursor: 'pointer', outline: 'none' }}
+            >
+              <option value="small-grid">Pequena</option>
+              <option value="grid">Média</option>
+              <option value="large-grid">Grande</option>
+              <option value="xl-grid">Super Grande</option>
+            </select>
+          )}
+
           {/* View Toggle */}
           <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #E2E8F0', borderRadius: '20px', overflow: 'hidden', backgroundColor: '#FFF' }}>
-            <div style={{ padding: '8px 12px', borderRight: '1px solid #F1F1F1', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <div 
+              onClick={() => setViewMode('list')}
+              style={{ padding: '8px 12px', borderRight: '1px solid #F1F1F1', cursor: 'pointer', display: 'flex', alignItems: 'center', backgroundColor: viewMode === 'list' ? '#F2F2F2' : '#FFF' }}
+            >
+              {viewMode === 'list' && <Check size={14} color="#0F172A" style={{marginRight: '4px'}} />}
               <List size={16} color="#0F172A" />
             </div>
-            <div style={{ padding: '8px 12px', backgroundColor: '#E0EFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Check size={14} color="#0F172A" />
+            <div 
+              onClick={() => setViewMode(viewMode === 'list' ? 'grid' : viewMode)}
+              style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: viewMode !== 'list' ? '#F2F2F2' : '#FFF' }}
+            >
+              {viewMode !== 'list' && <Check size={14} color="#0F172A" />}
               <Grid size={16} color="#0F172A" />
             </div>
           </div>
@@ -4265,6 +4496,15 @@ const FileExplorerView: React.FC<{
                     <PremiumFolderIcon width={16} height={12} />
                     <span>Pasta</span>
                   </button>
+                  <button 
+                    onClick={() => { setIsNewMenuOpen(false); fileInputRef.current?.click(); }}
+                    style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#1E293B', fontSize: '13px', fontWeight: 600 }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <Upload size={16} color="#64748B" />
+                    <span>Upload de arquivo</span>
+                  </button>
                   <div style={{ height: '1px', backgroundColor: '#F1F1F1', margin: '4px 0' }} />
                   <button 
                     onClick={() => { setIsNewMenuOpen(false); window.open('https://docs.google.com/document/create', '_blank'); }}
@@ -4307,15 +4547,31 @@ const FileExplorerView: React.FC<{
             {folders.map(folder => (
               <div 
                 key={folder.id}
-                onClick={() => onFolderClick(folder)}
+                onClick={() => {
+                  if (selectedItems.includes(folder.id)) setSelectedItems(prev => prev.filter(i => i !== folder.id));
+                  else onFolderClick(folder);
+                }}
                 style={{ 
+                  position: 'relative',
                   padding: '20px', backgroundColor: '#FFF', border: '1px solid #F1F1F1', borderRadius: '20px', 
                   display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', transition: 'all 0.3s ease',
                   boxShadow: 'none'
                 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = '#0061FF'; e.currentTarget.style.transform = 'translateY(-4px)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = '#F1F1F1'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#0061FF'; e.currentTarget.style.transform = 'translateY(-4px)'; (e.currentTarget.querySelector('.item-checkbox') as HTMLElement).style.opacity = '1'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#F1F1F1'; e.currentTarget.style.transform = 'translateY(0)'; if(!selectedItems.includes(folder.id)) (e.currentTarget.querySelector('.item-checkbox') as HTMLElement).style.opacity = '0'; }}
               >
+                <input 
+                  type="checkbox" 
+                  checked={selectedItems.includes(folder.id)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    if (e.target.checked) setSelectedItems(prev => [...prev, folder.id]);
+                    else setSelectedItems(prev => prev.filter(i => i !== folder.id));
+                  }}
+                  onClick={e => e.stopPropagation()}
+                  style={{ position: 'absolute', top: '12px', left: '12px', opacity: selectedItems.includes(folder.id) ? 1 : 0, cursor: 'pointer', zIndex: 10 }} 
+                  className="item-checkbox" 
+                />
                 <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <PremiumFolderIcon width={32} height={24} />
                 </div>
@@ -4330,11 +4586,22 @@ const FileExplorerView: React.FC<{
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative', flex: 1, minHeight: files.length === 0 ? '120px' : 'auto' }}>
 
         
-        {files.length > 0 && (
+        {files.length > 0 && viewMode === 'list' && (
           <div style={{ backgroundColor: '#FFF', border: '1px solid #F1F1F1', borderRadius: '24px', overflow: 'hidden', boxShadow: 'none' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #F1F1F1' }}>
+                  <th style={{ padding: '20px 24px', width: '40px' }}>
+                    <input 
+                      type="checkbox" 
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedItems(files.map(f => f.id));
+                        else setSelectedItems([]);
+                      }}
+                      checked={files.length > 0 && files.every(f => selectedItems.includes(f.id))}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </th>
                   <th style={{ padding: '20px 24px', fontSize: '11px', fontWeight: 900, color: '#1E1E1B', letterSpacing: '1px' }}>NOME</th>
                   <th style={{ padding: '20px 24px', fontSize: '11px', fontWeight: 900, color: '#1E1E1B', letterSpacing: '1px' }}>MODIFICADO</th>
                   <th style={{ padding: '20px 24px', fontSize: '11px', fontWeight: 900, color: '#1E1E1B', letterSpacing: '1px' }}>TAMANHO</th>
@@ -4345,12 +4612,29 @@ const FileExplorerView: React.FC<{
                 {files.map(file => (
                   <tr 
                     key={file.id} 
-                    style={{ borderBottom: '1px solid #F1F1F1', transition: 'all 0.2s ease', cursor: 'pointer' }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FFFFFF'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    style={{ borderBottom: '1px solid #F1F1F1', transition: 'all 0.2s ease', cursor: 'pointer', backgroundColor: selectedItems.includes(file.id) ? '#F8FAFC' : 'transparent' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = selectedItems.includes(file.id) ? '#F8FAFC' : 'transparent'}
+                    onClick={() => {
+                      if (selectedItems.includes(file.id)) setSelectedItems(prev => prev.filter(i => i !== file.id));
+                      else setSelectedItems(prev => [...prev, file.id]);
+                    }}
                   >
+                    <td style={{ padding: '16px 24px' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedItems.includes(file.id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          if (e.target.checked) setSelectedItems(prev => [...prev, file.id]);
+                          else setSelectedItems(prev => prev.filter(i => i !== file.id));
+                        }}
+                        onClick={e => e.stopPropagation()}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </td>
                     <td style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {file.type?.includes('image') ? <ImageIcon size={18} color="#0061FF" /> : <FileText size={18} color="#64748B" />}
                       </div>
                       <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>{file.name}</span>
@@ -4360,7 +4644,7 @@ const FileExplorerView: React.FC<{
                       {file.size ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : '--'}
                     </td>
                     <td style={{ padding: '16px 24px' }}>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F1F1F1' }}>
+                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}>
                         <MoreHorizontal size={20} />
                       </button>
                     </td>
@@ -4371,22 +4655,49 @@ const FileExplorerView: React.FC<{
           </div>
         )}
 
-        {isDragging && (
+        {files.length > 0 && viewMode !== 'list' && (
           <div style={{ 
-            padding: '80px 40px', textAlign: 'center', backgroundColor: '#F8FAFF', borderRadius: '24px', border: '2px dashed #F1F1F1',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            animation: 'fadeIn 0.2s ease',
-            position: files.length > 0 ? 'absolute' : 'relative',
-            inset: 0,
-            zIndex: 20
+            display: 'grid', 
+            gridTemplateColumns: `repeat(auto-fill, minmax(${viewMode === 'small-grid' ? 120 : viewMode === 'large-grid' ? 280 : viewMode === 'xl-grid' ? 360 : 200}px, 1fr))`, 
+            gap: '16px' 
           }}>
-            <div style={{ width: '64px', height: '64px', borderRadius: '20px', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: 'none' }}>
-              <Upload size={32} color="#0061FF" />
-            </div>
-            <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#334155', margin: '0 0 4px 0' }}>Solte o arquivo aqui</h4>
-            <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>Para iniciar o upload agora</p>
+            {files.map(file => (
+              <div 
+                key={file.id} 
+                style={{ position: 'relative', backgroundColor: '#FFF', border: '1px solid #F1F1F1', borderRadius: '16px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', cursor: 'pointer', transition: 'all 0.2s ease', borderColor: selectedItems.includes(file.id) ? '#0061FF' : '#F1F1F1' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#0061FF'; (e.currentTarget.querySelector('.item-checkbox') as HTMLElement).style.opacity = '1'; }}
+                onMouseLeave={e => { if(!selectedItems.includes(file.id)) { e.currentTarget.style.borderColor = '#F1F1F1'; (e.currentTarget.querySelector('.item-checkbox') as HTMLElement).style.opacity = '0'; } }}
+                onClick={() => {
+                  if (selectedItems.includes(file.id)) setSelectedItems(prev => prev.filter(i => i !== file.id));
+                  else setSelectedItems(prev => [...prev, file.id]);
+                }}
+              >
+                <input 
+                  type="checkbox" 
+                  checked={selectedItems.includes(file.id)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    if (e.target.checked) setSelectedItems(prev => [...prev, file.id]);
+                    else setSelectedItems(prev => prev.filter(i => i !== file.id));
+                  }}
+                  onClick={e => e.stopPropagation()}
+                  style={{ position: 'absolute', top: '12px', left: '12px', opacity: selectedItems.includes(file.id) ? 1 : 0, zIndex: 10, cursor: 'pointer' }} 
+                  className="item-checkbox" 
+                />
+                <div style={{ width: '100%', height: viewMode === 'small-grid' ? '60px' : '120px', borderRadius: '12px', backgroundColor: '#F8F9FA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {file.type?.includes('image') ? <ImageIcon size={32} color="#0061FF" /> : <FileText size={32} color="#64748B" />}
+                </div>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{file.name}</div>
+                  <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>
+                    Há 2 dias • {file.size ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : '--'}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
+
       </div>
 
       {contextMenu && (
@@ -4412,6 +4723,7 @@ const FileExplorerView: React.FC<{
           <div style={styles.menuDivider} />
           <button 
             style={styles.dropdownItem}
+            onClick={(e) => { e.stopPropagation(); handleUploadClick(); setContextMenu(null); }}
             onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
             onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
           >
@@ -4502,6 +4814,320 @@ const FileExplorerView: React.FC<{
           </button>
         </div>
       )}
+
+      {isRenameModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '400px', backgroundColor: '#1A1A1A', borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#FFF', marginBottom: '8px' }}>Renomear pasta</h2>
+            <p style={{ fontSize: '14px', color: '#64748B', marginBottom: '24px' }}>Digite o novo nome para a pasta atual.</p>
+            <input 
+              autoFocus
+              type="text" 
+              placeholder="Novo nome" 
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
+              style={{ width: '100%', padding: '16px', backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#FFF', fontSize: '15px', fontWeight: 600, outline: 'none', marginBottom: '24px' }}
+            />
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setIsRenameModalOpen(false)} style={{ padding: '12px 24px', backgroundColor: 'transparent', color: '#64748B', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer' }}>Cancelar</button>
+              <button 
+                onClick={() => {
+                  if(renameValue.trim()) {
+                    setIsRenameModalOpen(false);
+                    toast.success(`Pasta renomeada para "${renameValue}"`);
+                  }
+                }}
+                style={{ padding: '12px 24px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer' }}
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isShareModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '600px', backgroundColor: '#1A1A1A', borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={24} color="#0061FF" />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#FFF' }}>nota_fiscal_servico.pdf</h2>
+                  <div style={{ fontSize: '13px', color: '#94A3B8', marginTop: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <span>Documento de entrega #123</span> • <span>Valor: R$ 4.500</span> • <span>Cliente: XPTO</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981' }} />
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#10B981' }}>Status: Entregue</span>
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => setIsShareModalOpen(false)} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ backgroundColor: '#0061FF15', border: '1px solid #0061FF30', borderRadius: '16px', padding: '16px', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <Brain size={18} color="#3B82F6" />
+                <span style={{ fontSize: '14px', fontWeight: 700, color: '#FFF' }}>Sugestão Inteligente</span>
+              </div>
+              <p style={{ fontSize: '13px', color: '#94A3B8', marginBottom: '16px' }}>Identificamos que este arquivo está vinculado à entrega #123. Quem precisa ter acesso?</p>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button style={{ flex: 1, padding: '10px', backgroundColor: '#3B82F6', color: '#FFF', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <UsersIcon size={16} /> Compartilhar com todos (Equipe + Cliente)
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                <button style={{ padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.05)', color: '#E2E8F0', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <User size={14} color="#A78BFA" /> Enviar para Cliente
+                </button>
+                <button style={{ padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.05)', color: '#E2E8F0', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Truck size={14} color="#38BDF8" /> Enviar para Motorista
+                </button>
+                <button style={{ padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.05)', color: '#E2E8F0', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <LinkIcon size={14} color="#34D399" /> Gerar link de entrega
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 700, color: '#94A3B8', display: 'block', marginBottom: '8px' }}>Tipo de Acesso (Link)</label>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <select style={{ flex: 1, padding: '12px 16px', backgroundColor: '#0F0F0F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#FFF', fontSize: '14px', outline: 'none' }}>
+                    <option>👁️ Somente visualização</option>
+                    <option>✏️ Pode editar</option>
+                    <option>🔒 Link restrito (Apenas Equipe)</option>
+                    <option>⏱️ Link que expira (24h)</option>
+                  </select>
+                  <button onClick={() => toast.success('Link copiado!')} style={{ padding: '12px 24px', backgroundColor: 'rgba(255,255,255,0.05)', color: '#FFF', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Copy size={16} /> Copiar Link
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 700, color: '#94A3B8', display: 'block', marginBottom: '8px' }}>Log de Acesso Recente</label>
+                <div style={{ backgroundColor: '#0F0F0F', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800 }}>AL</div>
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFF' }}>Ana Lima (Financeiro)</div>
+                      <div style={{ fontSize: '12px', color: '#64748B' }}>Visualizou há 2 horas (3 visualizações)</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', padding: '4px 8px', borderRadius: '6px' }}>Equipe Interna</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setIsShareModalOpen(false)} style={{ padding: '12px 24px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer' }}>
+                Concluído
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {isOrganizingModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '24px', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+              <RefreshCw size={40} color="#0061FF" className="animate-spin" style={{ animation: 'spin 2s linear infinite' }} />
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#FFF', marginBottom: '8px' }}>Aguarde...</h2>
+              <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>Estamos organizando sua pasta...</p>
+            </div>
+          </div>
+          <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
+      {isDragging && (
+        <div style={{ 
+          position: 'absolute', inset: '-32px -64px -64px -64px', backgroundColor: 'rgba(255,255,255,0.95)', 
+          zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+          border: '2px dashed #0061FF', borderRadius: '32px', pointerEvents: 'none',
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{ width: '80px', height: '80px', borderRadius: '24px', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', boxShadow: '0 10px 25px rgba(0,97,255,0.2)' }}>
+            <Upload size={40} color="#0061FF" />
+          </div>
+          <span style={{ fontSize: '24px', fontWeight: 900, color: '#0F172A', marginBottom: '8px' }}>Solte o arquivo aqui</span>
+          <span style={{ fontSize: '16px', color: '#64748B', fontWeight: 600 }}>Para iniciar o upload inteligente agora</span>
+        </div>
+      )}
+
+      {selectedItems.length > 0 && (
+        <div style={{
+          position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          backgroundColor: '#1E232E', color: '#FFF', padding: '12px 24px', borderRadius: '24px',
+          display: 'flex', alignItems: 'center', gap: '20px', zIndex: 100,
+          boxShadow: '0 40px 80px rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.05)'
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: '180px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 800 }}>{selectedItems.length} itens selecionados</span>
+            <span style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>• {Math.floor(selectedItems.length / 2) + 1} relacionados à entrega • Cliente XPTO detectado</span>
+          </div>
+          
+          <div style={{ width: '1px', height: '40px', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button 
+              onClick={() => toast.success('Leitura concluída! Contexto identificado.')}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', backgroundColor: '#3B82F6', color: '#FFF', border: 'none', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}
+            >
+              <Zap size={18} />
+              <div style={{ textAlign: 'left', fontSize: '13px', fontWeight: 700, lineHeight: '1.2' }}>Ler<br/>Arquivos</div>
+            </button>
+            <button style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', backgroundColor: '#2A303F', color: '#E2E8F0', border: 'none', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = '#333A4A'} onMouseLeave={e => e.currentTarget.style.backgroundColor = '#2A303F'}>
+              <Truck size={16} color="#38BDF8" />
+              <div style={{ textAlign: 'left', fontSize: '13px', fontWeight: 600, lineHeight: '1.2' }}>Vincular à<br/>Entrega</div>
+            </button>
+            <button style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', backgroundColor: '#2A303F', color: '#E2E8F0', border: 'none', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = '#333A4A'} onMouseLeave={e => e.currentTarget.style.backgroundColor = '#2A303F'}>
+              <User size={16} color="#A78BFA" />
+              <div style={{ textAlign: 'left', fontSize: '13px', fontWeight: 600, lineHeight: '1.2' }}>Enviar para<br/>Cliente</div>
+            </button>
+            <button 
+              onClick={() => setIsAutomatedFolderModalOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', backgroundColor: '#2A303F', color: '#E2E8F0', border: 'none', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = '#333A4A'} onMouseLeave={e => e.currentTarget.style.backgroundColor = '#2A303F'}
+            >
+              <FolderPlus size={16} color="#34D399" />
+              <div style={{ textAlign: 'left', fontSize: '13px', fontWeight: 600, lineHeight: '1.2' }}>Organizar<br/>Automático</div>
+            </button>
+            
+            <div style={{ width: '1px', height: '40px', backgroundColor: 'rgba(255,255,255,0.1)', margin: '0 8px' }} />
+            
+            <button style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '8px' }} title="Compartilhar"><Share2 size={18} /></button>
+            <button style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '8px' }} title="Baixar"><Download size={18} /></button>
+            <button style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '8px' }} title="Excluir"><Trash2 size={18} /></button>
+          </div>
+          
+          <button onClick={() => setSelectedItems([])} style={{ position: 'absolute', top: '-10px', right: '-10px', width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#2A303F', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {isAutomatedFolderModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 110000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '900px', height: '600px', backgroundColor: '#1A1A1A', borderRadius: '24px', display: 'flex', flexDirection: 'column', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+            <div style={{ padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#FFF' }}>Criar uma pasta automatizada</h2>
+              <button onClick={() => setIsAutomatedFolderModalOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'none', color: '#94A3B8', cursor: 'pointer' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700 }}>Esc</span>
+                <X size={14} />
+              </button>
+            </div>
+            
+            <div style={{ flex: 1, display: 'flex' }}>
+              {/* Left Side: Logic Builder */}
+              <div style={{ flex: 1, padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px', overflowY: 'auto' }}>
+                <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '24px', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFF' }}>Quando arquivos forem adicionados à pasta</div>
+                    <ChevronDown size={14} color="#64748B" />
+                  </div>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', letterSpacing: '1px', marginBottom: '8px' }}>SELECIONE A PASTA DESTINO</div>
+                  <select style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', backgroundColor: '#0F0F0F', border: '1px solid rgba(255,255,255,0.1)', color: '#FFF', fontSize: '14px', outline: 'none' }}>
+                    <option>Escolher pasta existente...</option>
+                    <option>Entregas 2026</option>
+                  </select>
+                </div>
+
+                <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: '-24px', left: '32px', width: '2px', height: '24px', backgroundColor: '#0061FF' }} />
+                  <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '24px', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Folder size={16} color="#FFF" />
+                        </div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFF' }}>Então, organizar em pastas agrupadas por</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Trash2 size={14} color="#64748B" style={{ cursor: 'pointer' }} />
+                        <ChevronDown size={14} color="#64748B" />
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <label style={{ display: 'flex', gap: '12px', cursor: 'pointer' }}>
+                        <input type="radio" name="grouping" defaultChecked style={{ marginTop: '4px' }} />
+                        <div>
+                          <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFF' }}>Mês</div>
+                          <div style={{ fontSize: '13px', color: '#64748B', marginTop: '2px' }}>Mês em que seu conteúdo foi adicionado ao LogDock</div>
+                        </div>
+                      </label>
+                      <label style={{ display: 'flex', gap: '12px', cursor: 'pointer' }}>
+                        <input type="radio" name="grouping" style={{ marginTop: '4px' }} />
+                        <div>
+                          <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFF' }}>Ano</div>
+                          <div style={{ fontSize: '13px', color: '#64748B', marginTop: '2px' }}>Ano em que seu conteúdo foi adicionado ao LogDock</div>
+                        </div>
+                      </label>
+                      <label style={{ display: 'flex', gap: '12px', cursor: 'pointer' }}>
+                        <input type="radio" name="grouping" style={{ marginTop: '4px' }} />
+                        <div>
+                          <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFF' }}>Palavra-chave / Contexto Inteligente</div>
+                          <div style={{ fontSize: '13px', color: '#64748B', marginTop: '2px' }}>Agrupar por clientes, motoristas ou placas identificadas</div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <button style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'none', border: 'none', color: '#94A3B8', fontSize: '14px', fontWeight: 700, cursor: 'pointer', alignSelf: 'flex-start' }}>
+                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', border: '1px dashed #64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Plus size={14} />
+                  </div>
+                  Adicionar passo
+                </button>
+              </div>
+
+              {/* Right Side: Preview */}
+              <div style={{ width: '400px', backgroundColor: '#20242D', padding: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '100%', backgroundColor: '#FFF', borderRadius: '16px', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 900, color: '#1E293B', marginBottom: '16px' }}>Setembro</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                    <FileText size={16} color="#0061FF" />
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Doc_1.pdf</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <ImageIcon size={16} color="#34D399" />
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Photo.jpg</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ padding: '24px 32px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#94A3B8', fontSize: '13px' }}>
+                <input type="checkbox" defaultChecked />
+                Salvar ações como modelo de fluxo de trabalho
+              </label>
+              <button 
+                onClick={() => {
+                  setIsAutomatedFolderModalOpen(false);
+                  toast.success('Pasta automatizada criada com sucesso!');
+                }}
+                style={{ padding: '12px 24px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer' }}
+              >
+                Salvar Automação
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
