@@ -1,17 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import {
   Folder, File, Upload, Share2, Search, Filter,
   Download, Trash2, RotateCcw,
-  Eye, Plus, LayoutGrid, List as ListIcon,
+  Eye, Plus, LayoutGrid, List, Grid,
   Box, MoreHorizontal, Zap, FileText,
   Image as ImageIcon, RefreshCw, HardDrive,
   Settings, LogOut, ChevronRight, ShieldCheck, Settings2, Shield,
   Play, Volume2, Maximize2, ExternalLink, User, Lock, Minus, HelpCircle,
   UserPlus, Star, Clock, Laptop, X, Link as LinkIcon, Edit3, Copy, ArrowRight, Info, AlertTriangle, Check, Send, CheckCircle2, BoxSelect,
-  Bell, Layout, PanelLeft, MessageSquare, Gift, ChevronLeft, Edit2, Sun, ChevronUp, ChevronDown,
+  Bell, Layout, PanelLeft, MessageSquare, Gift, ChevronLeft, Edit2, Sun, Moon, ChevronUp, ChevronDown,
   Truck, Users as UsersIcon, ShieldAlert, Activity, Calendar, MapPin,
-  Home, Files, Image, Mail, Phone, Sparkles, Mic, ArrowUp, Camera
+  Home, Files, Image, Mail, Phone, Sparkles, Mic, ArrowUp, Camera,
+  FolderPlus
 } from 'lucide-react';
 import { supabase } from '@shared/lib/supabase';
 import { useAuth } from '@shared/context/AuthContext';
@@ -39,7 +40,515 @@ import MasterHubPage from './pages/MasterHub';
 import ClientPortalPage from './pages/ClientPortal';
 import ReportsPage from './pages/Reports';
 
-// --- Types ---
+// --- Styles ---
+const styles: Record<string, React.CSSProperties> = {
+  dashboardContainer: { display: 'flex', width: '100vw', height: '100vh', backgroundColor: '#0F0F0F', overflow: 'hidden' },
+  miniSidebar: { width: '120px', height: '100vh', backgroundColor: '#141414', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', zIndex: 120, flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.05)' },
+  miniLogoBox: { marginBottom: '60px', cursor: 'pointer' },
+  miniNav: { flex: 1, display: 'flex', flexDirection: 'column', gap: '32px' },
+  miniNavItem: { background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s', outline: 'none' },
+  miniNavActive: { color: '#0061FF' },
+  miniNavLink: { fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' },
+  miniSidebarBottom: { marginTop: 'auto', marginBottom: '24px' },
+  miniBottomBtn: { background: 'none', border: 'none', cursor: 'pointer', outline: 'none' },
+  main: { flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#0F0F0F', borderTopLeftRadius: '32px', borderBottomLeftRadius: '32px', boxShadow: 'none', margin: '12px 0 12px 0px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' },
+  header: { height: '80px', padding: '0 40px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'transparent' },
+  searchBar: { display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'rgba(255,255,255,0.03)', padding: '10px 20px', borderRadius: '14px', width: '400px', border: '1px solid rgba(255,255,255,0.05)' },
+  searchInput: { border: 'none', background: 'none', outline: 'none', width: '100%', fontSize: '14px', fontWeight: '600', color: '#FFFFFF' },
+  headerActions: { display: 'flex', alignItems: 'center', gap: '16px' },
+  uploadBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 20px', backgroundColor: '#0061FF', color: '#FFFFFF', fontSize: '14px', fontWeight: '800', cursor: 'pointer', borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0, 97, 255, 0.2)' },
+  opBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)', color: '#FFFFFF', fontSize: '13px', fontWeight: '700', cursor: 'pointer', borderRadius: '10px' },
+  userSection: { position: 'relative' },
+  userBadge: { width: '40px', height: '40px', backgroundColor: '#0061FF', color: '#FFF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', cursor: 'pointer', overflow: 'hidden' },
+  content: { flex: 1, padding: '40px', overflowY: 'auto', position: 'relative' },
+  
+  // Popups & Flyouts
+  flyoutOverlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 1000 },
+  flyoutContent: { position: 'absolute', left: '120px', top: '12px', bottom: '12px', width: '360px', backgroundColor: '#141414', borderRadius: '24px', boxShadow: '0 40px 100px rgba(0,0,0,0.5)', overflow: 'hidden', display: 'flex', flexDirection: 'column', border: '1px solid rgba(255,255,255,0.05)' },
+  flyoutHeader: { padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  flyoutTitle: { fontSize: '18px', fontWeight: '900', color: '#FFFFFF' },
+  closeFlyout: { background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' },
+  flyoutBody: { padding: '24px', flex: 1, overflowY: 'auto' },
+  flyoutGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' },
+  flyoutItem: { display: 'flex', flexDirection: 'column', gap: '12px', padding: '20px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', textAlign: 'center', alignItems: 'center', fontSize: '13px', fontWeight: '700', color: '#FFFFFF' },
+  flyoutList: { display: 'flex', flexDirection: 'column', gap: '12px' },
+  flyoutListItem: { display: 'flex', gap: '16px', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.01)', cursor: 'pointer', textAlign: 'left' },
+  flyoutItemInfo: { display: 'flex', flexDirection: 'column', gap: '2px' },
+  flyoutItemName: { fontSize: '14px', fontWeight: '800', color: '#FFFFFF' },
+  flyoutItemDesc: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: '600' },
+
+  macProfilePopup: { position: 'absolute', top: '50px', right: 0, width: '320px', backgroundColor: '#1A1A1A', borderRadius: '14px', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', zIndex: 10000, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' },
+  profileHeader: { padding: '24px' },
+  profileInfoMain: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' },
+  userBadgeLarge: { width: '48px', height: '48px', backgroundColor: '#0061FF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '900', color: '#FFF', overflow: 'hidden' },
+  profileName: { fontSize: '15px', fontWeight: '800', color: '#FFFFFF' },
+  profileEmail: { fontSize: '12px', color: 'rgba(255,255,255,0.5)' },
+  storageSection: { display: 'flex', flexDirection: 'column', gap: '12px' },
+  storageBarContainer: { height: '6px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' },
+  popupStorageFill: { height: '100%', borderRadius: '3px', transition: 'width 0.3s' },
+  popupStorageText: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontWeight: '600' },
+  upgradeLink: { background: 'none', border: 'none', color: '#0061FF', fontSize: '13px', fontWeight: '800', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'none' },
+  popupDivider: { height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' },
+  deviceSection: { padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '12px' },
+  deviceText: { fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: '600' },
+  popupMenu: { padding: '8px' },
+  popupItem: { padding: '10px 16px', fontSize: '13px', fontWeight: '600', color: '#FFFFFF', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: '0.2s' },
+  languageSection: { padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: '600' },
+
+  // Dashboard Stats & Components
+  loadingScreen: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', width: '100vw', backgroundColor: '#0F0F0F' },
+  aiBadge: { padding: '6px 12px', backgroundColor: 'rgba(0, 97, 255, 0.1)', color: '#0061FF', borderRadius: '10px', fontSize: '10px', fontWeight: '900', letterSpacing: '1px', width: 'fit-content' },
+  resultsContainer: { padding: '40px' },
+  resultsGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' },
+  resultCard: { backgroundColor: '#1A1A1A', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center' },
+  resultIconBox: { width: '48px', height: '48px', borderRadius: '14px', backgroundColor: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  resultType: { fontSize: '10px', fontWeight: '900', letterSpacing: '0.5px', marginBottom: '4px', color: 'rgba(255,255,255,0.4)' },
+  resultTitle: { fontSize: '15px', fontWeight: '800', color: '#FFFFFF', marginBottom: '4px' },
+  resultDate: { fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
+  viewResultBtn: { padding: '10px 16px', backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1', borderRadius: '10px', fontSize: '12px', fontWeight: '800', color: '#64748B', cursor: 'pointer' },
+  
+  // LogDock Original Premium Styles
+  dashboardView: { padding: '0px', display: 'flex', flexDirection: 'column', gap: '32px', animation: 'fadeIn 0.5s ease-out' },
+  sectionTitle: { fontSize: '28px', fontWeight: '900', color: '#FFFFFF', marginBottom: '24px', letterSpacing: '-0.5px' },
+  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '32px' },
+  statCard: { padding: '32px', backgroundColor: '#1A1A1A', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '20px', transition: 'all 0.3s ease', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' },
+  statIconBox: { width: '64px', height: '64px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  statTitle: { fontSize: '13px', fontWeight: '800', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' },
+  statValue: { fontSize: '24px', fontWeight: '900', color: '#FFFFFF' },
+  dashboardMainGrid: { display: 'grid', gridTemplateColumns: '1fr 380px', gap: '32px' },
+  dashboardPrimaryCol: { display: 'flex', flexDirection: 'column', gap: '32px' },
+  insightsSection: { backgroundColor: '#1A1A1A', padding: '32px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '32px' },
+  insightList: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  insightItem: { display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', fontWeight: '600', color: 'rgba(255,255,255,0.6)' },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' },
+  fileCard: { backgroundColor: '#1A1A1A', padding: '20px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '16px', alignItems: 'center', transition: 'all 0.2s ease', cursor: 'pointer' },
+  fileIconBox: { width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  fileInfo: { display: 'flex', flexDirection: 'column', gap: '2px' },
+  fileName: { fontSize: '14px', fontWeight: '800', color: '#FFFFFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  fileMeta: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: '600' },
+  timelineSidebar: { backgroundColor: '#141414', padding: '32px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)', alignSelf: 'start', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' },
+  timelineList: { display: 'flex', flexDirection: 'column' },
+  timelineItem: { display: 'flex', gap: '20px', paddingBottom: '32px', borderLeft: '2px solid rgba(255,255,255,0.05)', marginLeft: '6px', paddingLeft: '28px', position: 'relative' },
+  timelineDot: { width: '14px', height: '14px', borderRadius: '50%', position: 'absolute', left: '-8px', top: '0', border: '3px solid #141414', boxShadow: 'none' },
+  timelineContent: { flex: 1 },
+  timelineHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' },
+  timelineUser: { fontSize: '12px', fontWeight: '900', color: '#FFFFFF' },
+  timelineTime: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: '600' },
+  timelineEvent: { fontSize: '13px', color: 'rgba(255,255,255,0.6)', fontWeight: '500', lineHeight: '1.4' },
+  
+  aiStatusBadge: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#FFF', padding: '10px 20px', borderRadius: '16px' },
+  statusDotGreen: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF' },
+  projectList: { display: 'flex', flexDirection: 'column', gap: '24px' },
+  projectMeta: { display: 'flex', gap: '16px', fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
+  statusBadge: { display: 'flex', alignItems: 'center', gap: '6px', color: '#0061FF' },
+  projectTeam: { display: 'flex', alignItems: 'center', gap: '16px' },
+  teamAvatars: { display: 'flex', marginLeft: '8px' },
+  avatar: { width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#F1F1F1', border: '2px solid #FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '800', color: '#0061FF', marginLeft: '-8px' },
+  inviteBtn: { backgroundColor: '#334155', color: '#FFF', border: 'none', borderRadius: '100px', padding: '8px 16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' },
+  projectTabs: { display: 'flex', gap: '20px', borderTop: '1px solid #F1F1F1', paddingTop: '20px' },
+  projectTab: { fontSize: '13px', fontWeight: '700', color: '#94A3B8', cursor: 'pointer' },
+  projectTabActive: { fontSize: '13px', fontWeight: '800', color: '#0061FF' },
+  notifWidgetList: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  notifWidgetCard: { padding: '20px', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #F1F1F1' },
+  notifWidgetHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '12px' },
+  notifType: { fontSize: '11px', fontWeight: '800', color: '#0061FF', textTransform: 'uppercase' },
+  notifEventName: { fontSize: '15px', fontWeight: '800', marginBottom: '8px' },
+  notifEventTime: { fontSize: '12px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' },
+  notifWidgetMessage: { padding: '20px', borderRadius: '24px', border: '1px solid #F1F1F1' },
+  notifMsgText: { fontSize: '13px', color: '#64748B', margin: 0 },
+  assignmentTag: { fontSize: '12px', color: '#94A3B8', fontWeight: '700' },
+  assignmentTitle: { fontSize: '16px', fontWeight: '800', margin: '8px 0 24px 0', lineHeight: '1.4' },
+  assignmentFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
+  priorityBadge: { padding: '4px 12px', backgroundColor: '#FEE2E2', color: '#EF4444', fontSize: '11px', fontWeight: '800', borderRadius: '100px' },
+  assigneeAvatar: { width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#334155', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '800' },
+  addAssignmentBtn: { width: '100%', padding: '16px', borderRadius: '16px', border: '2px dashed #F1F1F1', backgroundColor: '#FFFFFF', color: '#64748B', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
+  calendarGrid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '12px', margin: '12px 0' },
+  calDayHead: { fontSize: '11px', fontWeight: '800', color: '#94A3B8', textAlign: 'center' },
+  calDay: { height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '700', color: '#334155', cursor: 'pointer', borderRadius: '50%' },
+  calDayActive: { backgroundColor: '#0061FF', color: '#FFFFFF' },
+  calendarEvents: { marginTop: '20px' },
+  calEvent: { padding: '16px', backgroundColor: '#FFFFFF', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '8px' },
+  calEventTime: { fontSize: '11px', fontWeight: '800', color: '#94A3B8' },
+  calEventInfo: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700' },
+  calEventDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF' },
+  taskList: { display: 'flex', flexDirection: 'column', gap: '20px' },
+  taskItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '20px', border: '1px solid #F1F1F1' },
+  taskName: { fontSize: '15px', fontWeight: '800', margin: 0 },
+  taskTime: { fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
+  taskProgress: { display: 'flex', alignItems: 'center', gap: '12px', width: '120px' },
+  progressBar: { flex: 1, height: '6px', backgroundColor: '#F1F1F1', borderRadius: '10px', overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: '#0061FF' },
+  progressText: { fontSize: '12px', fontWeight: '800', color: '#334155' },
+  premiumWidget: { backgroundColor: '#0061FF', borderRadius: '32px', padding: '32px', display: 'flex', flexDirection: 'column', gap: '16px', color: '#FFFFFF' },
+  premiumIcon: { width: '48px', height: '48px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  premiumTitle: { fontSize: '20px', fontWeight: '900', margin: 0 },
+  premiumText: { fontSize: '13px', opacity: 0.8, lineHeight: '1.5', margin: 0 },
+  premiumBtn: { backgroundColor: '#FFF', color: '#0061FF', border: 'none', padding: '12px', borderRadius: '14px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', marginTop: '8px' },
+  statMiniCard: { padding: '24px', backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid #F1F1F1', display: 'flex', alignItems: 'center', gap: '20px' },
+  statRing: { width: '48px', height: '48px', borderRadius: '50%', border: '4px solid #F1F1F1', borderTopColor: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  statRingInner: { fontSize: '11px', fontWeight: '900' },
+  meetingCard: { padding: '32px', backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid #F1F1F1', flex: 1 },
+  meetingFooter: { marginTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  meetingTime: { fontSize: '12px', color: '#94A3B8', fontWeight: '700' },
+  meetingActions: { display: 'flex', gap: '8px' },
+  rescheduleBtn: { background: '#F1F1F1', border: 'none', borderRadius: '100px', padding: '8px 16px', fontSize: '11px', fontWeight: '800', color: '#64748B', cursor: 'pointer' },
+  acceptBtn: { background: '#0061FF', border: 'none', borderRadius: '100px', padding: '8px 16px', fontSize: '11px', fontWeight: '800', color: '#FFF', cursor: 'pointer' },
+  dashboardInnerContent: { display: 'flex', flexDirection: 'column', gap: '0', minHeight: '100vh', paddingBottom: '100px', backgroundColor: '#FFFFFF' },
+  scoreCard: { padding: '32px', backgroundColor: '#FFFFFF', borderRadius: '32px', border: '1px solid #F1F1F1', display: 'flex', flexDirection: 'column', gap: '16px', transition: 'all 0.3s ease', boxShadow: 'none' },
+  scoreHeader: { display: 'flex', alignItems: 'center', gap: '12px' },
+  scoreLabel: { fontSize: '11px', fontWeight: '900', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px' },
+  scoreValue: { fontSize: '36px', fontWeight: '900', color: '#334155', letterSpacing: '-1px' },
+  scoreBar: { height: '8px', backgroundColor: '#FFFFFF', borderRadius: '4px', overflow: 'hidden' },
+  scoreFill: { height: '100%', borderRadius: '4px', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)' },
+  timelineContext: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: '900', color: '#0061FF', backgroundColor: '#F0F7FF', padding: '6px 12px', borderRadius: '10px', width: 'fit-content' },
+  viewAllTimelineBtn: { width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid #F1F1F1', backgroundColor: '#FFFFFF', color: '#94A3B8', fontSize: '12px', fontWeight: '800', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.5px' },
+  intelSidebar: { 
+    position: 'fixed', 
+    top: '12px', 
+    right: '12px', 
+    bottom: '12px', 
+    width: '380px', 
+    backgroundColor: '#1A1A1A', 
+    borderRadius: '32px', 
+    boxShadow: '0 20px 40px rgba(0,0,0,0.3)', 
+    border: '1px solid rgba(255,255,255,0.1)',
+    zIndex: 2000,
+    display: 'flex',
+    flexDirection: 'column',
+    animation: 'slideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+  },
+  intelHeader: { padding: '24px 32px', borderBottom: '1px solid #F1F1F1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  intelTitle: { fontSize: '15px', fontWeight: '900', color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.5px' },
+  intelContent: { padding: '32px', flex: 1, display: 'flex', flexDirection: 'column', gap: '32px' },
+  intelAlert: { backgroundColor: 'rgba(124, 58, 237, 0.1)', padding: '16px 20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '12px', color: '#7C3AED', fontSize: '13px', fontWeight: '700', border: '1px solid rgba(124, 58, 237, 0.2)' },
+  intelFieldGroup: { display: 'flex', flexDirection: 'column', gap: '12px' },
+  intelLabel: { fontSize: '11px', fontWeight: '900', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' },
+  intelValue: { fontSize: '15px', fontWeight: '800', color: '#FFFFFF' },
+  intelDataBox: { padding: '20px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' },
+  
+  // Automations Styles
+  automationsContainer: { padding: '48px', maxWidth: '1200px' },
+  autoGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' },
+  autoCard: { backgroundColor: '#FFFFFF', borderRadius: '32px', padding: '32px', border: '1px solid #F1F1F1', boxShadow: 'none', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
+  autoHeader: { display: 'flex', gap: '20px', marginBottom: '32px' },
+  autoIconBox: { width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  autoTitle: { fontSize: '16px', fontWeight: '900', color: '#334155', marginBottom: '4px' },
+  autoDesc: { fontSize: '13px', color: '#64748B', fontWeight: '600', lineHeight: '1.5' },
+  toggleSwitch: { width: '42px', height: '24px', borderRadius: '100px', padding: '3px', cursor: 'pointer', transition: 'all 0.3s ease', flexShrink: 0 },
+  toggleDot: { width: '18px', height: '18px', backgroundColor: '#FFF', borderRadius: '50%', boxShadow: 'none', transition: 'all 0.3s ease' },
+  autoFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '24px', borderTop: '1px solid #F1F1F1' },
+  autoStatus: { fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#94A3B8', letterSpacing: '0.5px' },
+  autoSettingsBtn: { background: 'none', border: 'none', color: '#0061FF', fontSize: '12px', fontWeight: '800', cursor: 'pointer' },
+  
+  synergyCard: { background: 'linear-gradient(135deg, #334155 0%, #334155 100%)', borderRadius: '32px', padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '240px', boxShadow: 'none' },
+  synergyHeader: { display: 'flex', gap: '20px' },
+  synergyIcon: { width: '56px', height: '56px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  synergyStatus: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', fontWeight: '700', color: '#0061FF', margin: '24px 0' },
+  synergyBtn: { width: '100%', padding: '14px', borderRadius: '16px', border: 'none', backgroundColor: '#FFF', color: '#334155', fontSize: '13px', fontWeight: '900', cursor: 'pointer', transition: 'all 0.2s' },
+
+  // Team Styles
+  teamContainer: { padding: '48px', maxWidth: '1000px' },
+  teamHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
+  teamTitle: { fontSize: '28px', fontWeight: '900', color: '#334155', marginBottom: '8px' },
+  teamSubtitle: { fontSize: '15px', color: '#64748B', fontWeight: '600' },
+  addMemberBtn: { backgroundColor: '#0061FF', color: '#FFFFFF', border: 'none', borderRadius: '16px', padding: '12px 24px', fontSize: '14px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: 'none' },
+  memberList: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  memberCard: { backgroundColor: '#FFF', borderRadius: '24px', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #F1F1F1', boxShadow: 'none' },
+  memberInfo: { display: 'flex', alignItems: 'center', gap: '16px' },
+  memberAvatar: { width: '48px', height: '48px', backgroundColor: '#FFFFFF', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '900', color: '#0061FF', border: '1px solid #F1F1F1' },
+  memberName: { fontSize: '15px', fontWeight: '800', color: '#334155' },
+  memberEmail: { fontSize: '13px', color: '#94A3B8', fontWeight: '600' },
+  memberMeta: { display: 'flex', alignItems: 'center', gap: '24px' },
+  roleBadge: { fontSize: '11px', fontWeight: '900', padding: '6px 12px', borderRadius: '10px', letterSpacing: '0.5px' },
+  memberActionBtn: { background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '8px', borderRadius: '10px' },
+  
+  // Modal Styles
+  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 },
+  inviteModal: { backgroundColor: '#FFF', width: '450px', borderRadius: '32px', boxShadow: 'none', overflow: 'hidden', animation: 'scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)' },
+  modalHeader: { padding: '24px 32px', borderBottom: '1px solid #F1F1F1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  closeBtn: { background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' },
+  modalBody: { padding: '32px' },
+  inputLabel: { fontSize: '11px', fontWeight: '900', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px' },
+  modalInput: { padding: '16px', borderRadius: '16px', border: '1px solid #F1F1F1', outline: 'none', fontSize: '14px', fontWeight: '600', transition: 'all 0.2s' },
+  modalSelect: { padding: '16px', borderRadius: '16px', border: '1px solid #F1F1F1', outline: 'none', fontSize: '14px', fontWeight: '600', backgroundColor: '#FFF' },
+  inviteNotice: { fontSize: '12px', color: '#64748B', fontWeight: '500', lineHeight: '1.6', margin: '8px 0' },
+  confirmInviteBtn: { backgroundColor: '#0061FF', color: '#FFFFFF', border: 'none', borderRadius: '16px', padding: '16px', fontSize: '14px', fontWeight: '900', cursor: 'pointer', marginTop: '12px', boxShadow: 'none' },
+
+  // API & Workflow Styles
+  apiContainer: { padding: '48px', maxWidth: '1200px' },
+  apiGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' },
+  apiMainCol: { display: 'flex', flexDirection: 'column', gap: '32px' },
+  apiSideCol: { display: 'flex', flexDirection: 'column', gap: '32px' },
+  apiCard: { backgroundColor: '#FFFFFF', borderRadius: '32px', padding: '32px', border: '1px solid #F1F1F1', boxShadow: 'none' },
+  apiCardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
+  apiCardTitle: { fontSize: '15px', fontWeight: '900', color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' },
+  apiAddBtn: { backgroundColor: '#0061FF', color: '#FFFFFF', border: 'none', borderRadius: '12px', padding: '8px 16px', fontSize: '12px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
+  keyList: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  keyItem: { backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #F1F1F1' },
+  keyInfo: { display: 'flex', flexDirection: 'column', gap: '4px' },
+  keyName: { fontSize: '13px', fontWeight: '800', color: '#334155' },
+  keyCode: { fontSize: '12px', color: '#94A3B8', fontFamily: 'monospace' },
+  keyActionBtn: { background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' },
+  webhookBox: { backgroundColor: '#F0F7FF', borderRadius: '24px', padding: '24px', border: '1px solid #F1F1F1' },
+  webhookLabel: { fontSize: '10px', fontWeight: '900', color: '#0061FF', marginBottom: '8px' },
+  webhookUrl: { backgroundColor: '#FFF', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', fontWeight: '600', color: '#334155', boxShadow: 'none' },
+  webhookHint: { fontSize: '12px', color: '#64748B', fontWeight: '500', marginTop: '16px', lineHeight: '1.5' },
+  logList: { display: 'flex', flexDirection: 'column', gap: '12px' },
+  logItem: { padding: '16px', borderBottom: '1px solid #F1F1F1' },
+  
+  workflowContainer: { padding: '48px', maxWidth: '1000px' },
+  workflowCanvas: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', padding: '40px', backgroundColor: '#FFFFFF', borderRadius: '40px', border: '1px dashed #F1F1F1' },
+  workflowNode: { width: '400px', backgroundColor: '#FFF', borderRadius: '24px', border: '1px solid #F1F1F1', boxShadow: 'none', overflow: 'hidden' },
+  nodeHeader: { padding: '12px 20px', backgroundColor: '#FFFFFF', borderBottom: '1px solid #F1F1F1', fontSize: '11px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px' },
+  nodeBody: { padding: '20px' },
+  nodeLabel: { fontSize: '14px', color: '#475569', marginBottom: '4px' },
+  nodeDetail: { fontSize: '12px', fontWeight: '800', color: '#334155' },
+  workflowConnector: { width: '2px', height: '40px', backgroundColor: '#F1F1F1' },
+
+  // AI Dashboard Styles
+  aiDashboardContainer: { 
+    flex: 1, 
+    height: '100%', 
+    background: 'linear-gradient(to bottom, #FFFFFF 0%, #E6EFFF 100%)', 
+    display: 'flex', 
+    flexDirection: 'column', 
+    alignItems: 'center', 
+    padding: '80px 40px',
+    overflow: 'hidden',
+    position: 'relative'
+  },
+  aiHeader: { textAlign: 'center', marginBottom: '60px', animation: 'fadeInDown 0.8s ease' },
+  aiHeadline: { fontSize: '48px', fontWeight: '900', color: '#334155', marginBottom: '16px', letterSpacing: '-1px' },
+  aiSubheadline: { fontSize: '18px', color: '#64748B', fontWeight: '600', maxWidth: '600px', margin: '0 auto' },
+  
+  aiChatContainer: { 
+    width: '100%', 
+    maxWidth: '800px', 
+    flex: 1, 
+    display: 'flex', 
+    flexDirection: 'column', 
+    gap: '24px',
+    zIndex: 10
+  },
+  chatScroll: { 
+    flex: 1, 
+    overflowY: 'auto', 
+    padding: '20px', 
+    display: 'flex', 
+    flexDirection: 'column', 
+    gap: '20px',
+    scrollBehavior: 'smooth'
+  },
+  aiBubble: { 
+    alignSelf: 'flex-start', 
+    backgroundColor: '#FFF', 
+    padding: '20px 24px', 
+    borderRadius: '24px 24px 24px 8px', 
+    boxShadow: 'none', 
+    border: '1px solid #F1F1F1',
+    display: 'flex',
+    gap: '16px',
+    maxWidth: '80%',
+    animation: 'slideUp 0.4s ease'
+  },
+  userBubble: { 
+    alignSelf: 'flex-end', 
+    backgroundColor: '#0061FF', 
+    color: '#FFFFFF', 
+    padding: '20px 24px', 
+    borderRadius: '24px 24px 8px 24px', 
+    boxShadow: 'none', 
+    maxWidth: '70%',
+    animation: 'slideUp 0.4s ease'
+  },
+  aiIconBox: { 
+    width: '32px', 
+    height: '32px', 
+    backgroundColor: '#8B5CF6', 
+    borderRadius: '10px', 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    flexShrink: 0 
+  },
+  msgContent: { fontSize: '15px', fontWeight: '600', lineHeight: '1.6' },
+  typingDots: { fontSize: '20px', fontWeight: '900', color: '#8B5CF6' },
+  
+  aiInputWrapper: { 
+    position: 'relative', 
+    width: '100%', 
+    marginTop: 'auto',
+    animation: 'fadeInUp 0.8s ease'
+  },
+  aiInput: { 
+    width: '100%', 
+    padding: '24px 100px 24px 32px', 
+    borderRadius: '100px', 
+    border: '1px solid #F1F1F1', 
+    backgroundColor: '#FFFFFF', 
+    boxShadow: '0 2px 6px rgba(0,0,0,0.03)', 
+    outline: 'none', 
+    fontSize: '16px', 
+    fontWeight: '600', 
+    transition: 'all 0.3s' 
+  },
+  aiSendBtn: { 
+    position: 'absolute', 
+    right: '12px', 
+    top: '12px', 
+    bottom: '12px', 
+    width: '56px', 
+    backgroundColor: '#0061FF', 
+    border: 'none', 
+    borderRadius: '50%', 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    boxShadow: 'none'
+  },
+  aiShortcuts: { display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '20px' },
+  aiShortcutBtn: { 
+    backgroundColor: 'rgba(255,255,255,0.5)', 
+    border: '1px solid #F1F1F1', 
+    padding: '8px 16px', 
+    borderRadius: '100px', 
+    fontSize: '12px', 
+    fontWeight: '800', 
+    color: '#64748B', 
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
+
+  // Hybrid Dashboard Styles
+  dashboardScrollWrapper: { flex: 1, overflowY: 'auto', backgroundColor: '#FFF' },
+  aiHeroHero: { 
+    padding: '60px 40px', 
+    backgroundColor: '#F1F1F1', 
+    display: 'flex', 
+    flexDirection: 'column', 
+    alignItems: 'center',
+    borderBottom: '1px solid #F1F1F1',
+    marginBottom: '48px'
+  },
+  aiHeadlineSmall: { fontSize: '32px', fontWeight: '900', color: '#334155', marginBottom: '16px' },
+  aiInputWrapperSmall: { position: 'relative', width: '100%', maxWidth: '600px' },
+  aiInputSmall: { width: '100%', padding: '16px 60px 16px 24px', borderRadius: '100px', border: '1px solid #F1F1F1', backgroundColor: '#FFFFFF', boxShadow: '0 2px 6px rgba(0,0,0,0.03)', outline: 'none', fontSize: '14px', fontWeight: '600' },
+  aiSendBtnSmall: { position: 'absolute', right: '8px', top: '8px', bottom: '8px', width: '40px', backgroundColor: '#0061FF', border: 'none', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
+  aiSmallHint: { background: 'none', border: 'none', color: '#0061FF', fontSize: '11px', fontWeight: '800', cursor: 'pointer', textDecoration: 'underline' },
+  offerToast: { position: 'fixed', bottom: '32px', left: '32px', backgroundColor: '#1A1A1A', borderRadius: '20px', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '20px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', zIndex: 10000, animation: 'slideUp 0.5s ease', width: '400px' },
+  offerTitle: { fontSize: '15px', fontWeight: '900', color: '#FFFFFF', marginBottom: '4px' },
+  offerText: { fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: '600' },
+  offerClose: { background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' },
+
+  // Onboarding & Nudge Styles
+  onboardingOverlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'none', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' },
+  onboardingCard: { backgroundColor: '#FFF', borderRadius: '40px', width: '100%', maxWidth: '640px', padding: '48px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' },
+  onboardingHeader: { textAlign: 'center', marginBottom: '40px' },
+  onboardingTitle: { fontSize: '24px', fontWeight: '900', color: '#334155', marginTop: '16px' },
+  onboardingSubtitle: { fontSize: '12px', color: '#94A3B8', fontWeight: '800', marginTop: '4px' },
+  onboardingGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '40px' },
+  onboardingOpt: { padding: '24px', borderRadius: '24px', border: '2px solid #F1F1F1', cursor: 'pointer', transition: '0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' },
+  onboardingIconBox: { width: '36px', height: '36px', borderRadius: '12px', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  onboardingLabel: { fontSize: '13px', fontWeight: '700', color: '#334155' },
+  onboardingFooter: { display: 'flex', justifyContent: 'center', gap: '16px' },
+  onboardingBack: { background: 'none', border: 'none', color: '#94A3B8', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
+  onboardingNext: { backgroundColor: '#0061FF', color: '#FFF', border: 'none', padding: '14px 40px', borderRadius: '16px', fontSize: '14px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0, 97, 255, 0.2)' },
+  
+  nudgeStack: { position: 'fixed', bottom: '32px', right: '32px', display: 'flex', flexDirection: 'column', gap: '12px', zIndex: 9999 },
+  nudgeBox: { width: '320px', backgroundColor: '#FFF', borderRadius: '24px', padding: '20px', border: '1px solid #F1F1F1', boxShadow: '0 2px 6px rgba(0,0,0,0.03)', display: 'flex', gap: '16px', alignItems: 'flex-start' },
+  nudgeIcon: { width: '32px', height: '32px', backgroundColor: '#8B5CF6', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  nudgeContent: { flex: 1 },
+  nudgeType: { fontSize: '9px', fontWeight: '900', color: '#8B5CF6', letterSpacing: '1px', marginBottom: '4px' },
+  nudgeText: { fontSize: '13px', fontWeight: '600', color: '#334155', lineHeight: '1.5' },
+  nudgeClose: { background: 'none', border: 'none', color: '#F1F1F1', cursor: 'pointer', padding: '4px' },
+
+  // New Dashboard Component Styles
+  summaryGridSmall: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' },
+  statCardFixed: { padding: '32px', backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid #F1F1F1', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' },
+  statHeaderSmall: { display: 'flex', alignItems: 'center', gap: '12px' },
+  statLabelSmall: { fontSize: '11px', fontWeight: '900', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px' },
+  statValueLarge: { fontSize: '36px', fontWeight: '900', color: '#334155', letterSpacing: '-1px' },
+  statBarSmall: { height: '8px', backgroundColor: '#FFFFFF', borderRadius: '4px', overflow: 'hidden' },
+  statBarFillSmall: { height: '100%', borderRadius: '4px' },
+  
+  timelineSidebarSmall: { backgroundColor: '#FFF', borderRadius: '40px', padding: '40px', border: '1px solid #F1F1F1', display: 'flex', flexDirection: 'column', gap: '32px', alignSelf: 'start', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' },
+  timelineItemSmall: { display: 'flex', gap: '20px', paddingBottom: '32px', borderLeft: '2px solid #FFFFFF', marginLeft: '6px', paddingLeft: '28px', position: 'relative' },
+  timelineDotSmall: { width: '14px', height: '14px', borderRadius: '50%', position: 'absolute', left: '-8px', top: '0', border: '3px solid #FFF', boxShadow: '0 0 0 4px #FFFFFF' },
+  timelineContentSmall: { flex: 1 },
+  timelineHeaderSmall: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px', alignItems: 'center' },
+  timelineUserSmall: { fontSize: '12px', fontWeight: '900', color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' },
+  timelineTimeSmall: { fontSize: '11px', fontWeight: '700', color: '#F1F1F1' },
+  timelineEventSmall: { fontSize: '14px', color: '#475569', marginBottom: '12px', fontWeight: '500', lineHeight: '1.5' },
+  timelineContextSmall: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: '900', color: '#0061FF', backgroundColor: '#F0F7FF', padding: '6px 12px', borderRadius: '10px', width: 'fit-content' },
+  viewAllTimelineBtnSmall: { width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid #F1F1F1', backgroundColor: '#F0F7FF', color: '#0061FF', fontSize: '12px', fontWeight: '800', cursor: 'pointer', letterSpacing: '0.5px' },
+  
+  dropdownItem: { width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#FFFFFF', fontSize: '13px', fontWeight: 600, transition: '0.2s' },
+  menuDivider: { height: '1px', backgroundColor: 'rgba(255,255,255,0.1)', margin: '4px 0' },
+  shortcutText: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 },
+
+  // Widget & Dashboard component styles
+  dashboardWidgetGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' },
+  widgetCard: { backgroundColor: '#1A1A1A', borderRadius: '24px', padding: '24px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '20px' },
+  widgetHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' },
+  widgetTitle: { fontSize: '15px', fontWeight: '900', color: '#FFFFFF', margin: 0 },
+
+  // Button styles used in IntelSidebar & header
+  closeProgressBtn: { background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  upgradeHeaderBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', backgroundColor: '#0061FF', color: '#FFFFFF', fontSize: '13px', fontWeight: '800', cursor: 'pointer', borderRadius: '12px', border: 'none' },
+  inviteHeaderBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', backgroundColor: 'transparent', color: '#334155', fontSize: '13px', fontWeight: '800', cursor: 'pointer', borderRadius: '12px', border: '1px solid #F1F1F1' },
+  badgeMini: { fontSize: '10px', fontWeight: '900', color: '#64748B', padding: '4px 10px', borderRadius: '8px', border: '1px solid #F1F1F1' },
+
+  // File & content view styles
+  emptyState: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 40px', gap: '16px', textAlign: 'center' as const },
+  emptyShared: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', gap: '16px' },
+  contentTitle: { fontSize: '22px', fontWeight: '900', color: '#334155', marginBottom: '24px' },
+  pageTitle: { fontSize: '28px', fontWeight: '900', color: '#334155', marginBottom: '8px' },
+  fileGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' },
+  fileRow: { display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 16px', borderRadius: '12px', border: '1px solid #F1F1F1', backgroundColor: '#FFFFFF', cursor: 'pointer' },
+  list: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  itemName: { fontSize: '14px', fontWeight: '700', color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
+  itemMeta: { fontSize: '11px', color: '#94A3B8', fontWeight: '600' },
+  itemCount: { fontSize: '12px', color: '#64748B', fontWeight: '600' },
+
+  // Filter bar styles
+  filterBtn: { background: 'none', border: '1px solid #F1F1F1', borderRadius: '10px', padding: '6px 14px', fontSize: '12px', fontWeight: '700', color: '#64748B', cursor: 'pointer', transition: '0.2s' },
+  filterBtnActive: { backgroundColor: '#0061FF', border: '1px solid #0061FF', borderRadius: '10px', padding: '6px 14px', fontSize: '12px', fontWeight: '700', color: '#FFFFFF', cursor: 'pointer' },
+  filterGroup: { display: 'flex', gap: '8px', alignItems: 'center' },
+  filterDivider: { width: '1px', height: '20px', backgroundColor: '#F1F1F1' },
+
+  // Photos view styles
+  photosView: { padding: '32px', flex: 1, overflowY: 'auto' as const },
+  photosFilterBar: { display: 'flex', gap: '12px', marginBottom: '24px', alignItems: 'center' },
+  photosGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '8px' },
+  mediaGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' },
+  mediaItem: { borderRadius: '16px', overflow: 'hidden', backgroundColor: '#F1F1F1', cursor: 'pointer', position: 'relative' as const },
+  mediaThumb: { width: '100%', aspectRatio: '1', objectFit: 'cover' as const, display: 'block' },
+  videoThumb: { width: '100%', aspectRatio: '16/9', objectFit: 'cover' as const, display: 'block' },
+
+  // Month grouping styles
+  monthSection: { marginBottom: '32px' },
+  monthHeader: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' },
+  monthTitle: { fontSize: '15px', fontWeight: '900', color: '#334155' },
+  monthCheckbox: { width: '18px', height: '18px', cursor: 'pointer', accentColor: '#0061FF' },
+
+  // Shared folder styles
+  sharedView: { padding: '32px', flex: 1, overflowY: 'auto' as const },
+  sharedFilterBar: { display: 'flex', gap: '12px', marginBottom: '24px', alignItems: 'center', flexWrap: 'wrap' as const },
+  sharedContent: { display: 'flex', flexDirection: 'column', gap: '24px' },
+
+  // Stats bar styles
+  statsRow: { display: 'flex', gap: '24px', marginBottom: '32px' },
+  statItem: { display: 'flex', flexDirection: 'column', gap: '4px' },
+  statLabel: { fontSize: '11px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
+  statTrend: { fontSize: '11px', fontWeight: '700', color: '#10B981' },
+
+  // Zoom control
+  zoomControl: { display: 'flex', alignItems: 'center', gap: '8px' },
+  zoomSlider: { width: '80px', accentColor: '#0061FF' },
+};
+
 interface LogDockFile {
   id: string;
   name: string;
@@ -80,7 +589,24 @@ const Globe = ({ size }: { size: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
 );
 
-const ProfilePopup: React.FC<{ profile: any, storage: any, onClose: () => void, onUpgrade: () => void, onNavigate: (tab: string) => void }> = ({ profile, storage, onClose, onUpgrade, onNavigate }) => {
+const PremiumFolderIcon = ({ width = 24, height = 18 }: { width?: number, height?: number }) => (
+  <svg width={width} height={height} viewBox="0 0 64 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="folderGradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#4DA3FF"/>
+        <stop offset="100%" stopColor="#1E6BFF"/>
+      </linearGradient>
+      <linearGradient id="folderTop" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#66B2FF"/>
+        <stop offset="100%" stopColor="#3D8BFF"/>
+      </linearGradient>
+    </defs>
+    <rect x="2" y="10" width="60" height="34" rx="6" fill="url(#folderGradient)" />
+    <path d="M4 10C4 8.5 6 6 8 6H22C24 6 25 7 26 8L28 10H60C62 10 62 30 62 14V16H2V12C2 10 3 10 4 10Z" fill="url(#folderTop)"/>
+  </svg>
+);
+
+const ProfilePopup: React.FC<{ profile: any, storage: any, onClose: () => void, onUpgrade: () => void, onNavigate: (tab: string, data?: any) => void }> = ({ profile, storage, onClose, onUpgrade, onNavigate }) => {
   const { signOut } = useAuth();
   return (
     <div style={styles.macProfilePopup} onClick={e => e.stopPropagation()}>
@@ -113,24 +639,24 @@ const ProfilePopup: React.FC<{ profile: any, storage: any, onClose: () => void, 
                 style={{ display: 'none' }} 
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    (onNavigate as any)('upload_profile_photo', e.target.files[0]);
+                    onNavigate('upload_profile_photo', e.target.files[0]);
                   }
-                }}
+                }} 
               />
             </label>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={styles.profileName}>{profile?.full_name}</span>
-            <span style={styles.profileEmail}>{profile?.email}</span>
+          <div>
+            <div style={styles.profileName}>{profile?.full_name || 'Usuário'}</div>
+            <div style={styles.profileEmail}>{profile?.email || 'email@exemplo.com'}</div>
           </div>
         </div>
-
+        
         <div style={styles.storageSection}>
           <div style={styles.storageBarContainer}>
             <div style={{ ...styles.popupStorageFill, width: `${storage.percent}%`, backgroundColor: storage.percent > 90 ? '#EF4444' : '#0061FF' }} />
           </div>
           <div style={styles.popupStorageText}>
-            <AlertTriangle size={14} color={storage.percent > 90 ? '#EF4444' : '#666'} />
+            <AlertTriangle size={14} color={storage.percent > 90 ? '#EF4444' : 'rgba(255,255,255,0.4)'} />
             <span>Usando {(storage.used / (1024 ** 3)).toFixed(2)} GB de {(storage.total / (1024 ** 3)).toFixed(0)} GB</span>
           </div>
           <button style={styles.upgradeLink} onClick={onUpgrade}>Fazer upgrade</button>
@@ -140,31 +666,59 @@ const ProfilePopup: React.FC<{ profile: any, storage: any, onClose: () => void, 
       <div style={styles.popupDivider} />
 
       <div style={styles.deviceSection}>
-        <Laptop size={18} color="#666" />
+        <Laptop size={18} color="rgba(255,255,255,0.4)" />
         <span style={styles.deviceText}>1 dispositivo conectado</span>
       </div>
 
       <div style={styles.popupDivider} />
 
       <div style={styles.popupMenu}>
-        <div style={styles.popupItem} onClick={() => onNavigate('configuracoes')}>Configurações</div>
-        <div style={styles.popupItem} onClick={() => onNavigate('perfil')}>Gerenciar conta</div>
-        <div style={styles.popupItem} onClick={() => onNavigate('automacoes')}>Automações</div>
-        <div style={styles.popupItem} onClick={() => window.open('/download', '_blank')}>
+        {[
+          { label: 'Configurações', tab: 'configuracoes' },
+          { label: 'Gerenciar conta', tab: 'perfil' },
+          { label: 'Automações', tab: 'automacoes' },
+        ].map(item => (
+          <div 
+            key={item.tab} 
+            style={styles.popupItem} 
+            onClick={() => onNavigate(item.tab)}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            {item.label}
+          </div>
+        ))}
+        <div 
+          style={styles.popupItem} 
+          onClick={() => window.open('/download', '_blank')}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+        >
           Instalar o aplicativo para desktop
           <ExternalLink size={14} />
         </div>
-        <div style={styles.popupItem}>
+        <div 
+          style={styles.popupItem}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+        >
           Tema
           <ChevronRight size={14} />
         </div>
-        <div style={styles.popupItem} onClick={signOut}>Sair</div>
+        <div 
+          style={styles.popupItem} 
+          onClick={signOut}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+        >
+          Sair
+        </div>
       </div>
 
       <div style={styles.popupDivider} />
 
       <div style={styles.languageSection}>
-        <Globe size={14} />
+        <Globe size={14} color="rgba(255,255,255,0.4)" />
         <span>Português (Brasil)</span>
       </div>
     </div>
@@ -209,7 +763,7 @@ const IntelSidebar: React.FC<{ file: LogDockFile, onClose: () => void }> = ({ fi
           </div>
           <span style={styles.intelTitle}>Inteligência LogDock</span>
         </div>
-        <button style={styles.closeProgressBtn} onClick={onClose}><X size={18} /></button>
+        <button style={styles.closeProgressBtn} onClick={onClose}><X size={16} /></button>
       </div>
 
       <div style={styles.intelContent}>
@@ -260,7 +814,7 @@ const IntelSidebar: React.FC<{ file: LogDockFile, onClose: () => void }> = ({ fi
              onClick={handleConfirm}
              disabled={isConfirming}
            >
-             {isConfirming ? <RefreshCw className="animate-spin" size={18} /> : 'Confirmar e Vincular'}
+             {isConfirming ? <RefreshCw className="animate-spin" size={16} /> : 'Confirmar e Vincular'}
            </button>
            <button style={{ ...styles.inviteHeaderBtn, width: '100%', height: '48px', justifyContent: 'center', backgroundColor: '#FFFFFF', color: '#64748B', border: '1px solid #F1F1F1', padding: '12px', boxShadow: 'none' }}>
              Corrigir Manualmente
@@ -458,13 +1012,15 @@ interface DashboardProps {
   handleMouseUpRecent: () => void;
   handleMouseMoveRecent: (e: React.MouseEvent) => void;
   openActionSidebar: (context: any) => void;
+  styles: Record<string, React.CSSProperties>;
+  theme: 'light' | 'dark';
 }
 
 const DashboardView: React.FC<DashboardProps> = ({ 
   setActiveTab, files, folders, carouselRef, isDraggingCarousel, 
   handleMouseDown, handleMouseLeaveCarousel, handleMouseUp, handleMouseMove,
   recentFilesRef, isDraggingRecent, handleMouseDownRecent, handleMouseLeaveRecent, 
-  handleMouseUpRecent, handleMouseMoveRecent, openActionSidebar
+  handleMouseUpRecent, handleMouseMoveRecent, openActionSidebar, styles, theme
 }) => {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<string | null>('Project Details.xls');
@@ -493,10 +1049,10 @@ const DashboardView: React.FC<DashboardProps> = ({
   ];
 
   return (
-    <div style={{ flex: 1, height: '100%', overflowY: 'auto', padding: '0 32px', backgroundColor: '#FFFFFF' }}>
+    <div style={{ flex: 1, height: '100%', overflowY: 'auto', padding: '0 32px', backgroundColor: 'transparent' }}>
       
-      {/* 🤖 HERO AI ASSISTANT SECTION (LIGHT VERSION) */}
-      <div style={{ padding: '40px 0 20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: '32px', marginBottom: '80px', position: 'relative' }}>
+      {/* 🤖 HERO AI ASSISTANT SECTION (DARK VERSION) */}
+      <div style={{ padding: '40px 0 20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: 'transparent', borderRadius: '32px', marginBottom: '80px', position: 'relative' }}>
         
         {/* IA BADGE SECTION */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
@@ -505,7 +1061,7 @@ const DashboardView: React.FC<DashboardProps> = ({
             display: 'flex', alignItems: 'center', gap: '8px', 
             padding: '8px 16px', backgroundColor: '#0061FF', border: '1px solid #0061FF', 
             borderRadius: '100px', cursor: 'pointer',
-            boxShadow: '0 4px 12px #F1F1F1'
+            boxShadow: theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.4)' : '0 4px 12px rgba(0, 97, 255, 0.2)'
           }}>
             <Sparkles size={14} color="#FFFFFF" />
             <span style={{ fontSize: '11px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.2px' }}>
@@ -514,12 +1070,12 @@ const DashboardView: React.FC<DashboardProps> = ({
           </div>
 
           {/* THE DESCRIPTION (OUTSIDE) */}
-          <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginLeft: '16px' }}>
+          <span style={{ fontSize: '11px', fontWeight: 600, color: theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B', marginLeft: '16px' }}>
             Assistente Inteligente treinada para o ecossistema Logta
           </span>
         </div>
 
-        <h1 style={{ fontSize: '56px', fontWeight: 900, color: '#0F172A', marginBottom: '16px', letterSpacing: '-2px', lineHeight: '1.1', minHeight: '62px' }}>
+        <h1 style={{ fontSize: '56px', fontWeight: 900, color: theme === 'dark' ? '#FFFFFF' : '#0F172A', marginBottom: '16px', letterSpacing: '-2px', lineHeight: '1.1', minHeight: '62px' }}>
           {displayText}
           <span style={{ 
             display: 'inline-block', width: '3px', height: '48px', 
@@ -534,20 +1090,20 @@ const DashboardView: React.FC<DashboardProps> = ({
             }
           `}</style>
         </h1>
-        <p style={{ fontSize: '15px', color: '#64748B', maxWidth: '600px', textAlign: 'center', lineHeight: '1.6', marginBottom: '40px', fontWeight: 500 }}>
+        <p style={{ fontSize: '15px', color: theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B', maxWidth: '600px', textAlign: 'center', lineHeight: '1.6', marginBottom: '40px', fontWeight: 500 }}>
           A inteligência que move sua operação logística.
         </p>
 
 
 
         {/* MAIN INPUT BOX */}
-        <div style={{ width: '100%', maxWidth: '720px', backgroundColor: '#F1F1F1', borderRadius: '20px', border: '1px solid #F1F1F1', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px', transition: 'all 0.3s', boxShadow: '0 10px 30px #F1F1F1' }}>
+        <div style={{ width: '100%', maxWidth: '720px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px', transition: 'all 0.3s', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
             <textarea
               placeholder="O que deseja procurar?"
               style={{ 
                 flex: 1, background: 'transparent', border: 'none', outline: 'none', 
-                color: '#0F172A', fontSize: '15px', fontWeight: 500, minHeight: '40px', 
+                color: theme === 'dark' ? '#FFFFFF' : '#334155', fontSize: '15px', fontWeight: 500, minHeight: '40px', 
                 resize: 'none', padding: 0, fontFamily: "'Inter', system-ui, sans-serif",
                 lineHeight: '1.5'
               }}
@@ -561,11 +1117,11 @@ const DashboardView: React.FC<DashboardProps> = ({
               </button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}>
-                <Mic size={18} />
+              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}>
+                <Mic size={16} />
               </button>
               <button style={{ backgroundColor: '#0061FF', color: '#FFFFFF', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                <ArrowUp size={18} />
+                <ArrowUp size={16} />
               </button>
             </div>
           </div>
@@ -576,24 +1132,24 @@ const DashboardView: React.FC<DashboardProps> = ({
           {['Criar nova pasta', 'Enviar arquivos', 'Ver relatórios', 'Buscar motorista', 'Carga pendente'].map((text, i, arr) => (
             <React.Fragment key={text}>
               <span 
-                style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600, cursor: 'pointer', transition: '0.2s', letterSpacing: '0.3px' }} 
+                style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontWeight: 600, cursor: 'pointer', transition: '0.2s', letterSpacing: '0.3px' }} 
                 onMouseEnter={e => { e.currentTarget.style.color = '#0061FF'; }} 
-                onMouseLeave={e => { e.currentTarget.style.color = '#94A3B8'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; }}
               >
                 {text}
               </span>
-              {i < arr.length - 1 && <span style={{ color: '#E2E8F0', fontSize: '10px' }}>•</span>}
+              {i < arr.length - 1 && <span style={{ color: 'rgba(255,255,255,0.1)', fontSize: '10px' }}>•</span>}
             </React.Fragment>
           ))}
         </div>
       </div>
       
       {/* 📏 SEPARATOR LINE */}
-      <div style={{ height: '1px', backgroundColor: '#F1F5F9', margin: '20px 0 48px 0', width: '100%' }} />
+      <div style={{ height: '1px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F5F9', margin: '20px 0 48px 0', width: '100%' }} />
 
       {/* 🧱 TOP RECENT EDITED SECTION */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' }}>Editados recentemente</h2>
+        <h2 style={{ fontSize: '15px', fontWeight: 900, color: theme === 'dark' ? '#FFFFFF' : '#334155', margin: 0, letterSpacing: '-0.5px' }}>Editados recentemente</h2>
         <button 
           onClick={() => setActiveTab('arquivos')}
           style={{ backgroundColor: 'transparent', border: 'none', color: '#0061FF', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
@@ -637,20 +1193,20 @@ const DashboardView: React.FC<DashboardProps> = ({
             style={{ 
               minWidth: '280px', 
               padding: '24px', 
-              backgroundColor: '#FFFFFF', 
-              border: item.important ? '1px solid #0061FF' : '1px solid #F1F1F1', 
+              backgroundColor: theme === 'dark' ? '#1A1A1A' : '#FFFFFF', 
+              border: item.important ? '1px solid #0061FF' : (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #EBEBEB'), 
               borderRadius: '24px', 
               display: 'flex', 
               flexDirection: 'column', 
               gap: '20px', 
               cursor: 'pointer', 
               transition: 'all 0.2s ease', 
-              boxShadow: 'none',
+              boxShadow: theme === 'dark' ? '0 10px 30px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.02)',
               scrollSnapAlign: 'start',
               flexShrink: 0
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#0061FF'; e.currentTarget.style.backgroundColor = '#F8FAFC'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = item.important ? '#0061FF' : '#F1F1F1'; e.currentTarget.style.backgroundColor = '#FFFFFF'; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#0061FF'; e.currentTarget.style.backgroundColor = theme === 'dark' ? '#222222' : '#F8FAFC'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = item.important ? '#0061FF' : (theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#EBEBEB'); e.currentTarget.style.backgroundColor = theme === 'dark' ? '#1A1A1A' : '#FFFFFF'; }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -664,7 +1220,7 @@ const DashboardView: React.FC<DashboardProps> = ({
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 900, color: '#0F172A', marginBottom: '6px' }}>{item.name || (item as any).title}</div>
+              <div style={{ fontSize: '14px', fontWeight: 900, color: theme === 'dark' ? '#FFFFFF' : '#0F172A', marginBottom: '6px' }}>{item.name || (item as any).title}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                 <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 700 }}>Alterado há 2h</span>
                 {item.important && <span style={{ fontSize: '10px', color: '#EF4444', background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '10px', fontWeight: 900 }}>AÇÃO REQUERIDA</span>}
@@ -681,7 +1237,7 @@ const DashboardView: React.FC<DashboardProps> = ({
                     });
                   }
                 }}
-                style={{ width: '100%', padding: '10px', border: '1px solid #F1F1F1', borderRadius: '12px', background: '#FFF', fontSize: '12px', fontWeight: 800, color: '#334155', cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                style={{ width: '100%', padding: '10px', border: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #F1F1F1', borderRadius: '12px', background: theme === 'dark' ? '#111' : '#FFF', fontSize: '12px', fontWeight: 800, color: theme === 'dark' ? '#94A3B8' : '#334155', cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                 onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
                 onMouseLeave={e => e.currentTarget.style.backgroundColor = '#FFF'}
               >
@@ -695,15 +1251,15 @@ const DashboardView: React.FC<DashboardProps> = ({
 
       {/* 🧱 PASTAS COMPARTILHADAS (LAYERED FOLDERS) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 900, color: '#334155', margin: 0, letterSpacing: '-0.5px' }}>Pastas Compartilhadas</h2>
+        <h2 style={{ fontSize: '15px', fontWeight: 900, color: theme === 'dark' ? '#FFFFFF' : '#334155', margin: 0, letterSpacing: '-0.5px' }}>Pastas Compartilhadas</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button style={{ border: 'none', backgroundColor: '#EFF6FF', color: '#0061FF', fontSize: '13px', fontWeight: 700, padding: '6px 14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-            <ListIcon size={14} />
+          <button style={{ border: 'none', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : '#FFFFFF', color: theme === 'dark' ? '#FFFFFF' : '#334155', border: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #F1F1F1', fontSize: '13px', fontWeight: 700, padding: '6px 14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+            <List size={14} />
             <span>Mais novas</span>
           </button>
           <button 
             onClick={() => setActiveTab('arquivos')}
-            style={{ backgroundColor: 'transparent', border: 'none', color: '#64748B', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+            style={{ backgroundColor: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
           >
             <span>Ver tudo</span>
             <ChevronRight size={14} />
@@ -747,7 +1303,7 @@ const DashboardView: React.FC<DashboardProps> = ({
             {/* macOS Style Folder Tab (Sloped) */}
             <div style={{
               position: 'absolute', top: '0px', left: '0px', width: '110px', height: '32px',
-              background: folder.active ? '#0061FF' : '#F1F1F1',
+              background: folder.active ? '#0061FF' : 'rgba(255,255,255,0.05)',
               zIndex: 1,
               clipPath: 'polygon(0% 100%, 12% 0%, 88% 0%, 100% 100%)',
               transition: 'all 0.3s ease'
@@ -756,8 +1312,8 @@ const DashboardView: React.FC<DashboardProps> = ({
             {/* Folder Body */}
             <div style={{
               position: 'absolute', top: '24px', left: 0, right: 0, bottom: 0,
-              background: folder.active ? 'linear-gradient(145deg, #0070FF 0%, #0050D1 100%)' : '#FFFFFF',
-              border: folder.active ? 'none' : '1px solid #F1F1F1',
+              background: folder.active ? 'linear-gradient(145deg, #0070FF 0%, #0050D1 100%)' : '#1A1A1A',
+              border: folder.active ? 'none' : '1px solid rgba(255,255,255,0.05)',
               borderRadius: '0 20px 20px 20px', padding: '24px',
               display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
               boxShadow: folder.active ? '0 20px 40px rgba(0, 97, 255, 0.2)' : '0 4px 12px rgba(0,0,0,0.02)', 
@@ -765,7 +1321,7 @@ const DashboardView: React.FC<DashboardProps> = ({
             }}
             onMouseEnter={e => { 
               e.currentTarget.style.transform = 'translateY(-6px)'; 
-              e.currentTarget.style.boxShadow = folder.active ? '0 25px 50px rgba(0, 97, 255, 0.3)' : '0 12px 24px rgba(0,0,0,0.08)';
+              e.currentTarget.style.boxShadow = folder.active ? '0 25px 50px rgba(0, 97, 255, 0.3)' : '0 20px 40px rgba(0,0,0,0.4)';
             }}
             onMouseLeave={e => { 
               e.currentTarget.style.transform = 'translateY(0)'; 
@@ -773,19 +1329,19 @@ const DashboardView: React.FC<DashboardProps> = ({
             }}
             >
               <div>
-                <div style={{ width: '44px', height: '44px', borderRadius: '14px', backgroundColor: folder.active ? 'rgba(255, 255, 255, 0.15)' : '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-                  <Folder size={24} color={folder.active ? '#FFFFFF' : '#64748B'} fill={folder.active ? '#FFFFFF' : '#64748B'} fillOpacity={0.2} />
+                <div style={{ width: '44px', height: '44px', borderRadius: '14px', backgroundColor: folder.active ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                  <Folder size={24} color={folder.active ? '#FFFFFF' : 'rgba(255,255,255,0.4)'} fill={folder.active ? '#FFFFFF' : 'rgba(255,255,255,0.4)'} fillOpacity={0.2} />
                 </div>
-                <h4 style={{ fontSize: '16px', fontWeight: 900, color: folder.active ? '#FFFFFF' : '#0F172A', margin: '0 0 6px 0', letterSpacing: '-0.3px' }}>{folder.name}</h4>
-                <p style={{ fontSize: '12px', color: folder.active ? 'rgba(255,255,255,0.7)' : '#94A3B8', fontWeight: 700, margin: 0 }}>{folder.meta}</p>
+                <h4 style={{ fontSize: '16px', fontWeight: 900, color: folder.active ? '#FFFFFF' : (theme === 'dark' ? '#FFFFFF' : '#334155'), margin: '0 0 6px 0', letterSpacing: '-0.3px' }}>{folder.name}</h4>
+                <p style={{ fontSize: '12px', color: folder.active ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.4)', fontWeight: 700, margin: 0 }}>{folder.meta}</p>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <img src="https://i.pravatar.cc/100?u=1" alt="A" style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid white', marginRight: '-10px', objectFit: 'cover' }} />
-                  <img src="https://i.pravatar.cc/100?u=2" alt="B" style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid white', marginRight: '-10px', objectFit: 'cover' }} />
-                  <img src="https://i.pravatar.cc/100?u=3" alt="C" style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid white', objectFit: 'cover' }} />
+                  <img src="https://i.pravatar.cc/100?u=1" alt="A" style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid #1A1A1A', marginRight: '-10px', objectFit: 'cover' }} />
+                  <img src="https://i.pravatar.cc/100?u=2" alt="B" style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid #1A1A1A', marginRight: '-10px', objectFit: 'cover' }} />
+                  <img src="https://i.pravatar.cc/100?u=3" alt="C" style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid #1A1A1A', objectFit: 'cover' }} />
                   {idx === 1 && (
-                    <span style={{ fontSize: '11px', backgroundColor: folder.active ? 'rgba(255,255,255,0.2)' : '#F8FAFC', color: folder.active ? '#FFF' : '#0061FF', padding: '4px 10px', borderRadius: '10px', fontWeight: 900, marginLeft: '8px', border: folder.active ? 'none' : '1px solid #F1F1F1' }}>+12</span>
+                    <span style={{ fontSize: '11px', backgroundColor: folder.active ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.05)', color: '#FFF', padding: '4px 10px', borderRadius: '10px', fontWeight: 900, marginLeft: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>+12</span>
                   )}
                 </div>
               </div>
@@ -796,7 +1352,7 @@ const DashboardView: React.FC<DashboardProps> = ({
 
       {/* 🧱 RECENTLY OPENED SECTION (TABLE WITH ACTIONS) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', gap: '12px', backgroundColor: '#F1F1F1', padding: '4px', borderRadius: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : '#EBEBEB', padding: '4px', borderRadius: '12px', border: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1' }}>
           {[
             { id: 'recent', label: 'Abertos recentemente' },
             { id: 'shared-doc', label: 'Documentos compartilhados' },
@@ -807,7 +1363,7 @@ const DashboardView: React.FC<DashboardProps> = ({
               onClick={() => setFilterTab(tab.id)}
               style={{
                 border: 'none', backgroundColor: filterTab === tab.id ? '#FFFFFF' : 'transparent',
-                color: filterTab === tab.id ? '#111827' : '#64748B', fontSize: '13px', fontWeight: filterTab === tab.id ? 700 : 600,
+                color: filterTab === tab.id ? '#000000' : 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 700,
                 padding: '6px 16px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px'
               }}
             >
@@ -818,33 +1374,33 @@ const DashboardView: React.FC<DashboardProps> = ({
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <Search size={16} color="#64748B" style={{ position: 'absolute', left: '12px' }} />
+            <Search size={16} color={theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'} style={{ position: 'absolute', left: '12px' }} />
             <input
               type="text"
               placeholder="Buscar arquivos..."
-              style={{ padding: '8px 40px 8px 36px', borderRadius: '12px', backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1', color: '#1E293B', fontSize: '13px', width: '200px', outline: 'none' }}
+              style={{ padding: '8px 40px 8px 36px', borderRadius: '12px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : '#FFFFFF', border: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #F1F1F1', color: theme === 'dark' ? '#FFFFFF' : '#334155', fontSize: '13px', width: '200px', outline: 'none' }}
             />
-            <span style={{ position: 'absolute', right: '12px', fontSize: '11px', color: '#64748B', fontWeight: 600 }}>⌘ F</span>
+            <span style={{ position: 'absolute', right: '12px', fontSize: '11px', color: theme === 'dark' ? 'rgba(255,255,255,0.2)' : '#94A3B8', fontWeight: 600 }}>⌘ F</span>
           </div>
-          <div style={{ display: 'flex', gap: '4px', backgroundColor: '#F1F1F1', padding: '2px', borderRadius: '10px' }}>
-            <button style={{ border: 'none', backgroundColor: 'transparent', color: '#64748B', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}><LayoutGrid size={16} /></button>
-            <button style={{ border: 'none', backgroundColor: '#FFFFFF', color: '#0061FF', padding: '6px', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}><ListIcon size={16} /></button>
+          <div style={{ display: 'flex', gap: '4px', backgroundColor: 'rgba(255,255,255,0.03)', padding: '2px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <button style={{ border: 'none', backgroundColor: 'transparent', color: 'rgba(255,255,255,0.4)', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}><LayoutGrid size={16} /></button>
+            <button style={{ border: 'none', backgroundColor: '#FFFFFF', color: '#000000', padding: '6px', borderRadius: '8px', cursor: 'pointer', boxShadow: 'none' }}><List size={16} /></button>
           </div>
         </div>
       </div>
 
-      <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #F1F1F1', overflow: 'hidden', marginBottom: '24px' }}>
+      <div style={{ backgroundColor: theme === 'dark' ? '#1A1A1A' : '#FFFFFF', borderRadius: '16px', border: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #F1F1F1', overflow: 'hidden', marginBottom: '24px', boxShadow: theme === 'dark' ? '0 20px 40px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.02)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
-            <tr style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #F1F1F1' }}>
+            <tr style={{ backgroundColor: 'transparent', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <th style={{ padding: '12px 16px', width: '32px' }}>
                 <input type="checkbox" style={{ borderRadius: '4px' }} checked={true} readOnly />
               </th>
-              <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>NOME DO ARQUIVO</th>
-              <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>RESPONSÁVEL</th>
-              <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>DATA DE ENVIO</th>
-              <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>ÚLTIMA ALTERAÇÃO</th>
-              <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>TAMANHO</th>
+              <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>NOME DO ARQUIVO</th>
+              <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>RESPONSÁVEL</th>
+              <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>DATA DE ENVIO</th>
+              <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>ÚLTIMA ALTERAÇÃO</th>
+              <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>TAMANHO</th>
               <th style={{ padding: '12px 16px', width: '32px' }}></th>
             </tr>
           </thead>
@@ -854,7 +1410,7 @@ const DashboardView: React.FC<DashboardProps> = ({
                 key={i} 
                 onClick={() => setSelectedFile(file.name)}
                 style={{ 
-                  borderBottom: '1px solid #F1F1F1', backgroundColor: selectedFile === file.name ? '#FFFFFF' : 'transparent',
+                  borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: selectedFile === file.name ? 'rgba(255,255,255,0.03)' : 'transparent',
                   cursor: 'pointer', transition: 'all 0.2s'
                 }}
               >
@@ -868,8 +1424,8 @@ const DashboardView: React.FC<DashboardProps> = ({
                     style={{ width: '28px', height: '28px' }} 
                   />
                   <div>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B' }}>{file.name}</span>
-                    <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>Shared <UsersIcon size={10} style={{ verticalAlign: 'middle' }} /></div>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: theme === 'dark' ? '#FFFFFF' : '#334155' }}>{file.name}</span>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Shared <UsersIcon size={10} style={{ verticalAlign: 'middle' }} /></div>
                   </div>
                 </td>
                 <td style={{ padding: '14px 16px' }}>
@@ -878,11 +1434,11 @@ const DashboardView: React.FC<DashboardProps> = ({
                     {i === 0 && <span style={{ fontSize: '11px', backgroundColor: '#EDE9FE', color: '#0061FF', padding: '2px 6px', borderRadius: '8px', fontWeight: 700 }}>+12</span>}
                   </div>
                 </td>
-                <td style={{ padding: '14px 16px', fontSize: '12px', color: '#475569', fontWeight: 500 }}>{file.dateUploaded}</td>
-                <td style={{ padding: '14px 16px', fontSize: '12px', color: '#475569', fontWeight: 500 }}>{file.lastModified}</td>
-                <td style={{ padding: '14px 16px', fontSize: '12px', color: '#475569', fontWeight: 500 }}>{file.size}</td>
+                <td style={{ padding: '14px 16px', fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>{file.dateUploaded}</td>
+                <td style={{ padding: '14px 16px', fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>{file.lastModified}</td>
+                <td style={{ padding: '14px 16px', fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>{file.size}</td>
                 <td style={{ padding: '14px 16px' }}>
-                  <MoreHorizontal size={16} color="#64748B" style={{ cursor: 'pointer' }} />
+                  <MoreHorizontal size={16} color="rgba(255,255,255,0.2)" style={{ cursor: 'pointer' }} />
                 </td>
               </tr>
             ))}
@@ -894,14 +1450,16 @@ const DashboardView: React.FC<DashboardProps> = ({
       {selectedFile && (
         <div style={{ 
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px',
-          backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1', borderRadius: '16px', boxShadow: '0 4px 25px rgba(0,0,0,0.02)',
+          backgroundColor: theme === 'dark' ? '#1A1A1A' : '#FFFFFF', 
+          border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #F1F1F1', 
+          borderRadius: '16px', boxShadow: theme === 'dark' ? '0 20px 40px rgba(0,0,0,0.4)' : '0 10px 30px rgba(0,0,0,0.1)',
           position: 'sticky', bottom: '16px', zIndex: 10
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <img src="https://img.icons8.com/color/48/figma--v1.png" alt="Figma icon" style={{ width: '24px', height: '24px' }} />
             <div>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B' }}>{selectedFile}</span>
-              <span style={{ fontSize: '11px', color: '#64748B', marginLeft: '12px' }}>• 1.5 GB • Sep 28, 2025</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>{selectedFile}</span>
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginLeft: '12px' }}>• 1.5 GB • Sep 28, 2025</span>
             </div>
             <span style={{ backgroundColor: '#1E1B4B', color: '#FFFFFF', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, marginLeft: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
               <Lock size={12} color="#FFF" />
@@ -909,11 +1467,11 @@ const DashboardView: React.FC<DashboardProps> = ({
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="Download"><Download size={18} /></button>
-            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="Copy Link"><LinkIcon size={18} /></button>
-            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="Delete"><Trash2 size={18} /></button>
-            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="Upload"><Upload size={18} /></button>
-            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="More"><MoreHorizontal size={18} /></button>
+            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="Download"><Download size={16} /></button>
+            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="Copy Link"><LinkIcon size={16} /></button>
+            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="Delete"><Trash2 size={16} /></button>
+            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="Upload"><Upload size={16} /></button>
+            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="More"><MoreHorizontal size={16} /></button>
           </div>
         </div>
       )}
@@ -923,14 +1481,14 @@ const DashboardView: React.FC<DashboardProps> = ({
 };
 
 
-const OperationalMemoryView: React.FC<DashboardProps> = ({ stats, events }) => {
+const OperationalMemoryView: React.FC<DashboardProps> = ({ stats, events, styles, theme }) => {
   return (
     <div style={styles.dashboardScrollWrapper}>
       <div style={{ padding: '40px' }}>
         <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h1 style={{ fontSize: '28px', fontWeight: '900', color: '#334155', marginBottom: '8px' }}>Memória Operacional</h1>
-            <p style={{ color: '#64748B', fontWeight: '600' }}>Hub de Inteligência • {new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <h1 style={{ fontSize: '28px', fontWeight: '900', color: theme === 'dark' ? '#FFFFFF' : '#334155', marginBottom: '8px' }}>Memória Operacional</h1>
+            <p style={{ color: theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B', fontWeight: '600' }}>Hub de Inteligência • {new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
           </div>
           <div style={styles.aiStatusBadge}>
             <div style={styles.statusDotGreen} />
@@ -943,21 +1501,21 @@ const OperationalMemoryView: React.FC<DashboardProps> = ({ stats, events }) => {
         <div style={styles.dashboardMainGrid}>
           <div style={styles.dashboardPrimaryCol}>
             <div style={styles.dashboardWidgetGrid}>
-              <div style={{ ...styles.widgetCard, gridColumn: 'span 2', background: 'linear-gradient(90deg, #FFFFFF 0%, #FFFFFF 100%)', borderColor: '#F1F1F1', padding: '24px' }}>
+              <div style={{ ...styles.widgetCard, gridColumn: 'span 2', background: theme === 'dark' ? '#1A1A1A' : '#FFFFFF', borderColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F1F1', padding: '24px' }}>
                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                        <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <ShieldCheck size={24} color="#0061FF" />
                        </div>
                        <div>
-                          <div style={{ fontSize: '14px', fontWeight: '900', color: '#1E293B' }}>Ambiente Blindado</div>
+                          <div style={{ fontSize: '14px', fontWeight: '900', color: theme === 'dark' ? '#FFFFFF' : '#1E293B' }}>Ambiente Blindado</div>
                           <div style={{ fontSize: '12px', color: '#64748B', fontWeight: '600' }}>Criptografia AES-256 & Proteção SOC 2 Ativa</div>
                        </div>
                     </div>
                  </div>
               </div>
 
-              <div style={{ ...styles.widgetCard, gridColumn: 'span 2', backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }}>
+              <div style={{ ...styles.widgetCard, gridColumn: 'span 2', backgroundColor: theme === 'dark' ? '#1E1B4B' : '#F0F9FF', borderColor: theme === 'dark' ? '#312E81' : '#BAE6FD' }}>
                 <div style={styles.widgetHeader}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ backgroundColor: '#0061FF', padding: '10px', borderRadius: '12px' }}>
@@ -972,10 +1530,10 @@ const OperationalMemoryView: React.FC<DashboardProps> = ({ stats, events }) => {
                     { title: 'Documento Expirando', desc: 'CNH Alison (em 15 dias)', action: 'Renovar', color: '#F59E0B' },
                     { title: 'Risco de Falha', desc: 'Volvo R500 (Freios)', action: 'Revisar', color: '#EF4444' },
                   ].map((task, i) => (
-                    <div key={i} style={{ flex: 1, backgroundColor: '#FFF', padding: '20px', borderRadius: '20px', border: '1px solid #F1F1F1' }}>
+                    <div key={i} style={{ flex: 1, backgroundColor: theme === 'dark' ? '#111' : '#FFF', padding: '20px', borderRadius: '20px', border: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #F1F1F1' }}>
                       <div style={{ fontSize: '11px', fontWeight: '900', color: task.color, textTransform: 'uppercase', marginBottom: '8px' }}>{task.title}</div>
-                      <div style={{ fontSize: '14px', fontWeight: '700', color: '#334155', marginBottom: '12px' }}>{task.desc}</div>
-                      <button style={{ backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1', borderRadius: '10px', padding: '8px 12px', fontSize: '11px', fontWeight: '800', color: '#64748B', cursor: 'pointer' }}>{task.action}</button>
+                      <div style={{ fontSize: '14px', fontWeight: '700', color: theme === 'dark' ? '#FFFFFF' : '#334155', marginBottom: '12px' }}>{task.desc}</div>
+                      <button style={{ backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : '#FFFFFF', border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #F1F1F1', borderRadius: '10px', padding: '8px 12px', fontSize: '11px', fontWeight: '800', color: theme === 'dark' ? '#94A3B8' : '#64748B', cursor: 'pointer' }}>{task.action}</button>
                     </div>
                   ))}
                 </div>
@@ -1009,7 +1567,7 @@ const OperationalMemoryView: React.FC<DashboardProps> = ({ stats, events }) => {
   );
 };
 
-const TeamPage: React.FC = () => {
+const TeamPage: React.FC<{ styles: Record<string, React.CSSProperties> }> = ({ styles }) => {
   const [members, setMembers] = useState([
     { id: '1', name: 'Alison Thiago', email: 'alison@logdock.com', role: 'ADMIN', status: 'ACTIVE' },
     { id: '2', name: 'Marcos Transportes', email: 'marcos@transp.com', role: 'OPERADOR', status: 'ACTIVE' },
@@ -1026,7 +1584,7 @@ const TeamPage: React.FC = () => {
           <p style={styles.teamSubtitle}>Gerencie quem pode acessar e operar o drive desta transportadora.</p>
         </div>
         <button style={{ ...styles.addMemberBtn, backgroundColor: '#000', color: '#FFF', boxShadow: 'none' }} onClick={() => setIsInviteOpen(true)}>
-          <UserPlus size={18} /> Convidar Colaborador
+          <UserPlus size={16} /> Convidar Colaborador
         </button>
       </div>
 
@@ -1047,7 +1605,7 @@ const TeamPage: React.FC = () => {
               <span style={{ ...styles.statusBadge, color: member.status === 'ACTIVE' ? '#0061FF' : '#F59E0B' }}>
                 {member.status === 'ACTIVE' ? 'Ativo' : 'Convite Enviado'}
               </span>
-              <button style={styles.memberActionBtn}><MoreHorizontal size={18} /></button>
+              <button style={styles.memberActionBtn}><MoreHorizontal size={16} /></button>
             </div>
           </div>
         ))}
@@ -1082,7 +1640,7 @@ const InviteModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     <div style={{
       position: 'fixed', inset: 0, zIndex: 1000,
       backgroundColor: 'rgba(15, 23, 42, 0.4)',
-      backdropFilter: 'blur(8px)',
+      backdropFilter: 'none',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       animation: 'fadeIn 0.2s ease'
     }}>
@@ -1189,7 +1747,7 @@ const InviteModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   );
 };
 
-const UserAPIs: React.FC = () => {
+const UserAPIs: React.FC<{ styles: Record<string, React.CSSProperties> }> = ({ styles }) => {
   const [keys, setKeys] = useState([{ id: '1', name: 'ERP Logística Principal', key: 'ld_live_a1b2c3d4e5f6...', created: '2026-05-01' }]);
   const [logs] = useState([
     { id: '1', method: 'POST', endpoint: '/v1/incoming', status: 200, time: '10:45:22', payload: 'file: nota_fiscal.pdf' },
@@ -1494,6 +2052,16 @@ const DeletedFilesView: React.FC = () => (
 
 const LogDockDashboard: React.FC = () => {
   const { user, profile } = useAuth();
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('logdock_theme');
+    // Only use dark if the user explicitly chose it. Default is always 'light'.
+    return saved === 'dark' ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('logdock_theme', theme);
+  }, [theme]);
+
   const [userType, setUserType] = useState<string | null>(() => localStorage.getItem('logdock_user_type'));
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(() => localStorage.getItem('logdock_onboarding_completed') === 'true');
   const [onboardingStep, setOnboardingStep] = useState<number>(() => {
@@ -1553,6 +2121,46 @@ const LogDockDashboard: React.FC = () => {
   const [uploadQueue, setUploadQueue] = useState<any[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(3);
+  
+  // Dynamic styles based on theme
+  const currentStyles = useMemo(() => {
+    if (theme === 'dark') {
+      return {
+        ...styles,
+        macProfilePopup: { ...styles.macProfilePopup, backgroundColor: '#1A1A1A', border: '1px solid rgba(255,255,255,0.1)' },
+        profileName: { ...styles.profileName, color: '#FFFFFF' },
+        profileEmail: { ...styles.profileEmail, color: 'rgba(255,255,255,0.5)' },
+        popupItem: { ...styles.popupItem, color: '#FFFFFF' },
+        dropdownItem: { ...styles.dropdownItem, color: '#FFFFFF' },
+      };
+    }
+    return {
+      ...styles,
+      dashboardContainer: { ...styles.dashboardContainer, backgroundColor: '#F8F9FA' },
+      miniSidebar: { ...styles.miniSidebar, backgroundColor: '#FFFFFF', borderRight: '1px solid #EBEBEB' },
+      main: { ...styles.main, backgroundColor: '#F8F9FA', border: '1px solid #EBEBEB', boxShadow: 'none' },
+      header: { ...styles.header, borderBottom: '1px solid #F1F1F1', backgroundColor: '#FFFFFF' },
+      searchBar: { ...styles.searchBar, backgroundColor: '#F8F9FA', border: '1px solid #EBEBEB' },
+      searchInput: { ...styles.searchInput, color: '#334155' },
+      statCard: { ...styles.statCard, backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
+      statValue: { ...styles.statValue, color: '#334155' },
+      statTitle: { ...styles.statTitle, color: '#64748B' },
+      sectionTitle: { ...styles.sectionTitle, color: '#334155' },
+      resultCard: { ...styles.resultCard, backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1' },
+      resultTitle: { ...styles.resultTitle, color: '#334155' },
+      fileCard: { ...styles.fileCard, backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1' },
+      fileName: { ...styles.fileName, color: '#334155' },
+      timelineSidebar: { ...styles.timelineSidebar, backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1', boxShadow: 'none' },
+      timelineUser: { ...styles.timelineUser, color: '#334155' },
+      timelineEvent: { ...styles.timelineEvent, color: '#64748B' },
+      macProfilePopup: { ...styles.macProfilePopup, backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1' },
+      profileName: { ...styles.profileName, color: '#334155' },
+      profileEmail: { ...styles.profileEmail, color: '#64748B' },
+      popupItem: { ...styles.popupItem, color: '#334155' },
+      dropdownItem: { ...styles.dropdownItem, color: '#334155' },
+    };
+  }, [theme]);
+
   const carouselRef = useRef<HTMLDivElement>(null);
   const recentFilesRef = useRef<HTMLDivElement>(null);
   
@@ -2538,12 +3146,29 @@ const LogDockDashboard: React.FC = () => {
         </div>
       )}
       {/* 🚀 CLOUD DOCK PREMIUM DESIGN LAYOUT */}
-      <div style={{ display: 'flex', width: '100vw', height: '100vh', backgroundColor: '#FFFFFF', overflow: 'hidden', fontFamily: '"Outfit", "Inter", sans-serif' }}>
+      <div style={{ 
+        ...currentStyles.dashboardContainer,
+        display: 'flex', 
+        width: '100vw', 
+        height: '100vh', 
+        overflow: 'hidden', 
+        fontFamily: '"Outfit", "Inter", sans-serif',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+      }}>
         
-        {/* TIER 1: ICON MINI-SIDEBAR */}
-        <aside style={{ width: '120px', backgroundColor: '#FFFFFF', borderRight: '1px solid #F1F1F1', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flexShrink: 0, padding: '24px 0' }}>
-          {/* LOGO */}
-          <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', marginBottom: '32px' }} onClick={() => navigate('/app/inicio')}>
+        <aside style={{ 
+          ...currentStyles.miniSidebar,
+          width: isSidebarCollapsed ? '120px' : '280px', 
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flexShrink: 0, padding: '24px 0',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}>
+
+          <div style={{ 
+            width: '56px', height: '56px', borderRadius: '16px', 
+            backgroundColor: theme === 'dark' ? '#1A1A1A' : '#FFFFFF', 
+            border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #F1F1F1', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', marginBottom: '32px' 
+          }} onClick={() => navigate('/app/inicio')}>
             <Logo onlyIcon={true} size={42} />
           </div>
 
@@ -2570,7 +3195,8 @@ const LogDockDashboard: React.FC = () => {
           ))}
 
           {/* DIVIDER */}
-          <div style={{ width: '32px', height: '1px', backgroundColor: '#F1F1F1', margin: '8px 0' }} />
+          <div style={{ width: '32px', height: '1px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#EBEBEB', margin: '8px 0' }} />
+
 
           {/* PLAN-BASED NAV — só aparece se o plano incluir */}
           {[
@@ -2614,16 +3240,18 @@ const LogDockDashboard: React.FC = () => {
             </button>
 
             {/* DIVIDER */}
-            <div style={{ width: '32px', height: '1px', backgroundColor: '#F1F1F1', margin: '4px 0' }} />
+            <div style={{ width: '32px', height: '1px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)', margin: '4px 0' }} />
+
 
             {/* CONFIGURAÇÕES */}
             <button
               title="Configurações"
               onClick={() => setActiveTab('configuracoes')}
-              style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: activeTab === 'configuracoes' ? '#0061FF' : '#F1F1F1', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: activeTab === 'configuracoes' ? '#FFF' : '#64748B', cursor: 'pointer', transition: 'all 0.2s' }}
+              style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: activeTab === 'configuracoes' ? '#0061FF' : (theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)'), border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: activeTab === 'configuracoes' ? '#FFF' : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#94A3B8'), cursor: 'pointer', transition: 'all 0.2s' }}
             >
               <Settings size={22} />
             </button>
+
 
             {/* SAIR */}
             <button
@@ -2642,31 +3270,31 @@ const LogDockDashboard: React.FC = () => {
         {/* 🔔 NOTIFICATION PANEL (PREMIUM DARK IDENTITY) */}
         {isNotificationOpen && (
           <div style={{
-            position: 'absolute', top: '80px', right: '40px', width: '400px', maxHeight: '85vh',
-            backgroundColor: '#1A1A1A', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: 'none', zIndex: 9999, display: 'flex', flexDirection: 'column',
+            position: 'absolute', top: '80px', right: '40px', 
+            width: '320px', maxHeight: '75vh',
+            backgroundColor: '#1A1A1A', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)', zIndex: 9999, display: 'flex', flexDirection: 'column',
             overflow: 'hidden', animation: 'fadeInDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
           }}>
-            <div style={{ padding: '32px 28px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                 <div style={{ width: '48px', height: '48px', borderRadius: '16px', backgroundColor: 'rgba(0, 97, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0061FF' }}>
-                   <ShieldCheck size={26} />
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                 <div style={{ width: '36px', height: '36px', borderRadius: '12px', backgroundColor: 'rgba(0, 97, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0061FF' }}>
+                   <ShieldCheck size={20} />
                  </div>
                  <div>
-                   <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#FFFFFF', margin: 0, letterSpacing: '-0.5px' }}>Central Inteligente</h3>
-                   <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', margin: 0, fontWeight: 600 }}>Operações aguardando ação</p>
+                   <h3 style={{ fontSize: '15px', fontWeight: 900, color: '#FFFFFF', margin: 0, letterSpacing: '-0.5px' }}>Central Inteligente</h3>
                  </div>
                </div>
-               <button onClick={() => setIsNotificationOpen(false)} style={{ width: '36px', height: '36px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.05)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#FFF' }}>
-                 <X size={18} />
+               <button onClick={() => setIsNotificationOpen(false)} style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.05)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#FFF' }}>
+                 <X size={14} />
                </button>
             </div>
             
-            <div style={{ padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ padding: '12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                {[
-                 { id: 1, type: 'PENDING_DOC', title: 'Carga #8821 Pendente', desc: 'Falta o comprovante de entrega para finalizar.', color: '#0061FF', icon: <Clock size={18} /> },
-                 { id: 2, type: 'VALIDATE', title: 'Documento Recebido', desc: 'Nota fiscal da carga #442 aguardando validação.', color: '#0061FF', icon: <FileText size={18} /> },
-                 { id: 3, type: 'ARCHIVE', title: 'Operação Finalizada', desc: 'Carga #7741 pronta para ser arquivada.', color: '#34A853', icon: <CheckCircle2 size={18} /> },
+                 { id: 1, type: 'PENDING_DOC', title: 'Carga #8821 Pendente', desc: 'Falta comprovante de entrega.', color: '#0061FF', icon: <Clock size={16} /> },
+                 { id: 2, type: 'VALIDATE', title: 'Documento Recebido', desc: 'Nota fiscal aguardando validação.', color: '#0061FF', icon: <FileText size={16} /> },
+                 { id: 3, type: 'ARCHIVE', title: 'Operação Finalizada', desc: 'Pronta para ser arquivada.', color: '#34A853', icon: <CheckCircle2 size={16} /> },
                ].map((notif, idx) => (
                  <div 
                    key={idx} 
@@ -2676,28 +3304,28 @@ const LogDockDashboard: React.FC = () => {
                      operation: notif.title.split(' ')[0] + ' ' + notif.title.split(' ')[1]
                    })}
                    style={{ 
-                     padding: '20px', backgroundColor: 'rgba(255,255,255,0.02)', 
-                     borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', 
-                     display: 'flex', gap: '16px', alignItems: 'flex-start', 
+                     padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.02)', 
+                     borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', 
+                     display: 'flex', gap: '12px', alignItems: 'center', 
                      cursor: 'pointer', transition: 'all 0.2s ease' 
                    }} 
                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }} 
                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; }}
                  >
-                   <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: notif.color, flexShrink: 0 }}>
+                   <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: notif.color, flexShrink: 0 }}>
                      {notif.icon}
                    </div>
                    <div style={{ flex: 1 }}>
-                     <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>{notif.title}</div>
-                     <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginTop: '4px', lineHeight: '1.5', fontWeight: 500 }}>{notif.desc}</div>
+                     <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF' }}>{notif.title}</div>
+                     <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px', fontWeight: 500 }}>{notif.desc}</div>
                    </div>
-                   <ChevronRight size={16} color="rgba(255,255,255,0.2)" style={{ marginTop: '12px' }} />
+                   <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
                  </div>
                ))}
             </div>
             
-            <div style={{ padding: '24px', borderTop: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.01)', textAlign: 'center' }}>
-               <button onClick={() => { setIsNotificationOpen(false); setUnreadCount(0); }} style={{ background: 'none', border: 'none', color: '#0061FF', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}>Marcar tudo como lido</button>
+            <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.01)', textAlign: 'center' }}>
+               <button onClick={() => { setIsNotificationOpen(false); setUnreadCount(0); }} style={{ background: 'none', border: 'none', color: '#0061FF', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}>Marcar tudo como lido</button>
             </div>
           </div>
         )}
@@ -2705,42 +3333,44 @@ const LogDockDashboard: React.FC = () => {
         {/* TIER 2: EXPLORER / NAVIGATION TREE SIDEBAR */}
         <aside style={{ 
           width: isSidebarCollapsed ? '84px' : '320px', 
-          background: '#F1F1F1', 
-          color: '#64748B', 
+          background: theme === 'dark' ? '#0F0F0F' : '#EBEBEB', 
+          color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#64748B', 
           display: 'flex', 
           flexDirection: 'column', 
-          borderRight: '1px solid #F1F1F1', 
+          borderRight: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1', 
           flexShrink: 0,
-          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
-          <div style={{ padding: '32px 24px', display: 'flex', alignItems: 'center', justifyContent: isSidebarCollapsed ? 'center' : 'space-between', borderBottom: '1px solid #F1F1F1' }}>
+
+          <div style={{ padding: '32px 24px', display: 'flex', alignItems: 'center', justifyContent: isSidebarCollapsed ? 'center' : 'space-between', borderBottom: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div 
                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: '#F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#D1D1D1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
               >
-                {isSidebarCollapsed ? <ChevronRight size={18} color="#64748B" /> : <ChevronLeft size={18} color="#64748B" />}
+                {isSidebarCollapsed ? <ChevronRight size={18} color={theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#64748B'} /> : <ChevronLeft size={18} color={theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#64748B'} />}
               </div>
-              {!isSidebarCollapsed && <span style={{ fontSize: '18px', fontWeight: 800, color: '#334155' }}>Painel</span>}
+              {!isSidebarCollapsed && <span style={{ fontSize: '18px', fontWeight: 800, color: theme === 'dark' ? '#FFFFFF' : '#334155' }}>Painel</span>}
             </div>
             {!isSidebarCollapsed && (
-              <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: '#F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Settings size={16} color="#64748B" />
+              <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#D1D1D1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Settings size={16} color={theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#64748B'} />
               </div>
             )}
           </div>
 
 
+
           {/* NAVIGATION MENU */}
           <div style={{ flex: 1, overflowY: 'auto', padding: isSidebarCollapsed ? '20px 10px' : '12px 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {[
-              { id: 'inicio', label: 'Dashboard', icon: <Home size={18} /> },
-              { id: 'operacoes', label: 'Operações', icon: <Box size={18} /> },
-              { id: 'transportadores', label: 'Transportadores', icon: <Truck size={18} /> },
-              { id: 'arquivos', label: 'Documentos', icon: <Files size={18} /> },
-              { id: 'relatorios', label: 'Relatórios', icon: <Activity size={18} /> },
-              { id: 'alertas', label: 'Alertas', icon: <Bell size={18} />, badge: '12' },
-              { id: 'configuracoes', label: 'Configurações', icon: <Settings size={18} /> },
+              { id: 'inicio', label: 'Dashboard', icon: <Home size={16} /> },
+              { id: 'operacoes', label: 'Operações', icon: <Box size={16} /> },
+              { id: 'transportadores', label: 'Transportadores', icon: <Truck size={16} /> },
+              { id: 'arquivos', label: 'Documentos', icon: <Files size={16} /> },
+              { id: 'relatorios', label: 'Relatórios', icon: <Activity size={16} /> },
+              { id: 'alertas', label: 'Alertas', icon: <Bell size={16} />, badge: '12' },
+              { id: 'configuracoes', label: 'Configurações', icon: <Settings size={16} /> },
             ].map(item => (
               <button 
                 key={item.id}
@@ -2751,26 +3381,28 @@ const LogDockDashboard: React.FC = () => {
                   height: isSidebarCollapsed ? '54px' : 'auto',
                   padding: isSidebarCollapsed ? '0' : '14px 18px', 
                   borderRadius: '12px', 
-                  backgroundColor: activeTab === item.id ? '#FFFFFF' : 'transparent', 
-                  border: 'none', 
+                  backgroundColor: activeTab === item.id ? (theme === 'dark' ? '#1A1A1A' : '#FFF') : 'transparent', 
+                  border: activeTab === item.id ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1') : 'none', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: isSidebarCollapsed ? 'center' : 'space-between', 
-                  color: activeTab === item.id ? '#0061FF' : '#64748B', 
-                  boxShadow: activeTab === item.id ? '0 4px 12px rgba(0,0,0,0.02)' : 'none',
+                  color: activeTab === item.id 
+                    ? (theme === 'dark' ? '#FFF' : '#0061FF') 
+                    : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'), 
+                  boxShadow: activeTab === item.id ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.05)') : 'none',
                   cursor: 'pointer', 
                   transition: 'all 0.2s ease' 
                 }}
                 onMouseEnter={e => {
                   if (activeTab !== item.id) {
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.8)';
-                    e.currentTarget.style.color = '#0061FF';
+                    e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+                    e.currentTarget.style.color = theme === 'dark' ? '#FFF' : '#334155';
                   }
                 }}
                 onMouseLeave={e => {
                   if (activeTab !== item.id) {
                     e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#64748B';
+                    e.currentTarget.style.color = theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B';
                   }
                 }}
               >
@@ -2791,34 +3423,34 @@ const LogDockDashboard: React.FC = () => {
           {!isSidebarCollapsed && (
             <div style={{
               marginTop: 'auto', padding: '24px', borderRadius: '24px',
-              background: '#FFF',
-              border: '1px solid #F1F1F1', position: 'relative', overflow: 'hidden',
+              background: theme === 'dark' ? '#141414' : '#FFFFFF',
+              border: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1', position: 'relative', overflow: 'hidden',
               marginBottom: '24px',
               margin: '24px',
-              boxShadow: 'none'
+              boxShadow: theme === 'dark' ? 'none' : '0 4px 12px rgba(0,0,0,0.05)'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '32px' }}>🚀</span>
-                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                  <MoreHorizontal size={16} color="#64748B" />
+                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: theme === 'dark' ? '#1A1A1A' : '#F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <MoreHorizontal size={16} color={theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'} />
                 </div>
               </div>
 
-              <h4 style={{ margin: '20px 0 10px', fontSize: '15px', fontWeight: 900, color: '#334155' }}>Uso de Armazenamento</h4>
+              <h4 style={{ margin: '20px 0 10px', fontSize: '15px', fontWeight: 900, color: theme === 'dark' ? '#FFFFFF' : '#334155' }}>Uso de Armazenamento</h4>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#334155' }}>{storageStats.used} / {storageStats.total}</span>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B' }}>{storageStats.percent}%</span>
+                <span style={{ fontSize: '13px', fontWeight: 800, color: theme === 'dark' ? '#FFF' : '#334155' }}>{storageStats.used} / {storageStats.total}</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B' }}>{storageStats.percent}%</span>
               </div>
 
-              <div style={{ width: '100%', height: '6px', backgroundColor: '#F1F1F1', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
+              <div style={{ width: '100%', height: '6px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F1F1', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
                 <div style={{ width: `${storageStats.percent}%`, height: '100%', backgroundColor: storageStats.percent > 90 ? '#EF4444' : '#0061FF', borderRadius: '3px' }} />
               </div>
 
               <button 
                 onClick={() => navigate('/plans')}
-                style={{ width: '100%', marginTop: '16px', padding: '12px', borderRadius: '14px', backgroundColor: '#0061FF', color: '#FFFFFF', border: 'none', fontSize: '13px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 12px rgba(181, 217, 0, 0.2)', transition: 'all 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#A3C200'}
+                style={{ width: '100%', marginTop: '16px', padding: '12px', borderRadius: '14px', backgroundColor: '#0061FF', color: '#FFFFFF', border: 'none', fontSize: '13px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: 'none', transition: 'all 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#0055E0'}
                 onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0061FF'}
               >
                 <Zap size={16} />
@@ -2834,14 +3466,22 @@ const LogDockDashboard: React.FC = () => {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', backgroundColor: '#F1F1F1' }}
+          style={{ 
+            flex: 1, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100%', 
+            overflowY: 'auto', 
+            backgroundColor: theme === 'dark' ? '#0F0F0F' : '#F8F9FA',
+            transition: 'background-color 0.3s ease'
+          }}
         >
           
           {/* HEADER TOPO DO WORKSPACE (TRANSPARENTE E ROLÁVEL) */}
           <header style={{ padding: '24px 40px', backgroundColor: 'transparent', borderBottom: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             {/* PAGE TITLE & SEARCH — LEFT */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-              <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' }}>
+              <h1 style={{ fontSize: '24px', fontWeight: 900, color: theme === 'dark' ? '#FFFFFF' : '#334155', margin: 0, letterSpacing: '-0.5px' }}>
                 {activeTab === 'inicio' ? 'Dashboard' : 
                  activeTab === 'arquivos' ? 'Meu Drive' : 
                  activeTab === 'lixeira' ? 'Lixeira' : 
@@ -2858,37 +3498,9 @@ const LogDockDashboard: React.FC = () => {
                  activeTab === 'relatorios' ? 'Relatórios' : 'LogDock'}
               </h1>
               
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '280px' }}>
-                <Search size={16} color="#94A3B8" style={{ position: 'absolute', left: '16px', flexShrink: 0 }} />
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  style={{ width: '100%', padding: '10px 40px 10px 44px', borderRadius: '12px', backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1', color: '#334155', fontSize: '12px', fontWeight: 600, outline: 'none', boxShadow: 'none' }}
-                />
-              </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              {/* NOTIFICATION BUTTON */}
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button 
-                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                  style={{ 
-                    width: '44px', height: '44px', borderRadius: '14px', 
-                    backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1', 
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#334155', 
-                    cursor: 'pointer', position: 'relative', transition: '0.2s' 
-                  }}
-                >
-                  <Bell size={18} />
-                  {unreadCount > 0 && (
-                    <div style={{ position: 'absolute', top: '-4px', right: '-4px', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: '#EF4444', border: '2px solid #FFF', color: '#FFF', fontSize: '10px', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {unreadCount}
-                    </div>
-                  )}
-                </button>
-              </div>
-
               {/* COLLABORATORS AVATARS STACK */}
               <div style={{ display: 'flex', alignItems: 'center', marginRight: '12px' }}>
                 {[
@@ -2897,11 +3509,12 @@ const LogDockDashboard: React.FC = () => {
                   { name: 'Mariana Costa', img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=60&auto=format&fit=crop&q=60' },
                   { name: 'Felipe Rocha', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&auto=format&fit=crop&q=60' }
                 ].map((col, i) => (
-                  <div key={i} style={{ position: 'relative', width: '36px', height: '36px', borderRadius: '50%', border: '2px solid #FFF', marginLeft: i === 0 ? 0 : '-10px', cursor: 'pointer', zIndex: 10 - i, transition: '0.2s', backgroundColor: '#F1F1F1', overflow: 'hidden' }}>
+                  <div key={i} style={{ position: 'relative', width: '36px', height: '36px', borderRadius: '50%', border: theme === 'dark' ? '2px solid #141414' : '2px solid #FFF', marginLeft: i === 0 ? 0 : '-10px', cursor: 'pointer', zIndex: 10 - i, transition: '0.2s', backgroundColor: theme === 'dark' ? '#1A1A1A' : '#F1F1F1', overflow: 'hidden' }}>
                     <img alt={col.name} src={col.img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 ))}
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#F1F1F1', border: '2px solid #FFF', marginLeft: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, color: '#64748B', cursor: 'pointer', zIndex: 5 }}>+8</div>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: theme === 'dark' ? '#1A1A1A' : '#F1F1F1', border: theme === 'dark' ? '2px solid #141414' : '2px solid #FFF', marginLeft: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, color: theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B', cursor: 'pointer', zIndex: 5 }}>+8</div>
+
                 <div 
                   title="Convidar colaborador" 
                   style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#EEF2FF', border: '2px dashed #0061FF', marginLeft: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.2s', flexShrink: 0 }}
@@ -2914,11 +3527,11 @@ const LogDockDashboard: React.FC = () => {
               {/* ACTION: COMPARTILHAR */}
               <button 
                 onClick={() => navigate('/team')}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 24px', backgroundColor: '#000', color: '#FFF', border: 'none', borderRadius: '16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', boxShadow: 'none', transition: 'all 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#1A1A1A'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#000'}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 24px', backgroundColor: theme === 'dark' ? '#1A1A1A' : '#F1F1F1', color: theme === 'dark' ? '#FFF' : '#334155', border: 'none', borderRadius: '16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', boxShadow: 'none', transition: 'all 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = theme === 'dark' ? '#222222' : '#EBEBEB'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = theme === 'dark' ? '#1A1A1A' : '#F1F1F1'}
               >
-                <Share2 size={18} />
+                <Share2 size={16} />
                 <span>Compartilhar</span>
               </button>
 
@@ -2929,20 +3542,60 @@ const LogDockDashboard: React.FC = () => {
                 onMouseEnter={e => e.currentTarget.style.backgroundColor = '#A3C200'}
                 onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0061FF'}
               >
-                <Zap size={18} />
+                <Zap size={16} />
                 <span>Mudar de plano</span>
               </button>
               <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={(e) => handleUpload(e.target.files)} />
 
               {/* PROFILE FLYOUT TOGGLE */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', paddingLeft: '16px', borderLeft: '1px solid #F1F1F1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', paddingLeft: '16px', borderLeft: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #F1F1F1' }}>
+                
+                {/* THEME TOGGLE BUTTON */}
+                <button 
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  style={{ 
+                    width: '44px', height: '44px', borderRadius: '14px', 
+                    backgroundColor: theme === 'dark' ? '#1A1A1A' : '#FFFFFF', 
+                    border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #F1F1F1', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                    color: theme === 'dark' ? '#FFB800' : '#334155', 
+                    cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: theme === 'dark' ? 'none' : '0 2px 4px rgba(0,0,0,0.02)'
+                  }}
+                  title={theme === 'dark' ? 'Mudar para modo dia' : 'Mudar para modo noite'}
+                >
+                  {theme === 'dark' ? <Sun size={18} fill="#FFB800" /> : <Moon size={18} fill="#334155" />}
+                </button>
+
+                {/* NOTIFICATION BUTTON */}
+                <button 
+                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                  style={{ 
+                    width: '44px', height: '44px', borderRadius: '14px', 
+                    backgroundColor: theme === 'dark' ? '#1A1A1A' : '#FFFFFF', 
+                    border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #F1F1F1', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                    color: theme === 'dark' ? '#FFF' : '#334155', 
+                    cursor: 'pointer', position: 'relative', transition: '0.2s' 
+                  }}
+                >
+                  <Bell size={16} />
+                  {unreadCount > 0 && (
+                    <div style={{ position: 'absolute', top: '-4px', right: '-4px', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: '#EF4444', border: theme === 'dark' ? '2px solid #1A1A1A' : '2px solid #FFF', color: '#FFF', fontSize: '10px', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {unreadCount}
+                    </div>
+                  )}
+                </button>
+
+
                 <div 
                   onClick={() => setIsActivityOpen(!isActivityOpen)}
                   style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
                 >
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: theme === 'dark' ? '#FFFFFF' : '#0F172A' }}>
                     {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Usuário'}
                   </span>
+
                   <div 
                     style={{ 
                       width: '44px', height: '44px', borderRadius: '14px', 
@@ -3008,8 +3661,9 @@ const LogDockDashboard: React.FC = () => {
           </header>
 
           {/* PAGE INNER CONTENT WRAPPER */}
-          <div style={{ padding: '20px 32px 64px 32px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ flex: 1, backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid #F1F1F1', padding: '64px 96px 96px 96px', boxShadow: 'none', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '20px 32px 64px 32px', flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: theme === 'dark' ? '#0F0F0F' : '#F8F9FA' }}>
+            <div style={{ flex: 1, backgroundColor: theme === 'dark' ? '#111111' : '#FFFFFF', borderRadius: '32px', border: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #EBEBEB', padding: '32px 64px 64px 64px', boxShadow: theme === 'dark' ? '0 40px 100px rgba(0,0,0,0.4)' : 'none', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease' }}>
+
             {(() => {
               return (
                 <>
@@ -3019,7 +3673,7 @@ const LogDockDashboard: React.FC = () => {
                   {selectedCollab && (
                     <div style={{
                       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                      backgroundColor: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(8px)',
+                      backgroundColor: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'none',
                       zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }} onClick={() => setActiveCollab(null)}>
                       <div
@@ -3066,7 +3720,7 @@ const LogDockDashboard: React.FC = () => {
                             onClick={() => setActiveCollab(null)}
                             style={{ background: 'rgba(255,255,255,0.08)', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', padding: '8px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}
                           >
-                            <X size={18} />
+                            <X size={16} />
                           </button>
                         </div>
 
@@ -3078,7 +3732,7 @@ const LogDockDashboard: React.FC = () => {
                             <div style={{ fontSize: '10px', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '20px' }}>Informações de Contato</div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: '#F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                   <Mail size={16} color="#0061FF" />
                                 </div>
                                 <div>
@@ -3087,7 +3741,7 @@ const LogDockDashboard: React.FC = () => {
                                 </div>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: '#F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                   <Phone size={16} color="#0061FF" />
                                 </div>
                                 <div>
@@ -3096,7 +3750,7 @@ const LogDockDashboard: React.FC = () => {
                                 </div>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: '#F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                   <ShieldCheck size={16} color="#0061FF" />
                                 </div>
                                 <div>
@@ -3171,9 +3825,13 @@ const LogDockDashboard: React.FC = () => {
                   handleMouseUpRecent={handleMouseUpRecent}
                   handleMouseMoveRecent={handleMouseMoveRecent}
                   openActionSidebar={openActionSidebar}
+                  styles={currentStyles}
+                  theme={theme}
                 />
               )}
-              {activeTab === 'operacao' && <OperationalMemoryView stats={globalStats} events={operationalEvents} />}
+              {activeTab === 'operacoes' && <OperationalMemoryView stats={globalStats} events={operationalEvents} styles={currentStyles} theme={theme} />}
+              {activeTab === 'equipe' && <TeamPage styles={currentStyles} />}
+              {activeTab === 'api' && <UserAPIs styles={currentStyles} />}
               {activeTab === 'torre-controle' && <ControlTowerPage />}
               {activeTab === 'master' && <MasterHubPage />}
               {activeTab === 'portal-cliente' && <ClientPortalPage />}
@@ -3217,17 +3875,22 @@ const LogDockDashboard: React.FC = () => {
 
             {/* ACTION SIDEBAR (PREMIUM DARK IDENTITY) */}
             {isActionSidebarOpen && actionContext && (
-              <div style={{ 
-                position: 'fixed', top: 0, right: 0, width: '460px', height: '100vh', 
-                backgroundColor: '#1A1A1A', boxShadow: 'none', 
-                zIndex: 5000, display: 'flex', flexDirection: 'column', 
-                animation: 'slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                borderLeft: '1px solid rgba(255,255,255,0.1)'
-              }}>
+              <>
+                <div 
+                  onClick={() => setIsActionSidebarOpen(false)}
+                  style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', zIndex: 4999 }} 
+                />
+                <div style={{ 
+                  position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', 
+                  width: '820px', maxHeight: '90vh', 
+                  backgroundColor: '#1A1A1A', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: '0 40px 80px rgba(0,0,0,0.6)', zIndex: 5000, display: 'flex', flexDirection: 'column', 
+                  overflow: 'hidden', animation: 'scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+                }}>
                 {/* Header Section */}
                 <div style={{ padding: '40px 32px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '16px', backgroundColor: actionContext.type === 'PENDING_DOC' ? 'rgba(0,97,255,0.15)' : 'rgba(52,168,83,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '12px', backgroundColor: actionContext.type === 'PENDING_DOC' ? 'rgba(0,97,255,0.15)' : 'rgba(52,168,83,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
                       {actionContext.type === 'PENDING_DOC' ? <Clock size={24} color="#0061FF" /> : <ShieldCheck size={24} color="#34A853" />}
                     </div>
                     <span style={{ fontSize: '24px', fontWeight: 900, color: '#FFF', letterSpacing: '-0.5px' }}>{actionContext.title}</span>
@@ -3235,51 +3898,72 @@ const LogDockDashboard: React.FC = () => {
                   </div>
                   <button 
                     onClick={() => setIsActionSidebarOpen(false)} 
-                    style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#FFF', width: '40px', height: '40px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#FFF', width: '32px', height: '32px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     <X size={20} />
                   </button>
                 </div>
 
                 {/* Content Section */}
-                <div style={{ flex: 1, padding: '0 32px 32px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                <div style={{ flex: 1, padding: '0 40px 40px', overflowY: 'auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
                   
-                  {/* Context Box */}
-                  <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '24px', padding: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ fontSize: '10px', fontWeight: 900, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>Identificação</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
-                        <Truck size={20} color="#0061FF" />
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '16px', fontWeight: 800, color: '#FFF' }}>{actionContext.operation}</span>
-                        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>ID LogDock: {Math.floor(Math.random() * 10000)}</span>
+                  {/* Left Column: Context & Identity */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '32px', padding: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 900, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '24px' }}>Dados da Operação</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                          <div style={{ width: '48px', height: '48px', borderRadius: '16px', backgroundColor: 'rgba(0, 97, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0, 97, 255, 0.1)' }}>
+                            <Truck size={24} color="#0061FF" />
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: '18px', fontWeight: 800, color: '#FFF' }}>{actionContext.operation}</span>
+                            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>ID LogDock: {Math.floor(Math.random() * 10000)}</span>
+                          </div>
+                        </div>
+                        
+                        <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.05)' }} />
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>Status Atual</span>
+                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#0061FF' }}>Aguardando Ação</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>Prioridade</span>
+                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#EF4444' }}>Alta</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Action Fields */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Right Column: AI Insights & Recommendation */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    <div style={{ backgroundColor: 'rgba(0, 97, 255, 0.05)', borderRadius: '32px', padding: '32px', border: '1px solid rgba(0, 97, 255, 0.1)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF', boxShadow: '0 0 10px #0061FF' }} />
+                        <span style={{ fontSize: '11px', fontWeight: 900, color: '#0061FF', textTransform: 'uppercase', letterSpacing: '1px' }}>Recomendação IA</span>
+                      </div>
+                      <p style={{ fontSize: '15px', color: '#FFF', fontWeight: 600, lineHeight: '1.6', margin: 0 }}>
+                        {actionContext.type === 'PENDING_DOC' ? 'O transportador ainda não anexou o comprovante. A IA sugere notificação imediata para evitar atrasos na baixa.' : 
+                         actionContext.type === 'VALIDATE' ? 'Dados extraídos conferem com o manifesto (99.8% precisão). Recomendamos a liberação imediata.' :
+                         'A operação foi processada com sucesso. O arquivamento liberará memória operacional.'}
+                      </p>
+                    </div>
+
                     {actionContext.type === 'VALIDATE' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
                           <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>Placa Detectada</span>
                           <span style={{ fontSize: '13px', fontWeight: 800, color: '#FFF' }}>ABC-1234</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
                           <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>Confiança IA</span>
                           <span style={{ fontSize: '13px', fontWeight: 800, color: '#34A853' }}>99.8%</span>
                         </div>
                       </div>
                     )}
-
-                    <div style={{ padding: '24px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                      <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6', margin: 0 }}>
-                        {actionContext.type === 'PENDING_DOC' ? 'O transportador ainda não anexou o comprovante. Deseja enviar uma notificação automática via WhatsApp?' : 
-                         actionContext.type === 'VALIDATE' ? 'Todos os dados extraídos pela IA conferem com o manifesto. Deseja liberar a carga para expedição?' :
-                         'A operação foi processada com sucesso. O arquivamento liberará memória operacional.'}
-                      </p>
-                    </div>
                   </div>
                 </div>
 
@@ -3295,11 +3979,12 @@ const LogDockDashboard: React.FC = () => {
                     onClick={() => { toast.success('Ação executada com sucesso!'); setIsActionSidebarOpen(false); }}
                     style={{ flex: 2, padding: '18px', backgroundColor: actionContext.type === 'PENDING_DOC' ? '#25D366' : '#0061FF', color: '#FFF', border: 'none', borderRadius: '18px', fontSize: '14px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
                   >
-                    {actionContext.type === 'PENDING_DOC' && <MessageSquare size={18} />}
+                    {actionContext.type === 'PENDING_DOC' && <MessageSquare size={16} />}
                     {actionContext.type === 'PENDING_DOC' ? 'Notificar WhatsApp' : actionContext.type === 'VALIDATE' ? 'Validar e Liberar' : 'Confirmar'}
                   </button>
                 </div>
               </div>
+              </>
             )}
             </div>
           </div>
@@ -3372,75 +4057,246 @@ const FileExplorerView: React.FC<{
   isNewMenuOpen: boolean,
   setIsNewMenuOpen: (val: boolean) => void
 }> = ({ folders, files, currentPath, onFolderClick, onBack, onNewFolder, isDragging, isNewMenuOpen, setIsNewMenuOpen }) => {
+  const [isFolderMenuOpen, setIsFolderMenuOpen] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const closeMenus = () => {
+    setIsFolderMenuOpen(false);
+    setContextMenu(null);
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-      {/* ACTIONS ROW */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-        <div style={{ position: 'relative' }}>
-          <button 
-            onClick={() => setIsNewMenuOpen(!isNewMenuOpen)}
-            style={{ padding: '10px 20px', backgroundColor: '#0F172A', color: '#FFF', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#1E293B'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0F172A'}
-          >
-            <Plus size={16} />
-            <span>Novo</span>
-            <ChevronDown size={14} />
+    <div 
+      style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+      onContextMenu={handleContextMenu}
+      onClick={closeMenus}
+    >
+      {/* BREADCRUMBS ROW */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 4px' }}>
+        <span 
+          onClick={onBack}
+          style={{ fontSize: '18px', fontWeight: 600, color: '#64748B', cursor: 'pointer' }}
+        >
+          Meu Drive
+        </span>
+        {currentPath.length > 0 && (
+          <>
+            <ChevronRight size={16} color="#94A3B8" />
+            <div 
+              style={{ position: 'relative' }}
+              onClick={(e) => { e.stopPropagation(); setIsFolderMenuOpen(!isFolderMenuOpen); }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '10px', backgroundColor: '#F8FAFC', cursor: 'pointer', border: '1px solid #F1F1F1' }}>
+                <span style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A' }}>{currentPath[currentPath.length - 1].name}</span>
+                <ChevronDown size={16} color="#0F172A" />
+              </div>
+
+              {isFolderMenuOpen && (
+                <div style={{ 
+                  position: 'absolute', top: '100%', left: 0, marginTop: '8px', 
+                  width: '320px', backgroundColor: '#1A1A1A', borderRadius: '12px', 
+                  border: '1px solid rgba(255,255,255,0.1)', padding: '8px', zIndex: 100,
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                  display: 'flex', flexDirection: 'column'
+                }}>
+                  <button 
+                    style={styles.dropdownItem}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <FolderPlus size={18} color="rgba(255,255,255,0.5)" />
+                      <span>Nova pasta</span>
+                    </div>
+                    <span style={styles.shortcutText}>^C, depois F</span>
+                  </button>
+                  <div style={styles.menuDivider} />
+                  <button 
+                    style={styles.dropdownItem}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <Download size={18} color="rgba(255,255,255,0.5)" />
+                      <span>Baixar</span>
+                    </div>
+                  </button>
+                  <button 
+                    style={styles.dropdownItem}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <Edit2 size={18} color="rgba(255,255,255,0.5)" />
+                      <span>Renomear</span>
+                    </div>
+                    <span style={styles.shortcutText}>⌥⌘E</span>
+                  </button>
+                  <div style={styles.menuDivider} />
+                  <button 
+                    style={styles.dropdownItem}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <UserPlus size={18} color="rgba(255,255,255,0.5)" />
+                      <span>Compartilhar</span>
+                    </div>
+                    <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
+                  </button>
+                  <button 
+                    style={styles.dropdownItem}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <Folder size={18} color="rgba(255,255,255,0.5)" />
+                      <span>Organizar</span>
+                    </div>
+                    <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
+                  </button>
+                  <button 
+                    style={styles.dropdownItem}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <Info size={18} color="rgba(255,255,255,0.5)" />
+                      <span>Informações da pasta</span>
+                    </div>
+                    <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
+                  </button>
+                  <div style={styles.menuDivider} />
+                  <button 
+                    style={{ ...styles.dropdownItem, color: '#EF4444' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <Trash2 size={18} color="#EF4444" />
+                      <span>Mover para a lixeira</span>
+                    </div>
+                    <span style={styles.shortcutText}>Delete</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* FILTER & ACTIONS ROW */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        {/* Left Side: Filter Pills */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {['Tipo', 'Pessoas', 'Modificado', 'Fonte'].map(filter => (
+            <div key={filter} style={{ 
+              display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', 
+              borderRadius: '10px', border: '1px solid #E2E8F0', backgroundColor: filter === 'Pessoas' ? '#F1F1F1' : '#FFF',
+              cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#334155'
+            }}>
+              <span>{filter}</span>
+              <ChevronDown size={14} color="#64748B" />
+            </div>
+          ))}
+        </div>
+
+        {/* Right Side: Actions & View Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Sort Control */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '20px', backgroundColor: '#E0EFFF', cursor: 'pointer' }}>
+            <span style={{ fontSize: '12px', fontWeight: 800, color: '#0061FF' }}>Nome</span>
+            <ArrowUp size={14} color="#0061FF" />
+          </div>
+
+          {/* View Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #E2E8F0', borderRadius: '20px', overflow: 'hidden', backgroundColor: '#FFF' }}>
+            <div style={{ padding: '8px 12px', borderRight: '1px solid #F1F1F1', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              <List size={16} color="#0F172A" />
+            </div>
+            <div style={{ padding: '8px 12px', backgroundColor: '#E0EFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Check size={14} color="#0F172A" />
+              <Grid size={16} color="#0F172A" />
+            </div>
+          </div>
+
+          {/* Filter Funnel Icon */}
+          <button style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #E2E8F0', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <Filter size={16} color="#64748B" />
           </button>
 
-          {isNewMenuOpen && (
-            <>
-              <div 
-                style={{ position: 'fixed', inset: 0, zIndex: 40 }} 
-                onClick={() => setIsNewMenuOpen(false)} 
-              />
-              <div style={{ 
-                position: 'absolute', top: '100%', right: 0, marginTop: '8px', 
-                width: '240px', backgroundColor: '#FFF', borderRadius: '16px', 
-                border: '1px solid #F1F1F1', padding: '8px', zIndex: 50,
-                boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
-                display: 'flex', flexDirection: 'column', gap: '4px'
-              }}>
-                <button 
-                  onClick={() => { setIsNewMenuOpen(false); onNewFolder(); }}
-                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#1E293B', fontSize: '13px', fontWeight: 600 }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <Folder size={16} color="#64748B" />
-                  <span>Pasta</span>
-                </button>
-                <div style={{ height: '1px', backgroundColor: '#F1F1F1', margin: '4px 0' }} />
-                <button 
-                  onClick={() => { setIsNewMenuOpen(false); window.open('https://docs.google.com/document/create', '_blank'); }}
-                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#1E293B', fontSize: '13px', fontWeight: 600 }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <img src="https://img.icons8.com/color/48/microsoft-word-2019.png" style={{ width: '16px', height: '16px' }} alt="" />
-                  <span>Documento (Google Docs)</span>
-                </button>
-                <button 
-                  onClick={() => { setIsNewMenuOpen(false); window.open('https://sheets.google.com/create', '_blank'); }}
-                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#1E293B', fontSize: '13px', fontWeight: 600 }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <img src="https://img.icons8.com/color/48/microsoft-excel-2019.png" style={{ width: '16px', height: '16px' }} alt="" />
-                  <span>Planilha (Google Sheets)</span>
-                </button>
-                <button 
-                  onClick={() => { setIsNewMenuOpen(false); window.open('https://slides.google.com/create', '_blank'); }}
-                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#1E293B', fontSize: '13px', fontWeight: 600 }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <img src="https://img.icons8.com/color/48/microsoft-powerpoint-2019.png" style={{ width: '16px', height: '16px' }} alt="" />
-                  <span>Apresentação (Google Slides)</span>
-                </button>
-              </div>
-            </>
-          )}
+          {/* NOVO BUTTON */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setIsNewMenuOpen(!isNewMenuOpen)}
+              style={{ padding: '10px 20px', backgroundColor: '#0F172A', color: '#FFF', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#1E293B'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0F172A'}
+            >
+              <Plus size={16} />
+              <span>Novo</span>
+              <ChevronDown size={14} />
+            </button>
+
+            {isNewMenuOpen && (
+              <>
+                <div 
+                  style={{ position: 'fixed', inset: 0, zIndex: 40 }} 
+                  onClick={() => setIsNewMenuOpen(false)} 
+                />
+                <div style={{ 
+                  position: 'absolute', top: '100%', right: 0, marginTop: '8px', 
+                  width: '240px', backgroundColor: '#FFF', borderRadius: '16px', 
+                  border: '1px solid #F1F1F1', padding: '8px', zIndex: 50,
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
+                  display: 'flex', flexDirection: 'column', gap: '4px'
+                }}>
+                  <button 
+                    onClick={() => { setIsNewMenuOpen(false); onNewFolder(); }}
+                    style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#1E293B', fontSize: '13px', fontWeight: 600 }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <PremiumFolderIcon width={16} height={12} />
+                    <span>Pasta</span>
+                  </button>
+                  <div style={{ height: '1px', backgroundColor: '#F1F1F1', margin: '4px 0' }} />
+                  <button 
+                    onClick={() => { setIsNewMenuOpen(false); window.open('https://docs.google.com/document/create', '_blank'); }}
+                    style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#1E293B', fontSize: '13px', fontWeight: 600 }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <img src="https://img.icons8.com/color/48/microsoft-word-2019.png" style={{ width: '16px', height: '16px' }} alt="" />
+                    <span>Documento (Google Docs)</span>
+                  </button>
+                  <button 
+                    onClick={() => { setIsNewMenuOpen(false); window.open('https://sheets.google.com/create', '_blank'); }}
+                    style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#1E293B', fontSize: '13px', fontWeight: 600 }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <img src="https://img.icons8.com/color/48/microsoft-excel-2019.png" style={{ width: '16px', height: '16px' }} alt="" />
+                    <span>Planilha (Google Sheets)</span>
+                  </button>
+                  <button 
+                    onClick={() => { setIsNewMenuOpen(false); window.open('https://slides.google.com/create', '_blank'); }}
+                    style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#1E293B', fontSize: '13px', fontWeight: 600 }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <img src="https://img.icons8.com/color/48/microsoft-powerpoint-2019.png" style={{ width: '16px', height: '16px' }} alt="" />
+                    <span>Apresentação (Google Slides)</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -3460,8 +4316,8 @@ const FileExplorerView: React.FC<{
                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#0061FF'; e.currentTarget.style.transform = 'translateY(-4px)'; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = '#F1F1F1'; e.currentTarget.style.transform = 'translateY(0)'; }}
               >
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Folder size={22} color="#0061FF" fill="#0061FF" fillOpacity={0.1} />
+                <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <PremiumFolderIcon width={32} height={24} />
                 </div>
                 <span style={{ fontSize: '14px', fontWeight: 700, color: '#334155' }}>{folder.name}</span>
               </div>
@@ -3528,10 +4384,124 @@ const FileExplorerView: React.FC<{
               <Upload size={32} color="#0061FF" />
             </div>
             <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#334155', margin: '0 0 4px 0' }}>Solte o arquivo aqui</h4>
-            <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>Para iniciar o upload instantâneo</p>
+            <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>Para iniciar o upload agora</p>
           </div>
         )}
       </div>
+
+      {contextMenu && (
+        <div style={{ 
+          position: 'fixed', top: contextMenu.y, left: contextMenu.x, 
+          width: '280px', backgroundColor: '#1A1A1A', borderRadius: '12px', 
+          border: '1px solid rgba(255,255,255,0.1)', padding: '8px', zIndex: 10000,
+          boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+          display: 'flex', flexDirection: 'column'
+        }} onClick={e => e.stopPropagation()}>
+          <button 
+            style={styles.dropdownItem} 
+            onClick={() => { onNewFolder(); setContextMenu(null); }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <FolderPlus size={18} color="rgba(255,255,255,0.5)" />
+              <span>Nova pasta</span>
+            </div>
+            <span style={styles.shortcutText}>^C, depois F</span>
+          </button>
+          <div style={styles.menuDivider} />
+          <button 
+            style={styles.dropdownItem}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <Upload size={18} color="rgba(255,255,255,0.5)" />
+              <span>Upload de arquivo</span>
+            </div>
+            <span style={styles.shortcutText}>^C, depois U</span>
+          </button>
+          <button 
+            style={styles.dropdownItem}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <Folder size={18} color="rgba(255,255,255,0.5)" />
+              <span>Upload de pasta</span>
+            </div>
+            <span style={styles.shortcutText}>^C, depois I</span>
+          </button>
+          <div style={styles.menuDivider} />
+          <button 
+            style={styles.dropdownItem} 
+            onClick={() => window.open('https://docs.google.com/document/create', '_blank')}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <img src="https://img.icons8.com/color/48/microsoft-word-2019.png" style={{ width: '18px', height: '18px' }} alt="" />
+              <span>Documentos Google</span>
+            </div>
+            <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
+          </button>
+          <button 
+            style={styles.dropdownItem} 
+            onClick={() => window.open('https://sheets.google.com/create', '_blank')}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <img src="https://img.icons8.com/color/48/microsoft-excel-2019.png" style={{ width: '18px', height: '18px' }} alt="" />
+              <span>Planilhas Google</span>
+            </div>
+            <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
+          </button>
+          <button 
+            style={styles.dropdownItem} 
+            onClick={() => window.open('https://slides.google.com/create', '_blank')}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <img src="https://img.icons8.com/color/48/microsoft-powerpoint-2019.png" style={{ width: '18px', height: '18px' }} alt="" />
+              <span>Apresentações Google</span>
+            </div>
+            <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
+          </button>
+          <button 
+            style={styles.dropdownItem}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <Play size={18} color="#8B5CF6" />
+              <span>Google Vids</span>
+            </div>
+          </button>
+          <button 
+            style={styles.dropdownItem}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <FileText size={18} color="#8B5CF6" />
+              <span>Formulários Google</span>
+            </div>
+            <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
+          </button>
+          <button 
+            style={styles.dropdownItem}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <span>Mais</span>
+            </div>
+            <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -3550,480 +4520,5 @@ const LogDockApp: React.FC = () => {
   );
 };
 
-const styles: Record<string, React.CSSProperties> = {
-  dashboardContainer: { display: 'flex', width: '100vw', height: '100vh', backgroundColor: '#334155', overflow: 'hidden' },
-  miniSidebar: { width: '120px', height: '100vh', backgroundColor: '#334155', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', zIndex: 120, flexShrink: 0 },
-  miniLogoBox: { marginBottom: '60px', cursor: 'pointer' },
-  miniNav: { flex: 1, display: 'flex', flexDirection: 'column', gap: '32px' },
-  miniNavItem: { background: 'none', border: 'none', color: '#94A3B8', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s', outline: 'none' },
-  miniNavActive: { color: '#0061FF' },
-  miniNavLink: { fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' },
-  miniSidebarBottom: { marginTop: 'auto', marginBottom: '24px' },
-  miniBottomBtn: { background: 'none', border: 'none', cursor: 'pointer', outline: 'none' },
-  main: { flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#F1F1F1', borderTopLeftRadius: '32px', borderBottomLeftRadius: '32px', boxShadow: 'none', margin: '12px 0 12px 0px', overflow: 'hidden', border: '1px solid #F1F1F1' },
-  header: { height: '80px', padding: '0 40px', borderBottom: '1px solid #F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FFF' },
-  searchBar: { display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#F9F9F7', padding: '10px 20px', borderRadius: '14px', width: '400px', border: '1px solid #F1F1F1' },
-  searchInput: { border: 'none', background: 'none', outline: 'none', width: '100%', fontSize: '14px', fontWeight: '600', color: '#334155' },
-  headerActions: { display: 'flex', alignItems: 'center', gap: '16px' },
-  uploadBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 20px', backgroundColor: '#0061FF', color: '#FFFFFF', fontSize: '14px', fontWeight: '800', cursor: 'pointer', borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(181, 217, 0, 0.15)' },
-  opBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', border: '1px solid #F1F1F1', background: 'none', color: '#334155', fontSize: '13px', fontWeight: '700', cursor: 'pointer', borderRadius: '10px' },
-  userSection: { position: 'relative' },
-  userBadge: { width: '40px', height: '40px', backgroundColor: '#0061FF', color: '#FFF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', cursor: 'pointer', overflow: 'hidden' },
-  content: { flex: 1, padding: '40px', overflowY: 'auto', position: 'relative' },
-  
-  // Popups & Flyouts
-  flyoutOverlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.05)', backdropFilter: 'blur(4px)', zIndex: 1000 },
-  flyoutContent: { position: 'absolute', left: '120px', top: '12px', bottom: '12px', width: '360px', backgroundColor: '#FFF', borderRadius: '24px', boxShadow: 'none', overflow: 'hidden', display: 'flex', flexDirection: 'column', border: '1px solid #F1F1F1' },
-  flyoutHeader: { padding: '24px', borderBottom: '1px solid #F1F1F1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  flyoutTitle: { fontSize: '18px', fontWeight: '900', color: '#334155' },
-  closeFlyout: { background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' },
-  flyoutBody: { padding: '24px', flex: 1, overflowY: 'auto' },
-  flyoutGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' },
-  flyoutItem: { display: 'flex', flexDirection: 'column', gap: '12px', padding: '20px', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #F1F1F1', cursor: 'pointer', textAlign: 'center', alignItems: 'center', fontSize: '13px', fontWeight: '700', color: '#334155' },
-  flyoutList: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  flyoutListItem: { display: 'flex', gap: '16px', padding: '16px', borderRadius: '16px', border: '1px solid #F1F1F1', backgroundColor: '#FBFBFB', cursor: 'pointer', textAlign: 'left' },
-  flyoutItemInfo: { display: 'flex', flexDirection: 'column', gap: '2px' },
-  flyoutItemName: { fontSize: '14px', fontWeight: '800', color: '#334155' },
-  flyoutItemDesc: { fontSize: '11px', color: '#94A3B8', fontWeight: '600' },
-
-  macProfilePopup: { position: 'absolute', top: '50px', right: 0, width: '320px', backgroundColor: '#FFF', borderRadius: '14px', boxShadow: 'none', zIndex: 10000, overflow: 'hidden' },
-  profileHeader: { padding: '24px' },
-  profileInfoMain: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' },
-  userBadgeLarge: { width: '48px', height: '48px', backgroundColor: '#0061FF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '900', color: '#FFF', overflow: 'hidden' },
-  profileName: { fontSize: '15px', fontWeight: '800', color: '#334155' },
-  profileEmail: { fontSize: '12px', color: '#666' },
-  storageSection: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  storageBarContainer: { height: '6px', backgroundColor: '#F1F1F1', borderRadius: '3px', overflow: 'hidden' },
-  popupStorageFill: { height: '100%', borderRadius: '3px', transition: 'width 0.3s' },
-  popupStorageText: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#666', fontWeight: '600' },
-  upgradeLink: { background: 'none', border: 'none', color: '#0061FF', fontSize: '13px', fontWeight: '800', cursor: 'pointer', textAlign: 'left', padding: 0, textDecoration: 'underline' },
-  popupDivider: { height: '1px', backgroundColor: '#F1F1F1' },
-  deviceSection: { padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '12px' },
-  deviceText: { fontSize: '12px', color: '#666', fontWeight: '600' },
-  popupMenu: { padding: '8px' },
-  popupItem: { padding: '10px 16px', fontSize: '13px', fontWeight: '600', color: '#334155', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  languageSection: { padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', color: '#666', fontWeight: '600' },
-
-  // Dashboard Stats & Components
-  loadingScreen: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', width: '100vw', backgroundColor: '#FFFFFF' },
-  aiBadge: { padding: '6px 12px', backgroundColor: '#F0F7FF', color: '#0061FF', borderRadius: '10px', fontSize: '10px', fontWeight: '900', letterSpacing: '1px', width: 'fit-content' },
-  resultsContainer: { padding: '40px' },
-  resultsGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' },
-  resultCard: { backgroundColor: '#FFF', borderRadius: '24px', border: '1px solid #F1F1F1', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center' },
-  resultIconBox: { width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  resultType: { fontSize: '10px', fontWeight: '900', letterSpacing: '0.5px', marginBottom: '4px' },
-  resultTitle: { fontSize: '15px', fontWeight: '800', color: '#334155', marginBottom: '4px' },
-  
-  // LogDock Original Premium Styles
-  dashboardView: { padding: '0px', display: 'flex', flexDirection: 'column', gap: '32px', animation: 'fadeIn 0.5s ease-out' },
-  sectionTitle: { fontSize: '28px', fontWeight: '900', color: '#334155', marginBottom: '24px', letterSpacing: '-0.5px' },
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '32px' },
-  statCard: { padding: '32px', backgroundColor: '#FFF', borderRadius: '24px', border: '1px solid #F1F1F1', display: 'flex', alignItems: 'center', gap: '20px', transition: 'all 0.3s ease', boxShadow: 'none' },
-  statIconBox: { width: '64px', height: '64px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  statTitle: { fontSize: '13px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' },
-  statValue: { fontSize: '24px', fontWeight: '900', color: '#334155' },
-  dashboardMainGrid: { display: 'grid', gridTemplateColumns: '1fr 380px', gap: '32px' },
-  dashboardPrimaryCol: { display: 'flex', flexDirection: 'column', gap: '32px' },
-  insightsSection: { backgroundColor: '#FFF', padding: '32px', borderRadius: '24px', border: '1px solid #F1F1F1', marginBottom: '32px' },
-  insightList: { display: 'flex', flexDirection: 'column', gap: '16px' },
-  insightItem: { display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', fontWeight: '600', color: '#475569' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' },
-  fileCard: { backgroundColor: '#FFF', padding: '20px', borderRadius: '20px', border: '1px solid #F1F1F1', display: 'flex', gap: '16px', alignItems: 'center', transition: 'all 0.2s ease', cursor: 'pointer' },
-  fileIconBox: { width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  fileInfo: { display: 'flex', flexDirection: 'column', gap: '2px' },
-  fileName: { fontSize: '14px', fontWeight: '800', color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  fileMeta: { fontSize: '11px', color: '#94A3B8', fontWeight: '600' },
-  timelineSidebar: { backgroundColor: '#FFF', padding: '32px', borderRadius: '32px', border: '1px solid #F1F1F1', alignSelf: 'start' },
-  timelineList: { display: 'flex', flexDirection: 'column' },
-  timelineItem: { display: 'flex', gap: '20px', paddingBottom: '32px', borderLeft: '2px solid #F1F1F1', marginLeft: '6px', paddingLeft: '28px', position: 'relative' },
-  timelineDot: { width: '14px', height: '14px', borderRadius: '50%', position: 'absolute', left: '-8px', top: '0', border: '3px solid #FFF', boxShadow: 'none' },
-  timelineContent: { flex: 1 },
-  timelineHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' },
-  timelineUser: { fontSize: '12px', fontWeight: '900', color: '#334155' },
-  timelineTime: { fontSize: '11px', color: '#94A3B8', fontWeight: '600' },
-  timelineEvent: { fontSize: '13px', color: '#475569', fontWeight: '500', lineHeight: '1.4' },
-  resultDate: { fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
-  viewResultBtn: { padding: '10px 16px', backgroundColor: '#FFFFFF', border: '1px solid #F1F1F1', borderRadius: '10px', fontSize: '12px', fontWeight: '800', color: '#64748B', cursor: 'pointer' },
-  aiStatusBadge: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#FFF', padding: '10px 20px', borderRadius: '16px' },
-  statusDotGreen: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF' },
-  projectList: { display: 'flex', flexDirection: 'column', gap: '24px' },
-  projectMeta: { display: 'flex', gap: '16px', fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
-  statusBadge: { display: 'flex', alignItems: 'center', gap: '6px', color: '#0061FF' },
-  projectTeam: { display: 'flex', alignItems: 'center', gap: '16px' },
-  teamAvatars: { display: 'flex', marginLeft: '8px' },
-  avatar: { width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#F1F1F1', border: '2px solid #FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '800', color: '#0061FF', marginLeft: '-8px' },
-  inviteBtn: { backgroundColor: '#334155', color: '#FFF', border: 'none', borderRadius: '100px', padding: '8px 16px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' },
-  projectTabs: { display: 'flex', gap: '20px', borderTop: '1px solid #F1F1F1', paddingTop: '20px' },
-  projectTab: { fontSize: '13px', fontWeight: '700', color: '#94A3B8', cursor: 'pointer' },
-  projectTabActive: { fontSize: '13px', fontWeight: '800', color: '#0061FF' },
-  notifWidgetList: { display: 'flex', flexDirection: 'column', gap: '16px' },
-  notifWidgetCard: { padding: '20px', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #F1F1F1' },
-  notifWidgetHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '12px' },
-  notifType: { fontSize: '11px', fontWeight: '800', color: '#0061FF', textTransform: 'uppercase' },
-  notifEventName: { fontSize: '15px', fontWeight: '800', marginBottom: '8px' },
-  notifEventTime: { fontSize: '12px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' },
-  notifWidgetMessage: { padding: '20px', borderRadius: '24px', border: '1px solid #F1F1F1' },
-  notifMsgText: { fontSize: '13px', color: '#64748B', margin: 0 },
-  assignmentTag: { fontSize: '12px', color: '#94A3B8', fontWeight: '700' },
-  assignmentTitle: { fontSize: '16px', fontWeight: '800', margin: '8px 0 24px 0', lineHeight: '1.4' },
-  assignmentFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
-  priorityBadge: { padding: '4px 12px', backgroundColor: '#FEE2E2', color: '#EF4444', fontSize: '11px', fontWeight: '800', borderRadius: '100px' },
-  assigneeAvatar: { width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#334155', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '800' },
-  addAssignmentBtn: { width: '100%', padding: '16px', borderRadius: '16px', border: '2px dashed #F1F1F1', backgroundColor: '#FFFFFF', color: '#64748B', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
-  calendarGrid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '12px', margin: '12px 0' },
-  calDayHead: { fontSize: '11px', fontWeight: '800', color: '#94A3B8', textAlign: 'center' },
-  calDay: { height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '700', color: '#334155', cursor: 'pointer', borderRadius: '50%' },
-  calDayActive: { backgroundColor: '#0061FF', color: '#FFFFFF' },
-  calendarEvents: { marginTop: '20px' },
-  calEvent: { padding: '16px', backgroundColor: '#FFFFFF', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '8px' },
-  calEventTime: { fontSize: '11px', fontWeight: '800', color: '#94A3B8' },
-  calEventInfo: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700' },
-  calEventDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF' },
-  taskList: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  taskItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '20px', border: '1px solid #F1F1F1' },
-  taskName: { fontSize: '15px', fontWeight: '800', margin: 0 },
-  taskTime: { fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
-  taskProgress: { display: 'flex', alignItems: 'center', gap: '12px', width: '120px' },
-  progressBar: { flex: 1, height: '6px', backgroundColor: '#F1F1F1', borderRadius: '10px', overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: '#0061FF' },
-  progressText: { fontSize: '12px', fontWeight: '800', color: '#334155' },
-  premiumWidget: { backgroundColor: '#0061FF', borderRadius: '32px', padding: '32px', display: 'flex', flexDirection: 'column', gap: '16px', color: '#FFFFFF' },
-  premiumIcon: { width: '48px', height: '48px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  premiumTitle: { fontSize: '20px', fontWeight: '900', margin: 0 },
-  premiumText: { fontSize: '13px', opacity: 0.8, lineHeight: '1.5', margin: 0 },
-  premiumBtn: { backgroundColor: '#FFF', color: '#0061FF', border: 'none', padding: '12px', borderRadius: '14px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', marginTop: '8px' },
-  statMiniCard: { padding: '24px', backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid #F1F1F1', display: 'flex', alignItems: 'center', gap: '20px' },
-  statRing: { width: '48px', height: '48px', borderRadius: '50%', border: '4px solid #F1F1F1', borderTopColor: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statRingInner: { fontSize: '11px', fontWeight: '900' },
-  meetingCard: { padding: '32px', backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid #F1F1F1', flex: 1 },
-  meetingFooter: { marginTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  meetingTime: { fontSize: '12px', color: '#94A3B8', fontWeight: '700' },
-  meetingActions: { display: 'flex', gap: '8px' },
-  rescheduleBtn: { background: '#F1F1F1', border: 'none', borderRadius: '100px', padding: '8px 16px', fontSize: '11px', fontWeight: '800', color: '#64748B', cursor: 'pointer' },
-  acceptBtn: { background: '#0061FF', border: 'none', borderRadius: '100px', padding: '8px 16px', fontSize: '11px', fontWeight: '800', color: '#FFF', cursor: 'pointer' },
-  dashboardContainer: { display: 'flex', minHeight: '100vh', backgroundColor: '#F1F1F1', overflow: 'hidden' },
-  dashboardInnerContent: { display: 'flex', flexDirection: 'column', gap: '0', minHeight: '100vh', paddingBottom: '100px', backgroundColor: '#FFFFFF' },
-  scoreCard: { padding: '32px', backgroundColor: '#FFFFFF', borderRadius: '32px', border: '1px solid #F1F1F1', display: 'flex', flexDirection: 'column', gap: '16px', transition: 'all 0.3s ease', boxShadow: 'none' },
-  scoreHeader: { display: 'flex', alignItems: 'center', gap: '12px' },
-  scoreLabel: { fontSize: '11px', fontWeight: '900', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px' },
-  scoreValue: { fontSize: '36px', fontWeight: '900', color: '#334155', letterSpacing: '-1px' },
-  scoreBar: { height: '8px', backgroundColor: '#FFFFFF', borderRadius: '4px', overflow: 'hidden' },
-  scoreFill: { height: '100%', borderRadius: '4px', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)' },
-  aiBadge: { display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#8B5CF6', color: '#FFF', padding: '4px 8px', borderRadius: '100px', fontSize: '10px', fontWeight: '900', boxShadow: 'none' },
-  aiStatusBadge: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: '#F0F9FF', borderRadius: '12px', border: '1px solid #F1F1F1', fontSize: '12px', fontWeight: '700', color: '#0061FF' },
-  dashboardMainGrid: { display: 'grid', gridTemplateColumns: '1fr 340px', gap: '32px' },
-  dashboardPrimaryCol: { display: 'flex', flexDirection: 'column', gap: '32px' },
-  timelineSidebar: { backgroundColor: '#FFFFFF', borderRadius: '40px', padding: '40px', border: '1px solid #F1F1F1', display: 'flex', flexDirection: 'column', gap: '32px', alignSelf: 'start', boxShadow: 'none' },
-  timelineList: { display: 'flex', flexDirection: 'column' },
-  timelineItem: { display: 'flex', gap: '20px', paddingBottom: '32px', borderLeft: '2px solid #FFFFFF', marginLeft: '6px', paddingLeft: '28px', position: 'relative' },
-  timelineDot: { width: '14px', height: '14px', borderRadius: '50%', position: 'absolute', left: '-8px', top: '0', border: '3px solid #FFF', boxShadow: 'none' },
-  timelineHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px', alignItems: 'center' },
-  timelineUser: { fontSize: '12px', fontWeight: '900', color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  timelineTime: { fontSize: '11px', fontWeight: '700', color: '#F1F1F1' },
-  timelineEvent: { fontSize: '14px', color: '#475569', marginBottom: '12px', fontWeight: '500', lineHeight: '1.5' },
-  timelineContext: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: '900', color: '#0061FF', backgroundColor: '#F0F7FF', padding: '6px 12px', borderRadius: '10px', width: 'fit-content' },
-  viewAllTimelineBtn: { width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid #F1F1F1', backgroundColor: '#FFFFFF', color: '#94A3B8', fontSize: '12px', fontWeight: '800', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.5px' },
-  intelSidebar: { 
-    position: 'fixed', 
-    top: '12px', 
-    right: '12px', 
-    bottom: '12px', 
-    width: '380px', 
-    backgroundColor: '#FFFFFF', 
-    borderRadius: '32px', 
-    boxShadow: 'none', 
-    border: '1px solid #F1F1F1',
-    zIndex: 2000,
-    display: 'flex',
-    flexDirection: 'column',
-    animation: 'slideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
-  },
-  intelHeader: { padding: '24px 32px', borderBottom: '1px solid #F1F1F1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  intelTitle: { fontSize: '15px', fontWeight: '900', color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  intelContent: { padding: '32px', flex: 1, display: 'flex', flexDirection: 'column', gap: '32px' },
-  intelAlert: { backgroundColor: '#F5F3FF', padding: '16px 20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '12px', color: '#7C3AED', fontSize: '13px', fontWeight: '700', border: '1px solid #F1F1F1' },
-  intelFieldGroup: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  intelLabel: { fontSize: '11px', fontWeight: '900', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px' },
-  intelValue: { fontSize: '15px', fontWeight: '800', color: '#334155' },
-  intelDataBox: { padding: '20px', backgroundColor: '#FFFFFF', borderRadius: '20px', border: '1px solid #F1F1F1' },
-  
-  // Automations Styles
-  automationsContainer: { padding: '48px', maxWidth: '1200px' },
-  autoGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' },
-  autoCard: { backgroundColor: '#FFFFFF', borderRadius: '32px', padding: '32px', border: '1px solid #F1F1F1', boxShadow: 'none', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
-  autoHeader: { display: 'flex', gap: '20px', marginBottom: '32px' },
-  autoIconBox: { width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  autoTitle: { fontSize: '16px', fontWeight: '900', color: '#334155', marginBottom: '4px' },
-  autoDesc: { fontSize: '13px', color: '#64748B', fontWeight: '600', lineHeight: '1.5' },
-  toggleSwitch: { width: '42px', height: '24px', borderRadius: '100px', padding: '3px', cursor: 'pointer', transition: 'all 0.3s ease', flexShrink: 0 },
-  toggleDot: { width: '18px', height: '18px', backgroundColor: '#FFF', borderRadius: '50%', boxShadow: 'none', transition: 'all 0.3s ease' },
-  autoFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '24px', borderTop: '1px solid #F1F1F1' },
-  autoStatus: { fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#94A3B8', letterSpacing: '0.5px' },
-  autoSettingsBtn: { background: 'none', border: 'none', color: '#0061FF', fontSize: '12px', fontWeight: '800', cursor: 'pointer' },
-  
-  synergyCard: { background: 'linear-gradient(135deg, #334155 0%, #334155 100%)', borderRadius: '32px', padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '240px', boxShadow: 'none' },
-  synergyHeader: { display: 'flex', gap: '20px' },
-  synergyIcon: { width: '56px', height: '56px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  synergyStatus: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', fontWeight: '700', color: '#0061FF', margin: '24px 0' },
-  synergyBtn: { width: '100%', padding: '14px', borderRadius: '16px', border: 'none', backgroundColor: '#FFF', color: '#334155', fontSize: '13px', fontWeight: '900', cursor: 'pointer', transition: 'all 0.2s' },
-
-  // Team Styles
-  teamContainer: { padding: '48px', maxWidth: '1000px' },
-  teamHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
-  teamTitle: { fontSize: '28px', fontWeight: '900', color: '#334155', marginBottom: '8px' },
-  teamSubtitle: { fontSize: '15px', color: '#64748B', fontWeight: '600' },
-  addMemberBtn: { backgroundColor: '#0061FF', color: '#FFFFFF', border: 'none', borderRadius: '16px', padding: '12px 24px', fontSize: '14px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: 'none' },
-  memberList: { display: 'flex', flexDirection: 'column', gap: '16px' },
-  memberCard: { backgroundColor: '#FFF', borderRadius: '24px', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #F1F1F1', boxShadow: 'none' },
-  memberInfo: { display: 'flex', alignItems: 'center', gap: '16px' },
-  memberAvatar: { width: '48px', height: '48px', backgroundColor: '#FFFFFF', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '900', color: '#0061FF', border: '1px solid #F1F1F1' },
-  memberName: { fontSize: '15px', fontWeight: '800', color: '#334155' },
-  memberEmail: { fontSize: '13px', color: '#94A3B8', fontWeight: '600' },
-  memberMeta: { display: 'flex', alignItems: 'center', gap: '24px' },
-  roleBadge: { fontSize: '11px', fontWeight: '900', padding: '6px 12px', borderRadius: '10px', letterSpacing: '0.5px' },
-  statusBadge: { fontSize: '12px', fontWeight: '700' },
-  memberActionBtn: { background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '8px', borderRadius: '10px' },
-  
-  // Modal Styles
-  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 },
-  inviteModal: { backgroundColor: '#FFF', width: '450px', borderRadius: '32px', boxShadow: 'none', overflow: 'hidden', animation: 'scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)' },
-  modalHeader: { padding: '24px 32px', borderBottom: '1px solid #F1F1F1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  closeBtn: { background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' },
-  modalBody: { padding: '32px' },
-  inputLabel: { fontSize: '11px', fontWeight: '900', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px' },
-  modalInput: { padding: '16px', borderRadius: '16px', border: '1px solid #F1F1F1', outline: 'none', fontSize: '14px', fontWeight: '600', transition: 'all 0.2s' },
-  modalSelect: { padding: '16px', borderRadius: '16px', border: '1px solid #F1F1F1', outline: 'none', fontSize: '14px', fontWeight: '600', backgroundColor: '#FFF' },
-  inviteNotice: { fontSize: '12px', color: '#64748B', fontWeight: '500', lineHeight: '1.6', margin: '8px 0' },
-  confirmInviteBtn: { backgroundColor: '#0061FF', color: '#FFFFFF', border: 'none', borderRadius: '16px', padding: '16px', fontSize: '14px', fontWeight: '900', cursor: 'pointer', marginTop: '12px', boxShadow: 'none' },
-
-  // API & Workflow Styles
-  apiContainer: { padding: '48px', maxWidth: '1200px' },
-  apiGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' },
-  apiMainCol: { display: 'flex', flexDirection: 'column', gap: '32px' },
-  apiSideCol: { display: 'flex', flexDirection: 'column', gap: '32px' },
-  apiCard: { backgroundColor: '#FFFFFF', borderRadius: '32px', padding: '32px', border: '1px solid #F1F1F1', boxShadow: 'none' },
-  apiCardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
-  apiCardTitle: { fontSize: '15px', fontWeight: '900', color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  apiAddBtn: { backgroundColor: '#0061FF', color: '#FFFFFF', border: 'none', borderRadius: '12px', padding: '8px 16px', fontSize: '12px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
-  keyList: { display: 'flex', flexDirection: 'column', gap: '16px' },
-  keyItem: { backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #F1F1F1' },
-  keyInfo: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  keyName: { fontSize: '13px', fontWeight: '800', color: '#334155' },
-  keyCode: { fontSize: '12px', color: '#94A3B8', fontFamily: 'monospace' },
-  keyActionBtn: { background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' },
-  webhookBox: { backgroundColor: '#F0F7FF', borderRadius: '24px', padding: '24px', border: '1px solid #F1F1F1' },
-  webhookLabel: { fontSize: '10px', fontWeight: '900', color: '#0061FF', marginBottom: '8px' },
-  webhookUrl: { backgroundColor: '#FFF', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', fontWeight: '600', color: '#334155', boxShadow: 'none' },
-  webhookHint: { fontSize: '12px', color: '#64748B', fontWeight: '500', marginTop: '16px', lineHeight: '1.5' },
-  logList: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  logItem: { padding: '16px', borderBottom: '1px solid #F1F1F1' },
-  
-  workflowContainer: { padding: '48px', maxWidth: '1000px' },
-  workflowCanvas: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', padding: '40px', backgroundColor: '#FFFFFF', borderRadius: '40px', border: '1px dashed #F1F1F1' },
-  workflowNode: { width: '400px', backgroundColor: '#FFF', borderRadius: '24px', border: '1px solid #F1F1F1', boxShadow: 'none', overflow: 'hidden' },
-  nodeHeader: { padding: '12px 20px', backgroundColor: '#FFFFFF', borderBottom: '1px solid #F1F1F1', fontSize: '11px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px' },
-  nodeBody: { padding: '20px' },
-  nodeLabel: { fontSize: '14px', color: '#475569', marginBottom: '4px' },
-  nodeDetail: { fontSize: '12px', fontWeight: '800', color: '#334155' },
-  workflowConnector: { width: '2px', height: '40px', backgroundColor: '#F1F1F1' },
-
-  // AI Dashboard Styles
-  aiDashboardContainer: { 
-    flex: 1, 
-    height: '100%', 
-    background: 'linear-gradient(to bottom, #FFFFFF 0%, #E6EFFF 100%)', 
-    display: 'flex', 
-    flexDirection: 'column', 
-    alignItems: 'center', 
-    padding: '80px 40px',
-    overflow: 'hidden',
-    position: 'relative'
-  },
-  aiHeader: { textAlign: 'center', marginBottom: '60px', animation: 'fadeInDown 0.8s ease' },
-  aiBadge: { 
-    display: 'inline-block', 
-    backgroundColor: '#0061FF', 
-    color: '#FFFFFF', 
-    padding: '8px 16px', 
-    borderRadius: '100px', 
-    fontSize: '11px', 
-    fontWeight: '900', 
-    letterSpacing: '1px', 
-    marginBottom: '24px',
-    boxShadow: 'none'
-  },
-  aiHeadline: { fontSize: '48px', fontWeight: '900', color: '#334155', marginBottom: '16px', letterSpacing: '-1px' },
-  aiSubheadline: { fontSize: '18px', color: '#64748B', fontWeight: '600', maxWidth: '600px', margin: '0 auto' },
-  
-  aiChatContainer: { 
-    width: '100%', 
-    maxWidth: '800px', 
-    flex: 1, 
-    display: 'flex', 
-    flexDirection: 'column', 
-    gap: '24px',
-    zIndex: 10
-  },
-  chatScroll: { 
-    flex: 1, 
-    overflowY: 'auto', 
-    padding: '20px', 
-    display: 'flex', 
-    flexDirection: 'column', 
-    gap: '20px',
-    scrollBehavior: 'smooth'
-  },
-  aiBubble: { 
-    alignSelf: 'flex-start', 
-    backgroundColor: '#FFF', 
-    padding: '20px 24px', 
-    borderRadius: '24px 24px 24px 8px', 
-    boxShadow: 'none', 
-    border: '1px solid #F1F1F1',
-    display: 'flex',
-    gap: '16px',
-    maxWidth: '80%',
-    animation: 'slideUp 0.4s ease'
-  },
-  userBubble: { 
-    alignSelf: 'flex-end', 
-    backgroundColor: '#0061FF', 
-    color: '#FFFFFF', 
-    padding: '20px 24px', 
-    borderRadius: '24px 24px 8px 24px', 
-    boxShadow: 'none', 
-    maxWidth: '70%',
-    animation: 'slideUp 0.4s ease'
-  },
-  aiIconBox: { 
-    width: '32px', 
-    height: '32px', 
-    backgroundColor: '#8B5CF6', 
-    borderRadius: '10px', 
-    display: 'flex', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    flexShrink: 0 
-  },
-  msgContent: { fontSize: '15px', fontWeight: '600', lineHeight: '1.6' },
-  typingDots: { fontSize: '20px', fontWeight: '900', color: '#8B5CF6' },
-  
-  aiInputWrapper: { 
-    position: 'relative', 
-    width: '100%', 
-    marginTop: 'auto',
-    animation: 'fadeInUp 0.8s ease'
-  },
-  aiInput: { 
-    width: '100%', 
-    padding: '24px 100px 24px 32px', 
-    borderRadius: '100px', 
-    border: '1px solid #F1F1F1', 
-    backgroundColor: '#FFFFFF', 
-    boxShadow: '0 2px 6px rgba(0,0,0,0.03)', 
-    outline: 'none', 
-    fontSize: '16px', 
-    fontWeight: '600', 
-    transition: 'all 0.3s' 
-  },
-  aiSendBtn: { 
-    position: 'absolute', 
-    right: '12px', 
-    top: '12px', 
-    bottom: '12px', 
-    width: '56px', 
-    backgroundColor: '#0061FF', 
-    border: 'none', 
-    borderRadius: '50%', 
-    display: 'flex', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    boxShadow: 'none'
-  },
-  aiShortcuts: { display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '20px' },
-  aiShortcutBtn: { 
-    backgroundColor: 'rgba(255,255,255,0.5)', 
-    border: '1px solid #F1F1F1', 
-    padding: '8px 16px', 
-    borderRadius: '100px', 
-    fontSize: '12px', 
-    fontWeight: '800', 
-    color: '#64748B', 
-    cursor: 'pointer',
-    transition: 'all 0.2s'
-  },
-
-  // Hybrid Dashboard Styles
-  dashboardScrollWrapper: { flex: 1, overflowY: 'auto', backgroundColor: '#FFF' },
-  aiHeroHero: { 
-    padding: '60px 40px', 
-    backgroundColor: '#F1F1F1', 
-    display: 'flex', 
-    flexDirection: 'column', 
-    alignItems: 'center',
-    borderBottom: '1px solid #F1F1F1',
-    marginBottom: '48px'
-  },
-  aiHeadlineSmall: { fontSize: '32px', fontWeight: '900', color: '#334155', marginBottom: '16px' },
-  aiInputWrapperSmall: { position: 'relative', width: '100%', maxWidth: '600px' },
-  aiInputSmall: { width: '100%', padding: '16px 60px 16px 24px', borderRadius: '100px', border: '1px solid #F1F1F1', backgroundColor: '#FFFFFF', boxShadow: '0 2px 6px rgba(0,0,0,0.03)', outline: 'none', fontSize: '14px', fontWeight: '600' },
-  aiSendBtnSmall: { position: 'absolute', right: '8px', top: '8px', bottom: '8px', width: '40px', backgroundColor: '#0061FF', border: 'none', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
-  aiSmallHint: { background: 'none', border: 'none', color: '#0061FF', fontSize: '11px', fontWeight: '800', cursor: 'pointer', textDecoration: 'underline' },
-
-  // Results Memory Styles
-  resultsContainer: { padding: '48px', maxWidth: '1200px' },
-  resultsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '24px' },
-  resultCard: { backgroundColor: '#FFFFFF', borderRadius: '24px', padding: '24px', display: 'flex', alignItems: 'center', gap: '20px', border: '1px solid #F1F1F1', boxShadow: 'none' },
-  resultIconBox: { width: '48px', height: '48px', backgroundColor: '#FFFFFF', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  resultType: { fontSize: '10px', fontWeight: '900', letterSpacing: '1px', marginBottom: '4px' },
-  resultTitle: { fontSize: '15px', fontWeight: '800', color: '#334155', marginBottom: '4px' },
-  resultDate: { fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
-  viewResultBtn: { padding: '8px 16px', borderRadius: '10px', border: '1px solid #F1F1F1', backgroundColor: '#FFF', fontSize: '12px', fontWeight: '800', color: '#64748B', cursor: 'pointer' },
-  badgeMini: { fontSize: '10px', fontWeight: '900', color: '#64748B', padding: '4px 10px', borderRadius: '8px', border: '1px solid #F1F1F1' },
-
-  // Onboarding & Nudge Styles
-  onboardingOverlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' },
-  onboardingCard: { backgroundColor: '#FFF', borderRadius: '40px', width: '100%', maxWidth: '640px', padding: '48px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' },
-  onboardingHeader: { textAlign: 'center', marginBottom: '40px' },
-  onboardingTitle: { fontSize: '24px', fontWeight: '900', color: '#334155', marginTop: '16px' },
-  onboardingSubtitle: { fontSize: '12px', color: '#94A3B8', fontWeight: '800', marginTop: '4px' },
-  onboardingGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '40px' },
-  onboardingOpt: { padding: '24px', borderRadius: '24px', border: '2px solid #F1F1F1', cursor: 'pointer', transition: '0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' },
-  onboardingIconBox: { width: '48px', height: '48px', borderRadius: '16px', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  onboardingLabel: { fontSize: '13px', fontWeight: '700', color: '#334155' },
-  onboardingFooter: { display: 'flex', justifyContent: 'center', gap: '16px' },
-  onboardingBack: { background: 'none', border: 'none', color: '#94A3B8', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
-  onboardingNext: { backgroundColor: '#0061FF', color: '#FFF', border: 'none', padding: '14px 40px', borderRadius: '16px', fontSize: '14px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0, 97, 255, 0.2)' },
-  
-  nudgeStack: { position: 'fixed', bottom: '32px', right: '32px', display: 'flex', flexDirection: 'column', gap: '12px', zIndex: 9999 },
-  nudgeBox: { width: '320px', backgroundColor: '#FFF', borderRadius: '24px', padding: '20px', border: '1px solid #F1F1F1', boxShadow: '0 2px 6px rgba(0,0,0,0.03)', display: 'flex', gap: '16px', alignItems: 'flex-start' },
-  nudgeIcon: { width: '32px', height: '32px', backgroundColor: '#8B5CF6', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  nudgeContent: { flex: 1 },
-  nudgeType: { fontSize: '9px', fontWeight: '900', color: '#8B5CF6', letterSpacing: '1px', marginBottom: '4px' },
-  nudgeText: { fontSize: '13px', fontWeight: '600', color: '#334155', lineHeight: '1.5' },
-  nudgeClose: { background: 'none', border: 'none', color: '#F1F1F1', cursor: 'pointer', padding: '4px' },
-
-  // New Dashboard Component Styles
-  summaryGridSmall: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' },
-  statCardFixed: { padding: '32px', backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid #F1F1F1', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' },
-  statHeaderSmall: { display: 'flex', alignItems: 'center', gap: '12px' },
-  statLabelSmall: { fontSize: '11px', fontWeight: '900', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px' },
-  statValueLarge: { fontSize: '36px', fontWeight: '900', color: '#334155', letterSpacing: '-1px' },
-  statBarSmall: { height: '8px', backgroundColor: '#FFFFFF', borderRadius: '4px', overflow: 'hidden' },
-  statBarFillSmall: { height: '100%', borderRadius: '4px' },
-  
-  timelineSidebarSmall: { backgroundColor: '#FFF', borderRadius: '40px', padding: '40px', border: '1px solid #F1F1F1', display: 'flex', flexDirection: 'column', gap: '32px', alignSelf: 'start', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' },
-  timelineItemSmall: { display: 'flex', gap: '20px', paddingBottom: '32px', borderLeft: '2px solid #FFFFFF', marginLeft: '6px', paddingLeft: '28px', position: 'relative' },
-  timelineDotSmall: { width: '14px', height: '14px', borderRadius: '50%', position: 'absolute', left: '-8px', top: '0', border: '3px solid #FFF', boxShadow: '0 0 0 4px #FFFFFF' },
-  timelineContentSmall: { flex: 1 },
-  timelineHeaderSmall: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px', alignItems: 'center' },
-  timelineUserSmall: { fontSize: '12px', fontWeight: '900', color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  timelineTimeSmall: { fontSize: '11px', fontWeight: '700', color: '#F1F1F1' },
-  timelineEventSmall: { fontSize: '14px', color: '#475569', marginBottom: '12px', fontWeight: '500', lineHeight: '1.5' },
-  timelineContextSmall: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: '900', color: '#0061FF', backgroundColor: '#F0F7FF', padding: '6px 12px', borderRadius: '10px', width: 'fit-content' },
-  viewAllTimelineBtnSmall: { width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid #F1F1F1', backgroundColor: '#F0F7FF', color: '#0061FF', fontSize: '12px', fontWeight: '800', cursor: 'pointer', letterSpacing: '0.5px' },
-};
 
 export default LogDockApp;
