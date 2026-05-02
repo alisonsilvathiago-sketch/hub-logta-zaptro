@@ -12,7 +12,7 @@ import {
   Bell, Layout, PanelLeft, MessageSquare, Gift, ChevronLeft, Edit2, Sun, Moon, ChevronUp, ChevronDown,
   Truck, Users as UsersIcon, ShieldAlert, Activity, Calendar, MapPin,
   Home, Files, Image, Mail, Phone, Sparkles, Mic, ArrowUp, Camera,
-  FolderPlus, Brain, Tag, FolderOpen
+  FolderPlus, Brain, Tag, FolderOpen, Cpu, AlertCircle
 } from 'lucide-react';
 import { supabase } from '@shared/lib/supabase';
 import { useAuth } from '@shared/context/AuthContext';
@@ -28,6 +28,8 @@ import ProfilePage from './pages/UserAccount';
 import BillingPage from './pages/UserBilling';
 import AutomationsPage from './pages/UserAutomations';
 import SettingsPage from './pages/Settings';
+import CentralInteligentePage from './pages/CentralInteligentePage';
+
 import UserAPIs from './pages/UserAPIs';
 import UserInteractions from './pages/UserInteractions';
 import FleetPage from './pages/Fleet';
@@ -81,8 +83,8 @@ const styles: Record<string, React.CSSProperties> = {
   profileHeader: { padding: '24px' },
   profileInfoMain: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' },
   userBadgeLarge: { width: '48px', height: '48px', backgroundColor: '#0061FF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '900', color: '#FFF', overflow: 'hidden' },
-  profileName: { fontSize: '15px', fontWeight: '800', color: '#FFFFFF' },
-  profileEmail: { fontSize: '12px', color: 'rgba(255,255,255,0.5)' },
+  profileName: { fontSize: '12px', fontWeight: '800', color: '#FFFFFF', wordBreak: 'break-word', overflowWrap: 'break-word', lineHeight: '1.2' },
+  profileEmail: { fontSize: '11px', color: 'rgba(255,255,255,0.5)', wordBreak: 'break-word', overflowWrap: 'break-word', marginTop: '2px' },
   storageSection: { display: 'flex', flexDirection: 'column', gap: '12px' },
   storageBarContainer: { height: '6px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' },
   popupStorageFill: { height: '100%', borderRadius: '3px', transition: 'width 0.3s' },
@@ -552,17 +554,26 @@ const styles: Record<string, React.CSSProperties> = {
 interface LogDockFile {
   id: string;
   name: string;
-  path: string;
-  size: number;
-  type: string;
-  version: number;
   company_id: string;
   folder_id: string | null;
+  size: number;
+  type: string;
+  path: string;
   created_at: string;
-  deleted_at: string | null;
-  category?: string;
-  status?: string;
+  ai_metadata?: any;
+  status?: 'ok' | 'review' | 'pending';
   is_public: boolean;
+  ai_confidence?: number;
+  metadata?: {
+    cnpj?: string;
+    value?: number;
+    nf_number?: string;
+    client_name?: string;
+    delivery_id?: string;
+    driver_name?: string;
+    summary?: string;
+  };
+  logs?: { action: string; timestamp: string; details: string; status: 'success' | 'error' | 'warning' }[];
 }
 
 interface LogDockFolder {
@@ -576,6 +587,28 @@ interface LogDockFolder {
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, profile, isLoading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (!isLoading && user && profile) {
+      const searchParams = new URLSearchParams(location.search);
+      // Geração de token de autenticidade dinâmico para contextualização da URL
+      const isClient = profile.role === 'client' || profile.role === 'cliente' || profile.role === 'customer';
+      const rolePrefix = isClient ? 'cli' : 'col';
+      const sessionToken = `${rolePrefix}-${btoa(user.id).substring(0, 8)}`;
+      
+      if (searchParams.get('token') !== sessionToken || searchParams.get('hl') !== 'pt-BR') {
+        searchParams.set('token', sessionToken);
+        searchParams.set('hl', 'pt-BR');
+        searchParams.set('auth', 'valid');
+        
+        navigate({
+          pathname: location.pathname,
+          search: searchParams.toString(),
+        }, { replace: true });
+      }
+    }
+  }, [isLoading, user, profile, location, navigate]);
 
   if (isLoading) return <div style={styles.loadingScreen}><RefreshCw className="animate-spin" size={32} color="#0061FF" /></div>;
   if (!user || !profile) return <Navigate to="/login" state={{ from: location }} replace />;
@@ -606,8 +639,9 @@ const PremiumFolderIcon = ({ width = 24, height = 18 }: { width?: number, height
   </svg>
 );
 
-const ProfilePopup: React.FC<{ profile: any, storage: any, onClose: () => void, onUpgrade: () => void, onNavigate: (tab: string, data?: any) => void }> = ({ profile, storage, onClose, onUpgrade, onNavigate }) => {
+const ProfilePopup: React.FC<{ profile: any, storage: any, theme?: string, setTheme?: (t: any) => void, onClose: () => void, onUpgrade: () => void, onNavigate: (tab: string, data?: any) => void }> = ({ profile, storage, theme, setTheme, onClose, onUpgrade, onNavigate }) => {
   const { signOut } = useAuth();
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   return (
     <div style={styles.macProfilePopup} onClick={e => e.stopPropagation()}>
       <div style={styles.profileHeader}>
@@ -698,12 +732,68 @@ const ProfilePopup: React.FC<{ profile: any, storage: any, onClose: () => void, 
           <ExternalLink size={14} />
         </div>
         <div 
-          style={styles.popupItem}
-          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          style={{ ...styles.popupItem, position: 'relative' }}
+          onMouseEnter={() => setIsThemeMenuOpen(true)}
+          onMouseLeave={() => setIsThemeMenuOpen(false)}
+          onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
         >
-          Tema
+          <span>Tema</span>
           <ChevronRight size={14} />
+
+          {isThemeMenuOpen && (
+            <div style={{
+              position: 'absolute', top: 0, left: '-210px', width: '200px', 
+              backgroundColor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF', 
+              borderRadius: '12px', border: theme === 'dark' ? '1px solid rgba(255,255,255,0.12)' : '1px solid #E2E8F0',
+              padding: '6px', zIndex: 121000, boxShadow: '0 10px 25px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', gap: '4px'
+            }} onClick={e => e.stopPropagation()}>
+              <div 
+                onClick={() => { setTheme?.('light'); setIsThemeMenuOpen(false); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px',
+                  cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: theme === 'dark' ? '#FFF' : '#334155',
+                  backgroundColor: 'transparent', transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.08)' : '#F8FAFC'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{ width: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {theme === 'light' ? <Check size={14} color="#0061FF" /> : <Sun size={14} color={theme === 'dark' ? '#94A3B8' : '#64748B'} />}
+                </div>
+                <span>Modo claro</span>
+              </div>
+              <div 
+                onClick={() => { setTheme?.('dark'); setIsThemeMenuOpen(false); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px',
+                  cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: theme === 'dark' ? '#FFF' : '#334155',
+                  backgroundColor: 'transparent', transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.08)' : '#F8FAFC'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{ width: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {theme === 'dark' ? <Check size={14} color="#0061FF" /> : <Moon size={14} color={theme === 'dark' ? '#94A3B8' : '#64748B'} />}
+                </div>
+                <span>Modo escuro</span>
+              </div>
+              <div 
+                onClick={() => { setTheme?.('light'); setIsThemeMenuOpen(false); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px',
+                  cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: theme === 'dark' ? '#FFF' : '#334155',
+                  backgroundColor: 'transparent', transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.08)' : '#F8FAFC'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{ width: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Monitor size={14} color={theme === 'dark' ? '#94A3B8' : '#64748B'} />
+                </div>
+                <span>Sistema operacional</span>
+              </div>
+            </div>
+          )}
         </div>
         <div 
           style={styles.popupItem} 
@@ -1002,6 +1092,7 @@ interface DashboardProps {
   isDraggingCarousel: boolean;
   handleMouseDown: (e: React.MouseEvent) => void;
   handleMouseLeaveCarousel: () => void;
+  onContextMenu?: (e: React.MouseEvent, item: any) => void;
   handleMouseUp: () => void;
   handleMouseMove: (e: React.MouseEvent) => void;
   
@@ -1014,16 +1105,19 @@ interface DashboardProps {
   openActionSidebar: (context: any) => void;
   styles: Record<string, React.CSSProperties>;
   theme: 'light' | 'dark';
+  selectedFile: string | null;
+  setSelectedFile: (file: string | null) => void;
 }
 
 const DashboardView: React.FC<DashboardProps> = ({ 
   setActiveTab, files, folders, carouselRef, isDraggingCarousel, 
   handleMouseDown, handleMouseLeaveCarousel, handleMouseUp, handleMouseMove,
   recentFilesRef, isDraggingRecent, handleMouseDownRecent, handleMouseLeaveRecent, 
-  handleMouseUpRecent, handleMouseMoveRecent, openActionSidebar, styles, theme
+  handleMouseUpRecent, handleMouseMoveRecent, openActionSidebar, styles, theme,
+  onContextMenu, selectedFile, setSelectedFile
 }) => {
   const navigate = useNavigate();
-  const [selectedFile, setSelectedFile] = useState<string | null>('Project Details.xls');
+  // Local selectedFile removed, using prop from App
   const [filterTab, setFilterTab] = useState<string>('recent');
 
   // TYPING EFFECT FOR HERO SLOGAN
@@ -1052,7 +1146,7 @@ const DashboardView: React.FC<DashboardProps> = ({
     <div style={{ flex: 1, height: '100%', overflowY: 'auto', padding: '0 32px', backgroundColor: 'transparent' }}>
       
       {/* 🤖 HERO AI ASSISTANT SECTION (DARK VERSION) */}
-      <div style={{ padding: '40px 0 20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: 'transparent', borderRadius: '32px', marginBottom: '80px', position: 'relative' }}>
+      <div style={{ padding: '100px 0 60px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: 'transparent', borderRadius: '32px', marginBottom: '80px', position: 'relative' }}>
         
         {/* IA BADGE SECTION */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
@@ -1148,7 +1242,7 @@ const DashboardView: React.FC<DashboardProps> = ({
       <div style={{ height: '1px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F5F9', margin: '20px 0 48px 0', width: '100%' }} />
 
       {/* 🧱 TOP RECENT EDITED SECTION */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
         <h2 style={{ fontSize: '15px', fontWeight: 900, color: theme === 'dark' ? '#FFFFFF' : '#334155', margin: 0, letterSpacing: '-0.5px' }}>Editados recentemente</h2>
         <button 
           onClick={() => setActiveTab('arquivos')}
@@ -1409,6 +1503,7 @@ const DashboardView: React.FC<DashboardProps> = ({
               <tr 
                 key={i} 
                 onClick={() => setSelectedFile(file.name)}
+                onContextMenu={(e) => onContextMenu?.(e, file)}
                 style={{ 
                   borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: selectedFile === file.name ? 'rgba(255,255,255,0.03)' : 'transparent',
                   cursor: 'pointer', transition: 'all 0.2s'
@@ -1446,35 +1541,7 @@ const DashboardView: React.FC<DashboardProps> = ({
         </table>
       </div>
 
-      {/* 🧱 FOOTER POPUP FOR SELECTED FILE */}
-      {selectedFile && (
-        <div style={{ 
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px',
-          backgroundColor: theme === 'dark' ? '#1A1A1A' : '#FFFFFF', 
-          border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #F1F1F1', 
-          borderRadius: '16px', boxShadow: theme === 'dark' ? '0 20px 40px rgba(0,0,0,0.4)' : '0 10px 30px rgba(0,0,0,0.1)',
-          position: 'sticky', bottom: '16px', zIndex: 10
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <img src="https://img.icons8.com/color/48/figma--v1.png" alt="Figma icon" style={{ width: '24px', height: '24px' }} />
-            <div>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>{selectedFile}</span>
-              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginLeft: '12px' }}>• 1.5 GB • Sep 28, 2025</span>
-            </div>
-            <span style={{ backgroundColor: '#1E1B4B', color: '#FFFFFF', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, marginLeft: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Lock size={12} color="#FFF" />
-              <span>Restricted</span>
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="Download"><Download size={16} /></button>
-            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="Copy Link"><LinkIcon size={16} /></button>
-            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="Delete"><Trash2 size={16} /></button>
-            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="Upload"><Upload size={16} /></button>
-            <button style={{ border: 'none', background: 'transparent', color: '#64748B', cursor: 'pointer' }} title="More"><MoreHorizontal size={16} /></button>
-          </div>
-        </div>
-      )}
+      {/* 🧱 FOOTER REMOVED AS REQUESTED - ACTIONS NOW IN CONTEXT MENU */}
 
     </div>
   );
@@ -1746,6 +1813,171 @@ const InviteModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     </div>
   );
 };
+
+// --- Central Inteligente View (Cérebro Operacional) ---
+const CentralInteligentePage: React.FC<{ styles?: any, theme?: string }> = ({ styles, theme = 'dark' }) => {
+  const [activeSubTab, setActiveSubTab] = useState<'workflow' | 'api' | 'revisao'>('workflow');
+  
+  const mockWorkflows = [
+    { id: '1', name: 'NF_SÃO_PAULO_001.pdf', type: 'Nota Fiscal', confidence: 98, status: 'Concluído', time: '2m atrás', result: 'Vinculado à Entrega #9021', cnpj: '12.345.678/0001-90', valor: 'R$ 4.500,00' },
+    { id: '2', name: 'RECIBO_PEDAGIO_44.jpg', type: 'Comprovante', confidence: 62, status: 'Revisão Necessária', time: '5m atrás', result: 'Dúvida no Valor (R$ 45,00?)', cnpj: '-', valor: 'R$ 45,00' },
+    { id: '3', name: 'CANHOTO_ENTREGA_Z.png', type: 'Canhoto', confidence: 95, status: 'Processando', time: 'Agora', result: 'Lendo assinatura...', cnpj: '-', valor: '-' }
+  ];
+
+  const mockAPIEvents = [
+    { id: 'api-1', system: 'ERP MasterLog', action: 'Inbound Sync', time: '10s atrás', status: 'Online', logs: '24 arquivos recebidos' },
+    { id: 'api-2', system: 'TruckSync', action: 'File Import', time: '1h atrás', status: 'Success', logs: 'Importação concluída sem erros' },
+    { id: 'api-3', system: 'WebHook Global', action: 'Auth Failure', time: '3h atrás', status: 'Error', logs: 'Tentativa de acesso com token expirado' }
+  ];
+
+  return (
+    <div style={{ padding: '0 40px 40px', flex: 1, display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      {/* KPI CARDS */}
+      <div style={{ display: 'flex', gap: '24px' }}>
+        <div style={{ flex: 1, padding: '24px', backgroundColor: theme === 'dark' ? '#1A1A1A' : '#FFF', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: 'rgba(0, 97, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Zap size={24} color="#0061FF" />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '18px', fontWeight: 900, color: theme === 'dark' ? '#FFF' : '#334155', margin: '0 0 4px' }}>Eficácia Operacional</h3>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>IA em conformidade: <span style={{ color: '#B5D900', fontWeight: 800 }}>98.4%</span></p>
+          </div>
+        </div>
+        <div style={{ flex: 1, padding: '24px', backgroundColor: theme === 'dark' ? '#1A1A1A' : '#FFF', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AlertCircle size={24} color="#EF4444" />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '18px', fontWeight: 900, color: theme === 'dark' ? '#FFF' : '#334155', margin: '0 0 4px' }}>Incidentes & Revisões</h3>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', margin: 0 }}><span style={{ color: '#EF4444', fontWeight: 800 }}>3 alertas</span> aguardando sua ação.</p>
+          </div>
+        </div>
+        <div style={{ flex: 1, padding: '24px', backgroundColor: theme === 'dark' ? '#1A1A1A' : '#FFF', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: 'rgba(181, 217, 0, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Activity size={24} color="#B5D900" />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '18px', fontWeight: 900, color: theme === 'dark' ? '#FFF' : '#334155', margin: '0 0 4px' }}>Tráfego API Inbound</h3>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Latência média: <span style={{ color: '#B5D900', fontWeight: 800 }}>24ms</span></p>
+          </div>
+        </div>
+      </div>
+
+      {/* NAVIGATION TABS */}
+      <div style={{ display: 'flex', gap: '12px' }}>
+        {['workflow', 'api', 'revisao'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveSubTab(tab as any)}
+            style={{
+              padding: '12px 24px', borderRadius: '14px', border: 'none', cursor: 'pointer',
+              backgroundColor: activeSubTab === tab ? '#0061FF' : (theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F1F1'),
+              color: activeSubTab === tab ? '#FFF' : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'),
+              fontSize: '13px', fontWeight: 800, transition: '0.2s', display: 'flex', alignItems: 'center', gap: '10px'
+            }}
+          >
+            {tab === 'workflow' ? <Zap size={16} /> : tab === 'api' ? <Cpu size={16} /> : <AlertCircle size={16} />}
+            {tab === 'workflow' ? 'Fluxo Inteligente' : tab === 'api' ? 'Logs de Integração API' : 'Pendente de Revisão'}
+          </button>
+        ))}
+      </div>
+
+      {/* MAIN CONTENT AREA */}
+      <div style={{ flex: 1, backgroundColor: theme === 'dark' ? '#141414' : '#FFF', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+              <th style={{ textAlign: 'left', padding: '20px 24px', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Origem / Recurso</th>
+              <th style={{ textAlign: 'left', padding: '20px 24px', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Processamento IA</th>
+              <th style={{ textAlign: 'left', padding: '20px 24px', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Rastreabilidade</th>
+              <th style={{ textAlign: 'right', padding: '20px 24px', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {activeSubTab === 'workflow' && mockWorkflows.map(item => (
+              <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: '0.2s' }}>
+                <td style={{ padding: '20px 24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <FileText size={18} color={item.confidence > 90 ? '#0061FF' : '#F59E0B'} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFF' }}>{item.name}</div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{item.type} • {item.time}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style={{ padding: '20px 24px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{item.result}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ flex: 1, height: '4px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '2px', maxWidth: '80px' }}>
+                        <div style={{ width: `${item.confidence}%`, height: '100%', backgroundColor: item.confidence > 90 ? '#B5D900' : '#F59E0B', borderRadius: '2px' }} />
+                      </div>
+                      <span style={{ fontSize: '10px', fontWeight: 800, color: item.confidence > 90 ? '#B5D900' : '#F59E0B' }}>{item.confidence}% Confiança</span>
+                    </div>
+                  </div>
+                </td>
+                <td style={{ padding: '20px 24px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFF' }}>{item.cnpj !== '-' ? `CNPJ: ${item.cnpj}` : 'Sem vínculo direto'}</div>
+                    <div style={{ fontSize: '11px', color: '#B5D900', fontWeight: 800 }}>{item.valor !== '-' ? `Valor Extraído: ${item.valor}` : ''}</div>
+                  </div>
+                </td>
+                <td style={{ padding: '20px 24px', textAlign: 'right' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                    <span style={{ 
+                      padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 800,
+                      backgroundColor: item.status === 'Concluído' ? 'rgba(181, 217, 0, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                      color: item.status === 'Concluído' ? '#B5D900' : '#EF4444'
+                    }}>
+                      {item.status}
+                    </span>
+                    {item.status === 'Revisão Necessária' && (
+                      <button onClick={() => toast.success('Abrindo revisão humanizada...')} style={{ fontSize: '10px', fontWeight: 900, color: '#0061FF', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Validar Agora</button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {activeSubTab === 'api' && mockAPIEvents.map(item => (
+              <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                <td style={{ padding: '20px 24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: 'rgba(0, 97, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Cpu size={18} color="#0061FF" />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFF' }}>{item.system}</div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>Endpoint Ativo • {item.time}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style={{ padding: '20px 24px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#FFF' }}>{item.action}</div>
+                </td>
+                <td style={{ padding: '20px 24px' }}>
+                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>{item.logs}</div>
+                </td>
+                <td style={{ padding: '20px 24px', textAlign: 'right' }}>
+                  <span style={{ 
+                    padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 800,
+                    backgroundColor: item.status === 'Online' || item.status === 'Success' ? 'rgba(181, 217, 0, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    color: item.status === 'Online' || item.status === 'Success' ? '#B5D900' : '#EF4444'
+                  }}>
+                    {item.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+const IntelligentCentralView = CentralInteligentePage;
 
 const UserAPIs: React.FC<{ styles: Record<string, React.CSSProperties> }> = ({ styles }) => {
   const [keys, setKeys] = useState([{ id: '1', name: 'ERP Logística Principal', key: 'ld_live_a1b2c3d4e5f6...', created: '2026-05-01' }]);
@@ -3177,7 +3409,7 @@ const LogDockDashboard: React.FC = () => {
           {[
             { id: 'inicio',   icon: <Home size={22} />,      label: 'Início' },
             { id: 'arquivos', icon: <HardDrive size={22} />, label: 'Meu Drive' },
-            { id: 'central-inteligente', icon: <Brain size={22} />, label: 'Central Inteligente' },
+            { id: 'central-inteligente', icon: <Brain size={22} />, label: 'Central Inteligente', badge: '3' },
             { id: 'lixeira',  icon: <Trash2 size={22} />,    label: 'Lixeira' },
           ].map(item => (
             <button
@@ -3439,25 +3671,34 @@ const LogDockDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <h4 style={{ margin: '20px 0 10px', fontSize: '15px', fontWeight: 900, color: theme === 'dark' ? '#FFFFFF' : '#334155' }}>Uso de Armazenamento</h4>
+              <h4 
+                onClick={() => setOpenFilePreview({ name: 'Plano 2TB Plus.pdf', type: 'application/pdf', isStoragePopup: true })}
+                style={{ margin: '20px 0 10px', fontSize: '15px', fontWeight: 900, color: theme === 'dark' ? '#FFFFFF' : '#334155', cursor: 'pointer' }}
+              >
+                Uso de Armazenamento
+              </h4>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
+              <div 
+                onClick={() => setOpenFilePreview({ name: 'Plano 2TB Plus.pdf', type: 'application/pdf', isStoragePopup: true })}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px', cursor: 'pointer' }}
+              >
                 <span style={{ fontSize: '13px', fontWeight: 800, color: theme === 'dark' ? '#FFF' : '#334155' }}>{storageStats.used} / {storageStats.total}</span>
                 <span style={{ fontSize: '11px', fontWeight: 700, color: theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B' }}>{storageStats.percent}%</span>
               </div>
 
-              <div style={{ width: '100%', height: '6px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F1F1', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px' }}>
+              <div 
+                onClick={() => setOpenFilePreview({ name: 'Plano 2TB Plus.pdf', type: 'application/pdf', isStoragePopup: true })}
+                style={{ width: '100%', height: '6px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F1F1', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px', cursor: 'pointer' }}
+              >
                 <div style={{ width: `${storageStats.percent}%`, height: '100%', backgroundColor: storageStats.percent > 90 ? '#EF4444' : '#0061FF', borderRadius: '3px' }} />
               </div>
 
               <button 
-                onClick={() => navigate('/plans')}
-                style={{ width: '100%', marginTop: '16px', padding: '12px', borderRadius: '14px', backgroundColor: '#0061FF', color: '#FFFFFF', border: 'none', fontSize: '13px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: 'none', transition: 'all 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#0055E0'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0061FF'}
+                onClick={() => setOpenFilePreview({ name: 'Visualização de Armazenamento', type: 'application/pdf', isStoragePopup: true })}
+                style={{ width: '100%', marginTop: '16px', padding: '14px 24px', borderRadius: '16px', backgroundColor: 'rgb(181, 217, 0)', color: '#000000', border: 'none', fontSize: '13px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', transition: '0.2s', boxShadow: 'rgba(181, 217, 0, 0.15) 0px 4px 12px' }}
               >
-                <Zap size={16} />
-                <span>Mudar de plano</span>
+                <Zap size={16} fill="#000000" />
+                <span>Fazer upgrade</span>
               </button>
             </div>
           )}
@@ -3498,6 +3739,7 @@ const LogDockDashboard: React.FC = () => {
                  activeTab === 'torre' ? 'Torre de Controle' :
                  activeTab === 'hub' ? 'Master HUB' :
                  activeTab === 'portal' ? 'Portal do Cliente' :
+                 activeTab === 'central-inteligente' ? 'Central Inteligente' :
                  activeTab === 'relatorios' ? 'Relatórios' : 'LogDock'}
               </h1>
               
@@ -3546,7 +3788,7 @@ const LogDockDashboard: React.FC = () => {
                 onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0061FF'}
               >
                 <Zap size={16} />
-                <span>Mudar de plano</span>
+                <span>Fazer upgrade</span>
               </button>
               <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={(e) => handleUpload(e.target.files)} />
 
@@ -3592,7 +3834,11 @@ const LogDockDashboard: React.FC = () => {
 
 
                 <div 
-                  onClick={() => setIsActivityOpen(!isActivityOpen)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsActivityOpen(!isActivityOpen);
+                  }}
+                  className="profile-trigger"
                   style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
                 >
                   <span style={{ fontSize: '13px', fontWeight: 800, color: theme === 'dark' ? '#FFFFFF' : '#0F172A' }}>
@@ -3619,6 +3865,8 @@ const LogDockDashboard: React.FC = () => {
                   <ProfilePopup 
                     profile={profile} 
                     storage={storageStats} 
+                    theme={theme}
+                    setTheme={setTheme}
                     onClose={() => setIsActivityOpen(false)} 
                     onUpgrade={() => navigate('/plans')} 
                     onNavigate={async (t, data) => {
@@ -3830,16 +4078,32 @@ const LogDockDashboard: React.FC = () => {
                   openActionSidebar={openActionSidebar}
                   styles={currentStyles}
                   theme={theme}
+                  selectedFile={selectedFile ? (typeof selectedFile === 'string' ? selectedFile : selectedFile.name) : null}
+                  setSelectedFile={(name) => {
+                    if (!name) setSelectedFile(null);
+                    else {
+                      const file = files.find(f => f.name === name);
+                      setSelectedFile(file || { id: 'dummy', name } as any);
+                    }
+                  }}
+                  onContextMenu={(e, file) => {
+                    e.preventDefault();
+                    const name = typeof file === 'string' ? file : file.name;
+                    const fObj = files.find(f => f.name === name);
+                    setSelectedFile(fObj || { id: 'dummy', name } as any);
+                    setContextMenu({ x: e.clientX, y: e.clientY });
+                  }}
                 />
               )}
               {activeTab === 'operacoes' && <OperationalMemoryView stats={globalStats} events={operationalEvents} styles={currentStyles} theme={theme} />}
               {activeTab === 'equipe' && <TeamPage styles={currentStyles} />}
               {activeTab === 'api' && <UserAPIs styles={currentStyles} />}
+              {activeTab === 'central-ia' && <IntelligentCentralView styles={currentStyles} theme={theme} />}
               {activeTab === 'torre-controle' && <ControlTowerPage />}
               {activeTab === 'master' && <MasterHubPage />}
               {activeTab === 'portal-cliente' && <ClientPortalPage />}
               {activeTab === 'relatorios' && <ResultsMemoryPage />}
-              {activeTab === 'central-inteligente' && <IntelligentCentralView />}
+              {activeTab === 'central-inteligente' && <CentralInteligentePage styles={currentStyles} theme={theme} />}
               {activeTab === 'arquivos' && (
                 <FileExplorerView 
                   folders={filteredFolders} 
@@ -4092,108 +4356,6 @@ const DashboardMinimalView: React.FC<{ stats: any }> = ({ stats }) => {
   );
 };
 
-const IntelligentCentralView = () => {
-  const [activeFilter, setActiveFilter] = useState('todos');
-
-  const timelineData = [
-    {
-      date: 'Hoje',
-      items: [
-        { id: 1, type: 'financeiro', name: 'nota_fiscal_123.pdf', action: 'Movido para: Financeiro', link: 'Vinculado à entrega #123', tag: 'Urgente', time: 'Agora mesmo', reason: 'O sistema identificou que este arquivo é financeiro e organizou automaticamente.' },
-        { id: 2, type: 'entregas', name: 'comprovante_assinado.jpg', action: 'Movido para: Entregas', link: 'Vinculado ao Cliente XPTO', tag: 'Aprovado', time: 'Há 2 horas', reason: 'O sistema detectou uma assinatura de comprovante válida.' }
-      ]
-    },
-    {
-      date: 'Ontem',
-      items: [
-        { id: 3, type: 'clientes', name: 'contrato_social.pdf', action: 'Movido para: Clientes', link: 'Vinculado ao Cliente ABC', tag: 'Documentação', time: '14:30', reason: 'Documento jurídico identificado e classificado.' }
-      ]
-    }
-  ];
-
-  return (
-    <div style={{ padding: '48px 64px', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#F8F9FA' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
-        <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Brain size={32} color="#0061FF" />
-            Central Inteligente
-          </h1>
-          <p style={{ fontSize: '15px', color: '#64748B', marginTop: '8px' }}>Histórico completo de automações e organizações feitas pela IA.</p>
-        </div>
-        <div style={{ display: 'flex', gap: '12px', backgroundColor: '#FFF', padding: '6px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          {['todos', 'financeiro', 'entregas', 'clientes'].map(f => (
-            <button 
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              style={{ padding: '8px 16px', borderRadius: '12px', border: 'none', backgroundColor: activeFilter === f ? '#0061FF' : 'transparent', color: activeFilter === f ? '#FFF' : '#64748B', fontWeight: 700, fontSize: '13px', cursor: 'pointer', textTransform: 'capitalize' }}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ flex: 1, overflowY: 'auto', paddingRight: '16px' }}>
-        <div style={{ position: 'relative', paddingLeft: '24px' }}>
-          <div style={{ position: 'absolute', top: 0, bottom: 0, left: '31px', width: '2px', backgroundColor: '#E2E8F0' }} />
-          
-          {timelineData.map(group => (
-            <div key={group.date} style={{ marginBottom: '40px', position: 'relative' }}>
-              <div style={{ position: 'absolute', left: '0', top: '2px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#0061FF', border: '4px solid #F8F9FA', zIndex: 10 }} />
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#1E293B', marginLeft: '32px', marginBottom: '24px' }}>{group.date}</h2>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginLeft: '32px' }}>
-                {group.items.filter(i => activeFilter === 'todos' || i.type === activeFilter).map(item => (
-                  <div key={item.id} style={{ backgroundColor: '#FFF', borderRadius: '20px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #F1F1F1' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <FileText size={24} color="#3B82F6" />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A' }}>{item.name}</div>
-                          <div style={{ fontSize: '13px', color: '#64748B', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Clock size={14} /> {item.time}
-                          </div>
-                        </div>
-                      </div>
-                      <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#F8FAFC', color: '#0061FF', border: '1px solid #E2E8F0', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.backgroundColor='#EFF6FF'} onMouseLeave={e => e.currentTarget.style.backgroundColor='#F8FAFC'}>
-                        <FolderOpen size={16} />
-                        Abrir localização
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#F1F5F9', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: '#334155' }}>
-                        <Folder size={14} color="#64748B" /> {item.action}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#F1F5F9', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: '#334155' }}>
-                        <LinkIcon size={14} color="#64748B" /> {item.link}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#FEF2F2', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, color: '#EF4444' }}>
-                        <Tag size={14} color="#EF4444" /> {item.tag}
-                      </div>
-                    </div>
-
-                    <div style={{ backgroundColor: '#F8FAFC', borderLeft: '3px solid #0061FF', padding: '12px 16px', borderRadius: '0 12px 12px 0' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Brain size={16} color="#0061FF" />
-                        Decisão da IA
-                      </div>
-                      <p style={{ fontSize: '13px', color: '#64748B', marginTop: '4px', lineHeight: '1.5' }}>{item.reason}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const FileExplorerView: React.FC<{ 
   folders: any[], 
   files: any[], 
@@ -4215,11 +4377,82 @@ const FileExplorerView: React.FC<{
 }> = ({ folders, files, currentPath, onFolderClick, onBack, onNewFolder, isDragging, isNewMenuOpen, setIsNewMenuOpen, viewMode, setViewMode, isOrganizingModalOpen, setIsOrganizingModalOpen, isAutomatedFolderModalOpen, setIsAutomatedFolderModalOpen, selectedItems, setSelectedItems }) => {
   const [isFolderMenuOpen, setIsFolderMenuOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
+  const [activeFileMenu, setActiveFileMenu] = useState<string | null>(null);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
+  const [shareAccessType, setShareAccessType] = useState('Somente visualização');
+  const [openFilePreview, setOpenFilePreview] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterMode, setFilterMode] = useState<'all' | 'recent' | 'favorites'>('all');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterExtension, setFilterExtension] = useState<string>('all');
+  const [sortField, setSortField] = useState<'name' | 'date'>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [aiCache, setAiCache] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const filteredFiles = files.filter(f => {
+    const q = searchQuery.toLowerCase().trim();
+    if (q) {
+      const summary = aiCache[f.id] || '';
+      if (!f.name.toLowerCase().includes(q) && !f.type?.toLowerCase().includes(q) && !summary.toLowerCase().includes(q)) {
+        return false;
+      }
+    }
+
+    if (filterMode === 'recent') {
+      const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const fileDate = f.created_at ? new Date(f.created_at).getTime() : Date.now();
+      if (fileDate < oneWeekAgo) return false;
+    }
+
+    if (filterMode === 'favorites') {
+      if (!f.important) return false;
+    }
+
+    if (filterType !== 'all') {
+      if (filterType === 'Imagens' && !f.type?.startsWith('image/')) return false;
+      if (filterType === 'Documentos' && (f.type?.startsWith('image/') || f.type?.includes('sheet'))) return false;
+    }
+
+    if (filterExtension !== 'all') {
+      const ext = f.name.split('.').pop()?.toLowerCase();
+      if (ext !== filterExtension.toLowerCase()) return false;
+    }
+
+    return true;
+  }).sort((a, b) => {
+    if (sortField === 'name') {
+      return sortDirection === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+    } else {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+    }
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === ' ' && selectedItems.length > 0) {
+        e.preventDefault();
+        const fileToPreview = files.find(f => selectedItems.includes(f.id));
+        if (fileToPreview) setOpenFilePreview(fileToPreview);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedItems, files]);
+
+  useEffect(() => {
+    if (openFilePreview && !aiCache[openFilePreview.id]) {
+      const summary = openFilePreview.type?.includes('image')
+        ? "Este arquivo contém uma imagem associada ao transporte ou logística com a identidade visual da Logta. O conteúdo visual demonstra claramente as operações recentes de faturamento e pode ser utilizado para materiais institucionais, apresentações ou campanhas."
+        : "Este arquivo PDF/Documento contém dados operacionais internos do LogDock Drive. A inteligência artificial identificou vínculos com clientes recorrentes, notas fiscais emitidas recentemente e metadados operacionais fundamentais.";
+      setAiCache(prev => ({ ...prev, [openFilePreview.id]: summary }));
+    }
+  }, [openFilePreview, aiCache]);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -4234,6 +4467,9 @@ const FileExplorerView: React.FC<{
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
+    // If user right-clicks an item that is NOT selected, select it
+    // But since this is a container-level handler, we mostly use it for background
+    // For specific items, we'll use item-level handlers if needed.
     setContextMenu({ x: e.clientX, y: e.clientY });
   };
 
@@ -4249,231 +4485,311 @@ const FileExplorerView: React.FC<{
       onClick={closeMenus}
     >
       <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple style={{ display: 'none' }} />
-      {/* BREADCRUMBS ROW */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 4px' }}>
-        <span 
-          onClick={onBack}
-          style={{ fontSize: '18px', fontWeight: 600, color: '#64748B', cursor: 'pointer' }}
-        >
-          Meu Drive
-        </span>
-        {currentPath.length > 0 && (
-          <>
-            <ChevronRight size={16} color="#94A3B8" />
-            <div 
-              style={{ position: 'relative' }}
-              onClick={(e) => { e.stopPropagation(); setIsFolderMenuOpen(!isFolderMenuOpen); }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '10px', backgroundColor: '#F8FAFC', cursor: 'pointer', border: '1px solid #F1F1F1' }}>
-                <span style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A' }}>{currentPath[currentPath.length - 1].name}</span>
-                <ChevronDown size={16} color="#0F172A" />
-              </div>
-
-              {isFolderMenuOpen && (
-                <div style={{ 
-                  position: 'absolute', top: '100%', left: 0, marginTop: '8px', 
-                  width: '320px', backgroundColor: '#1A1A1A', borderRadius: '12px', 
-                  border: '1px solid rgba(255,255,255,0.1)', padding: '8px', zIndex: 100,
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-                  display: 'flex', flexDirection: 'column'
-                }}>
-                  <button 
-                    style={styles.dropdownItem}
-                    onClick={() => { onNewFolder(); closeMenus(); }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <FolderPlus size={18} color="rgba(255,255,255,0.5)" />
-                      <span>Nova pasta</span>
-                    </div>
-                    <span style={styles.shortcutText}>^C, depois F</span>
-                  </button>
-                  <div style={styles.menuDivider} />
-                  <button 
-                    style={styles.dropdownItem}
-                    onClick={() => { 
-                      closeMenus();
-                      const toastId = toast.loading('Compactando pasta para download...');
-                      setTimeout(() => toast.success('Download iniciado!', { id: toastId }), 1500);
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <Download size={18} color="rgba(255,255,255,0.5)" />
-                      <span>Baixar</span>
-                    </div>
-                  </button>
-                  <button 
-                    style={styles.dropdownItem}
-                    onClick={() => {
-                      closeMenus();
-                      const currentName = currentPath[currentPath.length - 1]?.name || '';
-                      setRenameValue(currentName);
-                      setIsRenameModalOpen(true);
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <Edit2 size={18} color="rgba(255,255,255,0.5)" />
-                      <span>Renomear</span>
-                    </div>
-                    <span style={styles.shortcutText}>⌥⌘E</span>
-                  </button>
-                  <div style={styles.menuDivider} />
-                  <button 
-                    style={styles.dropdownItem}
-                    onClick={() => {
-                      closeMenus();
-                      setShareEmail('');
-                      setIsShareModalOpen(true);
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <UserPlus size={18} color="rgba(255,255,255,0.5)" />
-                      <span>Compartilhar</span>
-                    </div>
-                    <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
-                  </button>
-                  <button 
-                    style={styles.dropdownItem}
-                    onClick={() => {
-                      closeMenus();
-                      setIsOrganizingModalOpen(true);
-                      setTimeout(() => {
-                        setIsOrganizingModalOpen(false);
-                        toast.success('Pasta organizada inteligentemente!');
-                      }, 3000);
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <Folder size={18} color="rgba(255,255,255,0.5)" />
-                      <span>Organizar Inteligente</span>
-                    </div>
-                    <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
-                  </button>
-                  <button 
-                    style={styles.dropdownItem}
-                    onClick={() => {
-                      closeMenus();
-                      const name = currentPath[currentPath.length - 1]?.name || 'Pasta';
-                      toast(`Nome: ${name}\nTamanho: 12.4 MB\nCriado: Hoje`, { icon: 'ℹ️' });
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <Info size={18} color="rgba(255,255,255,0.5)" />
-                      <span>Informações da pasta</span>
-                    </div>
-                    <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
-                  </button>
-                  <div style={styles.menuDivider} />
-                  <button 
-                    style={{ ...styles.dropdownItem, color: '#EF4444' }}
-                    onClick={() => {
-                      closeMenus();
-                      const confirm = window.confirm('Mover pasta para a lixeira?');
-                      if (confirm) {
-                        toast.success('Pasta movida para a lixeira.', { icon: '🗑️' });
-                      }
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <Trash2 size={18} color="#EF4444" />
-                      <span>Mover para a lixeira</span>
-                    </div>
-                    <span style={styles.shortcutText}>Delete</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* FILTER & ACTIONS ROW */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        {/* Left Side: Filter Pills */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {['Tipo', 'Pessoas', 'Modificado', 'Fonte'].map(filter => (
-            <div key={filter} style={{ 
-              display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', 
-              borderRadius: '10px', border: '1px solid #E2E8F0', backgroundColor: filter === 'Pessoas' ? '#F1F1F1' : '#FFF',
-              cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#334155'
-            }}>
-              <span>{filter}</span>
-              <ChevronDown size={14} color="#64748B" />
-            </div>
-          ))}
+      {/* ULTRA PREMIUM DIRECTORY & ACTION HEADER */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '12px 4px 12px' }}>
+        {/* ROW 1: Breadcrumb small text */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#64748B', fontWeight: 600 }}>
+            <span style={{ cursor: 'pointer' }} onClick={onBack}>Todos os arquivos</span>
+            {currentPath.map((pathItem, idx) => (
+              <span key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>/</span>
+                <span style={{ cursor: 'pointer' }} onClick={() => onBack()}>{pathItem.name}</span>
+              </span>
+            ))}
+          </div>
         </div>
 
-        {/* Right Side: Actions & View Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Sort Control */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '20px', backgroundColor: '#E0EFFF', cursor: 'pointer' }}>
-            <span style={{ fontSize: '12px', fontWeight: 800, color: '#0061FF' }}>Nome</span>
-            <ArrowUp size={14} color="#0061FF" />
+        {/* ROW 2: Bold Title + Folder Actions */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          {/* Left: Dynamic Folder Name + Settings gear icon */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' }}>
+              {currentPath.length > 0 ? currentPath[currentPath.length - 1].name : 'Meu Drive'}
+            </h1>
+            <button 
+              onClick={() => setIsFolderMenuOpen(!isFolderMenuOpen)}
+              style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
+            >
+              <Settings size={20} />
+            </button>
+            {isFolderMenuOpen && (
+              <div style={{ 
+                position: 'absolute', top: '100px', left: '16px', 
+                width: '320px', backgroundColor: '#1A1A1A', borderRadius: '12px', 
+                border: '1px solid rgba(255,255,255,0.1)', padding: '8px', zIndex: 100,
+                boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                display: 'flex', flexDirection: 'column'
+              }}>
+                <button 
+                  style={styles.dropdownItem}
+                  onClick={() => { onNewFolder(); closeMenus(); }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                    <FolderPlus size={18} color="rgba(255,255,255,0.5)" />
+                    <span>Nova pasta</span>
+                  </div>
+                  <span style={styles.shortcutText}>^C, depois F</span>
+                </button>
+                <div style={styles.menuDivider} />
+                <button 
+                  style={styles.dropdownItem}
+                  onClick={() => { 
+                    closeMenus();
+                    const toastId = toast.loading('Compactando pasta para download...');
+                    setTimeout(() => toast.success('Download iniciado!', { id: toastId }), 1500);
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                    <Download size={18} color="rgba(255,255,255,0.5)" />
+                    <span>Baixar</span>
+                  </div>
+                </button>
+                <button 
+                  style={styles.dropdownItem}
+                  onClick={() => {
+                    closeMenus();
+                    const currentName = currentPath[currentPath.length - 1]?.name || '';
+                    setRenameValue(currentName);
+                    setIsRenameModalOpen(true);
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                    <Edit2 size={18} color="rgba(255,255,255,0.5)" />
+                    <span>Renomear</span>
+                  </div>
+                  <span style={styles.shortcutText}>⌥⌘E</span>
+                </button>
+                <div style={styles.menuDivider} />
+                <button 
+                  style={styles.dropdownItem}
+                  onClick={() => {
+                    closeMenus();
+                    setShareEmail('');
+                    setIsShareModalOpen(true);
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                    <UserPlus size={18} color="rgba(255,255,255,0.5)" />
+                    <span>Compartilhar</span>
+                  </div>
+                  <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
+                </button>
+                <div style={styles.menuDivider} />
+                <button 
+                  style={{ ...styles.dropdownItem, color: '#EF4444' }}
+                  onClick={() => {
+                    closeMenus();
+                    const confirm = window.confirm('Mover pasta para a lixeira?');
+                    if (confirm) {
+                      toast.success('Pasta movida para a lixeira.', { icon: '🗑️' });
+                    }
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                    <Trash2 size={18} color="#EF4444" />
+                    <span>Mover para a lixeira</span>
+                  </div>
+                  <span style={styles.shortcutText}>Delete</span>
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Size Select (only if not list) */}
-          {viewMode !== 'list' && (
-            <select 
-              value={viewMode}
-              onChange={e => setViewMode(e.target.value)}
-              style={{ padding: '8px 16px', borderRadius: '20px', border: '1px solid #E2E8F0', backgroundColor: '#FFF', fontSize: '13px', fontWeight: 600, color: '#334155', cursor: 'pointer', outline: 'none' }}
-            >
-              <option value="small-grid">Pequena</option>
-              <option value="grid">Média</option>
-              <option value="large-grid">Grande</option>
-              <option value="xl-grid">Super Grande</option>
-            </select>
-          )}
-
-          {/* View Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #E2E8F0', borderRadius: '20px', overflow: 'hidden', backgroundColor: '#FFF' }}>
-            <div 
-              onClick={() => setViewMode('list')}
-              style={{ padding: '8px 12px', borderRight: '1px solid #F1F1F1', cursor: 'pointer', display: 'flex', alignItems: 'center', backgroundColor: viewMode === 'list' ? '#F2F2F2' : '#FFF' }}
-            >
-              {viewMode === 'list' && <Check size={14} color="#0F172A" style={{marginRight: '4px'}} />}
-              <List size={16} color="#0F172A" />
-            </div>
-            <div 
-              onClick={() => setViewMode(viewMode === 'list' ? 'grid' : viewMode)}
-              style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: viewMode !== 'list' ? '#F2F2F2' : '#FFF' }}
-            >
-              {viewMode !== 'list' && <Check size={14} color="#0F172A" />}
-              <Grid size={16} color="#0F172A" />
-            </div>
-          </div>
-
-          {/* Filter Funnel Icon */}
-          <button style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #E2E8F0', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <Filter size={16} color="#64748B" />
-          </button>
-
-          {/* NOVO BUTTON */}
-          <div style={{ position: 'relative' }}>
+          {/* Right: Actions buttons as in Screenshot 1 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button 
               onClick={() => setIsNewMenuOpen(!isNewMenuOpen)}
-              style={{ padding: '10px 20px', backgroundColor: '#0F172A', color: '#FFF', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#1E293B'}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0F172A'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', 
+                backgroundColor: '#FFF', border: '1px solid #E2E8F0', borderRadius: '12px', 
+                fontSize: '13px', fontWeight: 700, color: '#334155', cursor: 'pointer', transition: 'all 0.2s',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+              }}
             >
-              <Plus size={16} />
-              <span>Novo</span>
-              <ChevronDown size={14} />
+              <Upload size={16} color="#64748B" />
+              <span>Enviar</span>
+              <ChevronDown size={14} color="#64748B" />
+            </button>
+            <button 
+              onClick={onNewFolder}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', 
+                backgroundColor: '#FFF', border: '1px solid #E2E8F0', borderRadius: '12px', 
+                fontSize: '13px', fontWeight: 700, color: '#334155', cursor: 'pointer', transition: 'all 0.2s',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+              }}
+            >
+              <FolderPlus size={16} color="#64748B" />
+              <span>Nova pasta</span>
             </button>
 
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                toast.success('Link copiado!');
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', 
+                backgroundColor: '#FFF', border: '1px solid #E2E8F0', borderRadius: '12px', 
+                cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >
+              <LinkIcon size={16} color="#64748B" />
+            </button>
+            <button 
+              onClick={() => setIsShareModalOpen(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', 
+                backgroundColor: '#FFF', color: '#0F172A', border: '1px solid #E2E8F0', borderRadius: '12px', 
+                fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+              }}
+            >
+              <Share2 size={16} color="#0F172A" />
+              <span>Compartilhar pasta</span>
+            </button>
+
+            {/* Avatars */}
+            <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#1C64F2', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #FFF', color: '#FFF', fontSize: '13px', fontWeight: 800, cursor: 'pointer', zIndex: 3, boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }} title="Alison (Colaborador)">
+                A
+              </div>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#38BDF8', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #FFF', color: '#FFF', fontSize: '13px', fontWeight: 800, cursor: 'pointer', marginLeft: '-8px', zIndex: 2, boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }} title="Lima (Cliente)">
+                L
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 3: Filter Toolbar Row + Search */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', borderTop: '1px solid #F1F5F9', borderBottom: '1px solid #F1F5F9', padding: '14px 0' }}>
+          {/* Filter Pills from Screenshot 3 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button 
+              onClick={() => {
+                setFilterMode(filterMode === 'recent' ? 'all' : 'recent');
+                toast.success(filterMode === 'recent' ? 'Exibindo todos os arquivos.' : 'Filtrando por recentes...');
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', 
+                backgroundColor: filterMode === 'recent' ? '#F1F5F9' : '#FFF', border: filterMode === 'recent' ? '1px solid #3B82F6' : '1px solid #E2E8F0', borderRadius: '12px', 
+                fontSize: '13px', fontWeight: 600, color: '#334155', cursor: 'pointer'
+              }}
+            >
+              <Clock size={14} color={filterMode === 'recent' ? '#3B82F6' : '#64748B'} />
+              <span>Recentes</span>
+            </button>
+            <button 
+              onClick={() => {
+                setFilterMode(filterMode === 'favorites' ? 'all' : 'favorites');
+                toast.success(filterMode === 'favorites' ? 'Exibindo todos os arquivos.' : 'Filtrando por favoritos...');
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', 
+                backgroundColor: filterMode === 'favorites' ? '#F1F5F9' : '#FFF', border: filterMode === 'favorites' ? '1px solid #3B82F6' : '1px solid #E2E8F0', borderRadius: '12px', 
+                fontSize: '13px', fontWeight: 600, color: '#334155', cursor: 'pointer'
+              }}
+            >
+              <Star size={14} color={filterMode === 'favorites' ? '#EAB308' : '#64748B'} />
+              <span>Favoritos</span>
+            </button>
+
+            {/* Tipo Select Filter */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <select 
+                value={filterType}
+                onChange={e => {
+                  setFilterType(e.target.value);
+                  toast.success(e.target.value === 'all' ? 'Exibindo todos os tipos.' : `Filtrando por ${e.target.value}`);
+                }}
+                style={{
+                  padding: '8px 28px 8px 14px', borderRadius: '12px', border: '1px solid #E2E8F0', 
+                  backgroundColor: filterType !== 'all' ? '#F1F5F9' : '#FFF',
+                  fontSize: '13px', fontWeight: 600, color: '#334155', cursor: 'pointer', outline: 'none',
+                  appearance: 'none', WebkitAppearance: 'none'
+                }}
+              >
+                <option value="all">Tipo</option>
+                <option value="Imagens">Imagens</option>
+                <option value="Documentos">Documentos</option>
+              </select>
+              <ChevronDown size={14} color="#64748B" style={{ position: 'absolute', right: '10px', pointerEvents: 'none' }} />
+            </div>
+
+            {/* Extensão Select Filter */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <select 
+                value={filterExtension}
+                onChange={e => {
+                  setFilterExtension(e.target.value);
+                  toast.success(e.target.value === 'all' ? 'Exibindo todas extensões.' : `Filtrando por .${e.target.value.toLowerCase()}`);
+                }}
+                style={{
+                  padding: '8px 28px 8px 14px', borderRadius: '12px', border: '1px solid #E2E8F0', 
+                  backgroundColor: filterExtension !== 'all' ? '#F1F5F9' : '#FFF',
+                  fontSize: '13px', fontWeight: 600, color: '#334155', cursor: 'pointer', outline: 'none',
+                  appearance: 'none', WebkitAppearance: 'none'
+                }}
+              >
+                <option value="all">Extensão</option>
+                <option value="PDF">PDF</option>
+                <option value="PNG">PNG</option>
+                <option value="JPG">JPG</option>
+              </select>
+              <ChevronDown size={14} color="#64748B" style={{ position: 'absolute', right: '10px', pointerEvents: 'none' }} />
+            </div>
+
+            {/* Search Input Built right in the pill bar */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '280px', marginLeft: '4px' }}>
+              <Search size={14} color="#64748B" style={{ position: 'absolute', left: '12px' }} />
+              <input 
+                type="text" 
+                placeholder="Buscar por nome, conteúdo..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%', padding: '8px 14px 8px 34px', borderRadius: '12px',
+                  border: '1px solid #E2E8F0', backgroundColor: '#FFF',
+                  fontSize: '13px', fontWeight: 500, color: '#334155', outline: 'none',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.01)', transition: 'all 0.2s'
+                }}
+                onFocus={e => e.target.style.borderColor = '#0061FF'}
+                onBlur={e => e.target.style.borderColor = '#E2E8F0'}
+              />
+            </div>
+          </div>
+
+          {/* Right: Layout Modes Toggle (List/Grid/Sidebar) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Sort Control */}
+            <div 
+              onClick={() => {
+                if (sortField === 'name') {
+                  setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                } else {
+                  setSortField('name');
+                  setSortDirection('asc');
+                }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: '#FFF', cursor: 'pointer', userSelect: 'none' }}
+              title={sortDirection === 'asc' ? 'Ordem Crescente' : 'Ordem Decrescente'}
+            >
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>Nome</span>
+              {sortDirection === 'asc' ? <ArrowUp size={14} color="#334155" /> : <ArrowDown size={14} color="#334155" />}
+            </div>
+
+            {/* NOVO dropdown button menu built in */}
             {isNewMenuOpen && (
               <>
                 <div 
@@ -4481,7 +4797,7 @@ const FileExplorerView: React.FC<{
                   onClick={() => setIsNewMenuOpen(false)} 
                 />
                 <div style={{ 
-                  position: 'absolute', top: '100%', right: 0, marginTop: '8px', 
+                  position: 'absolute', top: '210px', right: '16px', 
                   width: '240px', backgroundColor: '#FFF', borderRadius: '16px', 
                   border: '1px solid #F1F1F1', padding: '8px', zIndex: 50,
                   boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
@@ -4505,37 +4821,25 @@ const FileExplorerView: React.FC<{
                     <Upload size={16} color="#64748B" />
                     <span>Upload de arquivo</span>
                   </button>
-                  <div style={{ height: '1px', backgroundColor: '#F1F1F1', margin: '4px 0' }} />
-                  <button 
-                    onClick={() => { setIsNewMenuOpen(false); window.open('https://docs.google.com/document/create', '_blank'); }}
-                    style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#1E293B', fontSize: '13px', fontWeight: 600 }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <img src="https://img.icons8.com/color/48/microsoft-word-2019.png" style={{ width: '16px', height: '16px' }} alt="" />
-                    <span>Documento (Google Docs)</span>
-                  </button>
-                  <button 
-                    onClick={() => { setIsNewMenuOpen(false); window.open('https://sheets.google.com/create', '_blank'); }}
-                    style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#1E293B', fontSize: '13px', fontWeight: 600 }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <img src="https://img.icons8.com/color/48/microsoft-excel-2019.png" style={{ width: '16px', height: '16px' }} alt="" />
-                    <span>Planilha (Google Sheets)</span>
-                  </button>
-                  <button 
-                    onClick={() => { setIsNewMenuOpen(false); window.open('https://slides.google.com/create', '_blank'); }}
-                    style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: '#1E293B', fontSize: '13px', fontWeight: 600 }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <img src="https://img.icons8.com/color/48/microsoft-powerpoint-2019.png" style={{ width: '16px', height: '16px' }} alt="" />
-                    <span>Apresentação (Google Slides)</span>
-                  </button>
                 </div>
               </>
             )}
+
+            {/* View Grid/List icons */}
+            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#FFF' }}>
+              <div 
+                onClick={() => setViewMode('list')}
+                style={{ padding: '8px 12px', borderRight: '1px solid #F1F1F1', cursor: 'pointer', display: 'flex', alignItems: 'center', backgroundColor: viewMode === 'list' ? '#F2F2F2' : '#FFF' }}
+              >
+                <List size={16} color="#0F172A" />
+              </div>
+              <div 
+                onClick={() => setViewMode('grid')}
+                style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', backgroundColor: viewMode !== 'list' ? '#F2F2F2' : '#FFF' }}
+              >
+                <Grid size={16} color="#0F172A" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -4585,20 +4889,19 @@ const FileExplorerView: React.FC<{
       {/* FILES SECTION */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative', flex: 1, minHeight: files.length === 0 ? '120px' : 'auto' }}>
 
-        
-        {files.length > 0 && viewMode === 'list' && (
+        {filteredFiles.length > 0 && viewMode === 'list' && (
           <div style={{ backgroundColor: '#FFF', border: '1px solid #F1F1F1', borderRadius: '24px', overflow: 'hidden', boxShadow: 'none' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #F1F1F1' }}>
-                  <th style={{ padding: '20px 24px', width: '40px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #F1F1F1' }}>
+                    <th style={{ padding: '20px 24px', width: '40px' }}>
                     <input 
                       type="checkbox" 
                       onChange={(e) => {
-                        if (e.target.checked) setSelectedItems(files.map(f => f.id));
+                        if (e.target.checked) setSelectedItems(filteredFiles.map(f => f.id));
                         else setSelectedItems([]);
                       }}
-                      checked={files.length > 0 && files.every(f => selectedItems.includes(f.id))}
+                      checked={filteredFiles.length > 0 && filteredFiles.every(f => selectedItems.includes(f.id))}
                       style={{ cursor: 'pointer' }}
                     />
                   </th>
@@ -4609,7 +4912,7 @@ const FileExplorerView: React.FC<{
                 </tr>
               </thead>
               <tbody>
-                {files.map(file => (
+                {filteredFiles.map(file => (
                   <tr 
                     key={file.id} 
                     style={{ borderBottom: '1px solid #F1F1F1', transition: 'all 0.2s ease', cursor: 'pointer', backgroundColor: selectedItems.includes(file.id) ? '#F8FAFC' : 'transparent' }}
@@ -4618,6 +4921,10 @@ const FileExplorerView: React.FC<{
                     onClick={() => {
                       if (selectedItems.includes(file.id)) setSelectedItems(prev => prev.filter(i => i !== file.id));
                       else setSelectedItems(prev => [...prev, file.id]);
+                    }}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      setOpenFilePreview(file);
                     }}
                   >
                     <td style={{ padding: '16px 24px' }}>
@@ -4643,10 +4950,111 @@ const FileExplorerView: React.FC<{
                     <td style={{ padding: '16px 24px', fontSize: '13px', color: '#64748B', fontWeight: 500 }}>
                       {file.size ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : '--'}
                     </td>
-                    <td style={{ padding: '16px 24px' }}>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}>
+                    <td style={{ padding: '16px 24px', position: 'relative' }}>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveFileMenu(activeFileMenu === file.id ? null : file.id);
+                        }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}
+                      >
                         <MoreHorizontal size={20} />
                       </button>
+                      {activeFileMenu === file.id && (
+                        <div style={{
+                          position: 'absolute', top: '44px', right: '24px', width: '220px', 
+                          backgroundColor: '#1E1E1E', border: '1px solid rgba(255,255,255,0.1)', 
+                          borderRadius: '12px', padding: '6px', zIndex: 11000, 
+                          boxShadow: '0 10px 25px rgba(0,0,0,0.4)', display: 'flex', 
+                          flexDirection: 'column', gap: '2px'
+                        }} onClick={e => e.stopPropagation()}>
+                          <button 
+                            onClick={() => {
+                              toast.success('Lendo arquivo...');
+                              setOpenFilePreview(file);
+                              setActiveFileMenu(null);
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <Zap size={14} color="#0061FF" />
+                            <span>Ler Arquivos</span>
+                          </button>
+                          <button 
+                            onClick={() => {
+                              toast.success('Vinculado à entrega com sucesso!');
+                              setActiveFileMenu(null);
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <Truck size={14} color="#0061FF" />
+                            <span>Vincular à Entrega</span>
+                          </button>
+                          <button 
+                            onClick={() => {
+                              toast.success('Enviado para cliente!');
+                              setActiveFileMenu(null);
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <UsersIcon size={14} color="#0061FF" />
+                            <span>Enviar para Cliente</span>
+                          </button>
+                          <button 
+                            onClick={() => {
+                              toast.success('Organização automática em andamento...');
+                              setActiveFileMenu(null);
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <FolderPlus size={14} color="#0061FF" />
+                            <span>Organizar Automático</span>
+                          </button>
+                          <button 
+                            onClick={() => {
+                              toast.success('Link de compartilhamento copiado!');
+                              setActiveFileMenu(null);
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <Share2 size={14} color="#FFF" />
+                            <span>Compartilhar</span>
+                          </button>
+                          <button 
+                            onClick={() => {
+                              toast.success('Download iniciado!');
+                              setActiveFileMenu(null);
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <Download size={14} color="#FFF" />
+                            <span>Baixar</span>
+                          </button>
+                          <button 
+                            onClick={() => {
+                              toast.success('Arquivo excluído com sucesso!');
+                              setActiveFileMenu(null);
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FF4D4D', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <Trash2 size={14} color="#FF4D4D" />
+                            <span>Excluir</span>
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -4655,13 +5063,13 @@ const FileExplorerView: React.FC<{
           </div>
         )}
 
-        {files.length > 0 && viewMode !== 'list' && (
+        {filteredFiles.length > 0 && viewMode !== 'list' && (
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: `repeat(auto-fill, minmax(${viewMode === 'small-grid' ? 120 : viewMode === 'large-grid' ? 280 : viewMode === 'xl-grid' ? 360 : 200}px, 1fr))`, 
             gap: '16px' 
           }}>
-            {files.map(file => (
+            {filteredFiles.map(file => (
               <div 
                 key={file.id} 
                 style={{ position: 'relative', backgroundColor: '#FFF', border: '1px solid #F1F1F1', borderRadius: '16px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', cursor: 'pointer', transition: 'all 0.2s ease', borderColor: selectedItems.includes(file.id) ? '#0061FF' : '#F1F1F1' }}
@@ -4670,6 +5078,10 @@ const FileExplorerView: React.FC<{
                 onClick={() => {
                   if (selectedItems.includes(file.id)) setSelectedItems(prev => prev.filter(i => i !== file.id));
                   else setSelectedItems(prev => [...prev, file.id]);
+                }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  setOpenFilePreview(file);
                 }}
               >
                 <input 
@@ -4684,6 +5096,110 @@ const FileExplorerView: React.FC<{
                   style={{ position: 'absolute', top: '12px', left: '12px', opacity: selectedItems.includes(file.id) ? 1 : 0, zIndex: 10, cursor: 'pointer' }} 
                   className="item-checkbox" 
                 />
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveFileMenu(activeFileMenu === file.id ? null : file.id);
+                  }}
+                  style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', zIndex: 12 }}
+                >
+                  <MoreHorizontal size={20} />
+                </button>
+                {activeFileMenu === file.id && (
+                  <div style={{
+                    position: 'absolute', top: '44px', right: '12px', width: '220px', 
+                    backgroundColor: '#1E1E1E', border: '1px solid rgba(255,255,255,0.1)', 
+                    borderRadius: '12px', padding: '6px', zIndex: 11000, 
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.4)', display: 'flex', 
+                    flexDirection: 'column', gap: '2px'
+                  }} onClick={e => e.stopPropagation()}>
+                    <button 
+                      onClick={() => {
+                        toast.success('Lendo arquivo...');
+                        setOpenFilePreview(file);
+                        setActiveFileMenu(null);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <Zap size={14} color="#0061FF" />
+                      <span>Ler Arquivos</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        toast.success('Vinculado à entrega com sucesso!');
+                        setActiveFileMenu(null);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <Truck size={14} color="#0061FF" />
+                      <span>Vincular à Entrega</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        toast.success('Enviado para cliente!');
+                        setActiveFileMenu(null);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <UsersIcon size={14} color="#0061FF" />
+                      <span>Enviar para Cliente</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        toast.success('Organização automática em andamento...');
+                        setActiveFileMenu(null);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <FolderPlus size={14} color="#0061FF" />
+                      <span>Organizar Automático</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        toast.success('Link de compartilhamento copiado!');
+                        setActiveFileMenu(null);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <Share2 size={14} color="#FFF" />
+                      <span>Compartilhar</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        toast.success('Download iniciado!');
+                        setActiveFileMenu(null);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <Download size={14} color="#FFF" />
+                      <span>Baixar</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        toast.success('Arquivo excluído com sucesso!');
+                        setActiveFileMenu(null);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', backgroundColor: 'transparent', color: '#FF4D4D', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'left' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <Trash2 size={14} color="#FF4D4D" />
+                      <span>Excluir</span>
+                    </button>
+                  </div>
+                )}
                 <div style={{ width: '100%', height: viewMode === 'small-grid' ? '60px' : '120px', borderRadius: '12px', backgroundColor: '#F8F9FA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {file.type?.includes('image') ? <ImageIcon size={32} color="#0061FF" /> : <FileText size={32} color="#64748B" />}
                 </div>
@@ -4697,121 +5213,135 @@ const FileExplorerView: React.FC<{
             ))}
           </div>
         )}
-
       </div>
 
       {contextMenu && (
         <div style={{ 
           position: 'fixed', top: contextMenu.y, left: contextMenu.x, 
-          width: '280px', backgroundColor: '#1A1A1A', borderRadius: '12px', 
-          border: '1px solid rgba(255,255,255,0.1)', padding: '8px', zIndex: 10000,
-          boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-          display: 'flex', flexDirection: 'column'
-        }} onClick={e => e.stopPropagation()}>
-          <button 
-            style={styles.dropdownItem} 
-            onClick={() => { onNewFolder(); setContextMenu(null); }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-              <FolderPlus size={18} color="rgba(255,255,255,0.5)" />
-              <span>Nova pasta</span>
-            </div>
-            <span style={styles.shortcutText}>^C, depois F</span>
-          </button>
-          <div style={styles.menuDivider} />
-          <button 
-            style={styles.dropdownItem}
-            onClick={(e) => { e.stopPropagation(); handleUploadClick(); setContextMenu(null); }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-              <Upload size={18} color="rgba(255,255,255,0.5)" />
-              <span>Upload de arquivo</span>
-            </div>
-            <span style={styles.shortcutText}>^C, depois U</span>
-          </button>
-          <button 
-            style={styles.dropdownItem}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-              <Folder size={18} color="rgba(255,255,255,0.5)" />
-              <span>Upload de pasta</span>
-            </div>
-            <span style={styles.shortcutText}>^C, depois I</span>
-          </button>
-          <div style={styles.menuDivider} />
-          <button 
-            style={styles.dropdownItem} 
-            onClick={() => window.open('https://docs.google.com/document/create', '_blank')}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-              <img src="https://img.icons8.com/color/48/microsoft-word-2019.png" style={{ width: '18px', height: '18px' }} alt="" />
-              <span>Documentos Google</span>
-            </div>
-            <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
-          </button>
-          <button 
-            style={styles.dropdownItem} 
-            onClick={() => window.open('https://sheets.google.com/create', '_blank')}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-              <img src="https://img.icons8.com/color/48/microsoft-excel-2019.png" style={{ width: '18px', height: '18px' }} alt="" />
-              <span>Planilhas Google</span>
-            </div>
-            <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
-          </button>
-          <button 
-            style={styles.dropdownItem} 
-            onClick={() => window.open('https://slides.google.com/create', '_blank')}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-              <img src="https://img.icons8.com/color/48/microsoft-powerpoint-2019.png" style={{ width: '18px', height: '18px' }} alt="" />
-              <span>Apresentações Google</span>
-            </div>
-            <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
-          </button>
-          <button 
-            style={styles.dropdownItem}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-              <Play size={18} color="#8B5CF6" />
-              <span>Google Vids</span>
-            </div>
-          </button>
-          <button 
-            style={styles.dropdownItem}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-              <FileText size={18} color="#8B5CF6" />
-              <span>Formulários Google</span>
-            </div>
-            <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
-          </button>
-          <button 
-            style={styles.dropdownItem}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-              <span>Mais</span>
-            </div>
-            <ChevronRight size={14} color="rgba(255,255,255,0.2)" />
-          </button>
+          width: '260px', backgroundColor: '#1A1A1A', borderRadius: '16px', 
+          border: '1px solid rgba(255,255,255,0.1)', padding: '8px', zIndex: 100000,
+          boxShadow: '0 20px 40px rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column'
+        }}>
+          {(selectedItems.length > 0 || selectedFile) ? (
+            <>
+              <div style={{ padding: '8px 12px', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                {selectedItems.length > 0 ? `${selectedItems.length} itens selecionados` : `Ações para ${selectedFile}`}
+              </div>
+              <button 
+                onClick={() => { toast.success('IA: Lendo arquivos...'); setContextMenu(null); }}
+                style={styles.dropdownItem}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <Zap size={18} color="#0061FF" />
+                  <span>Ler Arquivos (IA)</span>
+                </div>
+              </button>
+              <button 
+                onClick={() => { toast.success('Vinculado à entrega!'); setContextMenu(null); }}
+                style={styles.dropdownItem}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <Truck size={18} color="#0061FF" />
+                  <span>Vincular à Entrega</span>
+                </div>
+              </button>
+              <div style={styles.menuDivider} />
+              <button 
+                onClick={() => { toast.success('Link copiado!'); setContextMenu(null); }}
+                style={styles.dropdownItem}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <LinkIcon size={18} color="rgba(255,255,255,0.5)" />
+                  <span>Gerar Link</span>
+                </div>
+              </button>
+              <button 
+                onClick={() => { toast.success('Download iniciado!'); setContextMenu(null); }}
+                style={styles.dropdownItem}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <Download size={18} color="rgba(255,255,255,0.5)" />
+                  <span>Baixar</span>
+                </div>
+              </button>
+              <div style={styles.menuDivider} />
+              <button 
+                onClick={() => { 
+                  if(window.confirm('Excluir permanentemente?')) {
+                    toast.success('Removido com sucesso');
+                    setSelectedItems([]);
+                    setSelectedFile(null);
+                  }
+                  setContextMenu(null); 
+                }}
+                style={{ ...styles.dropdownItem, color: '#EF4444' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <Trash2 size={18} color="#EF4444" />
+                  <span>Excluir</span>
+                </div>
+              </button>
+            </>
+          ) : (
+            <>
+              <button 
+                onClick={() => { onNewFolder(); setContextMenu(null); }}
+                style={styles.dropdownItem}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <FolderPlus size={18} color="rgba(255,255,255,0.5)" />
+                  <span>Nova pasta</span>
+                </div>
+              </button>
+              <button 
+                onClick={() => { handleUploadClick(); setContextMenu(null); }}
+                style={styles.dropdownItem}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <Upload size={18} color="rgba(255,255,255,0.5)" />
+                  <span>Upload de arquivos</span>
+                </div>
+              </button>
+              <div style={styles.menuDivider} />
+              <button 
+                onClick={() => { setIsAutomatedFolderModalOpen(true); setContextMenu(null); }}
+                style={styles.dropdownItem}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <Zap size={18} color="#A78BFA" />
+                  <span>Nova pasta automatizada</span>
+                </div>
+              </button>
+              <div style={styles.menuDivider} />
+              <button 
+                style={styles.dropdownItem} 
+                onClick={() => { window.open('https://docs.google.com/document/create', '_blank'); setContextMenu(null); }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <img src="https://img.icons8.com/color/48/microsoft-word-2019.png" style={{ width: '18px', height: '18px' }} alt="" />
+                  <span>Documentos Google</span>
+                </div>
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -4846,7 +5376,9 @@ const FileExplorerView: React.FC<{
         </div>
       )}
 
-      {isShareModalOpen && (
+      {isShareModalOpen && (() => {
+        const fileToShare = files.find(f => selectedItems.includes(f.id)) || files[0] || { id: 'file-demo', name: 'nota_fiscal_servico.pdf' };
+        return (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ width: '600px', backgroundColor: '#1A1A1A', borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
             
@@ -4855,9 +5387,9 @@ const FileExplorerView: React.FC<{
                 <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <FileText size={24} color="#0061FF" />
                 </div>
-                <div>
-                  <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#FFF' }}>nota_fiscal_servico.pdf</h2>
-                  <div style={{ fontSize: '13px', color: '#94A3B8', marginTop: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#FFF', wordBreak: 'break-all', whiteSpace: 'normal', margin: 0 }}>{fileToShare.name}</h2>
+                  <div style={{ fontSize: '13px', color: '#94A3B8', marginTop: '4px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <span>Documento de entrega #123</span> • <span>Valor: R$ 4.500</span> • <span>Cliente: XPTO</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
@@ -4899,13 +5431,34 @@ const FileExplorerView: React.FC<{
               <div>
                 <label style={{ fontSize: '13px', fontWeight: 700, color: '#94A3B8', display: 'block', marginBottom: '8px' }}>Tipo de Acesso (Link)</label>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <select style={{ flex: 1, padding: '12px 16px', backgroundColor: '#0F0F0F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#FFF', fontSize: '14px', outline: 'none' }}>
-                    <option>👁️ Somente visualização</option>
-                    <option>✏️ Pode editar</option>
-                    <option>🔒 Link restrito (Apenas Equipe)</option>
-                    <option>⏱️ Link que expira (24h)</option>
+                  <select 
+                    value={shareAccessType}
+                    onChange={(e) => setShareAccessType(e.target.value)}
+                    style={{ flex: 1, padding: '12px 16px', backgroundColor: '#0F0F0F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#FFF', fontSize: '14px', outline: 'none' }}
+                  >
+                    <option value="Somente visualização">Somente visualização</option>
+                    <option value="Pode editar">Pode editar</option>
+                    <option value="Link restrito (Apenas Equipe)">Link restrito (Apenas Equipe)</option>
+                    <option value="Link que expira (24h)">Link que expira (24h)</option>
                   </select>
-                  <button onClick={() => toast.success('Link copiado!')} style={{ padding: '12px 24px', backgroundColor: 'rgba(255,255,255,0.05)', color: '#FFF', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button 
+                    onClick={() => {
+                      const publicToken = btoa(fileToShare.id + ':' + shareAccessType).substring(0, 12);
+                      const validUntil = shareAccessType === 'Link que expira (24h)' ? Date.now() + 24 * 60 * 60 * 1000 : null;
+                      const linkInfo = {
+                        fileId: fileToShare.id,
+                        token: publicToken,
+                        accessType: shareAccessType,
+                        validUntil,
+                        file: fileToShare
+                      };
+                      localStorage.setItem(`public_link_${fileToShare.id}`, JSON.stringify(linkInfo));
+                      const fullLink = `${window.location.origin}/view/${fileToShare.id}?token=${publicToken}&type=${encodeURIComponent(shareAccessType)}`;
+                      navigator.clipboard.writeText(fullLink);
+                      toast.success('Link de compartilhamento público copiado!');
+                    }} 
+                    style={{ padding: '12px 24px', backgroundColor: 'rgba(255,255,255,0.05)', color: '#FFF', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
                     <Copy size={16} /> Copiar Link
                   </button>
                 </div>
@@ -4934,7 +5487,8 @@ const FileExplorerView: React.FC<{
 
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {isOrganizingModalOpen && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -4966,56 +5520,8 @@ const FileExplorerView: React.FC<{
         </div>
       )}
 
-      {selectedItems.length > 0 && (
-        <div style={{
-          position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          backgroundColor: '#1E232E', color: '#FFF', padding: '12px 24px', borderRadius: '24px',
-          display: 'flex', alignItems: 'center', gap: '20px', zIndex: 100,
-          boxShadow: '0 40px 80px rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.05)'
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', minWidth: '180px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 800 }}>{selectedItems.length} itens selecionados</span>
-            <span style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>• {Math.floor(selectedItems.length / 2) + 1} relacionados à entrega • Cliente XPTO detectado</span>
-          </div>
-          
-          <div style={{ width: '1px', height: '40px', backgroundColor: 'rgba(255,255,255,0.1)' }} />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button 
-              onClick={() => toast.success('Leitura concluída! Contexto identificado.')}
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', backgroundColor: '#3B82F6', color: '#FFF', border: 'none', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}
-            >
-              <Zap size={18} />
-              <div style={{ textAlign: 'left', fontSize: '13px', fontWeight: 700, lineHeight: '1.2' }}>Ler<br/>Arquivos</div>
-            </button>
-            <button style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', backgroundColor: '#2A303F', color: '#E2E8F0', border: 'none', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = '#333A4A'} onMouseLeave={e => e.currentTarget.style.backgroundColor = '#2A303F'}>
-              <Truck size={16} color="#38BDF8" />
-              <div style={{ textAlign: 'left', fontSize: '13px', fontWeight: 600, lineHeight: '1.2' }}>Vincular à<br/>Entrega</div>
-            </button>
-            <button style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', backgroundColor: '#2A303F', color: '#E2E8F0', border: 'none', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = '#333A4A'} onMouseLeave={e => e.currentTarget.style.backgroundColor = '#2A303F'}>
-              <User size={16} color="#A78BFA" />
-              <div style={{ textAlign: 'left', fontSize: '13px', fontWeight: 600, lineHeight: '1.2' }}>Enviar para<br/>Cliente</div>
-            </button>
-            <button 
-              onClick={() => setIsAutomatedFolderModalOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', backgroundColor: '#2A303F', color: '#E2E8F0', border: 'none', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = '#333A4A'} onMouseLeave={e => e.currentTarget.style.backgroundColor = '#2A303F'}
-            >
-              <FolderPlus size={16} color="#34D399" />
-              <div style={{ textAlign: 'left', fontSize: '13px', fontWeight: 600, lineHeight: '1.2' }}>Organizar<br/>Automático</div>
-            </button>
-            
-            <div style={{ width: '1px', height: '40px', backgroundColor: 'rgba(255,255,255,0.1)', margin: '0 8px' }} />
-            
-            <button style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '8px' }} title="Compartilhar"><Share2 size={18} /></button>
-            <button style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '8px' }} title="Baixar"><Download size={18} /></button>
-            <button style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '8px' }} title="Excluir"><Trash2 size={18} /></button>
-          </div>
-          
-          <button onClick={() => setSelectedItems([])} style={{ position: 'absolute', top: '-10px', right: '-10px', width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#2A303F', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <X size={14} />
-          </button>
-        </div>
-      )}
+
 
       {isAutomatedFolderModalOpen && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 110000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -5128,6 +5634,403 @@ const FileExplorerView: React.FC<{
         </div>
       )}
 
+      {/* INTELLIGENT FILE PREVIEW MODAL */}
+      {/* INTELLIGENT FILE PREVIEW MODAL */}
+      {openFilePreview && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(16px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 120000
+        }} onClick={() => setOpenFilePreview(null)}>
+          {(() => {
+            const isExceeded = (storageStats.percent >= 90) || (storageStats.used?.includes('GB') && parseFloat(storageStats.used) >= 2) || openFilePreview?.isStoragePopup;
+            if (isExceeded) {
+              return (
+                <div style={{
+                  width: '940px', height: '740px', backgroundColor: '#141414', borderRadius: '32px',
+                  border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 40px 80px rgba(0,0,0,0.6)',
+                  display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '40px', gap: '24px', zIndex: 120001
+                }} onClick={e => e.stopPropagation()}>
+
+                  {/* Header: Title + Close */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#FFF', margin: 0, letterSpacing: '-0.5px' }}>
+                        Faça upgrade para visualizar {openFilePreview.name}
+                      </h3>
+                    </div>
+                    <button onClick={() => setOpenFilePreview(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
+                      <X size={24} />
+                    </button>
+                  </div>
+
+                  {/* Warning Red Alert block */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', 
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.25)', 
+                    borderRadius: '14px', width: '100%'
+                  }}>
+                    <AlertTriangle size={18} color="#F87171" />
+                    <div style={{ flex: 1, color: '#FCA5A5', fontSize: '13px', fontWeight: 600 }}>
+                      A visualização prévia está restrita porque você excedeu seu limite de armazenamento.{' '}
+                      <span 
+                        onClick={() => { toast.success('Download iniciado!'); setOpenFilePreview(null); }}
+                        style={{ color: '#FFF', textDecoration: 'underline', cursor: 'pointer', fontWeight: 700 }}
+                      >
+                        Baixar arquivo
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Content: Two columns */}
+                  <div style={{ display: 'flex', gap: '36px', flex: 1, minHeight: 0 }}>
+                    {/* Left Column: Image/File Preview */}
+                    <div style={{
+                      flex: 1, backgroundColor: '#0C0C0C', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', position: 'relative', border: '1px solid rgba(255,255,255,0.03)',
+                      borderRadius: '24px', overflow: 'hidden', padding: '24px'
+                    }}>
+                      {openFilePreview.type?.includes('image') ? (
+                        <img 
+                          src={openFilePreview.url || 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80'} 
+                          alt={openFilePreview.name} 
+                          style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '14px' }} 
+                        />
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', color: '#FFF', textAlign: 'center' }}>
+                          <div style={{ width: '80px', height: '80px', borderRadius: '24px', backgroundColor: 'rgba(0,97,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+                            <FileText size={42} color="#0061FF" />
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '16px', fontWeight: 800, display: 'block', marginBottom: '6px' }}>{openFilePreview.name}</span>
+                            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Arquivo no LogDock Cloud</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Right Column: AI Details & Upgrade Actions */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        {/* Plus Plan details as in user screenshot */}
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#A3C200', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Recomendado</span>
+                          <h4 style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', margin: 0, fontWeight: 700 }}>Plus</h4>
+                          <h2 style={{ fontSize: '38px', fontWeight: 900, color: '#FFF', margin: '4px 0', letterSpacing: '-1px' }}>2.000 GB</h2>
+                          <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>US$ 9,99/mês, faturado anualmente</span>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <div style={{ width: '100%', height: '6px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
+                            <div style={{ width: '0.33%', height: '100%', backgroundColor: '#FFF', borderRadius: '3px' }} />
+                          </div>
+                          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Use 6,65 GB de 2.000 GB de armazenamento</span>
+                        </div>
+
+                        {/* Obter o 2.000 GB large Button */}
+                        <button 
+                          onClick={() => {
+                            setOpenFilePreview(null);
+                            navigate('/checkout?plan=Plus');
+                          }}
+                          style={{
+                            backgroundColor: '#FFFFFF', color: '#000000', padding: '16px 28px', border: 'none', borderRadius: '100px',
+                            fontSize: '15px', fontWeight: 800, cursor: 'pointer', textAlign: 'center', transition: 'transform 0.2s ease', boxShadow: '0 12px 24px rgba(0,0,0,0.15)'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+                          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                        >
+                          Obter o 2.000 GB
+                        </button>
+
+                        {/* Features List */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                            <Check size={16} color="#A3C200" />
+                            <span>Conecte todos os seus dispositivos</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                            <Check size={16} color="#A3C200" />
+                            <span>Transfira arquivos até 50 GB</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer buttons */}
+                      <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '24px' }}>
+                        <button 
+                          onClick={() => setOpenFilePreview(null)}
+                          style={{ flex: 1, backgroundColor: 'transparent', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', padding: '12px', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}
+                        >
+                          Gerenciar arquivos
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setOpenFilePreview(null);
+                            navigate('/plans');
+                          }}
+                          style={{ flex: 1, backgroundColor: 'transparent', color: '#FFF', border: '1px solid #FFF', borderRadius: '12px', padding: '12px', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}
+                        >
+                          Ver planos
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              );
+            } else {
+              return (
+                <div style={{
+                  width: '1000px', height: '640px', backgroundColor: '#141414', borderRadius: '32px',
+                  border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 40px 80px rgba(0,0,0,0.6)',
+                  display: 'flex', overflow: 'hidden', zIndex: 120001
+                }} onClick={e => e.stopPropagation()}>
+                  {/* Left Column: Image/File Preview */}
+                  <div style={{
+                    flex: 1.2, backgroundColor: '#0F0F0F', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', position: 'relative', borderRight: '1px solid rgba(255,255,255,0.05)',
+                    padding: '32px'
+                  }}>
+                    {openFilePreview.type?.includes('image') ? (
+                      <img 
+                        src={openFilePreview.url || 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80'} 
+                        alt={openFilePreview.name} 
+                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '16px' }} 
+                      />
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', color: '#FFF' }}>
+                        <FileText size={80} color="#0061FF" />
+                        <div style={{ textAlign: 'center' }}>
+                          <span style={{ fontSize: '18px', fontWeight: 800, display: 'block', marginBottom: '4px' }}>{openFilePreview.name}</span>
+                          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Arquivo do Drive Inteligente</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Right Column: AI Details & Summary */}
+                  <div style={{ flex: 1, padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px', overflowY: 'auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: 'rgba(0,97,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Zap size={16} color="#0061FF" />
+                        </div>
+                        <span style={{ fontSize: '12px', fontWeight: 900, color: '#0061FF', textTransform: 'uppercase', letterSpacing: '1px' }}>LogDock AI Drive</span>
+                      </div>
+                      <button onClick={() => setOpenFilePreview(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
+                        <X size={20} />
+                      </button>
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: 900, color: '#FFF', margin: 0, letterSpacing: '-0.5px', wordBreak: 'break-all', whiteSpace: 'normal' }}>{openFilePreview.name}</h3>
+                      <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, flexWrap: 'wrap' }}>
+                        <span>{openFilePreview.size ? (openFilePreview.size / (1024 * 1024)).toFixed(1) + ' MB' : '0.1 MB'}</span>
+                        <span>•</span>
+                        <span>Modificado há 2 dias</span>
+                      </div>
+                    </div>
+                    
+                    <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.05)' }} />
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 900, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Resumo Inteligente</span>
+                      <div style={{ padding: '24px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', fontWeight: 600, lineHeight: '1.6', margin: 0 }}>
+                          {openFilePreview.type?.includes('image') ? 
+                            `Este arquivo de imagem contém elementos visuais associados ao transporte e logística. A inteligência do LogDock identificou padrões relacionados à entrega #123, incluindo informações de cliente detectado. ` : 
+                            `Este documento contém dados operacionais do LogDock Drive. A inteligência artificial identificou vínculos com clientes, entregas recentes e metadados operacionais do fluxo de logística.`
+                          }
+                          {" "}O conteúdo sugere automatização da baixa operacional no módulo de destino.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 900, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Ações Inteligentes</span>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <button 
+                          onClick={() => { toast.success('Arquivo compartilhado com sucesso!'); setOpenFilePreview(null); }}
+                          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '14px', cursor: 'pointer', fontSize: '13px', fontWeight: 800 }}
+                        >
+                          <Share2 size={16} />
+                          <span>Compartilhar</span>
+                        </button>
+                        <button 
+                          onClick={() => { toast.success('Download iniciado!'); setOpenFilePreview(null); }}
+                          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px', backgroundColor: 'rgba(255,255,255,0.03)', color: '#FFF', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '14px', cursor: 'pointer', fontSize: '13px', fontWeight: 800 }}
+                        >
+                          <Download size={16} />
+                          <span>Baixar</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+          })()}
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+const PublicViewFile: React.FC = () => {
+  const { fileId } = useParams<{ fileId: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const searchParams = new URLSearchParams(location.search);
+  const token = searchParams.get('token');
+  const type = searchParams.get('type');
+
+  const [linkData, setLinkData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const savedLink = localStorage.getItem(`public_link_${fileId}`);
+    if (!savedLink) {
+      const fallbackFile = {
+        id: fileId || 'file-sample',
+        name: 'nota_fiscal_servico.pdf',
+        size: 45000,
+        type: 'pdf',
+        created_at: new Date().toISOString()
+      };
+      setLinkData({
+        file: fallbackFile,
+        accessType: type || 'Somente visualização'
+      });
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(savedLink);
+      if (token && parsed.token !== token) {
+        setError('Token de acesso inválido para este arquivo.');
+        return;
+      }
+      if (parsed.validUntil && Date.now() > parsed.validUntil) {
+        setError('Este link expirou após 24 horas.');
+        return;
+      }
+      setLinkData(parsed);
+    } catch (err) {
+      setError('Erro ao carregar os dados de compartilhamento.');
+    }
+  }, [fileId, token]);
+
+  if (error) {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: '#0B132B', color: '#FFF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: '"Inter", sans-serif' }}>
+        <div style={{ textAlign: 'center', maxWidth: '400px' }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+            <X size={32} color="#EF4444" />
+          </div>
+          <h1 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '12px' }}>Acesso Negado</h1>
+          <p style={{ color: '#94A3B8', fontSize: '14px', lineHeight: 1.5, marginBottom: '24px' }}>{error}</p>
+          <button onClick={() => navigate('/')} style={{ width: '100%', padding: '14px 24px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>
+            Voltar ao Início
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!linkData) {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: '#0B132B', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <RefreshCw size={36} color="#0061FF" className="animate-spin" />
+      </div>
+    );
+  }
+
+  const { file, accessType } = linkData;
+  const isCanEdit = accessType === 'Pode editar';
+
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: '#0B132B', color: '#FFF', display: 'flex', flexDirection: 'column', fontFamily: '"Inter", sans-serif' }}>
+      <header style={{ height: '72px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', backgroundColor: '#0D1527' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <FileText size={20} color="#FFF" />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '15px', fontWeight: 800, color: '#FFF' }}>{file.name}</h1>
+            <span style={{ fontSize: '12px', color: '#64748B' }}>Visualizando um arquivo compartilhado via LogDock • {accessType}</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button onClick={() => navigate('/login')} style={{ padding: '10px 20px', backgroundColor: 'transparent', color: '#FFF', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+            Entrar
+          </button>
+          <button onClick={() => navigate('/')} style={{ padding: '10px 20px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+            Criar conta grátis
+          </button>
+        </div>
+      </header>
+
+      <div style={{ flex: 1, display: 'flex', padding: '40px', gap: '40px', boxSizing: 'border-box' }}>
+        
+        <div style={{ flex: 1, backgroundColor: '#0D1527', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '450px', position: 'relative' }}>
+          {isCanEdit && (
+            <div style={{ position: 'absolute', top: '24px', right: '24px', backgroundColor: 'rgba(52,211,153,0.1)', border: '1px solid #34D39930', padding: '8px 16px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#34D399' }} />
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#34D399' }}>Permissão de Edição Ativa</span>
+            </div>
+          )}
+
+          {file.type && (file.type.startsWith('image/') || file.type.includes('png') || file.type.includes('jpg')) ? (
+            <img src={`https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=600&auto=format&fit=crop`} alt={file.name} style={{ maxWidth: '80%', maxHeight: '400px', borderRadius: '16px', objectFit: 'contain' }} />
+          ) : (
+            <div style={{ textAlign: 'center', maxWidth: '320px' }}>
+              <div style={{ width: '84px', height: '84px', borderRadius: '24px', backgroundColor: '#1E293B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                <FileText size={40} color="#0061FF" />
+              </div>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#FFF', marginBottom: '8px' }}>Preview Indisponível</h2>
+              <p style={{ fontSize: '13px', color: '#64748B', lineHeight: 1.5, marginBottom: '24px' }}>Você tem acesso de <strong>{accessType}</strong> a este arquivo. Use os botões acima ou abaixo para explorá-lo.</p>
+              {isCanEdit ? (
+                <button onClick={() => toast.success('Ação de edição simulada!')} style={{ width: '100%', padding: '12px 24px', backgroundColor: '#3B82F6', color: '#FFF', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  Simular Edição no Arquivo
+                </button>
+              ) : (
+                <button onClick={() => toast.success('Download simulado!')} style={{ width: '100%', padding: '12px 24px', backgroundColor: '#1E293B', color: '#FFF', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                  Fazer Download
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div style={{ width: '380px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ backgroundColor: '#0D1527', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', padding: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <Brain size={18} color="#3B82F6" />
+              <span style={{ fontSize: '14px', fontWeight: 700, color: '#FFF' }}>Resumo Inteligente</span>
+            </div>
+            <p style={{ fontSize: '13px', color: '#94A3B8', lineHeight: 1.6, marginBottom: '0' }}>
+              Identificamos que este arquivo está vinculado à entrega #123. Ele contém metadados associados à logística do cliente XPTO, com valor estimado de R$ 4.500.
+            </p>
+          </div>
+
+          <div style={{ backgroundColor: '#0D1527', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Globe size={18} color="#34D399" />
+              <span style={{ fontSize: '14px', fontWeight: 700, color: '#FFF' }}>Aquisição & Conversão</span>
+            </div>
+            <p style={{ fontSize: '13px', color: '#94A3B8', lineHeight: 1.5 }}>
+              Crie uma conta gratuita no LogDock agora mesmo para automatizar e gerenciar com segurança todos os seus documentos digitais.
+            </p>
+            <button onClick={() => navigate('/')} style={{ padding: '12px 20px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}>
+              Criar Conta Grátis
+            </button>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 };
@@ -5137,6 +6040,7 @@ const LogDockApp: React.FC = () => {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LogDockLogin />} />
+      <Route path="/view/:fileId" element={<PublicViewFile />} />
       <Route path="/app" element={<Navigate to="/app/inicio" replace />} />
       <Route path="/app/*" element={<ProtectedRoute><LogDockDashboard /></ProtectedRoute>} />
       <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />

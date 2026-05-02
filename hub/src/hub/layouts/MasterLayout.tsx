@@ -10,7 +10,7 @@ import { AlertCircle, WifiOff } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
 
 const MasterLayout: React.FC = () => {
-  const { user, profile, isLoading } = useAuth();
+  const { user, profile, isLoading, signOut } = useAuth();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
@@ -60,7 +60,7 @@ const MasterLayout: React.FC = () => {
         alignItems: 'center', justifyContent: 'center', backgroundColor: '#0F172A' 
       }}>
         <div style={{
-          width: '64px', height: '64px', borderRadius: '24px', backgroundColor: '#6366F1',
+          width: '64px', height: '64px', borderRadius: '24px', backgroundColor: '#0061FF',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           animation: 'pulse 1.5s infinite ease-in-out', boxShadow: '0 0 40px rgba(99,102,241,0.3)'
         }}>
@@ -81,7 +81,7 @@ const MasterLayout: React.FC = () => {
   }
 
   // Refined Auth Protection Logic
-  const isMaster = profile?.role === 'MASTER' || profile?.role === 'MASTER_ADMIN' || profile?.role === 'ADMIN';
+  const isMaster = profile?.role === 'MASTER' || profile?.role === 'MASTER_ADMIN';
 
   // Wait for profile if user exists but profile doesn't yet
   if (user && !profile) {
@@ -109,8 +109,28 @@ const MasterLayout: React.FC = () => {
   }
 
   if (user && !isMaster && !isLoading) {
-    // If user is logged in but not master, we might want to show an error or logout
-    return <Navigate to="/" replace />;
+    return (
+      <div style={{
+        height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', backgroundColor: '#0F172A', color: 'white',
+        textAlign: 'center', padding: '40px'
+      }}>
+        <AlertCircle size={48} color="#EF4444" style={{ marginBottom: '24px' }} />
+        <h1 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '12px' }}>Acesso Negado</h1>
+        <p style={{ color: '#94A3B8', maxWidth: '400px', marginBottom: '32px' }}>
+          Sua conta não possui permissões administrativas para acessar o Hub Master.
+        </p>
+        <button 
+          onClick={() => signOut()}
+          style={{
+            padding: '12px 24px', backgroundColor: '#EF4444', border: 'none',
+            borderRadius: '12px', color: 'white', fontWeight: '700', cursor: 'pointer'
+          }}
+        >
+          Sair do Sistema
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -143,14 +163,17 @@ const MasterLayout: React.FC = () => {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
         :root {
-          --primary: #6366F1;
-          --primary-dark: #4F46E5;
+          --primary: #0061FF;
+          --primary-dark: #0052D9;
           --bg-main: #F8FAFC;
           --bg-card: #ffffff;
           --text-title: #111827;
           --text-subtitle: #6B7280;
           --text-body: #374151;
           --border: #f1f5f9;
+          --accent: #0061FF;
+          --bg-overlay: rgba(99, 102, 241, 0.05);
+          --secondary: #0061FF;
         }
 
         * {

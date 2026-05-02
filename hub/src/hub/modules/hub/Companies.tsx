@@ -47,6 +47,7 @@ const CompanyManagement: React.FC = () => {
   const [companyIntegrations, setCompanyIntegrations] = useState<any[]>([]);
   const [companyLogs, setCompanyLogs] = useState<any[]>([]);
   const [companySecurityLogs, setCompanySecurityLogs] = useState<any[]>([]);
+  const [automationLogs, setAutomationLogs] = useState<any[]>([]);
   const [companyMetrics, setCompanyMetrics] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'geral' | 'operacao' | 'comunicacao' | 'usuarios' | 'financeiro' | 'integracoes' | 'logs' | 'acoes'>('geral');
   const [saving, setSaving] = useState(false);
@@ -70,18 +71,78 @@ const CompanyManagement: React.FC = () => {
 
   const [currentFilter, setCurrentFilter] = useState<'todas' | 'ativas' | 'erros' | 'novas' | 'billing'>('todas');
 
-  const logMasterAction = async (action: string, details: string, companyId?: string, metadata: any = {}) => {
+  const logMasterAction = async (action: string, details: string, targetType: string = 'COMPANY', metadata: any = {}) => {
     try {
-      await supabase.from('audit_logs').insert([{
-        user_id: user?.id,
-        action,
-        details,
-        module: 'HUB_MASTER',
-        company_id: companyId || null,
-        metadata: { ...metadata, platform: 'HUB' }
-      }]);
+      if (!profile) return;
+      
+      const { error } = await supabase
+        .from('master_audit_logs')
+        .insert([{
+          actor_id: profile.id,
+          action: action,
+          details: details,
+          target_type: targetType,
+          metadata: {
+            ...metadata,
+            ip_context: 'HUB_COMMAND_CENTER',
+            browser: navigator.userAgent,
+            timestamp: new Date().toISOString()
+          }
+        }]);
+
+      if (error) console.error('Audit Error:', error);
     } catch (err) {
-      console.error('Falha ao auditar:', err);
+      console.error('Failed to log master action:', err);
+    }
+  };
+
+  const handleUpdateCompanyStatus = async (companyId: string, newStatus: string) => {
+    try {
+      setSaving(true);
+      const { error } = await supabase
+        .from('companies')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', companyId);
+
+      if (error) throw error;
+
+      await logMasterAction(
+        'STATUS_CHANGE', 
+        `Instância alterada para ${newStatus}`, 
+        'COMPANY', 
+        { company_id: companyId, new_status: newStatus }
+      );
+
+      toastSuccess(`Status atualizado para ${newStatus}`);
+      fetchData(); // Refresh list
+      if (selectedCompany?.id === companyId) {
+        setSelectedCompany({ ...selectedCompany, status: newStatus });
+      }
+    } catch (error: any) {
+      toastError(error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleImpersonate = async (companyId: string) => {
+    try {
+      await logMasterAction('IMPERSONATION', `Entrada em modo master na empresa ${companyId}`, 'AUTH');
+      
+      // Store current context for return
+      localStorage.setItem('hub_master_return', 'true');
+      localStorage.setItem('hub_original_profile', JSON.stringify(profile));
+      
+      // Target impersonation
+      localStorage.setItem('logta-auth-token', companyId); // Shared storage key
+      localStorage.setItem('logta-impersonated-company', companyId);
+      
+      toastSuccess('Modo Master Ativado. Redirecionando...');
+      setTimeout(() => {
+        window.location.href = `/app/inicio?impersonate=${companyId}`;
+      }, 1500);
+    } catch (error: any) {
+      toastError('Erro ao assumir controle');
     }
   };
 
@@ -127,7 +188,8 @@ const CompanyManagement: React.FC = () => {
         supabase.from('integrations').select('*').eq('company_id', companyId),
         supabase.from('master_payments').select('*').eq('company_id', companyId).order('created_at', { ascending: false }).limit(10),
         supabase.from('audit_log').select('*, profiles:actor_id(full_name)').eq('company_id', companyId).order('created_at', { ascending: false }).limit(10),
-        supabase.from('security_logs').select('*').eq('company_id', companyId).order('created_at', { ascending: false }).limit(10)
+        supabase.from('security_logs').select('*').eq('company_id', companyId).order('created_at', { ascending: false }).limit(10),
+         supabase.from('automation_logs').select('*').limit(10)
       ]);
 
       if (uRes.data) setCompanyUsers(uRes.data);
@@ -138,6 +200,7 @@ const CompanyManagement: React.FC = () => {
       if (pRes.data) setCompanyPayments(pRes.data);
       if (lRes.data) setCompanyLogs(lRes.data);
       if (sRes.data) setCompanySecurityLogs(sRes.data);
+      if (vRes.data) setAutomationLogs(vRes.data);
       
       // Calculate mini metrics
       setCompanyMetrics({
@@ -329,8 +392,8 @@ const CompanyManagement: React.FC = () => {
       {/* DASHBOARD MASTER (CONTROL CENTER VERSION) */}
       <div style={styles.statsGrid}>
         <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
-            <Globe size={20} color="#6366F1" />
+          <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
+            <Globe size={20} color="#0061FF" />
           </div>
           <div style={styles.statContent}>
             <p style={styles.statLabel}>Unidade Global</p>
@@ -342,7 +405,7 @@ const CompanyManagement: React.FC = () => {
         </div>
 
         <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#6366F1'}}>
+          <div style={{...styles.statIconBox, backgroundColor: '#0061FF'}}>
             <Activity size={20} color="#FFFFFF" />
           </div>
           <div style={styles.statContent}>
@@ -352,8 +415,8 @@ const CompanyManagement: React.FC = () => {
         </div>
 
         <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
-            <ShieldAlert size={20} color="#6366F1" />
+          <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
+            <ShieldAlert size={20} color="#0061FF" />
           </div>
           <div style={styles.statContent}>
             <p style={styles.statLabel}>Erros Críticos</p>
@@ -365,7 +428,7 @@ const CompanyManagement: React.FC = () => {
         </div>
 
         <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#4F46E5'}}>
+          <div style={{...styles.statIconBox, backgroundColor: '#0052D9'}}>
             <DollarSign size={20} color="#FFFFFF" />
           </div>
           <div style={styles.statContent}>
@@ -461,7 +524,7 @@ const CompanyManagement: React.FC = () => {
               >
                 <td style={styles.td}>
                    <div style={styles.companyInfo}>
-                      <div style={{...styles.avatar, backgroundColor: company.primary_color || '#6366F1'}}>
+                      <div style={{...styles.avatar, backgroundColor: company.primary_color || '#0061FF'}}>
                         {(company.name || 'U')[0]}
                       </div>
                       <div>
@@ -611,7 +674,7 @@ const CompanyManagement: React.FC = () => {
                {activeTab === 'geral' && selectedCompany && (
                   <div style={styles.geralContainer}>
                      <div style={styles.geralHeader}>
-                        <div style={{...styles.geralAvatar, backgroundColor: selectedCompany.primary_color || '#6366F1'}}>{(selectedCompany.name || 'U')[0]}</div>
+                        <div style={{...styles.geralAvatar, backgroundColor: selectedCompany.primary_color || '#0061FF'}}>{(selectedCompany.name || 'U')[0]}</div>
                         <div>
                            <h2 style={styles.geralTitle}>{selectedCompany.name}</h2>
                            <div style={styles.geralBadges}>
@@ -623,20 +686,37 @@ const CompanyManagement: React.FC = () => {
                      
                      <div style={styles.statsRow}>
                         <div style={styles.statBox}>
-                           <div style={styles.statBoxLabel}>Logta Status</div>
-                           <div style={{...styles.statBoxValue, color: '#10B981'}}>Online</div>
-                        </div>
-                        <div style={styles.statBox}>
-                           <div style={styles.statBoxLabel}>Zapto Status</div>
-                           <div style={{...styles.statBoxValue, color: '#F59E0B'}}>Atenção</div>
+                           <div style={styles.statBoxLabel}>Instância Hub</div>
+                           <div style={{...styles.statBoxValue, color: selectedCompany?.status === 'active' ? '#10B981' : '#EF4444'}}>
+                              {selectedCompany?.status === 'active' ? 'Ativa' : 'Bloqueada'}
+                           </div>
                         </div>
                         <div style={styles.statBox}>
                            <div style={styles.statBoxLabel}>Uso de IA</div>
                            <div style={styles.statBoxValue}>84%</div>
                         </div>
                         <div style={styles.statBox}>
-                           <div style={styles.statBoxLabel}>Backup</div>
-                           <div style={styles.statBoxValue}>1.2GB</div>
+                           <div style={styles.statBoxLabel}>Armazenamento</div>
+                           <div style={styles.statBoxValue}>{selectedCompany?.storage_limit_gb || 5}GB</div>
+                        </div>
+                        <div style={styles.statBox}>
+                           <div style={styles.statBoxLabel}>Ação Rápida</div>
+                           <button 
+                              style={{
+                                padding: '4px 12px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                backgroundColor: selectedCompany?.status === 'active' ? '#FEE2E2' : '#DCFCE7',
+                                color: selectedCompany?.status === 'active' ? '#EF4444' : '#10B981',
+                                fontSize: '11px',
+                                fontWeight: '800',
+                                cursor: 'pointer'
+                              }}
+                              onClick={() => handleUpdateCompanyStatus(selectedCompany!.id, selectedCompany?.status === 'active' ? 'blocked' : 'active')}
+                              disabled={saving}
+                           >
+                              {selectedCompany?.status === 'active' ? 'Bloquear' : 'Ativar'}
+                           </button>
                         </div>
                      </div>
 
@@ -811,11 +891,11 @@ const CompanyManagement: React.FC = () => {
                      <div style={styles.planSummary}>
                         <div>
                            <div style={styles.infoLabel}>Plano SaaS Ativo</div>
-                           <div style={{fontSize: '24px', fontWeight: '800', color: 'var(--primary)'}}>{selectedCompany?.plan} Enterprise</div>
+                           <div style={{fontSize: '24px', fontWeight: '800', color: 'var(--primary)'}}>{selectedCompany?.plan?.toUpperCase()}</div>
                         </div>
                         <div style={{textAlign: 'right'}}>
-                           <div style={styles.infoLabel}>Faturamento Mensal</div>
-                           <div style={{fontSize: '24px', fontWeight: '800', color: '#10b981'}}>R$ 1.540,00</div>
+                           <div style={styles.infoLabel}>Total Faturado (Histórico)</div>
+                           <div style={{fontSize: '24px', fontWeight: '800', color: '#10b981'}}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(companyMetrics.total_billed)}</div>
                         </div>
                      </div>
                      
@@ -902,7 +982,7 @@ const CompanyManagement: React.FC = () => {
                                 <div style={{fontSize: '11px', color: '#64748b', display: 'flex', gap: '8px'}}>
                                    <span>USUÁRIO: {log.profiles?.full_name || 'SISTEMA'}</span>
                                    <span>•</span>
-                                   <span style={{color: '#6366F1'}}>AÇÃO: {log.action}</span>
+                                   <span style={{color: '#0061FF'}}>AÇÃO: {log.action}</span>
                                 </div>
                              </div>
                           </div>
@@ -922,6 +1002,20 @@ const CompanyManagement: React.FC = () => {
                           </div>
                        ))}
                        {companySecurityLogs.length === 0 && <div style={styles.emptyActivity}>Nenhuma ocorrência de segurança crítica.</div>}
+
+                        <h5 style={{...styles.subTitleSmall, marginTop: '24px'}}>Decisões de IA (Inteligência Central)</h5>
+                        {automationLogs.map(log => (
+                           <div key={log.id} style={{...styles.logItemSmall, borderLeft: '4px solid #8B5CF6', backgroundColor: '#F5F3FF'}}>
+                              <div style={styles.logTime}>
+                                 <div style={{fontWeight: '800', fontSize: '11px', color: '#6D28D9'}}>{new Date(log.created_at).toLocaleTimeString()}</div>
+                              </div>
+                              <div style={styles.logBody}>
+                                 <div style={{fontWeight: '700', fontSize: '13px', color: '#6D28D9'}}>{log.event_name}</div>
+                                 <div style={{fontSize: '11px', color: '#7C3AED'}}>{JSON.stringify(log.details)}</div>
+                              </div>
+                           </div>
+                        ))}
+                        {automationLogs.length === 0 && <div style={styles.emptyActivity}>Nenhum log de automação recente.</div>}
                     </div>
                   </div>
                )}
@@ -936,29 +1030,29 @@ const CompanyManagement: React.FC = () => {
                        <button style={styles.masterActionBtn} onClick={() => handleImpersonate(selectedCompany!.id)}>
                          <div style={styles.masterActionIcon}><UserPlus size={20} /></div>
                          <div>
-                            <div style={styles.masterActionTitle}>Entrar na Empresa</div>
-                            <div style={styles.masterActionDesc}>Acesso invisível modo master admin.</div>
+                            <div style={styles.masterActionTitle}>Assumir Controle (Deus Mode)</div>
+                            <div style={styles.masterActionDesc}>Entrar na conta do cliente sem senha.</div>
                          </div>
                        </button>
                        <button style={styles.masterActionBtn}>
                          <div style={styles.masterActionIcon}><RefreshCw size={20} /></div>
                          <div>
-                            <div style={styles.masterActionTitle}>Forçar Atualização</div>
-                            <div style={styles.masterActionDesc}>Sincronizar scripts e módulos globais.</div>
+                            <div style={styles.masterActionTitle}>{selectedCompany?.status === 'active' ? 'Bloquear Unidade' : 'Ativar Unidade'}</div>
+                            <div style={styles.masterActionDesc}>Controlar acesso imediato da instância.</div>
                          </div>
                        </button>
                        <button style={styles.masterActionBtn}>
                          <div style={styles.masterActionIcon}><Save size={20} /></div>
                          <div>
-                            <div style={styles.masterActionTitle}>Restaurar Backup Cloud</div>
-                            <div style={styles.masterActionDesc}>Recuperar DB do último snapshot estável.</div>
+                            <div style={styles.masterActionTitle}>Wipe Total (Reset)</div>
+                            <div style={styles.masterActionDesc}>Limpar todos os dados da empresa.</div>
                          </div>
                        </button>
                        <button style={{...styles.masterActionBtn, borderLeftColor: '#EF4444'}}>
                          <div style={{...styles.masterActionIcon, backgroundColor: '#FEE2E2', color: '#EF4444'}}><ShieldAlert size={20} /></div>
                          <div>
-                            <div style={styles.masterActionTitle}>Corrigir Erros Críticos</div>
-                            <div style={styles.masterActionDesc}>Reiniciar buffers e limpar cache master.</div>
+                            <div style={styles.masterActionTitle}>Otimizar Banco de Dados</div>
+                            <div style={styles.masterActionDesc}>VACUUM e Reindexação de tabelas.</div>
                          </div>
                        </button>
                     </div>
@@ -1119,7 +1213,7 @@ const styles: Record<string, any> = {
   companyMeta: { fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: '500' },
 
   systemsGrid: { display: 'flex', gap: '8px' },
-  sysBadgeLogta: { padding: '6px 12px', borderRadius: '10px', backgroundColor: '#EEF2FF', color: '#4F46E5', fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' },
+  sysBadgeLogta: { padding: '6px 12px', borderRadius: '10px', backgroundColor: '#F0F7FF', color: '#0052D9', fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' },
   sysBadgeZapto: { padding: '6px 12px', borderRadius: '10px', backgroundColor: '#F0FDF4', color: '#16A34A', fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' },
 
   statusBadgeMaster: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '12px', fontSize: '11px', fontWeight: '800', width: 'fit-content' },
@@ -1133,7 +1227,7 @@ const styles: Record<string, any> = {
 
   activityCell: { display: 'flex', flexDirection: 'column', gap: '4px' },
   tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', borderRadius: '12px', border: 'none', backgroundColor: 'transparent', color: '#64748B', fontSize: '13px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap', letterSpacing: '0.2px' },
-  activeTab: { backgroundColor: '#6366F1', color: 'white', fontWeight: '500' },
+  activeTab: { backgroundColor: '#0061FF', color: 'white', fontWeight: '500' },
   tabContent: { minHeight: '400px' },
 
   /* Form Styles */
@@ -1143,8 +1237,38 @@ const styles: Record<string, any> = {
   label: { fontSize: '12px', fontWeight: '700', color: '#475569', letterSpacing: '0.3px', marginLeft: '4px' },
   formInput: { padding: '14px 18px', borderRadius: '16px', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: '500', outline: 'none', transition: 'all 0.2s', backgroundColor: '#F8FAFC', color: '#0F172A' },
   subdomainInputBox: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '0 18px', transition: 'all 0.2s' },
-  formInputSub: { border: 'none', backgroundColor: 'transparent', padding: '14px 0', outline: 'none', fontSize: '14px', fontWeight: '700', width: '100%', textAlign: 'right', color: '#6366F1' },
+  formInputSub: { border: 'none', backgroundColor: 'transparent', padding: '14px 0', outline: 'none', fontSize: '14px', fontWeight: '700', width: '100%', textAlign: 'right', color: '#0061FF' },
   subdomainSuffix: { fontSize: '14px', fontWeight: '600', color: '#94A3B8' },
+
+  /* NEW MASTER HUB STYLES */
+  financeView: { padding: '20px 0' },
+  planSummary: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F8FAFC', padding: '24px', borderRadius: '24px', border: '1px solid #E2E8F0', marginBottom: '24px' },
+  servicesGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' },
+  serviceItem: { backgroundColor: 'white', padding: '16px', borderRadius: '16px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '12px' },
+  serviceInfo: { flex: 1 },
+  serviceName: { fontSize: '14px', fontWeight: '800', color: '#1E293B', marginBottom: '4px' },
+  serviceStatus: { fontSize: '12px', color: '#64748B', fontWeight: '600' },
+  serviceAction: { width: '100%', padding: '8px', borderRadius: '10px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#0061FF', fontSize: '11px', fontWeight: '800', cursor: 'pointer' },
+  
+  logsView: { padding: '10px 0' },
+  auditList: { display: 'flex', flexDirection: 'column', gap: '12px' },
+  logItemSmall: { display: 'flex', gap: '16px', padding: '12px', borderRadius: '12px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' },
+  logTime: { width: '60px', display: 'flex', flexDirection: 'column', gap: '2px' },
+  logBody: { flex: 1 },
+  emptyActivity: { padding: '40px', textAlign: 'center', color: '#94A3B8', fontSize: '13px', fontWeight: '500' },
+  
+  acoesView: { padding: '10px 0' },
+  acoesHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
+  sectionTitle: { fontSize: '12px', fontWeight: '900', color: '#1E293B', margin: 0, letterSpacing: '0.5px' },
+  dangerBadge: { padding: '4px 10px', borderRadius: '8px', backgroundColor: '#FEE2E2', color: '#EF4444', fontSize: '10px', fontWeight: '900' },
+  acoesGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
+  masterActionBtn: { display: 'flex', gap: '16px', padding: '20px', borderRadius: '20px', backgroundColor: 'white', border: '1px solid #E2E8F0', borderLeft: '4px solid #0061FF', textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s' },
+  masterActionIcon: { width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#F0F7FF', color: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  masterActionTitle: { fontSize: '14px', fontWeight: '800', color: '#1E293B', marginBottom: '4px' },
+  masterActionDesc: { fontSize: '12px', color: '#64748B', fontWeight: '500' },
+  
+  secondaryBtnSmall: { display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '10px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontSize: '11px', fontWeight: '700', cursor: 'pointer' },
+  subTitleSmall: { fontSize: '11px', fontWeight: '900', color: '#94A3B8', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' },
 };
 
 export default CompanyManagement;

@@ -64,7 +64,7 @@ export const runMasterAuditSync = async () => {
           });
         }
 
-        // 1.2 Auditoria de Arquivamento (Drive Compliance)
+        // 1.2 Auditoria de Arquivamento (LogDock Compliance)
         const { data: driveDocs } = await supabase
           .from('files')
           .select('id')
@@ -74,15 +74,15 @@ export const runMasterAuditSync = async () => {
 
         if (!driveDocs || driveDocs.length === 0) {
           await supabase.from('audit_logs').insert({
-            action: 'DRIVE_MISSING_CONTRACTS',
-            details: `ALERTA DRIVE: ${company.name} não possui contratos arquivados.`,
-            module: 'DRIVE',
+            action: 'LOGDOCK_MISSING_CONTRACTS',
+            details: `ALERTA LOGDOCK: ${company.name} não possui contratos arquivados.`,
+            module: 'LOGDOCK',
             company_id: company.id,
             metadata: { severity: 'low', action_required: 'Upload de contratos base' }
           });
         }
 
-        // 1.3 Arquivamento de Conversas (Drive Integration)
+        // 1.3 Arquivamento de Conversas (LogDock Integration)
         const { archiveDailyConversations } = await import('./chatArchiver');
         await archiveDailyConversations(company.id);
       }
@@ -112,6 +112,42 @@ export const runMasterAuditSync = async () => {
             metadata: { severity: 'info', variation: fuel.variation_percentage }
           });
         }
+      }
+    }
+
+    // 3. Monitor de Erro Zero (IA Decision Safeguard)
+    const { data: failedAutomations } = await supabase
+      .from('automation_logs')
+      .select('event_name, details, created_at')
+      .eq('status', 'failed')
+      .gt('created_at', new Date(Date.now() - 3600000 * 24).toISOString()); // Last 24h
+
+    if (failedAutomations && failedAutomations.length > 0) {
+      for (const fail of failedAutomations) {
+        await supabase.from('audit_logs').insert({
+          action: 'AI_DECISION_FAILURE',
+          details: `ERRO ZERO: Falha na automação IA (${fail.event_name}). Detalhes: ${JSON.stringify(fail.details)}`,
+          module: 'INTELLIGENCE',
+          metadata: { severity: 'high', event: fail.event_name }
+        });
+      }
+    }
+
+    // 4. Saúde das Interações (API Health Check)
+    const { data: brokenIntegrations } = await supabase
+      .from('integrations')
+      .select('id, name, company_id')
+      .eq('status', 'error');
+
+    if (brokenIntegrations && brokenIntegrations.length > 0) {
+      for (const integration of brokenIntegrations) {
+        await supabase.from('audit_logs').insert({
+          action: 'INTEGRATION_DOWN',
+          details: `INTERAÇÃO CRÍTICA: API ${integration.name} está offline na unidade ${integration.company_id}.`,
+          module: 'API',
+          company_id: integration.company_id,
+          metadata: { severity: 'critical', api: integration.name }
+        });
       }
     }
 
