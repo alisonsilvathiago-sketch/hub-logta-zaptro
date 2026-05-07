@@ -3660,9 +3660,35 @@ const LogDockDashboard: React.FC = () => {
               {!isSidebarCollapsed && <span style={{ fontSize: '18px', fontWeight: 800, color: theme === 'dark' ? '#FFFFFF' : '#334155' }}>Painel</span>}
             </div>
             {!isSidebarCollapsed && (
-              <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#D1D1D1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Settings size={16} color={theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#64748B'} />
-              </div>
+              <button 
+                onClick={() => setActiveTab('configuracoes')}
+                title="Configurações"
+                style={{ 
+                  width: '32px', 
+                  height: '32px', 
+                  borderRadius: '10px', 
+                  backgroundColor: activeTab === 'configuracoes' ? '#0061FF' : (theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F5F9'), 
+                  border: 'none',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  color: activeTab === 'configuracoes' ? '#FFFFFF' : (theme === 'dark' ? 'rgba(255,255,255,0.6)' : '#334155')
+                }}
+                onMouseEnter={e => {
+                  if (activeTab !== 'configuracoes') {
+                    e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#E2E8F0';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (activeTab !== 'configuracoes') {
+                    e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F5F9';
+                  }
+                }}
+              >
+                <Settings size={16} />
+              </button>
             )}
           </div>
 
@@ -3670,7 +3696,7 @@ const LogDockDashboard: React.FC = () => {
 
           <div style={{ flex: 1, overflowY: 'auto', padding: isSidebarCollapsed ? '20px 10px' : '12px 24px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {[
-              { id: 'inicio', label: 'LogDock IA', icon: <Home size={16} /> },
+              { id: 'inicio', label: 'LogDock IA', icon: <Sparkles size={16} /> },
               { id: 'operacoes', label: 'Operações', icon: <Box size={16} /> },
               { id: 'transportadores', label: 'Transportadores', icon: <Truck size={16} /> },
               { id: 'arquivos', label: 'Meu Drive', icon: <Files size={16} /> },
@@ -3692,15 +3718,15 @@ const LogDockDashboard: React.FC = () => {
                    height: isSidebarCollapsed ? '54px' : 'auto',
                    padding: isSidebarCollapsed ? '0' : '10px 16px', 
                    borderRadius: '12px', 
-                   backgroundColor: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '#1A1A1A' : (item.id === 'inicio' ? '#000000' : '#F8F9FA')) : 'transparent', 
-                   border: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : (item.id === 'inicio' ? '1px solid #000000' : '1px solid #D1D1D1')) : 'none', 
+                   backgroundColor: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '#1A1A1A' : '#F8F9FA') : 'transparent', 
+                   border: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1') : 'none', 
                    display: 'flex', 
                    alignItems: 'center', 
                    justifyContent: isSidebarCollapsed ? 'center' : 'space-between', 
                    color: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id))
-                     ? (theme === 'dark' ? '#FFF' : (item.id === 'inicio' ? '#FFFFFF' : '#0061FF')) 
+                     ? (theme === 'dark' ? '#FFF' : '#0061FF') 
                      : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'), 
-                   boxShadow: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : (item.id === 'inicio' ? '0 4px 12px rgba(0,0,0,0.25)' : '0 4px 12px rgba(0,0,0,0.05)')) : 'none',
+                   boxShadow: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.05)') : 'none',
                    cursor: 'pointer', 
                    transition: 'all 0.2s ease' 
                 }}
@@ -3719,7 +3745,19 @@ const LogDockDashboard: React.FC = () => {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: isSidebarCollapsed ? '0' : '12px', justifyContent: 'center', width: isSidebarCollapsed ? '100%' : 'auto' }}>
                   {item.icon}
-                  {!isSidebarCollapsed && <span style={{ fontSize: '13px', fontWeight: 700 }}>{item.label}</span>}
+                  {!isSidebarCollapsed && (
+                    <span style={{ 
+                      fontSize: '13px', 
+                      fontWeight: 700,
+                      background: activeTab === 'inicio' && item.id === 'inicio' && theme !== 'dark'
+                        ? 'linear-gradient(90deg, #000000 0%, #0061FF 100%)'
+                        : 'none',
+                      WebkitBackgroundClip: activeTab === 'inicio' && item.id === 'inicio' && theme !== 'dark' ? 'text' : 'unset',
+                      WebkitTextFillColor: activeTab === 'inicio' && item.id === 'inicio' && theme !== 'dark' ? 'transparent' : 'unset'
+                    }}>
+                      {item.label}
+                    </span>
+                  )}
                 </div>
                 {!isSidebarCollapsed && item.badge && (
                   <span style={{ backgroundColor: '#EF4444', color: '#FFF', padding: '2px 6px', borderRadius: '6px', fontSize: '10px', fontWeight: 900 }}>
