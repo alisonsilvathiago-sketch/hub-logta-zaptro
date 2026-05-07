@@ -179,15 +179,14 @@ ${req.prompt}
   } catch (err) {
     console.error(`[AI Gateway Error on System ${req.systemId.toUpperCase()}]:`, err);
     
-    // Fallback response with simulated intelligence using system prompt guidelines
     const latencyMs = Date.now() - startTime;
     return {
       success: false,
       systemId: req.systemId,
       agentName: config.agentName,
-      response: `[Huba AI Gateway - Conectividade de Contingência]: Olá! Percebemos uma indisponibilidade temporária de CORS ou conexão com o motor Ollama VPS em ${ollamaUrl}. \n\nNo entanto, seguindo as diretrizes de comportamento do agente "${config.agentName}" do sistema "${config.name}", as informações estão sendo retidas de forma segura no Hub Master até a reconexão.`,
+      response: "Erro ao conectar com a IA.",
       latencyMs,
-      tokensUsed: 42,
+      tokensUsed: 0,
       timestamp: new Date().toLocaleTimeString()
     };
   }
