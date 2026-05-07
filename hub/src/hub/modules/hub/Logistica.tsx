@@ -36,21 +36,23 @@ const BackButton: React.FC = () => {
     <button 
       onClick={() => navigate('/master/logistica')}
       style={{
-        border: 'none',
-        background: 'transparent',
+        border: '1px solid var(--border)',
+        background: 'white',
         cursor: 'pointer',
-        padding: '8px',
-        marginRight: '8px',
-        borderRadius: '50%',
+        width: '40px',
+        height: '40px',
+        marginRight: '12px',
+        borderRadius: '12px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         color: '#64748B',
-        transition: 'all 0.2s'
+        transition: 'all 0.2s',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
       }}
-      className="hover-bg-slate"
+      className="hover-scale"
     >
-      <ArrowLeft size={24} />
+      <ArrowLeft size={20} />
     </button>
   );
 };
@@ -328,7 +330,7 @@ const LogisticsMonitoring: React.FC = () => {
             </div>
             {optimizations.map((opt, i) => (
               <div key={i} style={styles.aiCard}>
-                <Zap size={20} color="#6366F1" style={{ flexShrink: 0 }} />
+                <Zap size={20} color="#0061FF" style={{ flexShrink: 0 }} />
                 <div>
                   <p style={styles.aiText}><strong>{opt.title}:</strong> {opt.suggestion}</p>
                   <div style={styles.aiImpact}>Impacto: {opt.impact}</div>
@@ -366,7 +368,7 @@ const LogisticsDestinations: React.FC = () => {
       <div style={styles.destinosGrid}>
         {destinos.map(destino => (
           <div key={destino.id} style={styles.destinoCard}>
-            <div style={styles.destinoIcon}><MapPin size={24} color="#6366F1" /></div>
+            <div style={styles.destinoIcon}><MapPin size={24} color="#0061FF" /></div>
             <div style={{ flex: 1 }}>
               <h3 style={styles.destinoTitle}>{destino.name}</h3>
               <div style={styles.destinoStats}>
@@ -408,7 +410,7 @@ const LogisticsIntelligence: React.FC<{ deliveryActions: any[], refresh: () => v
 
       <div style={styles.kpiRow}>
         <KPIItem label="Economia ROI" value="R$ 23.640" trend="+18.4%" trendUp={true} icon={<DollarSign size={24} />} color="#10B981" />
-        <KPIItem label="Risco (Guardian)" value="92%" trend="+5.2%" trendUp={true} icon={<ShieldCheck size={24} />} color="#6366F1" />
+        <KPIItem label="Risco (Guardian)" value="92%" trend="+5.2%" trendUp={true} icon={<ShieldCheck size={24} />} color="#0061FF" />
         <KPIItem label="Compliance Frota" value="98.4%" trend="+0.8%" trendUp={true} icon={<Users size={24} />} color="#F59E0B" />
         <KPIItem label="Produtividade IA" value="14.2x" trend="+2.1x" trendUp={true} icon={<Zap size={24} />} color="#D9FF00" />
       </div>
@@ -425,22 +427,22 @@ const LogisticsIntelligence: React.FC<{ deliveryActions: any[], refresh: () => v
               <AreaChart data={roiData}>
                 <defs>
                   <linearGradient id="colorSavings" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366F1" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#0061FF" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#0061FF" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 600, fill: '#94A3B8'}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 600, fill: '#94A3B8'}} />
                 <Tooltip contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 20px 40px rgba(0,0,0,0.1)'}} />
-                <Area type="monotone" dataKey="savings" stroke="#6366F1" strokeWidth={4} fill="url(#colorSavings)" />
+                <Area type="monotone" dataKey="savings" stroke="#0061FF" strokeWidth={4} fill="url(#colorSavings)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
           
           <div style={{ ...styles.insightCard, marginTop: '24px', backgroundColor: '#F8FAFC' }}>
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-              <Brain size={24} color="#6366F1" />
+              <Brain size={24} color="#0061FF" />
               <div>
                 <h4 style={{ ...styles.insightTitle, margin: 0 }}>Insight do Navigator AI</h4>
                 <p style={{ ...styles.insightText, margin: '4px 0 0' }}>As rotas otimizadas este mês reduziram a emissão de CO2 em 12% e economizaram 1.400 litros de combustível.</p>
@@ -452,7 +454,7 @@ const LogisticsIntelligence: React.FC<{ deliveryActions: any[], refresh: () => v
         {/* Right Col: Autonomous Logs */}
         <div style={styles.chartCard}>
           <div style={styles.cardHeaderWithBadge}>
-             <Brain size={18} color="#6366F1" />
+             <Brain size={18} color="#0061FF" />
              <h3 style={styles.cardTitle}>Log de Estratégias Autônomas</h3>
              <div style={styles.aiStatusBadge}>MONITORAMENTO IA ATIVO</div>
           </div>
@@ -462,14 +464,14 @@ const LogisticsIntelligence: React.FC<{ deliveryActions: any[], refresh: () => v
                   <div style={{...styles.strategyIcon, backgroundColor: action.status === 'confirmado' ? '#ECFDF5' : action.status === 'reagendado' ? '#FFFBEB' : '#F8FAF9'}}>
                      {action.status === 'confirmado' && <CheckCircle2 size={14} color="#10B981" />}
                      {action.status === 'reagendado' && <Repeat size={14} color="#F59E0B" />}
-                     {action.status === 'pendente' && <Box size={14} color="#6366F1" />}
+                     {action.status === 'pendente' && <Box size={14} color="#0061FF" />}
                   </div>
                   <div style={styles.strategyMain}>
                      <div style={styles.strategyAction}>Fulfillment: {action.status === 'confirmado' ? 'CONFIRMADO' : action.status === 'reagendado' ? 'REAGENDADO' : 'PENDENTE'}</div>
                      <div style={styles.strategyReason}>Pedido {action.order_id} • Token {action.token}</div>
                   </div>
                   <div style={styles.strategyMeta}>
-                     <div style={{...styles.strategyImpact, color: action.status === 'confirmado' ? '#10B981' : '#6366F1'}}>
+                     <div style={{...styles.strategyImpact, color: action.status === 'confirmado' ? '#10B981' : '#0061FF'}}>
                         {action.status === 'confirmado' ? 'Verificado' : 'Autônomo'}
                      </div>
                      <div style={styles.strategyTime}>{new Date(action.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
@@ -501,7 +503,7 @@ const LogisticsAggregates: React.FC<{ aggregates: any[], refresh: () => void }> 
       </header>
 
       <div style={styles.statsGrid}>
-        <KPIItem label="Agregados Ativos" value={aggregates.filter(a => a.status === 'ativo').length.toString()} icon={<Users size={20} />} color="#6366F1" />
+        <KPIItem label="Agregados Ativos" value={aggregates.filter(a => a.status === 'ativo').length.toString()} icon={<Users size={20} />} color="#0061FF" />
         <KPIItem label="Score Médio" value={(aggregates.reduce((acc, a) => acc + Number(a.score), 0) / (aggregates.length || 1)).toFixed(2)} icon={<Star size={20} />} color="#F59E0B" />
         <KPIItem label="Total Pagamentos" value={`R$ ${aggregates.reduce((acc, a) => acc + Number(a.total_earnings), 0).toLocaleString()}`} icon={<DollarSign size={20} />} color="#10B981" />
       </div>
@@ -655,7 +657,7 @@ const LogisticsExceptions: React.FC<{ exceptions: any[], refresh: () => void }> 
       <div style={styles.kpiRow}>
          <KPIItem label="Exceções Ativas" value={exceptions.length.toString()} trend={exceptions.length > 5 ? '+Alto' : 'Baixo'} trendUp={exceptions.length > 5} icon={<ShieldAlert size={20} />} color="#EF4444" />
          <KPIItem label="Taxa de Confirmação" value="94.2%" trend="+2.1%" trendUp={true} icon={<FileCheck size={20} />} color="#10B981" />
-         <KPIItem label="Resolvido c/ IA" value="88%" trend="+5%" trendUp={true} icon={<Zap size={20} />} color="#6366F1" />
+         <KPIItem label="Resolvido c/ IA" value="88%" trend="+5%" trendUp={true} icon={<Zap size={20} />} color="#0061FF" />
          <KPIItem label="Economia Perda" value="R$ 4.250" trend="+R$ 800" trendUp={true} icon={<DollarSign size={20} />} color="#10B981" />
       </div>
 
@@ -677,7 +679,7 @@ const LogisticsExceptions: React.FC<{ exceptions: any[], refresh: () => void }> 
                          <div style={styles.strategyReason}>Pedido {item.order_id} • Status: {item.status === 'pendente' ? 'Pendente' : 'Resolvido'}</div>
                       </div>
                       <div style={styles.strategyMeta}>
-                         <div style={{ ...styles.strategyImpact, color: '#6366F1' }}>{item.status === 'pendente' ? 'Aguardando IA' : 'Resolvido'}</div>
+                         <div style={{ ...styles.strategyImpact, color: '#0061FF' }}>{item.status === 'pendente' ? 'Aguardando IA' : 'Resolvido'}</div>
                          <div style={styles.strategyTime}>{new Date(item.created_at).toLocaleTimeString('pt-BR')}</div>
                       </div>
                    </div>
@@ -712,7 +714,7 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
   };
 
   const fuelMeta: Record<string, { label: string; color: string }> = {
-    gasolina: { label: 'Gasolina', color: '#6366F1' },
+    gasolina: { label: 'Gasolina', color: '#0061FF' },
     diesel: { label: 'Diesel', color: '#EF4444' },
     etanol: { label: 'Etanol', color: '#10B981' },
     gnv: { label: 'GNV', color: '#0EA5E9' },
@@ -764,9 +766,9 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
                   padding: '0 24px', 
                   backgroundColor: isActive ? 'var(--bg-active)' : 'var(--bg-secondary)', 
                   border: '1px solid',
-                  borderColor: isActive ? '#6366F1' : 'var(--border)', 
+                  borderColor: isActive ? '#0061FF' : 'var(--border)', 
                   fontWeight: '800', 
-                  color: isActive ? '#6366F1' : '#64748B',
+                  color: isActive ? '#0061FF' : '#64748B',
                   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   transform: isActive ? 'translateY(-1px)' : 'none',
                   boxShadow: isActive ? '0 4px 12px rgba(99, 102, 241, 0.15)' : 'none'
@@ -858,7 +860,7 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
               const price = Number(basePrice) + (i === 1 ? 0.20 : (i === 2 ? 0.45 : 0));
               return (
                 <div key={variant} style={{ ...styles.statCard, padding: '20px' }}>
-                  <div style={{ ...styles.statIconBox, backgroundColor: 'var(--bg-active)', color: '#6366F1', width: '40px', height: '40px' }}>
+                  <div style={{ ...styles.statIconBox, backgroundColor: 'var(--bg-active)', color: '#0061FF', width: '40px', height: '40px' }}>
                     <Droplets size={20} />
                   </div>
                   <div>
@@ -885,15 +887,15 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
                 ]}>
                   <defs>
                     <linearGradient id="fuelTrend" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#0061FF" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#0061FF" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94A3B8'}} />
                   <YAxis domain={['auto', 'auto']} hide />
                   <Tooltip />
-                  <Area type="monotone" dataKey="value" stroke="#6366F1" strokeWidth={3} fill="url(#fuelTrend)" />
+                  <Area type="monotone" dataKey="value" stroke="#0061FF" strokeWidth={3} fill="url(#fuelTrend)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -903,7 +905,7 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
         <div style={styles.sidebarCol}>
           <div style={styles.chartCard}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                <Brain size={20} color="#6366F1" />
+                <Brain size={20} color="#0061FF" />
                 <h3 style={styles.cardTitle}>Insight Estratégico IA</h3>
              </div>
              <div style={{ backgroundColor: 'var(--bg-active)', padding: '20px', borderRadius: '20px', border: '1px solid var(--border)' }}>
@@ -912,7 +914,7 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
                   Recomendamos reduzir abastecimentos imediatos em 20% para aproveitar o decréscimo projetado de 4.2%.
                 </p>
                 <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-                  <div style={{ padding: '6px 12px', backgroundColor: '#FFF', borderRadius: '10px', fontSize: '10px', fontWeight: '800', color: '#6366F1' }}>ECONOMIA ESTIMADA: R$ 2.4k</div>
+                  <div style={{ padding: '6px 12px', backgroundColor: '#FFF', borderRadius: '10px', fontSize: '10px', fontWeight: '800', color: '#0061FF' }}>ECONOMIA ESTIMADA: R$ 2.4k</div>
                 </div>
              </div>
           </div>
@@ -928,8 +930,8 @@ const KPIItem = ({ label, value, trend, trendUp, icon, variant = 'light', live }
   <div style={styles.statCard}>
     <div style={{ 
       ...styles.statIconBox, 
-      backgroundColor: variant === 'solid' ? '#6366F1' : 'var(--bg-active)', 
-      color: variant === 'solid' ? '#FFFFFF' : '#6366F1' 
+      backgroundColor: variant === 'solid' ? '#0061FF' : 'var(--bg-active)', 
+      color: variant === 'solid' ? '#FFFFFF' : '#0061FF' 
     }}>
       {React.cloneElement(icon as React.ReactElement, { size: 20 })}
     </div>
@@ -984,7 +986,7 @@ const LogisticsDashboard: React.FC<{
         </div>
         <div style={styles.headerActions}>
           <button 
-            style={{ ...styles.refreshBtn, width: 'auto', padding: '0 20px', backgroundColor: '#6366F1', color: '#FFF', border: 'none', fontWeight: '800', fontSize: '13px' }}
+            style={{ ...styles.refreshBtn, width: 'auto', padding: '0 20px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', fontWeight: '800', fontSize: '13px' }}
             onClick={() => navigate('/master/logistica/combustivel')}
           >
             <Fuel size={18} style={{ marginRight: '8px' }} /> Central de Combustível
@@ -1012,14 +1014,14 @@ const LogisticsDashboard: React.FC<{
               <AreaChart data={roiData}>
                 <defs>
                   <linearGradient id="dashSavings" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366F1" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#0061FF" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#0061FF" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94A3B8'}} />
                 <Tooltip />
-                <Area type="monotone" dataKey="savings" stroke="#6366F1" strokeWidth={3} fill="url(#dashSavings)" />
+                <Area type="monotone" dataKey="savings" stroke="#0061FF" strokeWidth={3} fill="url(#dashSavings)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -1050,8 +1052,8 @@ const LogisticsDashboard: React.FC<{
                   >
                     <div style={{ 
                       ...styles.dashShortcutIcon, 
-                      backgroundColor: isSolid ? '#6366F1' : '#F5F3FF', 
-                      color: isSolid ? '#FFFFFF' : '#6366F1' 
+                      backgroundColor: isSolid ? '#0061FF' : '#F5F3FF', 
+                      color: isSolid ? '#FFFFFF' : '#0061FF' 
                     }}>
                       <mod.icon size={18} />
                     </div>
@@ -1071,7 +1073,7 @@ const LogisticsDashboard: React.FC<{
                {deliveryActions.slice(0, 3).map(action => (
                  <div key={action.id} style={{ ...styles.strategyRow, padding: '12px' }}>
                     <div style={{...styles.strategyIcon, width: '28px', height: '28px', backgroundColor: '#F1F5F9'}}>
-                       <Zap size={12} color="#6366F1" />
+                       <Zap size={12} color="#0061FF" />
                     </div>
                     <div style={styles.strategyMain}>
                        <div style={{ fontSize: '12px', fontWeight: '700' }}>{action.status === 'confirmado' ? 'Entrega Validada' : 'Ação Autônoma'}</div>
@@ -1146,36 +1148,10 @@ const LogisticaHub: React.FC = () => {
       case 'finalizada': return { backgroundColor: '#ECFDF5', color: '#10B981', border: '1px solid #D1FAE5' };
       case 'problema': return { backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FEE2E2' };
       case 'atraso': return { backgroundColor: '#FFFBEB', color: '#F59E0B', border: '1px solid #FEF3C7' };
-      default: return { backgroundColor: '#EEF2FF', color: 'var(--accent)', border: '1px solid #E0E7FF' };
+      default: return { backgroundColor: '#F0F7FF', color: 'var(--accent)', border: '1px solid #E0E7FF' };
     }
   };
 
-  const BackButton: React.FC = () => {
-    const navigate = useNavigate();
-    return (
-      <button 
-        onClick={() => navigate('/master/logistica')}
-        style={{
-          border: '1px solid var(--border)',
-          background: 'white',
-          cursor: 'pointer',
-          width: '40px',
-          height: '40px',
-          marginRight: '12px',
-          borderRadius: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--text-secondary)',
-          transition: 'all 0.2s',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-        }}
-        className="hover-scale"
-      >
-        <ArrowLeft size={20} />
-      </button>
-    );
-  };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#FBFBFE' }} className="animate-fade-in">
@@ -1306,7 +1282,7 @@ const styles: Record<string, any> = {
   calcLabel: { fontSize: '12px', fontWeight: '700', color: '#64748B', marginBottom: '8px', display: 'block' },
   calcInput: { width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: '600', outline: 'none' },
   calcResult: { marginTop: '24px', padding: '20px', backgroundColor: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0' },
-  resultValue: { fontSize: '22px', fontWeight: '800', color: '#6366F1', marginTop: '8px' },
+  resultValue: { fontSize: '22px', fontWeight: '800', color: '#0061FF', marginTop: '8px' },
   emptyFuel: { gridColumn: 'span 3', padding: '48px', textAlign: 'center', color: '#94A3B8', fontWeight: '600' },
   fuelShowcase: { display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '24px', marginBottom: '24px' },
   fuelPumpCard: { backgroundColor: '#0F172A', borderRadius: '28px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px', boxShadow: '0 12px 30px rgba(15, 23, 42, 0.22)' },
@@ -1330,13 +1306,45 @@ const styles: Record<string, any> = {
   scoreRow: { display: 'flex', alignItems: 'center', gap: '6px' },
   loadingPlanContainer: { display: 'flex', flexDirection: 'column', gap: '16px' },
   loadingStep: { display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', backgroundColor: '#F8FAFC', borderRadius: '20px', border: '1px solid #E2E8F0' },
-  loadingIcon: { width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E2E8F0', color: '#6366F1' },
+  loadingIcon: { width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E2E8F0', color: '#0061FF' },
   loadingMain: { flex: 1 },
   loadingClient: { fontSize: '15px', fontWeight: '800', color: '#0F172A' },
   loadingZone: { fontSize: '12px', color: '#64748B', fontWeight: '600' },
   loadingMeta: { textAlign: 'right' },
   loadingDelivery: { fontSize: '13px', fontWeight: '800', color: '#10B981' },
-  loadingAction: { fontSize: '11px', color: '#94A3B8', fontWeight: '700', textTransform: 'uppercase', marginTop: '2px' }
+  loadingAction: { fontSize: '11px', color: '#94A3B8', fontWeight: '700', textTransform: 'uppercase', marginTop: '2px' },
+  
+  // KPI missing styles
+  statContent: { flex: 1 },
+  statTrend: { fontSize: '12px', fontWeight: '700', marginTop: '4px' },
+  dashShortcutLabel: { fontSize: '14px', fontWeight: '800', color: '#0F172A' },
+  dashShortcutSub: { fontSize: '11px', color: '#94A3B8', fontWeight: '600' },
+  statusTag: { padding: '4px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: '800' },
+  popupContainer: { padding: '8px', minWidth: '160px' },
+  popupTitle: { fontSize: '14px', fontWeight: '800', margin: '0 0 4px 0' },
+  popupSub: { fontSize: '11px', color: '#64748B', margin: '0 0 8px 0' },
+  popupAction: { width: '100%', padding: '8px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', marginTop: '8px' },
+  
+  // Intelligence styles
+  strategyList: { display: 'flex', flexDirection: 'column', gap: '12px' },
+  strategyRow: { display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', backgroundColor: '#FFF', borderRadius: '16px', border: '1px solid var(--border)' },
+  strategyIcon: { width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  strategyMain: { flex: 1 },
+  strategyAction: { fontSize: '13px', fontWeight: '800', color: '#0F172A' },
+  strategyReason: { fontSize: '11px', color: '#64748B', marginTop: '2px' },
+  strategyMeta: { textAlign: 'right' },
+  strategyImpact: { fontSize: '12px', fontWeight: '800' },
+  strategyTime: { fontSize: '10px', color: '#94A3B8', marginTop: '2px' },
+  aiStatusBadge: { padding: '6px 12px', backgroundColor: '#F0F7FF', color: '#0061FF', borderRadius: '12px', fontSize: '10px', fontWeight: '900' },
+  cardTitle: { fontSize: '18px', fontWeight: '800', color: '#1E293B', margin: 0 },
+  cardHeaderWithBadge: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' },
+  insightCard: { padding: '16px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: '#F8FAFC' },
+  insightTitle: { fontSize: '13px', fontWeight: '800', color: '#1E293B', margin: '0 0 4px 0' },
+  insightText: { fontSize: '12px', color: '#64748B', margin: 0, lineHeight: '1.5' },
+  statusBadgeActive: { padding: '6px 12px', backgroundColor: '#F0FDF4', color: '#10B981', borderRadius: '12px', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' },
+  kpiRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' },
+  splitGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' },
+  chartCard: { padding: '32px', backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }
 };
 
 export default LogisticaHub;

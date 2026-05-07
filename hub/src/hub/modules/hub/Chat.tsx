@@ -20,14 +20,14 @@ const HubChat: React.FC = () => {
   const [message, setMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isDriveModalOpen, setIsDriveModalOpen] = useState(false);
+  const [isLogDockModalOpen, setIsLogDockModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [driveFiles, setDriveFiles] = useState<any[]>([]);
+  const [logDockFiles, setLogDockFiles] = useState<any[]>([]);
   const [isDocsLoading, setIsDocsLoading] = useState(false);
   
-  const handleOpenDrive = () => {
-    setIsDriveModalOpen(true);
-    toastInfo('Sincronizando com Google Drive...');
+  const handleOpenLogDock = () => {
+    setIsLogDockModalOpen(true);
+    toastInfo('Sincronizando com LogDock.com.br...');
   };
   
   // UI states
@@ -100,7 +100,7 @@ const HubChat: React.FC = () => {
           title: 'Resumo Operacional - Abril 2024',
           metrics: [
             { label: 'Receita Total', value: 'R$ 1.240.000', trend: '+12%', color: '#10B981' },
-            { label: 'Novos Clientes', value: '42', trend: '+5%', color: '#6366F1' },
+            { label: 'Novos Clientes', value: '42', trend: '+5%', color: '#0061FF' },
             { label: 'Conversão', value: '18.4%', trend: '-2%', color: '#F59E0B' }
           ],
           chartData: [65, 78, 90, 85, 95, 110, 120]
@@ -200,11 +200,11 @@ const HubChat: React.FC = () => {
                       style={{
                         ...styles.channelItem,
                         backgroundColor: selectedChannel.id === ch.id ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
-                        borderLeft: selectedChannel.id === ch.id ? '3px solid #6366F1' : '3px solid transparent'
+                        borderLeft: selectedChannel.id === ch.id ? '3px solid #0061FF' : '3px solid transparent'
                       }}
                       onClick={() => handleSelectChannel(ch)}
                     >
-                      <div style={{...styles.channelIconBox, color: selectedChannel.id === ch.id ? '#6366F1' : 'rgba(255,255,255,0.4)'}}>
+                      <div style={{...styles.channelIconBox, color: selectedChannel.id === ch.id ? '#0061FF' : 'rgba(255,255,255,0.4)'}}>
                         {ch.icon}
                       </div>
                       <div style={styles.channelInfo}>
@@ -256,13 +256,13 @@ const HubChat: React.FC = () => {
                   style={{
                     ...styles.ticketItem,
                     backgroundColor: selectedChannel.id === tk.id ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255,255,255,0.05)',
-                    borderLeft: `4px solid ${tk.priority === 'high' ? '#EF4444' : '#6366F1'}`
+                    borderLeft: `4px solid ${tk.priority === 'high' ? '#EF4444' : '#0061FF'}`
                   }}
                   onClick={() => setSelectedChannel({ id: tk.id, name: tk.name, type: 'ticket', department: tk.dept })}
                 >
                   <div style={styles.ticketHeader}>
                     <span style={styles.ticketName}>{tk.name}</span>
-                    <span style={{...styles.priorityDot, backgroundColor: tk.priority === 'high' ? '#EF4444' : '#6366F1'}} />
+                    <span style={{...styles.priorityDot, backgroundColor: tk.priority === 'high' ? '#EF4444' : '#0061FF'}} />
                   </div>
                   <div style={styles.ticketBody}>
                     <span style={styles.ticketCust}>{tk.company} • {tk.customer}</span>
@@ -302,7 +302,7 @@ const HubChat: React.FC = () => {
           <div style={styles.headerActions}>
             <button style={styles.headerIconBtn}><Search size={18} /></button>
             <button style={styles.headerIconBtn}><Pin size={18} /></button>
-            <button style={{...styles.headerIconBtn, color: isInfoOpen ? '#6366F1' : '#94A3B8'}} onClick={() => setIsInfoOpen(!isInfoOpen)}><Info size={18} /></button>
+            <button style={{...styles.headerIconBtn, color: isInfoOpen ? '#0061FF' : '#94A3B8'}} onClick={() => setIsInfoOpen(!isInfoOpen)}><Info size={18} /></button>
             <button style={styles.headerIconBtn}><MoreVertical size={18} /></button>
           </div>
         </header>
@@ -325,7 +325,7 @@ const HubChat: React.FC = () => {
           {filteredMessages.map((msg, i) => (
             <div key={msg.id} style={styles.messageWrapper}>
               <div style={{...styles.messageAvatar, backgroundColor: msg.sender === 'Hub Assistant' ? 'rgba(99, 102, 241, 0.1)' : '#F8FAFC'}}>
-                {msg.sender === 'Hub Assistant' ? <Brain size={18} color="#6366F1" /> : msg.sender[0]}
+                {msg.sender === 'Hub Assistant' ? <Brain size={18} color="#0061FF" /> : msg.sender[0]}
               </div>
               <div style={styles.messageContent}>
                 <div style={styles.messageHeader}>
@@ -355,7 +355,7 @@ const HubChat: React.FC = () => {
                     <div style={styles.chartPlaceholder}>
                        <div style={{display: 'flex', alignItems: 'flex-end', gap: '8px', height: '60px'}}>
                           {msg.report.chartData.map((v: number, idx: number) => (
-                            <div key={idx} style={{flex: 1, height: `${(v/120)*100}%`, backgroundColor: '#6366F1', borderRadius: '4px', opacity: 0.2 + (idx * 0.1)}} />
+                            <div key={idx} style={{flex: 1, height: `${(v/120)*100}%`, backgroundColor: '#0061FF', borderRadius: '4px', opacity: 0.2 + (idx * 0.1)}} />
                           ))}
                        </div>
                     </div>
@@ -401,7 +401,7 @@ const HubChat: React.FC = () => {
             <div style={styles.inputActions}>
               <button style={styles.actionBtn} title="Insights de Dados"><Activity size={20} /></button>
               <button style={styles.actionBtn} onClick={() => setIsPaymentModalOpen(true)} title="Gerar Cobrança"><DollarSign size={20} /></button>
-              <button style={styles.actionBtn} onClick={handleOpenDrive} title="Anexar do Drive"><FileText size={20} /></button>
+              <button style={styles.actionBtn} onClick={handleOpenLogDock} title="Anexar do LogDock"><FileText size={20} /></button>
             </div>
             
             <input 
@@ -487,7 +487,7 @@ const HubChat: React.FC = () => {
                   
                   <div style={styles.infoGrid}>
                     <div style={styles.infoRow}><span style={styles.infoLabel}>Empresa</span><span style={styles.infoValue}>{selectedUserInfo.team}</span></div>
-                    <div style={styles.infoRow}><span style={styles.infoLabel}>Plano</span><span style={{color: '#6366F1'}}>{selectedUserInfo.plan || 'Enterprise'}</span></div>
+                    <div style={styles.infoRow}><span style={styles.infoLabel}>Plano</span><span style={{color: '#0061FF'}}>{selectedUserInfo.plan || 'Enterprise'}</span></div>
                   </div>
                 </div>
              )}
@@ -533,7 +533,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   sidebar: { width: '300px', backgroundColor: '#0F172A', display: 'flex', flexDirection: 'column', flexShrink: 0 },
   sidebarHeader: { padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   sidebarTitle: { fontSize: '22px', fontWeight: '900', color: 'white', letterSpacing: '-1px', margin: 0 },
-  aiBadge: { fontSize: '10px', fontWeight: '900', backgroundColor: '#6366F1', color: 'white', padding: '2px 8px', borderRadius: '4px' },
+  aiBadge: { fontSize: '10px', fontWeight: '900', backgroundColor: '#0061FF', color: 'white', padding: '2px 8px', borderRadius: '4px' },
   
   viewSwitcher: { display: 'flex', gap: '4px', padding: '0 16px 20px', flexDirection: 'column' },
   switchBtn: { width: '100%', padding: '12px 16px', borderRadius: '12px', border: 'none', backgroundColor: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: '14px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', transition: '0.2s' },
@@ -551,7 +551,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   channelInfo: { flex: 1, display: 'flex', flexDirection: 'column' },
   channelName: { fontSize: '14px', fontWeight: '700', color: 'white' },
   lastMsgText: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-  unreadDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#6366F1' },
+  unreadDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF' },
   
   dmList: { display: 'flex', flexDirection: 'column', gap: '2px' },
   dmItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer' },
@@ -571,7 +571,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   ticketMeta: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' },
   slaBox: { display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#EF4444', fontWeight: '800' },
   statusTagSidebar: { fontSize: '9px', fontWeight: '900', color: 'white', opacity: 0.6 },
-  newTicketBtn: { backgroundColor: 'transparent', border: 'none', color: '#6366F1', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' },
+  newTicketBtn: { backgroundColor: 'transparent', border: 'none', color: '#0061FF', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' },
 
   // CHAT AREA
   chatArea: { flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'white', margin: '12px', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' },
@@ -582,18 +582,18 @@ const styles: { [key: string]: React.CSSProperties } = {
   headerSubtitle: { fontSize: '12px', color: '#94A3B8', fontWeight: '700' },
   headerActions: { display: 'flex', gap: '4px' },
   headerIconBtn: { width: '36px', height: '36px', borderRadius: '10px', border: 'none', backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#94A3B8' },
-  aiStatusBadge: { fontSize: '9px', fontWeight: '900', backgroundColor: 'rgba(99, 102, 241, 0.1)', color: '#6366F1', padding: '2px 6px', borderRadius: '4px' },
+  aiStatusBadge: { fontSize: '9px', fontWeight: '900', backgroundColor: 'rgba(99, 102, 241, 0.1)', color: '#0061FF', padding: '2px 6px', borderRadius: '4px' },
 
   messageContainer: { flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '24px' },
   aiWelcomeBox: { textAlign: 'center', padding: '40px 20px', borderBottom: '1px solid #F1F5F9', marginBottom: '20px' },
-  aiIconLarge: { width: '80px', height: '80px', borderRadius: '24px', backgroundColor: 'rgba(99, 102, 241, 0.05)', color: '#6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' },
+  aiIconLarge: { width: '80px', height: '80px', borderRadius: '24px', backgroundColor: 'rgba(99, 102, 241, 0.05)', color: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' },
   aiWelcomeTitle: { fontSize: '24px', fontWeight: '900', color: '#0F172A', marginBottom: '8px' },
   aiWelcomeDesc: { fontSize: '14px', color: '#64748B', maxWidth: '400px', margin: '0 auto 24px' },
   aiShortcuts: { display: 'flex', justifyContent: 'center', gap: '12px' },
   shortcutBtn: { padding: '10px 20px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: 'white', fontSize: '13px', fontWeight: '800', color: '#334155', cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', gap: '8px' },
   
   messageWrapper: { display: 'flex', gap: '16px' },
-  messageAvatar: { width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#6366F1', fontSize: '13px', flexShrink: 0 },
+  messageAvatar: { width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#0061FF', fontSize: '13px', flexShrink: 0 },
   messageContent: { flex: 1 },
   messageHeader: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' },
   messageSender: { fontSize: '14px', fontWeight: '900', color: '#0F172A' },
@@ -609,20 +609,20 @@ const styles: { [key: string]: React.CSSProperties } = {
   metricValue: { fontSize: '16px', fontWeight: '900' },
   metricTrend: { fontSize: '9px', fontWeight: '700', opacity: 0.7 },
   chartPlaceholder: { marginBottom: '16px' },
-  fullReportBtn: { width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#6366F1', fontWeight: '800', fontSize: '12px', cursor: 'pointer' },
+  fullReportBtn: { width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#0061FF', fontWeight: '800', fontSize: '12px', cursor: 'pointer' },
 
   errorAlertBox: { marginTop: '12px', padding: '16px', borderRadius: '12px', backgroundColor: '#FEF2F2', border: '1px solid #FEE2E2', display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' },
   errorLine: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', color: '#991B1B' },
   fixBtn: { padding: '8px 12px', borderRadius: '8px', border: 'none', backgroundColor: '#EF4444', color: 'white', fontSize: '11px', fontWeight: '800', cursor: 'pointer', alignSelf: 'flex-start' },
 
-  typingIndicator: { display: 'flex', alignItems: 'center', gap: '10px', color: '#6366F1', fontSize: '12px', fontWeight: '700' },
+  typingIndicator: { display: 'flex', alignItems: 'center', gap: '10px', color: '#0061FF', fontSize: '12px', fontWeight: '700' },
 
   chatFooter: { padding: '0 24px 24px' },
   inputWrapper: { padding: '8px 12px', backgroundColor: '#F8FAFC', borderRadius: '16px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '12px' },
   inputActions: { display: 'flex', gap: '4px' },
   actionBtn: { width: '36px', height: '36px', borderRadius: '10px', border: 'none', backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#94A3B8' },
   mainInput: { flex: 1, border: 'none', backgroundColor: 'transparent', outline: 'none', fontSize: '15px', fontWeight: '600', color: '#0F172A' },
-  sendBtn: { width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#6366F1', color: 'white', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  sendBtn: { width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#0061FF', color: 'white', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 
   // RIGHT SIDEBAR
   rightSidebar: { width: '320px', backgroundColor: 'white', borderLeft: '1px solid #F1F5F9', display: 'flex', flexDirection: 'column' },
@@ -632,11 +632,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   
   ticketContext: { padding: '24px' },
   contextHeader: { display: 'flex', gap: '16px', marginBottom: '24px' },
-  contextIcon: { width: '48px', height: '48px', borderRadius: '16px', backgroundColor: '#F1F5F9', color: '#6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  contextIcon: { width: '48px', height: '48px', borderRadius: '16px', backgroundColor: '#F1F5F9', color: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   contextTitle: { fontSize: '16px', fontWeight: '900', margin: '0 0 4px' },
-  statusBadgeLarge: { fontSize: '10px', fontWeight: '900', color: '#6366F1', letterSpacing: '0.5px' },
+  statusBadgeLarge: { fontSize: '10px', fontWeight: '900', color: '#0061FF', letterSpacing: '0.5px' },
   
-  primaryActionBtn: { width: '100%', padding: '14px', borderRadius: '12px', backgroundColor: '#6366F1', color: 'white', border: 'none', fontWeight: '800', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '10px' },
+  primaryActionBtn: { width: '100%', padding: '14px', borderRadius: '12px', backgroundColor: '#0061FF', color: 'white', border: 'none', fontWeight: '800', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '10px' },
   secondaryActionBtn: { width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontWeight: '800', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' },
 
   aiContext: { padding: '24px' },
@@ -650,9 +650,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   miniLog: { fontSize: '12px', color: '#64748B', marginBottom: '8px' },
 
   profileHero: { padding: '32px 24px', textAlign: 'center' },
-  heroAvatar: { width: '64px', height: '64px', borderRadius: '20px', backgroundColor: '#6366F1', color: 'white', fontSize: '24px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' },
+  heroAvatar: { width: '64px', height: '64px', borderRadius: '20px', backgroundColor: '#0061FF', color: 'white', fontSize: '24px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' },
   heroName: { fontSize: '16px', fontWeight: '900', margin: '0 0 4px' },
-  heroBadge: { fontSize: '10px', color: '#6366F1', fontWeight: '800', textTransform: 'uppercase', backgroundColor: '#EEF2FF', padding: '3px 10px', borderRadius: '100px' },
+  heroBadge: { fontSize: '10px', color: '#0061FF', fontWeight: '800', textTransform: 'uppercase', backgroundColor: '#F0F7FF', padding: '3px 10px', borderRadius: '100px' },
   heroStatus: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', color: '#10B981', fontWeight: '700', marginTop: '12px' },
   
   infoGrid: { padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' },
@@ -667,7 +667,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   modalInput: { width: '100%', padding: '16px', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '24px', fontWeight: '900', outline: 'none' },
   formGroup: { marginBottom: '20px' },
   label: { fontSize: '12px', fontWeight: '800', color: '#94A3B8', marginBottom: '8px', display: 'block' },
-  submitPayBtn: { width: '100%', padding: '16px', borderRadius: '16px', backgroundColor: '#6366F1', color: 'white', border: 'none', fontWeight: '900', fontSize: '15px', cursor: 'pointer' },
+  submitPayBtn: { width: '100%', padding: '16px', borderRadius: '16px', backgroundColor: '#0061FF', color: 'white', border: 'none', fontWeight: '900', fontSize: '15px', cursor: 'pointer' },
   closeBtn: { background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' },
   closeSidebarBtn: { background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }
 };

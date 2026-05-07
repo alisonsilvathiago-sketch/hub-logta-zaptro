@@ -125,7 +125,7 @@ const CompanyManagement: React.FC = () => {
     }
   };
 
-  const handleImpersonate = async (companyId: string) => {
+  const handleImpersonateLegacy = async (companyId: string) => {
     try {
       await logMasterAction('IMPERSONATION', `Entrada em modo master na empresa ${companyId}`, 'AUTH');
       

@@ -27,7 +27,7 @@ const ClientsList: React.FC = () => {
 
   // Cores automáticas para avatares baseados na inicial
   const getAvatarColor = (name: string) => {
-    const colors = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+    const colors = ['#0061FF', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
     const charCode = name.charCodeAt(0);
     return colors[charCode % colors.length];
   };
@@ -126,7 +126,7 @@ const ClientsList: React.FC = () => {
       {/* DASHBOARD SUMMARY */}
       <div style={styles.summaryRow}>
         <div style={styles.summaryCard}>
-          <div style={{...styles.summaryIcon, backgroundColor: '#6366F115'}}><Users size={20} color="#6366F1" /></div>
+          <div style={{...styles.summaryIcon, backgroundColor: '#0061FF15'}}><Users size={20} color="#0061FF" /></div>
           <div>
             <p style={styles.summaryLabel}>Total de Clientes</p>
             <h3 style={styles.summaryValue}>{contacts.length}</h3>
@@ -134,14 +134,14 @@ const ClientsList: React.FC = () => {
           <div style={{...styles.trendTag, color: '#10B981'}}>+4 <TrendingUp size={12} /></div>
         </div>
         <div style={styles.summaryCard}>
-          <div style={{...styles.summaryIcon, backgroundColor: '#6366F1'}}><CheckCircle2 size={20} color="#FFFFFF" /></div>
+          <div style={{...styles.summaryIcon, backgroundColor: '#0061FF'}}><CheckCircle2 size={20} color="#FFFFFF" /></div>
           <div>
             <p style={styles.summaryLabel}>Clientes Ativos</p>
             <h3 style={styles.summaryValue}>{contacts.filter(c => c.status !== 'inactive').length}</h3>
           </div>
         </div>
         <div style={styles.summaryCard}>
-          <div style={{...styles.summaryIcon, backgroundColor: '#6366F115'}}><DollarSign size={20} color="#6366F1" /></div>
+          <div style={{...styles.summaryIcon, backgroundColor: '#0061FF15'}}><DollarSign size={20} color="#0061FF" /></div>
           <div>
             <p style={styles.summaryLabel}>MRR Estimado</p>
             <h3 style={styles.summaryValue}>R$ 42.800</h3>
@@ -149,7 +149,7 @@ const ClientsList: React.FC = () => {
           <div style={{...styles.trendTag, color: '#10B981'}}>+8.2% <TrendingUp size={12} /></div>
         </div>
         <div style={styles.summaryCard}>
-          <div style={{...styles.summaryIcon, backgroundColor: '#4F46E5'}}><TrendingDown size={20} color="#FFFFFF" /></div>
+          <div style={{...styles.summaryIcon, backgroundColor: '#0052D9'}}><TrendingDown size={20} color="#FFFFFF" /></div>
           <div>
             <p style={styles.summaryLabel}>Taxa de Churn</p>
             <h3 style={styles.summaryValue}>2.4%</h3>
@@ -237,7 +237,7 @@ const ClientsList: React.FC = () => {
                 <td style={{...styles.td, textAlign: 'right'}}>
                   <div style={styles.actions}>
                     <button style={styles.actionBtn} title="Abrir Chat"><MessageSquare size={16} /></button>
-                    <button style={{...styles.actionBtn, backgroundColor: '#EEF2FF', color: '#6366F1'}} title="Ver Perfil"><ExternalLink size={16} /></button>
+                    <button style={{...styles.actionBtn, backgroundColor: '#F0F7FF', color: '#0061FF'}} title="Ver Perfil"><ExternalLink size={16} /></button>
                     <ChevronRight size={18} color="#CBD5E1" />
                   </div>
                 </td>
@@ -266,7 +266,7 @@ const styles: Record<string, any> = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
   title: { fontSize: '32px', fontWeight: '800', color: '#0F172A', margin: 0, letterSpacing: '-1.5px' },
   subtitle: { color: '#64748B', fontSize: '15px', fontWeight: '500' },
-  addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '0 24px', height: '46px', backgroundColor: '#6366F1', color: 'white', border: 'none', borderRadius: '18px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)', letterSpacing: '0.3px' },
+  addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '0 24px', height: '46px', backgroundColor: '#0061FF', color: 'white', border: 'none', borderRadius: '18px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)', letterSpacing: '0.3px' },
   
   controls: { display: 'flex', gap: '16px', marginBottom: '24px' },
   searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'white', padding: '12px 24px', borderRadius: '20px', border: '1px solid #E2E8F0', transition: 'all 0.2s' },
@@ -282,7 +282,7 @@ const styles: Record<string, any> = {
   loadingTd: { padding: '100px', textAlign: 'center', color: '#94A3B8', fontWeight: '600' },
   
   uInfo: { display: 'flex', alignItems: 'center', gap: '14px' },
-  uAvatar: { width: '44px', height: '44px', borderRadius: '18px', background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', color: '#6366F1', fontSize: '18px' },
+  uAvatar: { width: '44px', height: '44px', borderRadius: '18px', background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', color: '#0061FF', fontSize: '18px' },
   uName: { fontSize: '15px', fontWeight: '600', color: '#0F172A', display: 'block', letterSpacing: '0.2px' },
   uSubtext: { fontSize: '12px', color: '#94A3B8', fontWeight: '500', letterSpacing: '0.2px' },
   
@@ -303,13 +303,13 @@ const styles: Record<string, any> = {
   trendTag: { position: 'absolute', top: '24px', right: '24px', fontSize: '12px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px', letterSpacing: '0.2px' },
   
   aiBanner: { backgroundColor: '#1F2937', borderRadius: '24px', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' },
-  aiIconBox: { width: '44px', height: '44px', borderRadius: '14px', background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  aiIconBox: { width: '44px', height: '44px', borderRadius: '14px', background: 'linear-gradient(135deg, #0061FF 0%, #8B5CF6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   aiTitle: { color: 'white', fontSize: '14px', fontWeight: '600', margin: 0, letterSpacing: '0.3px' },
   aiText: { color: '#94A3B8', fontSize: '13px', margin: '2px 0 0 0', fontWeight: '400', letterSpacing: '0.1px' },
   aiActionBtn: { padding: '8px 16px', borderRadius: '12px', border: '1px solid #374151', backgroundColor: 'transparent', color: 'white', fontSize: '12px', fontWeight: '600', cursor: 'pointer', letterSpacing: '0.3px' },
   
   segmentBtn: { padding: '10px 16px', borderRadius: '14px', border: 'none', background: 'transparent', color: '#64748B', fontSize: '14px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' },
-  activeSegment: { backgroundColor: 'var(--bg-active)', color: '#6366F1' },
+  activeSegment: { backgroundColor: 'var(--bg-active)', color: '#0061FF' },
   countBadge: { padding: '2px 8px', borderRadius: '8px', backgroundColor: 'white', border: '1px solid var(--border)', fontSize: '10px', color: '#94A3B8' },
   
   volumeCell: { display: 'flex', flexDirection: 'column', gap: '4px' },

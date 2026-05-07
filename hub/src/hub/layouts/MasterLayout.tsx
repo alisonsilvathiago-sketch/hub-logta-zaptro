@@ -198,6 +198,7 @@ const MasterLayout: React.FC = () => {
           letter-spacing: -1.2px !important;
           line-height: 1.2 !important;
           margin-bottom: 4px !important;
+          font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
         }
 
         h2, .h2-style {

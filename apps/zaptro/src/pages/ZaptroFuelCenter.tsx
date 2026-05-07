@@ -23,7 +23,7 @@ const normalizeType = (value?: string | null) => {
 };
 
 const fuelMeta: Record<string, { label: string; color: string }> = {
-  gasolina: { label: 'Gasolina', color: '#6366F1' },
+  gasolina: { label: 'Gasolina', color: '#0061FF' },
   diesel: { label: 'Diesel', color: '#EF4444' },
   etanol: { label: 'Etanol', color: '#10B981' },
   gnv: { label: 'GNV', color: '#0EA5E9' },

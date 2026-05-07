@@ -249,7 +249,7 @@ const styles: Record<string, any> = {
   logoCircle: {
     width: '56px',
     height: '56px',
-    backgroundColor: '#6366F1',
+    backgroundColor: '#0061FF',
     borderRadius: '16px',
     display: 'flex',
     alignItems: 'center',
@@ -336,7 +336,7 @@ const styles: Record<string, any> = {
   },
   forgotLink: {
     fontSize: '12px',
-    color: '#6366F1',
+    color: '#0061FF',
     fontWeight: '700',
     cursor: 'pointer',
   },
@@ -372,7 +372,7 @@ const styles: Record<string, any> = {
   submitBtn: {
     width: '100%',
     padding: '16px',
-    backgroundColor: '#6366F1',
+    backgroundColor: '#0061FF',
     color: 'white',
     border: 'none',
     borderRadius: '16px',

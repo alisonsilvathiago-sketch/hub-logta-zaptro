@@ -3,7 +3,7 @@ import { supabaseZaptro } from './supabase-zaptro';
 
 /**
  * Chat Archiver Service
- * Automatically exports daily chat history into the Hub Drive.
+ * Automatically exports daily chat history into the LogDock.
  */
 export const archiveDailyConversations = async (companyId: string) => {
   try {
@@ -57,9 +57,9 @@ export const archiveDailyConversations = async (companyId: string) => {
       // Cria um objeto File simulado para o serviço de Drive
       const file = new File([content], fileName, { type: 'text/plain' });
 
-      // 4. Salva no Drive via DriveIntelligence
-      const { saveEntityToDrive } = await import('./driveIntelligence');
-      const result = await saveEntityToDrive({
+      // 4. Salva no LogDock via LogDockIntelligence
+      const { saveEntityToLogDock } = await import('./logDockIntelligence');
+      const result = await saveEntityToLogDock({
         company_id: companyId,
         type: 'zaptro',
         file,

@@ -10,7 +10,7 @@ export interface FileUploadParams {
 }
 
 /**
- * Uploads a file to the Hub Drive with automated hierarchical organization.
+ * Uploads a file to the LogDock with automated hierarchical organization.
  * Integrated with Zaptro & Logta.
  */
 export const uploadFile = async ({ 
@@ -25,7 +25,7 @@ export const uploadFile = async ({
     const date = new Date().toISOString().split('T')[0];
     let filePath = '';
 
-    // 1. Definição do Path Automático (Padrão Hub Drive)
+    // 1. Definição do Path Automático (Padrão LogDock)
     if (entityType === 'cliente') {
       filePath = `${companyId}/clientes/${entityId}/${category}/${date}-${file.name}`;
     } else if (entityType === 'veiculo') {
@@ -43,7 +43,7 @@ export const uploadFile = async ({
 
     if (storageError) throw storageError;
 
-    // 3. Registro no Banco de Dados (Metadados Estruturados para o Drive)
+    // 3. Registro no Banco de Dados (Metadados Estruturados para o LogDock)
     const { data: dbData, error: dbError } = await supabase
       .from('files')
       .insert([
@@ -58,6 +58,7 @@ export const uploadFile = async ({
           entity_type: entityType,
           client_id: entityType === 'cliente' ? entityId : null,
           vehicle_id: entityType === 'veiculo' ? entityId : null,
+          status: 'pendente',
           metadata: { 
             source: 'zaptro_app', 
             auto_archived: true,
@@ -76,12 +77,12 @@ export const uploadFile = async ({
       action: 'AUTO_ARCHIVE',
       user_id: userId,
       company_id: companyId,
-      details: `Arquivo ${file.name} arquivado automaticamente via Zaptro App.`
+      details: `Arquivo ${file.name} arquivado automaticamente via LogDock (Zaptro).`
     });
 
     return { data: dbData, path: filePath };
   } catch (error: any) {
-    console.error('Erro no upload Hub Drive:', error.message);
+    console.error('Erro no upload LogDock:', error.message);
     throw error;
   }
 };

@@ -72,7 +72,7 @@ export const ShortcutHelp: React.FC = () => {
       >
         <div style={{ padding: '32px 32px 24px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#6366F115', color: '#6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#0061FF15', color: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <HelpCircle size={20} />
             </div>
             <div>

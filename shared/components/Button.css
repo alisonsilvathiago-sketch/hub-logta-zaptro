@@ -23,15 +23,15 @@
 
 /* Variants */
 .hub-button--primary {
-  background-color: #6366F1;
+  background-color: #0061FF;
   color: #FFFFFF !important;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 97, 255, 0.2);
 }
 
 .hub-button--primary:hover:not(:disabled) {
-  background-color: #4F46E5;
+  background-color: #0056E0;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 6px 16px rgba(0, 97, 255, 0.3);
 }
 
 .hub-button--secondary {
@@ -50,9 +50,9 @@
 }
 
 .hub-button--outline:hover:not(:disabled) {
-  border-color: #6366F1;
-  color: #6366F1;
-  background-color: rgba(99, 102, 241, 0.05);
+  border-color: #0061FF;
+  color: #0061FF;
+  background-color: rgba(0, 97, 255, 0.05);
 }
 
 .hub-button--danger {

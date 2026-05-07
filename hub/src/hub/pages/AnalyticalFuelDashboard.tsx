@@ -57,7 +57,7 @@ const AnalyticalFuelDashboard: React.FC = () => {
             <ArrowLeft size={18} />
           </button>
           <div style={styles.logoBox}>
-            <Fuel size={24} color="#6366F1" />
+            <Fuel size={24} color="#0061FF" />
             <div>
               <h1 style={styles.title}>Central de Inteligência</h1>
               <p style={styles.subtitle}>Monitoramento Nacional de Combustíveis em Tempo Real</p>
@@ -85,7 +85,7 @@ const AnalyticalFuelDashboard: React.FC = () => {
             ))}
           </div>
           <div style={{ ...styles.searchBox, width: '400px' }}>
-            <MapPin size={18} color="#6366F1" />
+            <MapPin size={18} color="#0061FF" />
             <input 
               type="text" 
               placeholder="Vincular sua cidade ou estado para filtrar preços..." 
@@ -98,7 +98,7 @@ const AnalyticalFuelDashboard: React.FC = () => {
         <div style={styles.statsGrid}>
           {fuelStats.map((stat, i) => (
             <div key={i} style={styles.statCard}>
-              <div style={{ ...styles.iconBox, backgroundColor: i % 2 === 0 ? '#F5F3FF' : '#6366F1', color: i % 2 === 0 ? '#6366F1' : '#FFF' }}>
+              <div style={{ ...styles.iconBox, backgroundColor: i % 2 === 0 ? '#F5F3FF' : '#0061FF', color: i % 2 === 0 ? '#0061FF' : '#FFF' }}>
                 {stat.icon}
               </div>
               <div>
@@ -122,15 +122,15 @@ const AnalyticalFuelDashboard: React.FC = () => {
                   <AreaChart data={roiData}>
                     <defs>
                       <linearGradient id="colorFuel" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#0061FF" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#0061FF" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94A3B8'}} />
                     <YAxis hide />
                     <Tooltip />
-                    <Area type="monotone" dataKey="value" stroke="#6366F1" strokeWidth={3} fill="url(#colorFuel)" />
+                    <Area type="monotone" dataKey="value" stroke="#0061FF" strokeWidth={3} fill="url(#colorFuel)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -139,7 +139,7 @@ const AnalyticalFuelDashboard: React.FC = () => {
             <div style={styles.fuelShowcase}>
               {['Gasolina', 'Etanol', 'Diesel'].map((type, i) => (
                 <div key={type} style={styles.fuelCard}>
-                  <div style={{ ...styles.fuelIcon, backgroundColor: i === 0 ? '#F5F3FF' : (i === 1 ? '#F0FDF4' : '#FEF2F2'), color: i === 0 ? '#6366F1' : (i === 1 ? '#22C55E' : '#EF4444') }}>
+                  <div style={{ ...styles.fuelIcon, backgroundColor: i === 0 ? '#F5F3FF' : (i === 1 ? '#F0FDF4' : '#FEF2F2'), color: i === 0 ? '#0061FF' : (i === 1 ? '#22C55E' : '#EF4444') }}>
                     <Droplets size={24} />
                   </div>
                   <div>
@@ -177,7 +177,7 @@ const AnalyticalFuelDashboard: React.FC = () => {
               </div>
 
               <div style={styles.aiInsight}>
-                <Brain size={20} color="#6366F1" />
+                <Brain size={20} color="#0061FF" />
                 <p style={styles.aiText}>
                   Detectamos uma tendência de queda de 2% no diesel para a próxima semana. Recomendamos aguardar 48h para grandes abastecimentos.
                 </p>
@@ -233,7 +233,7 @@ const styles = {
   searchBox: { display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#F1F5F9', padding: '10px 16px', borderRadius: '12px', width: '320px' },
   searchInput: { border: 'none', background: 'none', fontSize: '13px', color: '#1E293B', width: '100%', fontWeight: '600', outline: 'none' },
   syncBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#FFF', border: '1px solid #E2E8F0', borderRadius: '12px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', color: '#1E293B' },
-  publicBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#6366F1', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', color: '#FFF' },
+  publicBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#0061FF', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', color: '#FFF' },
   content: { padding: '40px' },
   statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' },
   statCard: { backgroundColor: '#FFF', padding: '24px', borderRadius: '24px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '20px' },
@@ -247,7 +247,7 @@ const styles = {
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   cardTitle: { fontSize: '16px', fontWeight: '900', color: '#0F172A', margin: 0 },
   cardSub: { fontSize: '13px', color: '#64748B', marginTop: '4px' },
-  tag: { fontSize: '10px', fontWeight: '800', color: '#6366F1', backgroundColor: '#F5F3FF', padding: '4px 10px', borderRadius: '20px' },
+  tag: { fontSize: '10px', fontWeight: '800', color: '#0061FF', backgroundColor: '#F5F3FF', padding: '4px 10px', borderRadius: '20px' },
   fuelShowcase: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' },
   fuelCard: { backgroundColor: '#FFF', padding: '24px', borderRadius: '24px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '20px' },
   fuelIcon: { width: '56px', height: '56px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' },

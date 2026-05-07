@@ -13,6 +13,7 @@ import { getPlatform } from '@core/lib/platform';
 
 const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ onMenuClick, isMobile }) => {
   const { profile, signOut } = useAuth();
+  console.log('[Header] Rendering for user:', profile?.email);
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -44,7 +45,8 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
       'account': 'Meu Perfil',
       'agenda': 'Agenda Hub',
       'hubchat': 'HubChat',
-      'logistica': 'A Logística'
+      'logistica': 'A Logística',
+      'logdock': 'LogDock'
     };
 
     paths.forEach((p, i) => {
@@ -169,6 +171,21 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
                   <Brain size={14} /> Operational Intelligence
                 </div>
               </div>
+
+              <div style={styles.divider} />
+
+              <div style={styles.dropdownSection}>
+                <div style={styles.dropdownSectionTitle}>OUTROS PRODUTOS</div>
+                <div 
+                  style={{...styles.dropdownItem, backgroundColor: '#F0F7FF', color: '#2563EB'}} 
+                  onClick={() => { setDropdownOpen(false); navigate('/logdock/app'); }}
+                >
+                  <HardDrive size={14} /> LogDock.com.br (Focado)
+                </div>
+                <div style={styles.dropdownItem}>
+                  <Zap size={14} /> Zaptro Commerce
+                </div>
+              </div>
               
               <div style={styles.divider} />
               
@@ -237,7 +254,7 @@ const styles: Record<string, any> = {
   },
   avatar: {
     width: '44px', height: '44px', borderRadius: '22px',
-    backgroundColor: '#6366F1', color: 'white',
+    backgroundColor: '#0061FF', color: 'white',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontWeight: '800', fontSize: '16px', boxShadow: '0 4px 6px rgba(99, 102, 241, 0.2)'
   },

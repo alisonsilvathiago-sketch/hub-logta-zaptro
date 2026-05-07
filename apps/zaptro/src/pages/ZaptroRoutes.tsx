@@ -755,7 +755,7 @@ const ZaptroRoutes: React.FC = () => {
   if (!profile?.company_id && !isMaster) {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', gap: '20px' }}>
-        <div style={{ width: 40, height: 40, border: '3px solid #E2E8F0', borderTopColor: '#6366F1', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <div style={{ width: 40, height: 40, border: '3px solid #E2E8F0', borderTopColor: '#0061FF', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
         <p style={{ color: '#64748B', fontSize: '14px', fontWeight: '600' }}>Identificando sua empresa...</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>

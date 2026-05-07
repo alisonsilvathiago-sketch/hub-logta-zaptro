@@ -30,7 +30,7 @@ const MasterSidebar: React.FC = () => {
       items: [
         { label: 'Empresas', icon: Building2, path: '/master/companies', shortcut: 'E' },
         { label: 'Financeiro', icon: CreditCard, path: '/master/billing', shortcut: 'F' },
-        { label: 'Hub Drive', icon: Archive, path: '/master/drive', shortcut: 'D' },
+        { label: 'LogDock.com.br', icon: Box, path: '/master/logdock', shortcut: 'D' },
         { label: 'Infra & Segurança', icon: HardDrive, path: '/master/infrastructure', shortcut: 'B' },
         { label: 'Workflows & Automações', icon: Zap, path: '/master/automacoes' },
       ]
@@ -119,7 +119,7 @@ const styles: Record<string, any> = {
     zIndex: 1000, overflow: 'hidden', boxShadow: '4px 0 25px -5px rgba(0,0,0,0.05)',
   },
   logoContainer: { padding: '24px 16px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', minHeight: '80px' },
-  logoIcon: { width: '48px', height: '48px', backgroundColor: '#6366F1', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)', flexShrink: 0 },
+  logoIcon: { width: '48px', height: '48px', backgroundColor: '#0061FF', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 16px rgba(0, 97, 255, 0.2)', flexShrink: 0 },
   logoTextContainer: { display: 'flex', flexDirection: 'column', transition: 'opacity 0.2s', whiteSpace: 'nowrap' },
   logoText: { color: '#0F172A', fontSize: '18px', fontWeight: '800', letterSpacing: '-0.8px' },
   logoSubtext: { color: '#94A3B8', fontSize: '10px', fontWeight: '800', letterSpacing: '0.8px', textTransform: 'uppercase' },
@@ -128,9 +128,9 @@ const styles: Record<string, any> = {
   groupTitle: { fontSize: '10px', fontWeight: '800', color: '#94A3B8', padding: '0 12px', letterSpacing: '1px', marginBottom: '4px', textTransform: 'uppercase' },
   groupItems: { display: 'flex', flexDirection: 'column', gap: '4px' },
   menuItem: { display: 'flex', alignItems: 'center', padding: '12px', borderRadius: '24px', color: '#64748B', textDecoration: 'none', fontSize: '14px', fontWeight: '600', transition: 'all 0.2s', whiteSpace: 'nowrap', position: 'relative', letterSpacing: '-0.4px' },
-  menuItemActive: { backgroundColor: '#F3F4F6', color: '#6366F1' },
+  menuItemActive: { backgroundColor: '#F3F4F6', color: '#0061FF' },
   menuLabel: { marginLeft: '12px', fontSize: '14px' },
-  activeDot: { position: 'absolute', right: '8px', width: '4px', height: '4px', backgroundColor: '#6366F1', borderRadius: '50%' },
+  activeDot: { position: 'absolute', right: '8px', width: '4px', height: '4px', backgroundColor: '#0061FF', borderRadius: '50%' },
   footer: { padding: '20px 12px', borderTop: '1px solid #E2E8F0' },
   logoutBtn: { width: '100%', display: 'flex', alignItems: 'center', borderRadius: '24px', backgroundColor: 'transparent', border: 'none', color: '#F43F5E', cursor: 'pointer', fontSize: '14px', fontWeight: '700', transition: 'all 0.2s', letterSpacing: '-0.4px' }
 };

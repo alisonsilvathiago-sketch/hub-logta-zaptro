@@ -219,7 +219,7 @@ const MasterNotifications: React.FC = () => {
            <div style={styles.historyList}>
               {history.map(n => (
                  <div key={n.id} style={styles.historyItem}>
-                    <div style={{...styles.priorityDot, backgroundColor: n.priority === 'CRITICAL' ? '#ef4444' : n.priority === 'HIGH' ? '#f59e0b' : '#6366F1'}} />
+                    <div style={{...styles.priorityDot, backgroundColor: n.priority === 'CRITICAL' ? '#ef4444' : n.priority === 'HIGH' ? '#f59e0b' : '#0061FF'}} />
                     <div style={styles.historyContent}>
                        <div style={styles.hTitleRow}>
                           <span style={styles.hTitle}>{n.title}</span>

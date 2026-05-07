@@ -381,7 +381,7 @@ const ClientProfile: React.FC = () => {
                         entityType="CLIENTE"
                         entityId={id || ''}
                         onUploadComplete={() => {
-                          toastSuccess('Documento arquivado com sucesso no Hub Drive!');
+                          toastSuccess('Documento arquivado com sucesso no LogDock!');
                           // Recarregar lista
                           supabase.from('files').select('*').eq('metadata->>client_id', id).then(({data}) => setFiles(data || []));
                         }}
@@ -419,7 +419,10 @@ const ClientProfile: React.FC = () => {
                          <div style={{ display: 'flex', gap: '8px' }}>
                             <button 
                               style={{...styles.btnAction, padding: '8px'}}
-                              onClick={() => window.open(`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/hub-drive/${file.path}`, '_blank')}
+                              onClick={async () => {
+                                const { data } = await supabase.storage.from('hub-drive').createSignedUrl(file.path, 60);
+                                if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                              }}
                             >
                               <Download size={16} />
                             </button>

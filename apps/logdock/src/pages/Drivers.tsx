@@ -204,7 +204,7 @@ const DriversPage: React.FC = () => {
                       backgroundColor: driver.status === 'active' ? '#E1FCEF' : driver.status === 'blocked' ? '#FEE2E2' : '#F1F5F9',
                       color: driver.status === 'active' ? '#065F46' : driver.status === 'blocked' ? '#991B1B' : '#475569'
                     }}>
-                      {driver.status.charAt(0).toUpperCase() + driver.status.slice(1)}
+                      {(driver.status || '').charAt(0).toUpperCase() + (driver.status || '').slice(1)}
                     </div>
                   </td>
                   <td style={styles.td}>

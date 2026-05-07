@@ -241,7 +241,7 @@ const CompanyProfile: React.FC = () => {
             {company.logo_url ? (
               <img src={company.logo_url} alt={company.name} style={styles.logoImg} />
             ) : (
-              <Building2 size={24} color="#6366F1" />
+              <Building2 size={24} color="#0061FF" />
             )}
           </div>
           <div>
@@ -376,7 +376,7 @@ const CompanyProfile: React.FC = () => {
 
               <div style={styles.statsRow}>
                 <div style={styles.statCard}>
-                  <Users size={20} color="#6366F1" />
+                  <Users size={20} color="#0061FF" />
                   <div><h4>{company.collaborators?.length || 0}</h4><p>Colaboradores</p></div>
                 </div>
                 <div style={styles.statCard}>
@@ -409,7 +409,7 @@ const CompanyProfile: React.FC = () => {
                   <div style={styles.waCard}>
                     <div style={{display: 'flex', justifyContent: 'space-between'}}>
                       <span style={styles.infoLabel}>WhatsApp Credits</span>
-                      <MessageSquare size={16} color="#6366F1" />
+                      <MessageSquare size={16} color="#0061FF" />
                     </div>
                     <div style={{fontSize: '18px', fontWeight: '800', marginTop: '10px'}}>
                       {company.wa_credits || 0}
@@ -438,7 +438,7 @@ const CompanyProfile: React.FC = () => {
                   </div>
                 </div>
                 <button 
-                  style={{...styles.primaryBtn, width: '100%', marginTop: '16px', backgroundColor: '#6366F1'}} 
+                  style={{...styles.primaryBtn, width: '100%', marginTop: '16px', backgroundColor: '#0061FF'}} 
                   onClick={() => handleRubyAction('ADD_CREDITS')}
                 >
                   <Plus size={18} /> Adicionar Créditos Rubi
@@ -567,8 +567,8 @@ const CompanyProfile: React.FC = () => {
               </div>
               <button style={styles.dangerBtn} onClick={() => handleRubyAction('RESET_INSTANCE')}>Executar</button>
             </div>
-            <div style={{...styles.adminActionCard, borderLeft: '4px solid #6366F1'}}>
-              <Zap color="#6366F1" size={24} />
+            <div style={{...styles.adminActionCard, borderLeft: '4px solid #0061FF'}}>
+              <Zap color="#0061FF" size={24} />
               <div>
                 <h4>Sincronização Forçada</h4>
                 <p>Força o espelhamento total do banco da unidade para o Hub Master.</p>
@@ -592,7 +592,7 @@ const CompanyProfile: React.FC = () => {
 
 const styles: Record<string, any> = {
   container: { padding: '24px 0' },
-  loading: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh', fontWeight: '800', color: '#6366F1', fontSize: '18px' },
+  loading: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh', fontWeight: '800', color: '#0061FF', fontSize: '18px' },
   error: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh', color: '#EF4444', fontWeight: '800', fontSize: '18px' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '20px' },
@@ -605,12 +605,12 @@ const styles: Record<string, any> = {
   metaItem: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#64748B', fontWeight: '500' },
   
   headerActions: { display: 'flex', gap: '12px' },
-  primaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '14px', border: 'none', backgroundColor: '#6366F1', color: 'white', fontWeight: '600', fontSize: '14px', cursor: 'pointer', letterSpacing: '0.3px' },
+  primaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '14px', border: 'none', backgroundColor: '#0061FF', color: 'white', fontWeight: '600', fontSize: '14px', cursor: 'pointer', letterSpacing: '0.3px' },
   impersonateBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '14px', border: 'none', backgroundColor: '#0F172A', color: 'white', fontWeight: '600', fontSize: '14px', cursor: 'pointer', letterSpacing: '0.3px' },
   
   tabNav: { display: 'flex', gap: '4px', borderBottom: '1px solid #E2E8F0', marginBottom: '32px' },
   tabBtn: { padding: '12px 20px', border: 'none', background: 'transparent', color: '#64748B', fontSize: '14px', fontWeight: '600', cursor: 'pointer', borderBottom: '2px solid transparent', letterSpacing: '0.2px' },
-  activeTab: { color: '#6366F1', borderBottom: '2px solid #6366F1', fontWeight: '500' },
+  activeTab: { color: '#0061FF', borderBottom: '2px solid #0061FF', fontWeight: '500' },
   
   contentArea: { },
   overviewGrid: { display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' },
@@ -638,7 +638,7 @@ const styles: Record<string, any> = {
   td: { padding: '16px 12px', fontSize: '14px' },
   roleTag: { padding: '4px 8px', borderRadius: '6px', backgroundColor: '#F1F5F9', fontSize: '11px', fontWeight: '700' },
   
-  addBtn: { display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', border: 'none', backgroundColor: '#F1F5F9', color: '#6366F1', fontWeight: '700', cursor: 'pointer' },
+  addBtn: { display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', border: 'none', backgroundColor: '#F1F5F9', color: '#0061FF', fontWeight: '700', cursor: 'pointer' },
   iconBtn: { width: '32px', height: '32px', borderRadius: '8px', border: 'none', backgroundColor: '#F8FAF9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', cursor: 'pointer' },
   colabActions: { display: 'flex', gap: '8px' },
   

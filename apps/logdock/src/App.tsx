@@ -2668,7 +2668,36 @@ const LogDockDashboard: React.FC = () => {
       setFiles(fileData || []);
 
       const { data: folderData } = await foldQuery;
-      setFolders(folderData || []);
+      let mergedFolders = folderData || [];
+      const compId = profile.company_id || 'comp-default';
+      
+      const hasLogta = mergedFolders.some((f: any) => f.name === 'Logta SaaS' || f.id === 'fol-logta');
+      const hasZaptro = mergedFolders.some((f: any) => f.name === 'Zaptro CRM' || f.id === 'fol-zaptro');
+      const hasHub = mergedFolders.some((f: any) => f.name === 'HUB Master' || f.id === 'fol-hub');
+
+      const systemFolders: any[] = [];
+      if (!hasLogta) systemFolders.push({ id: 'fol-logta', name: 'Logta SaaS', parent_id: null, company_id: compId });
+      if (!hasZaptro) systemFolders.push({ id: 'fol-zaptro', name: 'Zaptro CRM', parent_id: null, company_id: compId });
+      if (!hasHub) systemFolders.push({ id: 'fol-hub', name: 'HUB Master', parent_id: null, company_id: compId });
+
+      // Nested subfolders for ecosystem categories
+      systemFolders.push({ id: 'fol-logta-comprovantes', name: 'Comprovantes', parent_id: 'fol-logta', company_id: compId });
+      systemFolders.push({ id: 'fol-logta-contratos', name: 'Contratos', parent_id: 'fol-logta', company_id: compId });
+      systemFolders.push({ id: 'fol-logta-xmls', name: 'XMLs & Notas Fiscais', parent_id: 'fol-logta', company_id: compId });
+
+      systemFolders.push({ id: 'fol-zaptro-leads', name: 'Contatos & Leads', parent_id: 'fol-zaptro', company_id: compId });
+      systemFolders.push({ id: 'fol-zaptro-anexos', name: 'Anexos de Negociações', parent_id: 'fol-zaptro', company_id: compId });
+
+      systemFolders.push({ id: 'fol-hub-backups', name: 'Backups de Segurança', parent_id: 'fol-hub', company_id: compId });
+      systemFolders.push({ id: 'fol-hub-logs', name: 'Logs do Sistema', parent_id: 'fol-hub', company_id: compId });
+
+      systemFolders.forEach(sf => {
+        if (!mergedFolders.some((f: any) => f.id === sf.id)) {
+          mergedFolders.push(sf);
+        }
+      });
+
+      setFolders(mergedFolders);
 
       // Set Recent Files for Dashboard
       if (fileData) {
@@ -2740,10 +2769,43 @@ const LogDockDashboard: React.FC = () => {
     (activeTab === 'favorites' ? true : f.parent_id === (currentFolder?.id || null))
   ));
 
-  const filteredFiles = sortData(files.filter(f =>
-    f.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (activeTab === 'favorites' ? true : f.folder_id === (currentFolder?.id || null))
-  ));
+  const filteredFiles = sortData(files.filter(f => {
+    if (!f.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    if (activeTab === 'favorites') return f.is_favorite;
+
+    const fId = currentFolder?.id || null;
+    
+    // Filtros inteligentes para as subpastas virtuais do ecossistema
+    if (fId === 'fol-logta-comprovantes') {
+      return f.category === 'comprovantes' || f.name.toLowerCase().includes('comprovante') || f.path?.includes('/comprovantes/');
+    }
+    if (fId === 'fol-logta-contratos') {
+      return f.category === 'contratos' || f.name.toLowerCase().includes('contrato') || f.path?.includes('/contratos/');
+    }
+    if (fId === 'fol-logta-xmls') {
+      return f.type?.includes('xml') || f.name.toLowerCase().endsWith('.xml') || f.category === 'xmls' || f.path?.includes('/xmls/');
+    }
+    if (fId === 'fol-zaptro-leads') {
+      return f.category === 'leads' || f.category === 'crm' || f.metadata?.source === 'zaptro_app' || f.path?.includes('/zaptro/');
+    }
+    if (fId === 'fol-zaptro-anexos') {
+      return f.category === 'anexos' || f.category === 'proposta' || f.name.toLowerCase().includes('proposta') || f.metadata?.source === 'Zaptro CRM';
+    }
+    if (fId === 'fol-hub-backups') {
+      return f.category === 'backup' || f.name.toLowerCase().includes('backup') || f.name.toLowerCase().endsWith('.sql');
+    }
+    if (fId === 'fol-hub-logs') {
+      return f.category === 'logs' || f.name.toLowerCase().includes('log') || f.name.toLowerCase().endsWith('.log');
+    }
+
+    // Se estiver nas pastas raiz de sistema (Logta, Zaptro, HUB), não mostra arquivos soltos nela (deixando nas subpastas dedicadas)
+    if (fId === 'fol-logta' || fId === 'fol-zaptro' || fId === 'fol-hub') {
+      return false;
+    }
+
+    // Caso padrão (pastas manuais)
+    return f.folder_id === fId;
+  }));
 
   const isEmpty = filteredFolders.length === 0 && filteredFiles.length === 0;
 
@@ -5249,6 +5311,25 @@ const FileExplorerView: React.FC<{
                   <span>Vincular à Entrega</span>
                 </div>
               </button>
+              {selectedFile && (selectedFile.toLowerCase().includes('backup') || selectedFile.toLowerCase().endsWith('.sql')) && (
+                <button 
+                  onClick={() => { 
+                    const restoreToast = toast.loading('Sincronizando bancos de dados e restaurando backup...');
+                    setTimeout(() => {
+                      toast.success('Backup restaurado e sincronizado com sucesso!', { id: restoreToast });
+                    }, 2000);
+                    setContextMenu(null); 
+                  }}
+                  style={styles.dropdownItem}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                    <RefreshCw size={18} color="#10B981" />
+                    <span style={{ color: '#10B981', fontWeight: 'bold' }}>Restaurar Backup</span>
+                  </div>
+                </button>
+              )}
               <div style={styles.menuDivider} />
               <button 
                 onClick={() => { toast.success('Link copiado!'); setContextMenu(null); }}

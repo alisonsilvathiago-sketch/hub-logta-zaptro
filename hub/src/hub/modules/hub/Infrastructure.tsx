@@ -64,7 +64,7 @@ const InfrastructureManagement: React.FC = () => {
   ];
 
   const autonomousServices = [
-    { name: 'Navegador Logístico', description: 'Otimização de rotas e custos.', icon: <Zap size={24} />, color: '#6366F1' },
+    { name: 'Navegador Logístico', description: 'Otimização de rotas e custos.', icon: <Zap size={24} />, color: '#0061FF' },
     { name: 'Guardião de Entregas', description: 'Segurança e prevenção de falhas.', icon: <ShieldCheck size={24} />, color: '#10B981' },
     { name: 'Talent Scout AI', description: 'Gestão inteligente de talentos.', icon: <Search size={24} />, color: '#F59E0B' },
     { name: 'Auditor Operacional', description: 'Auditoria fiscal e operacional.', icon: <Terminal size={24} />, color: '#EF4444' },
@@ -180,7 +180,7 @@ const InfrastructureManagement: React.FC = () => {
 
       <div style={styles.statsGrid}>
         {[
-          { label: 'Processamento Global', value: '14.2 %', icon: <Cpu size={24} />, color: '#6366F1', bg: 'rgba(99, 102, 241, 0.1)' },
+          { label: 'Processamento Global', value: '14.2 %', icon: <Cpu size={24} />, color: '#0061FF', bg: 'rgba(99, 102, 241, 0.1)' },
           { label: 'Disponibilidade (Uptime)', value: '99.9 %', icon: <Wifi size={24} />, color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' },
           { label: 'Banco de Dados', value: '24.5 GB', icon: <Database size={24} />, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' },
           { label: 'Eventos Críticos', value: '0', icon: <ShieldAlert size={24} />, color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)' },
@@ -258,13 +258,14 @@ const InfrastructureManagement: React.FC = () => {
                    <tbody>
                       {[
                         { path: '/v1/logistica/navigator', method: 'POST', version: 'v1.4.2', status: 'STABLE' },
+                        { path: '/v1/storage/logdock', method: 'PUT', version: 'v2.0.0', status: 'STABLE' },
                         { path: '/v1/comunicacao/zaptro', method: 'GET', version: 'v2.1.0', status: 'STABLE' },
                         { path: '/v1/financeiro/audit', method: 'POST', version: 'v1.1.5', status: 'MAINTENANCE' },
                         { path: '/v1/auth/session', method: 'GET', version: 'v3.0.1', status: 'CRITICAL' },
                       ].map((api, i) => (
                         <tr key={i} style={styles.tr}>
                            <td style={styles.td}><code style={{...styles.logIp, fontSize: '13px'}}>{api.path}</code></td>
-                           <td style={styles.td}><span style={{...styles.logAction, color: api.method === 'POST' ? '#6366F1' : '#10B981'}}>{api.method}</span></td>
+                           <td style={styles.td}><span style={{...styles.logAction, color: api.method === 'POST' ? '#0061FF' : '#10B981'}}>{api.method}</span></td>
                            <td style={styles.td}><span style={styles.moduleBadge}>{api.version}</span></td>
                            <td style={styles.td}>
                               <div style={{...styles.statusTag, color: api.status === 'CRITICAL' ? '#EF4444' : api.status === 'MAINTENANCE' ? '#F59E0B' : '#10B981'}}>

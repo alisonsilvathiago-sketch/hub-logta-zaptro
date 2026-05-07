@@ -11,7 +11,7 @@ interface StatCardProps {
   isFeatured?: boolean;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ label, value, icon: Icon, trend, color = '#6366F1', style, isFeatured }) => {
+const StatCard: React.FC<StatCardProps> = ({ label, value, icon: Icon, trend, color = '#0061FF', style, isFeatured }) => {
   const textColor = isFeatured ? '#fff' : color;
   const labelColor = isFeatured ? 'rgba(255,255,255,0.8)' : '#64748B';
   const iconBg = isFeatured ? 'rgba(255,255,255,0.2)' : `${color}10`;
@@ -20,7 +20,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, icon: Icon, trend, co
 
   return (
     <div className="hover-scale" style={{ 
-      background: isFeatured ? 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)' : '#fff', 
+      background: isFeatured ? 'linear-gradient(135deg, #0061FF 0%, #8B5CF6 100%)' : '#fff', 
       borderRadius: '24px', 
       padding: '28px', 
       border: isFeatured ? 'none' : '1px solid rgba(226, 232, 240, 0.8)',

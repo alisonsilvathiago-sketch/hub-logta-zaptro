@@ -32,7 +32,7 @@ export const SystemConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const configMap: any = {
         platformName: 'Logta Hub',
         supportEmail: 'suporte@logta.com.br',
-        primaryColor: '#6366F1',
+        primaryColor: '#0061FF',
         allowRegistration: true,
         systemLockdown: false,
         googleServiceAccountKey: null

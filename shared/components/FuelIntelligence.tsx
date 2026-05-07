@@ -27,7 +27,7 @@ export const FuelPump: React.FC<{ data: FuelData }> = ({ data }) => {
 
   const getFuelColor = (type: string) => {
     switch (type.toLowerCase()) {
-      case 'gasolina': return '#6366F1';
+      case 'gasolina': return '#0061FF';
       case 'diesel': return '#EF4444';
       case 'etanol': return '#10B981';
       default: return '#94A3B8';
@@ -95,7 +95,7 @@ export const FuelDashboardCard: React.FC<{ prices: FuelData[]; onClick?: () => v
   return (
     <div style={styles.card} onClick={handleCardClick}>
       <div style={styles.cardHeader}>
-        <div style={styles.cardIconBox}><Fuel size={18} color="#6366F1" /></div>
+        <div style={styles.cardIconBox}><Fuel size={18} color="#0061FF" /></div>
         <div style={styles.cardTitle}>Combustível Hoje</div>
         <ChevronRight size={16} color="#94A3B8" style={{ marginLeft: 'auto' }} />
       </div>

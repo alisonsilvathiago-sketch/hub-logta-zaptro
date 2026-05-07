@@ -86,7 +86,7 @@ const CustomerDetail: React.FC = () => {
               width: '64px', 
               height: '64px', 
               borderRadius: '16px', 
-              backgroundColor: '#6366F1', 
+              backgroundColor: '#0061FF', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
@@ -103,8 +103,8 @@ const CustomerDetail: React.FC = () => {
                 <span style={{...styles.statusBadge, backgroundColor: company?.status === 'active' ? '#ECFDF5' : '#FEF2F2', color: company?.status === 'active' ? '#10B981' : '#EF4444'}}>
                   {company?.status === 'active' ? '● Ativo' : '● Bloqueado'}
                 </span>
-                <span style={{...styles.productBadge, backgroundColor: '#EEF2FF', color: '#6366F1'}}>
-                  <Zap size={12} fill="#6366F1" /> ZAPTRO CONECTADO
+                <span style={{...styles.productBadge, backgroundColor: '#F0F7FF', color: '#0061FF'}}>
+                  <Zap size={12} fill="#0061FF" /> ZAPTRO CONECTADO
                 </span>
               </div>
             </div>
@@ -120,7 +120,7 @@ const CustomerDetail: React.FC = () => {
       {/* SUMMARY METRICS */}
       <div style={styles.summaryRow}>
         <div style={styles.summaryCard}>
-          <div style={{...styles.summaryIcon, backgroundColor: '#EEF2FF'}}><DollarSign size={20} color="#6366F1" /></div>
+          <div style={{...styles.summaryIcon, backgroundColor: '#F0F7FF'}}><DollarSign size={20} color="#0061FF" /></div>
           <div>
             <p style={styles.summaryLabel}>Receita Gerada</p>
             <h3 style={styles.summaryValue}>R$ 12.450,00</h3>
@@ -154,7 +154,7 @@ const CustomerDetail: React.FC = () => {
         <div style={styles.leftCol}>
           <section style={styles.card}>
             <div style={styles.cardHeader}>
-              <div style={styles.cardIconBox}><Building2 size={20} color="#6366F1" /></div>
+              <div style={styles.cardIconBox}><Building2 size={20} color="#0061FF" /></div>
               <h2 style={styles.cardTitle}>Dados da Empresa</h2>
             </div>
             <div style={styles.infoGrid}>
@@ -171,7 +171,7 @@ const CustomerDetail: React.FC = () => {
 
           <section style={styles.card}>
             <div style={styles.cardHeader}>
-              <div style={styles.cardIconBox}><Sparkles size={20} color="#6366F1" /></div>
+              <div style={styles.cardIconBox}><Sparkles size={20} color="#0061FF" /></div>
               <h2 style={styles.cardTitle}>Insights da IA</h2>
             </div>
             <div style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
@@ -228,7 +228,7 @@ const CustomerDetail: React.FC = () => {
             <div style={styles.productStack}>
               <div style={styles.productItem}>
                 <div style={styles.productMain}>
-                  <div style={styles.prodIcon}><Zap size={18} color="#6366F1" /></div>
+                  <div style={styles.prodIcon}><Zap size={18} color="#0061FF" /></div>
                   <div>
                     <h4 style={styles.prodName}>{plan?.name || 'Plano Logta SaaS'}</h4>
                     <p style={styles.prodSub}>Próximo Vencimento: 12/06</p>
@@ -268,7 +268,7 @@ const CustomerDetail: React.FC = () => {
                         <span style={styles.progressLabel}>WhatsApp</span>
                         <span style={styles.progressValue}>700 / 1.000</span>
                      </div>
-                     <div style={styles.progressBar}><div style={{...styles.progressFill, width: '70%', backgroundColor: '#6366F1'}} /></div>
+                     <div style={styles.progressBar}><div style={{...styles.progressFill, width: '70%', backgroundColor: '#0061FF'}} /></div>
                   </div>
                   <div style={styles.progressContainer}>
                      <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '6px'}}>
@@ -284,14 +284,14 @@ const CustomerDetail: React.FC = () => {
 
           <section style={styles.card}>
             <div style={styles.cardHeader}>
-              <div style={styles.cardIconBox}><Clock size={20} color="#6366F1" /></div>
+              <div style={styles.cardIconBox}><Clock size={20} color="#0061FF" /></div>
               <h2 style={styles.cardTitle}>Time do Cliente ({team.length})</h2>
               <button style={styles.iconBtn}><Plus size={18} /></button>
             </div>
             <div style={styles.teamList}>
               {team.length > 0 ? team.map((member, i) => (
                 <div key={i} style={styles.memberItem}>
-                  <div style={{...styles.avatarSmall, backgroundColor: i % 2 === 0 ? '#6366F1' : '#10B981'}}>{(member.full_name || 'U')[0]}</div>
+                  <div style={{...styles.avatarSmall, backgroundColor: i % 2 === 0 ? '#0061FF' : '#10B981'}}>{(member.full_name || 'U')[0]}</div>
                   <div style={styles.memberInfo}>
                     <p style={styles.memberName}>{member.full_name}</p>
                     <p style={styles.memberRole}>{member.role.toUpperCase()}</p>
@@ -324,7 +324,7 @@ const CustomerDetail: React.FC = () => {
           </section>
           <section style={styles.card}>
             <div style={styles.cardHeader}>
-              <div style={styles.cardIconBox}><Activity size={20} color="#6366F1" /></div>
+              <div style={styles.cardIconBox}><Activity size={20} color="#0061FF" /></div>
               <h2 style={styles.cardTitle}>Histórico de Interação</h2>
             </div>
             <div style={styles.timeline}>
@@ -362,7 +362,7 @@ const CustomerDetail: React.FC = () => {
 
 const styles: Record<string, any> = {
   container: { padding: '40px 0' },
-  loading: { height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366F1', fontWeight: '800' },
+  loading: { height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0061FF', fontWeight: '800' },
   errorContainer: { height: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px' },
   header: { marginBottom: '40px' },
   backBtn: { background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B', fontWeight: '700', fontSize: '14px', cursor: 'pointer', marginBottom: '24px' },
@@ -371,9 +371,9 @@ const styles: Record<string, any> = {
   title: { fontSize: '36px', fontWeight: '800', color: '#0F172A', margin: 0, letterSpacing: '-1.5px' },
   badgeRow: { display: 'flex', gap: '8px' },
   statusBadge: { padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '800' },
-  productBadge: { backgroundColor: 'var(--bg-overlay)', color: '#6366F1', padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '800' },
+  productBadge: { backgroundColor: 'var(--bg-overlay)', color: '#0061FF', padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '800' },
   actions: { display: 'flex', gap: '12px' },
-  primaryBtn: { backgroundColor: '#6366F1', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '22px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
+  primaryBtn: { backgroundColor: '#0061FF', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '22px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
   secondaryBtn: { backgroundColor: 'white', color: '#64748B', border: '1px solid #E2E8F0', padding: '12px 24px', borderRadius: '22px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
   contentGrid: { display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px' },
   leftCol: { display: 'flex', flexDirection: 'column', gap: '32px' },
@@ -390,7 +390,7 @@ const styles: Record<string, any> = {
   memberItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '24px', backgroundColor: 'var(--bg-secondary)' },
   input: { padding: '12px', borderRadius: '24px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)', outline: 'none' },
   textarea: { padding: '12px', borderRadius: '24px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)', outline: 'none', minHeight: '100px', resize: 'none' },
-  avatarSmall: { width: '32px', height: '32px', borderRadius: '10px', backgroundColor: '#6366F1', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800' },
+  avatarSmall: { width: '32px', height: '32px', borderRadius: '10px', backgroundColor: '#0061FF', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800' },
   memberInfo: { flex: 1 },
   memberName: { fontSize: '14px', fontWeight: '700', color: '#1E293B', margin: 0 },
   memberRole: { fontSize: '11px', fontWeight: '700', color: '#94A3B8', margin: 0 },
@@ -416,7 +416,7 @@ const styles: Record<string, any> = {
   historyDate: { fontSize: '11px', color: '#94A3B8', margin: 0 },
   historySize: { fontSize: '12px', fontWeight: '700', color: '#64748B' },
   emptyText: { textAlign: 'center', padding: '20px', color: '#94A3B8', fontSize: '14px', fontStyle: 'italic' },
-  iconBtn: { background: 'none', border: 'none', cursor: 'pointer', color: '#6366F1' },
+  iconBtn: { background: 'none', border: 'none', cursor: 'pointer', color: '#0061FF' },
   summaryRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' },
   summaryCard: { backgroundColor: 'white', padding: '24px', borderRadius: '32px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' },
   summaryIcon: { width: '48px', height: '48px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
@@ -426,12 +426,12 @@ const styles: Record<string, any> = {
   integrationItem: { padding: '12px 16px', borderRadius: '16px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', fontSize: '13px', fontWeight: '700', color: '#475569' },
   progressContainer: { width: '100%' },
   progressLabel: { fontSize: '12px', fontWeight: '700', color: '#475569' },
-  progressValue: { fontSize: '12px', fontWeight: '800', color: '#6366F1' },
+  progressValue: { fontSize: '12px', fontWeight: '800', color: '#0061FF' },
   progressBar: { height: '8px', backgroundColor: '#F1F5F9', borderRadius: '4px', overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: '4px' },
   timeline: { display: 'flex', flexDirection: 'column', gap: '24px', paddingLeft: '12px' },
   timelineItem: { position: 'relative', paddingLeft: '24px', borderLeft: '2px solid #F1F5F9' },
-  timelinePoint: { position: 'absolute', left: '-7px', top: '0', width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#6366F1', border: '2px solid white' },
+  timelinePoint: { position: 'absolute', left: '-7px', top: '0', width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#0061FF', border: '2px solid white' },
   timelineContent: { display: 'flex', flexDirection: 'column' },
   timelineTitle: { fontSize: '14px', fontWeight: '800', color: '#1E293B', margin: 0 },
   timelineText: { fontSize: '13px', color: '#64748B', marginTop: '4px', margin: 0 },

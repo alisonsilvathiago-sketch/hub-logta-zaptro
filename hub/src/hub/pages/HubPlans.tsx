@@ -181,7 +181,7 @@ const MasterPlans: React.FC = () => {
       {/* FOOTER: SIMULAÇÃO */}
       <div style={styles.exampleCard}>
           <div style={styles.exHeader}>
-             <div style={styles.exIcon}><Smartphone size={20} color="#6366F1" /></div>
+             <div style={styles.exIcon}><Smartphone size={20} color="#0061FF" /></div>
              <h3 style={styles.exTitle}>Motor de Receita Híbrida Ativo</h3>
           </div>
           <p style={styles.exDesc}>Logta permite venda combinada: SaaS (Recorrência) + WhatsApp (Addon) + Créditos (Consumo) + Cursos (Info).</p>
@@ -263,7 +263,7 @@ const MasterPlans: React.FC = () => {
 const styles: Record<string, any> = {
   container: { padding: '40px', backgroundColor: 'transparent', minHeight: '100vh' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '48px' },
-  badge: { display: 'inline-block', padding: '4px 12px', backgroundColor: 'rgba(99, 102, 241, 0.18)', color: '#6366F1', borderRadius: '30px', fontSize: '10px', fontWeight: '700', marginBottom: '8px', letterSpacing: '1px' },
+  badge: { display: 'inline-block', padding: '4px 12px', backgroundColor: 'rgba(99, 102, 241, 0.18)', color: '#0061FF', borderRadius: '30px', fontSize: '10px', fontWeight: '700', marginBottom: '8px', letterSpacing: '1px' },
   title: { fontSize: '40px', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-2px', marginBottom: '8px' },
   subtitle: { fontSize: '16px', color: 'var(--text-muted)', fontWeight: '500' },
   headerActions: { display: 'flex', gap: '12px' },

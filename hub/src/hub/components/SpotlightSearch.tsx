@@ -84,7 +84,7 @@ const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ isOpen, onClose }) =>
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
         <div style={styles.searchHeader}>
-          <Search size={20} color="#6366F1" />
+          <Search size={20} color="#0061FF" />
           <input 
             ref={inputRef}
             style={styles.input}
@@ -109,11 +109,11 @@ const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ isOpen, onClose }) =>
                 >
                   <div style={{
                     ...styles.iconBox,
-                    backgroundColor: res.type === 'shortcut' ? '#EEF2FF' : res.type === 'vehicle' ? '#F0FDF4' : '#FFF7ED'
+                    backgroundColor: res.type === 'shortcut' ? '#F0F7FF' : res.type === 'vehicle' ? '#F0FDF4' : '#FFF7ED'
                   }}>
                     {res.type === 'shortcut' ? (res.icon || <Zap size={16} />) : 
                      res.type === 'vehicle' ? <Car size={16} color="#10B981" /> : 
-                     res.type === 'client' ? <Users size={16} color="#F59E0B" /> : <Building2 size={16} color="#6366F1" />}
+                     res.type === 'client' ? <Users size={16} color="#F59E0B" /> : <Building2 size={16} color="#0061FF" />}
                   </div>
                   <div style={styles.resInfo}>
                     <div style={styles.resName}>

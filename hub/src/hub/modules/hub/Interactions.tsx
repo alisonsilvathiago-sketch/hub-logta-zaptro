@@ -154,7 +154,7 @@ const InteractionsHub = () => {
   };
 
   const integrations = [
-    { id: 'google', name: 'Google Workspace Hub', desc: 'Drive, Docs, Meet e Workspace Engine', icon: Globe2, color: '#4285F4', bg: '#EEF2FF', status: 'CONECTADO', statusColor: '#10B981', statusBg: '#ECFDF5' },
+    { id: 'google', name: 'Google Workspace Hub', desc: 'LogDock, Docs, Meet e Workspace Engine', icon: Globe2, color: '#4285F4', bg: '#F0F7FF', status: 'CONECTADO', statusColor: '#10B981', statusBg: '#ECFDF5' },
     { id: 'asaas', name: 'Asaas Core Engine', desc: 'Processamento de split e assinaturas recorrentes', icon: CreditCard, color: '#0D9488', bg: '#F0FDFA', status: 'ATIVO', statusColor: '#10B981', statusBg: '#ECFDF5' },
     { id: 'wa', name: 'WhatsApp Business API', desc: 'Gateway de mensagens transacionais master', icon: Smartphone, color: '#16A34A', bg: '#F0FDF4', status: 'SYNC', statusColor: '#F97316', statusBg: '#FFF7ED' },
   ];

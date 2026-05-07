@@ -151,7 +151,7 @@ export const CommandPalette: React.FC = () => {
                   width: '36px',
                   height: '36px',
                   borderRadius: '10px',
-                  backgroundColor: i === selectedIndex ? '#6366F1' : '#F1F5F9',
+                  backgroundColor: i === selectedIndex ? '#0061FF' : '#F1F5F9',
                   color: i === selectedIndex ? 'white' : '#64748B',
                   display: 'flex',
                   alignItems: 'center',
@@ -164,7 +164,7 @@ export const CommandPalette: React.FC = () => {
                   {cmd.title}
                 </div>
                 {i === selectedIndex && (
-                  <ArrowRight size={16} color="#6366F1" />
+                  <ArrowRight size={16} color="#0061FF" />
                 )}
               </div>
             ))

@@ -484,7 +484,7 @@ const IntegrationsContent: React.FC = () => {
               <div style={{...styles.planIcon, backgroundColor: '#fef2f2', color: '#ef4444'}}><Cloud size={24} /></div>
               <div>
                 <h3 style={styles.cardTitle}>Google Cloud & Workspace</h3>
-                <p style={styles.cardSub}>Meet, Drive e Agenda.</p>
+                <p style={styles.cardSub}>Meet, LogDock e Agenda.</p>
               </div>
               <div style={{ marginLeft: 'auto' }}>
                 <span style={{...styles.statusBadge, backgroundColor: googleConfig ? '#ecfdf5' : '#fff7ed', color: googleConfig ? '#10b981' : '#f97316'}}>

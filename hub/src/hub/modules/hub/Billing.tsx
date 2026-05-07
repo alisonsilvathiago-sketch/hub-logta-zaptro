@@ -374,8 +374,8 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
           <>
             <div style={styles.statsGrid}>
               <div style={styles.statCard} className="hover-scale">
-                <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
-                  <TrendingUp size={20} color="#6366F1" />
+                <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
+                  <TrendingUp size={20} color="#0061FF" />
                 </div>
                 <div style={styles.statContent}>
                   <p style={styles.statLabel}>MRR (Mensal Recorrente)</p>
@@ -387,14 +387,14 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
               </div>
 
               <div style={styles.statCard} className="hover-scale">
-                <div style={{...styles.statIconBox, backgroundColor: '#6366F1'}}>
+                <div style={{...styles.statIconBox, backgroundColor: '#0061FF'}}>
                   <Users size={20} color="#FFFFFF" />
                 </div>
                 <div style={styles.statContent}>
                   <p style={styles.statLabel}>Tenants Ativos</p>
                   <h3 style={styles.statValue}>{metrics.activeTenants}</h3>
                 </div>
-                <div style={{...styles.statTrend, color: '#6366F1'}}>
+                <div style={{...styles.statTrend, color: '#0061FF'}}>
                   META: 50
                 </div>
               </div>
@@ -478,7 +478,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
 
               <div style={styles.chartCard}>
                 <div style={styles.chartHeaderInner}>
-                  <h3 style={styles.chartTitle}><Zap size={16} color="#6366F1" /> CRESCIMENTO DE RECEITA (ASAAS)</h3>
+                  <h3 style={styles.chartTitle}><Zap size={16} color="#0061FF" /> CRESCIMENTO DE RECEITA (ASAAS)</h3>
                   <div style={{...styles.chartTag, backgroundColor: '#E0E7FF', color: '#4338CA'}}>ASAAS SYNC</div>
                 </div>
                 <div style={{ height: 320 }}>
@@ -491,8 +491,8 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                     ]}>
                       <defs>
                         <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#0061FF" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#0061FF" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
@@ -524,7 +524,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                       <Area 
                         type="monotone" 
                         dataKey="value" 
-                        stroke="#6366F1" 
+                        stroke="#0061FF" 
                         strokeWidth={4}
                         fillOpacity={1} 
                         fill="url(#colorValue)" 
@@ -595,7 +595,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                             </td>
                             <td style={{...styles.td, textAlign: 'right'}}>
                                <div style={styles.rowActions}>
-                                  <button style={{...styles.actionIconBtn, color: '#6366F1', backgroundColor: 'var(--bg-overlay)'}} title="Ver Fatura" onClick={(e) => { e.stopPropagation(); window.open(charge.invoice_url, '_blank'); }}><Eye size={16} /></button>
+                                  <button style={{...styles.actionIconBtn, color: '#0061FF', backgroundColor: 'var(--bg-overlay)'}} title="Ver Fatura" onClick={(e) => { e.stopPropagation(); window.open(charge.invoice_url, '_blank'); }}><Eye size={16} /></button>
                                   <button 
                                     style={{...styles.actionIconBtn, color: '#10B981', backgroundColor: '#ECFDF5'}} 
                                     title="Copiar Link"
@@ -639,7 +639,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
              <div style={styles.plansGrid}>
                 {/* NEW PLAN CARD (PLUS) */}
                 <div style={{...styles.planCard, borderStyle: 'dashed', backgroundColor: '#F8FAFC', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', minHeight: '340px'}} onClick={() => setIsPlanModalOpen(true)}>
-                    <div style={{...styles.planIcon, width: '64px', height: '64px', backgroundColor: '#FFF', color: '#6366F1', border: '1px solid #E2E8F0'}}><Plus size={32} /></div>
+                    <div style={{...styles.planIcon, width: '64px', height: '64px', backgroundColor: '#FFF', color: '#0061FF', border: '1px solid #E2E8F0'}}><Plus size={32} /></div>
                     <div style={{textAlign: 'center'}}>
                         <h4 style={{...styles.planCardTitle, margin: 0}}>CRIAR NOVO PLANO</h4>
                         <p style={{...styles.pageSub, fontSize: '12px'}}>Adicionar ao catálogo master</p>
@@ -670,7 +670,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                      </div>
                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '20px' }}>
                         <button 
-                            style={{...styles.planActionBtn, backgroundColor: '#EEF2FF', color: '#6366F1'}} 
+                            style={{...styles.planActionBtn, backgroundColor: '#F0F7FF', color: '#0061FF'}} 
                             title="Copiar Link"
                             onClick={() => {
                                 navigator.clipboard.writeText(`https://checkout.logta.com/p/${plan.slug}`);
@@ -745,12 +745,12 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                                 <span style={styles.planBrand}>Campanha Black Friday 2026</span>
                              </div>
                           </td>
-                          <td style={styles.td}><span style={{...styles.cycleBadge, color: '#6366F1', backgroundColor: '#EEF2FF'}}>50% PERCENTUAL</span></td>
+                          <td style={styles.td}><span style={{...styles.cycleBadge, color: '#0061FF', backgroundColor: '#F0F7FF'}}>50% PERCENTUAL</span></td>
                           <td style={styles.td}><span style={styles.creditsText}>31/12/2026</span></td>
                           <td style={styles.td}>
                              <div style={{ fontSize: '13px', fontWeight: '700' }}>42 / 100 <span style={{ color: '#94A3B8', fontSize: '11px' }}>(42%)</span></div>
                              <div style={{ width: '80px', height: '4px', backgroundColor: '#E2E8F0', borderRadius: '2px', marginTop: '4px' }}>
-                                <div style={{ width: '42%', height: '100%', backgroundColor: '#6366F1', borderRadius: '2px' }} />
+                                <div style={{ width: '42%', height: '100%', backgroundColor: '#0061FF', borderRadius: '2px' }} />
                              </div>
                           </td>
                           <td style={{...styles.td, textAlign: 'right'}}>
@@ -873,8 +873,8 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                   key={prod.id} 
                   style={{
                     ...styles.productCardMini,
-                    borderColor: newCharge.selectedProducts.includes(prod.id) ? '#6366F1' : '#E2E8F0',
-                    backgroundColor: newCharge.selectedProducts.includes(prod.id) ? '#EEF2FF' : '#FFFFFF'
+                    borderColor: newCharge.selectedProducts.includes(prod.id) ? '#0061FF' : '#E2E8F0',
+                    backgroundColor: newCharge.selectedProducts.includes(prod.id) ? '#F0F7FF' : '#FFFFFF'
                   }}
                   onClick={() => {
                     const current = [...newCharge.selectedProducts];
@@ -885,7 +885,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                     }
                   }}
                 >
-                  <prod.icon size={18} color={newCharge.selectedProducts.includes(prod.id) ? '#6366F1' : '#94A3B8'} />
+                  <prod.icon size={18} color={newCharge.selectedProducts.includes(prod.id) ? '#0061FF' : '#94A3B8'} />
                   <span style={{ fontSize: '11px', fontWeight: '700' }}>{prod.label}</span>
                 </div>
               ))}
@@ -918,9 +918,9 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                       key={method.id}
                       style={{
                         ...styles.methodBtn,
-                        borderColor: newCharge.method === method.id ? '#6366F1' : '#E2E8F0',
-                        backgroundColor: newCharge.method === method.id ? '#EEF2FF' : '#FFFFFF',
-                        color: newCharge.method === method.id ? '#6366F1' : '#64748B',
+                        borderColor: newCharge.method === method.id ? '#0061FF' : '#E2E8F0',
+                        backgroundColor: newCharge.method === method.id ? '#F0F7FF' : '#FFFFFF',
+                        color: newCharge.method === method.id ? '#0061FF' : '#64748B',
                         padding: '10px 14px',
                         flex: 1
                       }}
@@ -938,7 +938,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                     width: '40px', 
                     height: '20px', 
                     borderRadius: '10px', 
-                    backgroundColor: newCharge.isRecurring ? '#6366F1' : '#E2E8F0',
+                    backgroundColor: newCharge.isRecurring ? '#0061FF' : '#E2E8F0',
                     position: 'relative',
                     cursor: 'pointer',
                     transition: 'all 0.2s'
@@ -1071,7 +1071,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
           <div style={{backgroundColor: 'var(--bg-overlay)', padding: '24px', borderRadius: '16px', marginBottom: '24px', border: '1px solid #E2E8F0'}}>
               <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '12px'}}>
                 <span style={styles.infoLabel}>Link de Pagamento (Asaas)</span>
-                <button style={{border: 'none', background: 'none', color: '#6366F1', cursor: 'pointer', fontWeight: '700', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px'}} onClick={() => {
+                <button style={{border: 'none', background: 'none', color: '#0061FF', cursor: 'pointer', fontWeight: '700', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px'}} onClick={() => {
                     navigator.clipboard.writeText(`https://checkout.logta.com/p/${selectedPlan?.slug}`);
                     toastSuccess('Checkout copiado!');
                 }}><Copy size={14} /> COPIAR</button>
@@ -1110,7 +1110,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                 <img src={`data:image/png;base64,${chargeResult.pix_image}`} alt="QR Code PIX" style={{ width: '200px', height: '200px', margin: '0 auto' }} />
                 <div style={{ marginTop: '12px', fontSize: '11px', color: '#94A3B8', wordBreak: 'break-all' }}>{chargeResult.pix_code}</div>
                 <button 
-                  style={{ marginTop: '12px', background: '#EEF2FF', color: '#6366F1', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
+                  style={{ marginTop: '12px', background: '#F0F7FF', color: '#0061FF', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
                   onClick={() => {
                     navigator.clipboard.writeText(chargeResult.pix_code);
                     toastSuccess('Copia e Cola copiado!');
@@ -1122,7 +1122,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
             {newCharge.method === 'BOLETO' && chargeResult?.bank_slip_url && (
               <div style={{ marginBottom: '24px' }}>
                 <button 
-                  style={{ background: '#6366F1', color: '#FFF', border: 'none', padding: '16px 24px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', width: '100%' }}
+                  style={{ background: '#0061FF', color: '#FFF', border: 'none', padding: '16px 24px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', width: '100%' }}
                   onClick={() => window.open(chargeResult.bank_slip_url, '_blank')}
                 >VISUALIZAR BOLETO (PDF)</button>
               </div>
@@ -1142,7 +1142,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
           onClose={() => setIsCouponModalOpen(false)}
           title="Novo Cupom de Desconto"
           subtitle="Crie códigos promocionais para campanhas de marketing."
-          icon={<Tag color="#6366F1" />}
+          icon={<Tag color="#0061FF" />}
           primaryAction={{
             label: 'CRIAR CUPOM',
             onClick: () => {
@@ -1203,14 +1203,14 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
           onClose={() => setIsInvoicePreviewOpen(false)}
           title="Visualização de Fatura Master"
           subtitle={`Referência: ${selectedCharge?.asaas_id || 'Interna'}`}
-          icon={<FileText color="#6366F1" />}
+          icon={<FileText color="#0061FF" />}
           size="xl"
         >
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
                 {/* LEFT: BOLETO PREVIEW */}
                 <div style={{ backgroundColor: 'var(--bg-overlay)', borderRadius: '24px', padding: '40px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ fontWeight: '900', fontSize: '20px', color: '#1E293B' }}>LOGTA <span style={{ color: '#6366F1' }}>SaaS</span></div>
+                        <div style={{ fontWeight: '900', fontSize: '20px', color: '#1E293B' }}>LOGTA <span style={{ color: '#0061FF' }}>SaaS</span></div>
                         <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: '10px', fontWeight: '800', color: '#94A3B8' }}>VENCIMENTO</div>
                             <div style={{ fontSize: '14px', fontWeight: '800', color: '#1E293B' }}>{new Date(selectedCharge?.due_date).toLocaleDateString()}</div>

@@ -159,7 +159,7 @@ const styles: Record<string, any> = {
   header: { maxWidth: '1000px', margin: '0 auto 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   backBtn: { background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B', fontWeight: '600', cursor: 'pointer' },
   brand: { display: 'flex', alignItems: 'center', gap: '12px' },
-  logoIcon: { width: '32px', height: '32px', backgroundColor: '#6366F1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  logoIcon: { width: '32px', height: '32px', backgroundColor: '#0061FF', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   brandName: { fontWeight: '800', color: '#0F172A', fontSize: '18px' },
   
   container: { maxWidth: '1000px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' },
@@ -170,20 +170,20 @@ const styles: Record<string, any> = {
   row: { display: 'flex', justifyContent: 'space-between', color: '#64748B', fontSize: '14px' },
   divider: { height: '1px', backgroundColor: '#E2E8F0', margin: '8px 0' },
   totalRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  totalValue: { fontSize: '24px', fontWeight: '800', color: '#6366F1' },
+  totalValue: { fontSize: '24px', fontWeight: '800', color: '#0061FF' },
   
   methods: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '32px' },
   methodBtn: { padding: '16px', borderRadius: '16px', border: '1.5px solid #E2E8F0', backgroundColor: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: '700', color: '#64748B', transition: 'all 0.2s' },
-  methodActive: { borderColor: '#6366F1', backgroundColor: '#EEF2FF', color: '#6366F1' },
+  methodActive: { borderColor: '#0061FF', backgroundColor: '#F0F7FF', color: '#0061FF' },
   
-  payBtn: { width: '100%', padding: '18px', backgroundColor: '#6366F1', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', fontSize: '16px', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)' },
+  payBtn: { width: '100%', padding: '18px', backgroundColor: '#0061FF', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', fontSize: '16px', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)' },
   security: { marginTop: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#94A3B8', justifyContent: 'center' },
   
   pixResult: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' },
   qr: { width: '200px', height: '200px', border: '1px solid #E2E8F0', borderRadius: '12px' },
   pixText: { fontSize: '13px', color: '#64748B', textAlign: 'center' },
   code: { width: '100%', padding: '12px', backgroundColor: '#F1F5F9', borderRadius: '8px', fontSize: '11px', wordBreak: 'break-all', fontFamily: 'monospace' },
-  loader: { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366F1' }
+  loader: { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0061FF' }
 };
 
 export default PaymentCheckout;

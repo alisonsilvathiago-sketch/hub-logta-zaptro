@@ -30,7 +30,7 @@ export default function DashboardStats({ metrics }: DashboardStatsProps) {
         value={data.mrr} 
         icon={DollarSign} 
         trend="+12.5%" 
-        color="#6366F1" 
+        color="#0061FF" 
       />
       <StatCard 
         label="ASSINATURAS ATIVAS" 

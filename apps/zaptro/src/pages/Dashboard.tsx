@@ -505,7 +505,7 @@ const styles = {
   subtitle: { color: '#6B7280', fontSize: '15px', marginTop: '4px', fontWeight: '500' },
   headerActions: { display: 'flex', gap: '12px', alignItems: 'center' },
   datePicker: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#FFFFFF', padding: '10px 16px', borderRadius: '12px', border: '1px solid #E5E7EB', fontSize: '14px', color: '#1F2937', fontWeight: '600', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  primaryBtn: { backgroundColor: '#6366F1', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.2)' },
+  primaryBtn: { backgroundColor: '#0061FF', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0, 97, 255, 0.2)' },
   secondaryBtn: { backgroundColor: '#FFFFFF', color: '#1F2937', border: '1px solid #E5E7EB', padding: '10px 20px', borderRadius: '12px', fontWeight: '700', fontSize: '13px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
   kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' },
   kpiCard: { backgroundColor: '#FFFFFF', padding: '20px', borderRadius: '12px', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', minHeight: '110px' },
@@ -519,17 +519,17 @@ const styles = {
   chartCard: { backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
   cardTitle: { fontSize: '16px', fontWeight: '800', color: '#1F2937' },
-  cardBadge: { padding: '5px 12px', backgroundColor: '#6366F115', color: '#6366F1', borderRadius: '8px', fontSize: '11px', fontWeight: '800' },
+  cardBadge: { padding: '5px 12px', backgroundColor: '#0061FF15', color: '#0061FF', borderRadius: '8px', fontSize: '11px', fontWeight: '800' },
   
   // Mini Calendar Styles
   miniCal: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
   miniCalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  miniMonth: { fontSize: '10px', fontWeight: '800', color: '#6366F1', letterSpacing: '1px' },
+  miniMonth: { fontSize: '10px', fontWeight: '800', color: '#0061FF', letterSpacing: '1px' },
   miniNav: { display: 'flex', gap: '8px', color: '#9CA3AF' },
   miniGrid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' },
   miniWeekDay: { fontSize: '9px', fontWeight: '800', color: '#9CA3AF', textAlign: 'center' as const },
   miniDay: { fontSize: '10px', fontWeight: '800', color: '#1F2937', textAlign: 'center' as const, height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px' },
-  miniToday: { backgroundColor: '#6366F1', color: '#FFFFFF' },
+  miniToday: { backgroundColor: '#0061FF', color: '#FFFFFF' },
   miniEvent: { backgroundColor: '#FEE2E2', color: '#EF4444' },
 
   // Admin Finance Grid
@@ -561,7 +561,7 @@ const styles = {
   alertContent: { flex: 1 },
   alertText: { fontSize: '14px', fontWeight: '700', color: '#1F2937' },
   alertTime: { fontSize: '12px', color: '#9CA3AF', fontWeight: '500' },
-  fleetGauge: { width: '180px', height: '180px', borderRadius: '50%', border: '12px solid #F3F4F6', borderTopColor: '#6366F1', position: 'relative' as const, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' },
+  fleetGauge: { width: '180px', height: '180px', borderRadius: '50%', border: '12px solid #F3F4F6', borderTopColor: '#0061FF', position: 'relative' as const, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' },
   gaugeCenter: { textAlign: 'center' as const },
   gaugeValue: { fontSize: '32px', fontWeight: '800', color: '#1F2937', marginBottom: '0' },
   gaugeLabel: { fontSize: '14px', color: '#6B7280', fontWeight: '600' },

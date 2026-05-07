@@ -41,7 +41,7 @@ interface Event {
 }
 
 const COLLABORATOR_COLORS = [
-  '#6366F1', '#10B981', '#F59E0B', '#EF4444', 
+  '#0061FF', '#10B981', '#F59E0B', '#EF4444', 
   '#8B5CF6', '#EC4899', '#06B6D4', '#F43F5E'
 ];
 
@@ -263,7 +263,7 @@ const Agenda: React.FC = () => {
             <div key={day.toString()} style={{...styles.weekColumn, backgroundColor: isToday(day) ? '#F8FAFC' : 'white'}}>
               <div style={styles.weekDayHeader}>
                 <span style={styles.weekDayLabel}>{format(day, 'EEE', { locale: ptBR })}</span>
-                <span style={{...styles.weekDayNum, backgroundColor: isToday(day) ? '#6366F1' : 'transparent', color: isToday(day) ? 'white' : '#1E293B'}}>
+                <span style={{...styles.weekDayNum, backgroundColor: isToday(day) ? '#0061FF' : 'transparent', color: isToday(day) ? 'white' : '#1E293B'}}>
                   {format(day, 'd')}
                 </span>
               </div>
@@ -366,7 +366,7 @@ const Agenda: React.FC = () => {
             >
               <span style={{
                 ...styles.dayNumber,
-                color: isToday(day) ? '#6366F1' : '#1E293B',
+                color: isToday(day) ? '#0061FF' : '#1E293B',
                 fontWeight: isToday(day) ? '800' : '600'
               }}>{format(day, 'd')}</span>
               
@@ -426,7 +426,7 @@ const Agenda: React.FC = () => {
                 style={{
                   ...styles.miniDay,
                   color: isSameMonth(day, currentDate) ? '#1E293B' : '#CBD5E1',
-                  backgroundColor: isSameDay(day, currentDate) ? '#6366F1' : 'transparent',
+                  backgroundColor: isSameDay(day, currentDate) ? '#0061FF' : 'transparent',
                   color: isSameDay(day, currentDate) ? 'white' : isSameMonth(day, currentDate) ? '#1E293B' : '#CBD5E1',
                   fontWeight: isSameDay(day, currentDate) ? '800' : '600'
                 }}
@@ -644,7 +644,7 @@ const Agenda: React.FC = () => {
               </div>
               <div style={styles.infoItem}>
                 <List size={16} />
-                <span>Status: <strong style={{color: '#6366F1'}}>{selectedEvent.status?.toUpperCase() || 'PENDENTE'}</strong></span>
+                <span>Status: <strong style={{color: '#0061FF'}}>{selectedEvent.status?.toUpperCase() || 'PENDENTE'}</strong></span>
               </div>
             </div>
 
@@ -805,7 +805,7 @@ const styles: Record<string, any> = {
   headerTitleRow: { marginBottom: '32px' },
   pageTitle: { fontSize: '28px', fontWeight: '800', color: '#0F172A', margin: 0, letterSpacing: '-1px' },
   pageSub: { fontSize: '14px', color: '#94A3B8', fontWeight: '500', marginTop: '4px' },
-  loading: { height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366F1', fontWeight: '800' },
+  loading: { height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0061FF', fontWeight: '800' },
   topBar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
   navGroup: { display: 'flex', alignItems: 'center', gap: '16px' },
   navBtn: { width: '40px', height: '40px', borderRadius: '24px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', cursor: 'pointer' },
@@ -818,7 +818,7 @@ const styles: Record<string, any> = {
   viewTabs: { display: 'flex', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '24px' },
   viewBtn: { border: 'none', background: 'none', padding: '6px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', color: '#64748B', cursor: 'pointer' },
   viewBtnActive: { backgroundColor: 'white', color: '#0F172A', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
-  addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '0 20px', height: '40px', backgroundColor: '#6366F1', color: 'white', border: 'none', borderRadius: '24px', fontWeight: '700', fontSize: '13px', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.2)' },
+  addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '0 20px', height: '40px', backgroundColor: '#0061FF', color: 'white', border: 'none', borderRadius: '24px', fontWeight: '700', fontSize: '13px', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.2)' },
 
   collabBar: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px', overflowX: 'auto', paddingBottom: '8px' },
   collabLabel: { fontSize: '12px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', whiteSpace: 'nowrap' },
@@ -867,7 +867,7 @@ const styles: Record<string, any> = {
 
   // Year View
   yearGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', padding: '24px', width: '100%', overflowY: 'auto' },
-  yearMonthCard: { backgroundColor: 'white', padding: '20px', borderRadius: '24px', border: '1px solid #E2E8F0', cursor: 'pointer', transition: 'all 0.2s', ':hover': { borderColor: '#6366F1', transform: 'translateY(-4px)' } },
+  yearMonthCard: { backgroundColor: 'white', padding: '20px', borderRadius: '24px', border: '1px solid #E2E8F0', cursor: 'pointer', transition: 'all 0.2s', ':hover': { borderColor: '#0061FF', transform: 'translateY(-4px)' } },
   yearMonthTitle: { fontSize: '16px', fontWeight: '800', color: '#0F172A', margin: '0 0 16px', textTransform: 'capitalize' },
   yearMonthContent: { display: 'flex', flexDirection: 'column', gap: '12px' },
   yearEventCount: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#64748B', fontWeight: '600' },
@@ -895,7 +895,7 @@ const styles: Record<string, any> = {
   inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
   label: { fontSize: '12px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' },
   input: { padding: '12px 16px', borderRadius: '24px', border: '1px solid #E2E8F0', outline: 'none', fontSize: '14px', fontWeight: '600', color: '#1E293B', backgroundColor: '#F8FAFC' },
-  submitBtn: { padding: '14px', backgroundColor: '#6366F1', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '800', fontSize: '15px', cursor: 'pointer', marginTop: '8px', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)' },
+  submitBtn: { padding: '14px', backgroundColor: '#0061FF', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '800', fontSize: '15px', cursor: 'pointer', marginTop: '8px', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)' },
 
   // New Sidebar & Grid Styles
   sidebar: { width: '320px', padding: '0 24px 0 0', display: 'flex', flexDirection: 'column', gap: '32px', borderRight: '1px solid #E2E8F0' },
@@ -924,7 +924,7 @@ const styles: Record<string, any> = {
   teamName: { fontSize: '13px', fontWeight: '600', color: '#475569', flex: 1 },
   
   aiInsightBanner: { backgroundColor: '#1F2937', borderRadius: '24px', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' },
-  aiIcon: { width: '40px', height: '40px', borderRadius: '14px', background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  aiIcon: { width: '40px', height: '40px', borderRadius: '14px', background: 'linear-gradient(135deg, #0061FF 0%, #8B5CF6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   aiTitle: { fontSize: '13px', fontWeight: '800', color: 'white', margin: 0 },
   aiDescription: { fontSize: '12px', color: '#94A3B8', margin: '2px 0 0 0' },
   aiActionBtn: { padding: '8px 16px', borderRadius: '12px', border: '1px solid #374151', backgroundColor: 'transparent', color: 'white', fontSize: '11px', fontWeight: '700', cursor: 'pointer' },
@@ -941,7 +941,7 @@ const styles: Record<string, any> = {
 
   // Create Modal Modern Design
   createModalBody: { display: 'flex', flexDirection: 'column', gap: '24px', padding: '10px 0' },
-  mainTitleInput: { fontSize: '24px', fontWeight: '800', color: '#0F172A', border: 'none', borderBottom: '2px solid #F1F5F9', outline: 'none', paddingBottom: '12px', width: '100%', marginBottom: '8px', transition: 'border-color 0.2s', ':focus': { borderColor: '#6366F1' } },
+  mainTitleInput: { fontSize: '24px', fontWeight: '800', color: '#0F172A', border: 'none', borderBottom: '2px solid #F1F5F9', outline: 'none', paddingBottom: '12px', width: '100%', marginBottom: '8px', transition: 'border-color 0.2s', ':focus': { borderColor: '#0061FF' } },
   typeTabs: { display: 'flex', gap: '8px' },
   tabBtn: { padding: '8px 20px', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '13px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' },
   formRow: { display: 'flex', gap: '20px', alignItems: 'flex-start' },
@@ -951,11 +951,11 @@ const styles: Record<string, any> = {
   timeInput: { padding: '6px 12px', borderRadius: '8px', border: '1px solid #E2E8F0', backgroundColor: '#F8FAFC', fontSize: '13px', fontWeight: '700', color: '#475569', outline: 'none' },
   selectInput: { flex: 1, padding: '10px 16px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: '#F8FAFC', fontSize: '13px', fontWeight: '600', color: '#475569', outline: 'none' },
   meetPlaceholder: { flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', color: '#64748B', fontWeight: '600' },
-  addMeetBtn: { padding: '6px 14px', borderRadius: '10px', backgroundColor: '#EEF2FF', color: '#6366F1', border: 'none', fontWeight: '700', fontSize: '11px', cursor: 'pointer' },
+  addMeetBtn: { padding: '6px 14px', borderRadius: '10px', backgroundColor: '#F0F7FF', color: '#0061FF', border: 'none', fontWeight: '700', fontSize: '11px', cursor: 'pointer' },
   descTextarea: { flex: 1, padding: '12px 16px', borderRadius: '16px', border: '1px solid #E2E8F0', backgroundColor: '#F8FAFC', fontSize: '13px', fontWeight: '600', color: '#475569', minHeight: '100px', resize: 'none', outline: 'none' },
   createFooter: { display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px', paddingTop: '24px', borderTop: '1px solid #F1F5F9' },
   cancelBtn: { padding: '12px 24px', borderRadius: '24px', border: 'none', backgroundColor: 'transparent', color: '#64748B', fontWeight: '800', fontSize: '14px', cursor: 'pointer' },
-  saveBtn: { padding: '12px 32px', borderRadius: '24px', border: 'none', backgroundColor: '#6366F1', color: 'white', fontWeight: '800', fontSize: '14px', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)' },
+  saveBtn: { padding: '12px 32px', borderRadius: '24px', border: 'none', backgroundColor: '#0061FF', color: 'white', fontWeight: '800', fontSize: '14px', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)' },
 
   // Integration Section
   integrationSection: { display: 'flex', flexDirection: 'column', gap: '16px' },

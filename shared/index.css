@@ -13,15 +13,16 @@
   --text-primary:  #1F2937;
   --text-secondary:#6B7280;
   --text-sidebar:  #4B5563;
-  --text-sidebar-active: #6366F1;
+  --text-sidebar-active: #0061FF;
 
-  /* Accent */
-  --accent:        #6366F1;
-  --accent-light:  #F9FAFB;
-  --accent-glow:   rgba(99,102,241,0.1);
-  --bg-active:     rgba(99, 102, 241, 0.08);
-  --bg-overlay:    rgba(99, 102, 241, 0.04);
-  --bg-secondary:  rgba(99, 102, 241, 0.03);
+  /* Brand Colors */
+  --accent:        #0061FF; /* Global Blue */
+  --accent-light:  #F0F7FF;
+  --secondary:     #0F172A; /* Slate 900 - Text & Dark elements */
+  --bg-secondary:  #F1F5F9; /* Slate 100 - Overlays & Sections */
+  --bg-active:     #F0F7FF; /* Global Blue 50 - Active states */
+  --accent-glow:   rgba(0,97,255,0.1);
+  --bg-overlay:    rgba(0, 97, 255, 0.04);
   --green:         #10B981;
   --orange:        #F59E0B;
   --red:           #EF4444;
@@ -63,7 +64,7 @@ h4 { font-size: 1.25rem; font-weight: 600; }
 /* ── Scrollbar ─────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: rgba(0,97,255,0.25); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 /* ── Animations ─────────────────────────────────── */

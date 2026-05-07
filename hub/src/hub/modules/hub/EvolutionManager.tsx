@@ -140,7 +140,7 @@ const EvolutionManager = () => {
 
       <div style={styles.statsRow}>
         <div style={styles.statCard}>
-          <div style={{ ...styles.statIcon, backgroundColor: '#EEF2FF', color: '#6366F1' }}><Activity size={24} /></div>
+          <div style={{ ...styles.statIcon, backgroundColor: '#F0F7FF', color: '#0061FF' }}><Activity size={24} /></div>
           <div>
             <div style={styles.statTitle}>NÚCLEO MASTER</div>
             <div style={styles.statValue}>OPERACIONAL</div>
@@ -287,7 +287,7 @@ const EvolutionManager = () => {
               <div style={{ fontSize: '10px', color: '#64748B', marginBottom: '16px', fontWeight: '800', letterSpacing: '1px' }}>LOGS DO ENGINE (REAL-TIME STREAM)</div>
               <div style={{ fontSize: '11px', marginBottom: '6px', opacity: 0.9 }}>[INFO] {new Date().toLocaleTimeString()} - Instância operacional.</div>
               <div style={{ fontSize: '11px', marginBottom: '6px', opacity: 0.9 }}>[INFO] {new Date().toLocaleTimeString()} - Mensagem despachada: 5511...</div>
-              <div style={{ fontSize: '11px', marginBottom: '6px', color: '#6366F1' }}>[DEBUG] Heartbeat recebido do cluster Evolution.</div>
+              <div style={{ fontSize: '11px', marginBottom: '6px', color: '#0061FF' }}>[DEBUG] Heartbeat recebido do cluster Evolution.</div>
               <div style={{ fontSize: '11px', color: '#64748B' }}>[DEBUG] Webhook response: 200 OK.</div>
             </div>
           </div>

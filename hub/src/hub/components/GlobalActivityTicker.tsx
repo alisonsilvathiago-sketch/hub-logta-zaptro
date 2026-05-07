@@ -91,7 +91,7 @@ const GlobalActivityTicker: React.FC = () => {
           
           <div style={styles.toastBody}>
             <div style={styles.iconBox}>
-              {activity.type === 'company' && <Building2 size={16} color="#6366F1" />}
+              {activity.type === 'company' && <Building2 size={16} color="#0061FF" />}
               {activity.type === 'payment' && <DollarSign size={16} color="#10B981" />}
               {activity.type === 'plan' && <Briefcase size={16} color="#F59E0B" />}
             </div>

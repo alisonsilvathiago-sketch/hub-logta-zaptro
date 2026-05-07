@@ -210,7 +210,7 @@ const ZaptroDashboardModernPreview: React.FC = () => {
       gnv: 'GNV',
     };
     const colors: Record<string, string> = {
-      gasolina: '#6366F1',
+      gasolina: '#0061FF',
       diesel: '#EF4444',
       etanol: '#10B981',
       gnv: '#0EA5E9',

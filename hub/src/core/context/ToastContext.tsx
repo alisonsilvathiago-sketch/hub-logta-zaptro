@@ -74,7 +74,7 @@ const ToastItem: React.FC<{ toast: Toast; onClose: () => void; index: number }> 
     success: <CheckCircle2 size={20} color="#10B981" />,
     error: <AlertCircle size={20} color="#EF4444" />,
     warning: <AlertTriangle size={20} color="#F59E0B" />,
-    info: <Info size={20} color="#6366F1" />
+    info: <Info size={20} color="#0061FF" />
   };
 
   const colors = {

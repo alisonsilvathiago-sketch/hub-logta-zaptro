@@ -12,7 +12,7 @@ export default function InvoicePrint({ invoice, onClose }: InvoicePrintProps) {
     <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 99999, padding: '60px', overflowY: 'auto', fontFamily: 'Inter, sans-serif' }}>
       {/* Botões de Ação (Escondidos na Impressão) */}
       <div className="no-print" style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '12px' }}>
-        <button onClick={() => window.print()} style={{ background: '#6366F1', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}>🖨️ IMPRIMIR PDF</button>
+        <button onClick={() => window.print()} style={{ background: '#0061FF', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}>🖨️ IMPRIMIR PDF</button>
         <button onClick={onClose} style={{ background: '#F1F5F9', color: '#64748B', border: 'none', padding: '10px 20px', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}>FECHAR</button>
       </div>
 
@@ -31,7 +31,7 @@ export default function InvoicePrint({ invoice, onClose }: InvoicePrintProps) {
           <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '4px' }}>CNPJ: 00.000.000/0001-00</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '32px', fontWeight: '900', color: '#6366F1' }}>FATURA</div>
+          <div style={{ fontSize: '32px', fontWeight: '900', color: '#0061FF' }}>FATURA</div>
           <div style={{ fontSize: '16px', fontWeight: '700', color: '#1A2340' }}>#INV-{invoice.invoice_number?.toString().padStart(5, '0')}</div>
         </div>
       </div>
@@ -84,7 +84,7 @@ export default function InvoicePrint({ invoice, onClose }: InvoicePrintProps) {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
             <div style={{ fontSize: '18px', fontWeight: '900', color: '#1A2340' }}>TOTAL:</div>
-            <div style={{ fontSize: '24px', fontWeight: '900', color: '#6366F1' }}>
+            <div style={{ fontSize: '24px', fontWeight: '900', color: '#0061FF' }}>
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(invoice.amount)}
             </div>
           </div>

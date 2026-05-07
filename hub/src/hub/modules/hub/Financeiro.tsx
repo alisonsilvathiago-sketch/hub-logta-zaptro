@@ -133,8 +133,8 @@ const MasterFinanceiro: React.FC = () => {
       {/* MAIN LIST */}
       <div style={styles.statsGrid}>
         <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
-            <DollarSign size={20} color="#6366F1" />
+          <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
+            <DollarSign size={20} color="#0061FF" />
           </div>
           <div style={styles.statContent}>
             <p style={styles.statLabel}>Total Conciliado</p>
@@ -146,7 +146,7 @@ const MasterFinanceiro: React.FC = () => {
         </div>
 
         <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#6366F1'}}>
+          <div style={{...styles.statIconBox, backgroundColor: '#0061FF'}}>
             <CheckCircle size={20} color="#FFFFFF" />
           </div>
           <div style={styles.statContent}>
@@ -156,8 +156,8 @@ const MasterFinanceiro: React.FC = () => {
         </div>
 
         <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
-            <Clock size={20} color="#6366F1" />
+          <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
+            <Clock size={20} color="#0061FF" />
           </div>
           <div style={styles.statContent}>
             <p style={styles.statLabel}>Pendentes (HOJE)</p>
@@ -169,7 +169,7 @@ const MasterFinanceiro: React.FC = () => {
         </div>
 
         <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#4F46E5'}}>
+          <div style={{...styles.statIconBox, backgroundColor: '#0052D9'}}>
             <ShieldCheck size={20} color="#FFFFFF" />
           </div>
           <div style={styles.statContent}>
@@ -218,7 +218,7 @@ const MasterFinanceiro: React.FC = () => {
                 <td style={styles.td}>
                    <div style={styles.refCell}>
                       <code>{p.asaas_id?.substring(0, 12)}</code>
-                      <ExternalLink size={12} color="#6366F1" cursor="pointer" />
+                      <ExternalLink size={12} color="#0061FF" cursor="pointer" />
                    </div>
                 </td>
                 <td style={styles.td}><strong style={styles.price}>R$ {p.amount?.toLocaleString('pt-BR')}</strong></td>
@@ -270,7 +270,7 @@ const MasterFinanceiro: React.FC = () => {
                  <div style={styles.concMeta}>DATA: {selectedPayment?.created_at ? new Date(selectedPayment.created_at).toLocaleDateString() : '---'}</div>
               </div>
               <div style={styles.concArrow}>
-                 <ChevronRight size={32} color="#6366F1" />
+                 <ChevronRight size={32} color="#0061FF" />
               </div>
               <div style={styles.concBox}>
                  <label style={styles.concLabel}>EMISSÃO NOTA FISCAL (NFe)</label>
@@ -281,7 +281,7 @@ const MasterFinanceiro: React.FC = () => {
            </div>
 
            <div style={styles.concAlert}>
-              <HelpCircle size={20} color="#6366F1" />
+              <HelpCircle size={20} color="#0061FF" />
               <p>O sistema detectou que os dados do cliente estão completos. A nota será emitida automaticamente e enviada para o e-mail cadastrado.</p>
            </div>
 

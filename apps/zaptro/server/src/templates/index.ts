@@ -443,7 +443,7 @@ export function buildTransactionalEmail(
       const subject = `Novo comentário em sua demanda — ${cn}`;
       const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
         <p><strong>${vars.author || 'Alguém'}</strong> comentou no card que você está acompanhando:</p>
-        <div style="font-style: italic; color: #94a3b8; padding: 16px; border-left: 4px solid #6366f1; background: rgba(99,102,241,0.05); margin: 20px 0;">
+        <div style="font-style: italic; color: #94a3b8; padding: 16px; border-left: 4px solid #0061FF; background: rgba(99,102,241,0.05); margin: 20px 0;">
           "${vars.comment || '...'}"
         </div>`;
       return {

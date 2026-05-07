@@ -218,7 +218,7 @@ const GeralTab = ({ name, setName, email, setEmail, reg, setReg, color, setColor
              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <input 
                    type="color" 
-                   value={color || '#6366F1'} 
+                   value={color || '#0061FF'} 
                    onChange={e => setColor(e.target.value)} 
                    style={{...styles.input, padding: '2px', height: '48px', width: '60px', flex: 'none', cursor: 'pointer'}}
                 />
@@ -291,7 +291,7 @@ const GoogleWorkspaceTab = () => {
   return (
     <div style={styles.tabContent}>
        <h3 style={styles.tabTitle}>Google Cloud & Workspace Hub</h3>
-       <p style={styles.tabSub}>Integração nativa para Meet, Drive e Agenda em todo o monorepo.</p>
+       <p style={styles.tabSub}>Integração nativa para Meet, LogDock e Agenda em todo o monorepo.</p>
        
        <div style={styles.fGroup}>
           <label style={styles.fLabel}>Service Account JSON Key</label>

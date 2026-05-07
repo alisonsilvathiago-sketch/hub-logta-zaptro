@@ -78,7 +78,7 @@ const MasterMarketplace: React.FC = () => {
             </div>
          </div>
          <div style={styles.statCard}>
-            <div style={{...styles.statIcon, backgroundColor: 'rgba(99, 102, 241, 0.12)'}}><BarChart2 size={24} color="#6366F1" /></div>
+            <div style={{...styles.statIcon, backgroundColor: 'rgba(99, 102, 241, 0.12)'}}><BarChart2 size={24} color="#0061FF" /></div>
             <div>
                <p style={styles.statLabel}>Receita Add-ons (Mês)</p>
                <h3 style={styles.statValue}>R$ 12.450</h3>

@@ -62,19 +62,27 @@ const createVehicleIcon = (svg: string, width: number, height: number, heading =
     `,
   });
 
-export const createTruckIcon = (heading = 0) => createVehicleIcon(TRUCK_ICON_SVG, 32, 50, heading);
-export const createCarIcon = (heading = 0) => createVehicleIcon(CAR_ICON_SVG, 24, 40, heading);
+const isBrowser = typeof window !== 'undefined' && typeof L !== 'undefined';
 
-// Backward-compatible defaults (without rotation)
-export const truckIcon = createTruckIcon(0);
-export const carIcon = createCarIcon(0);
+// Helper to create icons safely
+const safeCreateIcon = (heading: number, type: 'truck' | 'car') => {
+  if (!isBrowser) return null;
+  return createVehicleIcon(type === 'truck' ? TRUCK_ICON_SVG : CAR_ICON_SVG, type === 'truck' ? 32 : 24, type === 'truck' ? 50 : 40, heading);
+};
 
-export const problemIcon = new L.Icon({
+export const createTruckIcon = (heading = 0) => safeCreateIcon(heading, 'truck');
+export const createCarIcon = (heading = 0) => safeCreateIcon(heading, 'car');
+
+// Backward-compatible defaults
+export const truckIcon = isBrowser ? createTruckIcon(0) : null;
+export const carIcon = isBrowser ? createCarIcon(0) : null;
+
+export const problemIcon = isBrowser ? new L.Icon({
   iconUrl: 'https://cdn-icons-png.flaticon.com/512/595/595067.png',
   iconSize: [36, 36],
   iconAnchor: [18, 36],
   popupAnchor: [0, -36]
-});
+}) : null;
 
 const MapStyle = ({ variant }: { variant: 'light' | 'dark' }) => (
   <style>{`
@@ -97,7 +105,7 @@ const MapStyle = ({ variant }: { variant: 'light' | 'dark' }) => (
       height: 40px;
       margin: -20px 0 0 -20px;
       border-radius: 50%;
-      border: 2px solid #6366F1;
+      border: 2px solid #0061FF;
       animation: vehiclePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
       z-index: -1;
       pointer-events: none;

@@ -159,7 +159,7 @@ const ProfilePage: React.FC = () => {
             <h3 style={styles.cardTitle}>Acesso & Segurança</h3>
             <div style={styles.securityList}>
               <div style={styles.securityItem}>
-                <div style={styles.securityIcon}><Key size={18} color="#6366F1" /></div>
+                <div style={styles.securityIcon}><Key size={18} color="#0061FF" /></div>
                 <div style={styles.securityText}>
                   <span style={styles.securityLabel}>Senha</span>
                   <span style={styles.securitySub}>Alterada há 3 meses</span>
@@ -287,7 +287,7 @@ const styles: Record<string, any> = {
   pageTitle: { fontSize: '32px', fontWeight: '800', color: '#0F172A', margin: 0, letterSpacing: '-1.5px' },
   pageSub: { fontSize: '14px', color: '#94A3B8', fontWeight: '500' },
   saveBtn: { 
-    backgroundColor: '#6366F1', color: 'white', border: 'none', padding: '12px 24px', 
+    backgroundColor: '#0061FF', color: 'white', border: 'none', padding: '12px 24px', 
     borderRadius: '24px', fontWeight: '700', cursor: 'pointer', display: 'flex', 
     alignItems: 'center', gap: '8px', transition: 'all 0.2s', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)'
   },
@@ -300,11 +300,11 @@ const styles: Record<string, any> = {
   cardTitle: { fontSize: '18px', fontWeight: '800', color: '#0F172A', marginBottom: '24px' },
 
   profileHero: { marginBottom: '24px' },
-  banner: { height: '100px', backgroundColor: '#6366F1', borderRadius: '24px', marginBottom: '-50px' },
+  banner: { height: '100px', backgroundColor: '#0061FF', borderRadius: '24px', marginBottom: '-50px' },
   avatarSection: { padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' },
   avatarWrapper: { position: 'relative' },
   largeAvatar: { width: '100px', height: '100px', borderRadius: '32px', objectFit: 'cover', border: '4px solid white', boxShadow: '0 10px 15px rgba(0,0,0,0.1)' },
-  avatarPlaceholder: { width: '100px', height: '100px', borderRadius: '32px', backgroundColor: '#6366F1', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', fontWeight: '800', border: '4px solid white' },
+  avatarPlaceholder: { width: '100px', height: '100px', borderRadius: '32px', backgroundColor: '#0061FF', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', fontWeight: '800', border: '4px solid white' },
   uploadLabel: { position: 'absolute', bottom: '-4px', right: '-4px', backgroundColor: '#0F172A', padding: '8px', borderRadius: '12px', cursor: 'pointer', border: '3px solid white' },
   heroInfo: { textAlign: 'center' },
   heroName: { fontSize: '22px', fontWeight: '800', color: '#0F172A', margin: 0 },
@@ -331,14 +331,14 @@ const styles: Record<string, any> = {
   securityText: { flex: 1, display: 'flex', flexDirection: 'column' },
   securityLabel: { fontSize: '14px', fontWeight: '700', color: '#0F172A' },
   securitySub: { fontSize: '11px', color: '#94A3B8', fontWeight: '500' },
-  textBtn: { background: 'none', border: 'none', color: '#6366F1', fontWeight: '800', fontSize: '12px', cursor: 'pointer', padding: '4px 8px' },
+  textBtn: { background: 'none', border: 'none', color: '#0061FF', fontWeight: '800', fontSize: '12px', cursor: 'pointer', padding: '4px 8px' },
 
   prefsList: { display: 'flex', flexDirection: 'column', gap: '16px' },
   prefItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
   prefInfo: { display: 'flex', alignItems: 'center', gap: '16px' },
   prefLabel: { fontSize: '14px', fontWeight: '700', color: '#0F172A', display: 'block' },
   prefSub: { fontSize: '12px', color: '#94A3B8', fontWeight: '500', margin: 0 },
-  toggleActive: { width: '40px', height: '22px', backgroundColor: '#6366F1', borderRadius: '24px', position: 'relative', cursor: 'pointer', opacity: 0.8 }
+  toggleActive: { width: '40px', height: '22px', backgroundColor: '#0061FF', borderRadius: '24px', position: 'relative', cursor: 'pointer', opacity: 0.8 }
 };
 
 export default ProfilePage;

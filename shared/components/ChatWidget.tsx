@@ -166,7 +166,7 @@ export default function ChatWidget() {
   };
 
   const departments = [
-    { id: 'suporte', name: 'Suporte Técnico', icon: Headset, color: '#6366F1', desc: 'Dúvidas e erros' },
+    { id: 'suporte', name: 'Suporte Técnico', icon: Headset, color: '#0061FF', desc: 'Dúvidas e erros' },
     { id: 'financeiro', name: 'Financeiro', icon: Wallet, color: '#10B981', desc: 'Boletos e créditos' },
     { id: 'comercial', name: 'Comercial', icon: Building2, color: '#F59E0B', desc: 'Novos planos' },
     { id: 'operacao', name: 'Operação', icon: ShieldCheck, color: '#EF4444', desc: 'Status de entregas' },
@@ -179,7 +179,7 @@ export default function ChatWidget() {
           onClick={() => setIsOpen(true)}
           style={{
             width: '72px', height: '72px', borderRadius: '24px',
-            background: 'linear-gradient(135deg, #6366F1 0%, #0F172A 100%)',
+            background: 'linear-gradient(135deg, #0061FF 0%, #0F172A 100%)',
             color: '#fff', border: 'none', cursor: 'pointer',
             boxShadow: '0 20px 40px rgba(99,102,241,0.4)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -274,7 +274,7 @@ export default function ChatWidget() {
                 <div style={{
                   padding: '14px 20px', borderRadius: m.isMe ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
                   fontSize: '15px', lineHeight: '1.6', fontWeight: '500',
-                  background: m.isMe ? 'linear-gradient(135deg, #6366F1 0%, #4338CA 100%)' : (m.type === 'system' ? '#F1F5F9' : '#fff'),
+                  background: m.isMe ? 'linear-gradient(135deg, #0061FF 0%, #4338CA 100%)' : (m.type === 'system' ? '#F1F5F9' : '#fff'),
                   color: m.isMe ? '#fff' : (m.type === 'system' ? '#64748B' : '#0F172A'),
                   boxShadow: m.isMe ? '0 10px 25px rgba(99,102,241,0.2)' : '0 4px 15px rgba(0,0,0,0.05)',
                   border: m.isMe ? 'none' : '1px solid #E2E8F0',
@@ -286,7 +286,7 @@ export default function ChatWidget() {
                         <DollarSign size={20} /> <span style={{ fontWeight: '900' }}>Cobrança Gerada</span>
                       </div>
                       <div style={{ fontSize: '18px', fontWeight: '900' }}>R$ {m.metadata?.amount}</div>
-                      <button style={{ padding: '10px', borderRadius: '12px', border: 'none', backgroundColor: '#fff', color: '#6366F1', fontWeight: '900', fontSize: '12px', cursor: 'pointer' }}>PAGAR AGORA</button>
+                      <button style={{ padding: '10px', borderRadius: '12px', border: 'none', backgroundColor: '#fff', color: '#0061FF', fontWeight: '900', fontSize: '12px', cursor: 'pointer' }}>PAGAR AGORA</button>
                     </div>
                   ) : m.text}
                 </div>
@@ -311,7 +311,7 @@ export default function ChatWidget() {
                 <button 
                   onClick={handleSend} 
                   style={{ 
-                    background: '#6366F1', border: 'none', width: 44, height: 44, borderRadius: '14px', 
+                    background: '#0061FF', border: 'none', width: 44, height: 44, borderRadius: '14px', 
                     color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', 
                     cursor: 'pointer', boxShadow: '0 8px 16px rgba(99,102,241,0.3)', transition: 'all 0.2s'
                   }}

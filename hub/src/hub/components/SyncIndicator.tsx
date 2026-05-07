@@ -9,7 +9,7 @@ const SyncIndicator: React.FC = () => {
     switch (status) {
       case 'syncing':
         return { 
-          color: '#6366F1', 
+          color: '#0061FF', 
           icon: <RefreshCw size={18} className="sync-spin" />, 
           text: 'Sincronizando com Zapto e Logta...' 
         };

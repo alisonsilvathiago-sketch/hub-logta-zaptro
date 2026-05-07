@@ -52,7 +52,7 @@ const MasterCRM: React.FC = () => {
 
   const funnelStages = [
     { id: 'novo', name: 'Novas Oportunidades', color: '#D9FF00' },
-    { id: 'contato', name: 'Qualificação', color: '#6366F1' },
+    { id: 'contato', name: 'Qualificação', color: '#0061FF' },
     { id: 'negociacao', name: 'Negociação', color: '#f59e0b' },
     { id: 'proposta', name: 'Apresentação', color: '#38bdf8' },
     { id: 'fechamento', name: 'Fechado / Ganho', color: '#10b981' }
@@ -188,8 +188,8 @@ const MasterCRM: React.FC = () => {
 
       <div style={styles.statsGrid}>
         <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
-            <Target size={20} color="#6366F1" />
+          <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
+            <Target size={20} color="#0061FF" />
           </div>
           <div style={styles.statContent}>
             <p style={styles.statLabel}>Pipeline Total</p>
@@ -201,7 +201,7 @@ const MasterCRM: React.FC = () => {
         </div>
 
         <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#6366F1'}}>
+          <div style={{...styles.statIconBox, backgroundColor: '#0061FF'}}>
             <CheckCircle size={20} color="#FFFFFF" />
           </div>
           <div style={styles.statContent}>
@@ -214,8 +214,8 @@ const MasterCRM: React.FC = () => {
         </div>
 
         <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#6366F115'}}>
-            <Zap size={20} color="#6366F1" />
+          <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
+            <Zap size={20} color="#0061FF" />
           </div>
           <div style={styles.statContent}>
             <p style={styles.statLabel}>Leads em Risco</p>
@@ -227,7 +227,7 @@ const MasterCRM: React.FC = () => {
         </div>
 
         <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#4F46E5'}}>
+          <div style={{...styles.statIconBox, backgroundColor: '#0052D9'}}>
             <Star size={20} color="#FFFFFF" />
           </div>
           <div style={styles.statContent}>
@@ -498,7 +498,7 @@ const MasterCRM: React.FC = () => {
 const styles = {
   container: { padding: '40px', backgroundColor: 'transparent', minHeight: '100vh' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '48px' },
-  bread: { fontSize: '10px', fontWeight: '700', color: '#6366F1', marginBottom: '8px', letterSpacing: '1px', textTransform: 'uppercase' as const },
+  bread: { fontSize: '10px', fontWeight: '700', color: '#0061FF', marginBottom: '8px', letterSpacing: '1px', textTransform: 'uppercase' as const },
   title: { fontSize: '26px', fontWeight: '600', color: '#111827', margin: 0, letterSpacing: '-0.5px' },
   subtitle: { color: '#6B7280', fontSize: '14px', fontWeight: '400' },
   headerActions: { display: 'flex', gap: '20px', alignItems: 'center' },
@@ -594,7 +594,7 @@ const styles = {
   statusBadge: { fontSize: '10px', fontWeight: '800', padding: '6px 12px', borderRadius: '20px', letterSpacing: '0.5px', textTransform: 'uppercase' },
   iconBtn: { padding: '8px', border: 'none', background: 'none', color: '#94A3B8', cursor: 'pointer' },
 
-  modalPrice: { fontSize: '24px', fontWeight: '700', color: '#6366F1', letterSpacing: '-1px' },
+  modalPrice: { fontSize: '24px', fontWeight: '700', color: '#0061FF', letterSpacing: '-1px' },
   infoGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '40px' },
   iGroup: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
   iLabel: { fontSize: '11px', fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '1px' },
@@ -602,7 +602,7 @@ const styles = {
   interactionLog: { display: 'flex', flexDirection: 'column' as const, gap: '16px' },
   logTitle: { fontSize: '14px', fontWeight: '700', color: '#111827', marginBottom: '12px', letterSpacing: '-0.2px' },
   logItem: { display: 'flex', gap: '16px' },
-  logDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#6366F1', marginTop: '6px' },
+  logDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF', marginTop: '6px' },
   logText: { fontSize: '13px', color: '#374151', lineHeight: '1.5' },
   logDate: { fontSize: '11px', color: '#94A3B8', fontWeight: '500' },
   secondaryBtn: { padding: '12px 24px', backgroundColor: 'white', border: '1px solid #F1F5F9', borderRadius: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' },

@@ -12,7 +12,7 @@ interface FileUploaderProps {
 
 const COLORS = {
   primary: '#1E293B',
-  accent: '#6366F1',
+  accent: '#0061FF',
   muted: '#64748B',
   danger: '#EF4444'
 };
@@ -82,6 +82,7 @@ export default function UnifiedFileUploader({ companyId, clientId, module, refer
           path: filePath,
           type: file.type,
           size: file.size,
+          status: 'pendente',
           metadata: { 
             source: 'unified_uploader', 
             reference_id: referenceId,
@@ -134,7 +135,7 @@ export default function UnifiedFileUploader({ companyId, clientId, module, refer
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h3 style={{ fontSize: '16px', fontWeight: '900', color: COLORS.primary }}>Arquivos & Documentos</h3>
-          <p style={{ fontSize: '12px', color: COLORS.muted }}>Sincronizado automaticamente com o Hub Drive</p>
+          <p style={{ fontSize: '12px', color: COLORS.muted }}>Sincronizado automaticamente com o LogDock</p>
         </div>
         <label style={{ 
           background: COLORS.accent, color: '#fff', padding: '10px 20px', borderRadius: '12px', 

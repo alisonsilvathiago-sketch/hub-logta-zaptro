@@ -73,7 +73,7 @@ const MasterReports: React.FC = () => {
                  <div style={styles.chartHeader}>
                     <h4 style={styles.chartTitle}>Ecosystem Traffic Volume</h4>
                     <div style={styles.chartLegend}>
-                       <div style={{...styles.dot, backgroundColor: '#6366F1'}} /> API Calls
+                       <div style={{...styles.dot, backgroundColor: '#0061FF'}} /> API Calls
                     </div>
                  </div>
                  <div style={styles.chartPlaceholder}>

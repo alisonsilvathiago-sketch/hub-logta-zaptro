@@ -4,17 +4,17 @@
   /* Indigo Design System - Master Hub */
   --sidebar-bg:    #FFFFFF;
   --sidebar-hover: #F8FAFC;
-  --sidebar-active:#EEF2FF;
+  --sidebar-active:#F0F7FF;
   --content-bg:    #F1F5F9;
   --card-bg:       #FFFFFF;
   --border:        #E2E8F0;
 
   /* Brand Colors */
-  --accent:        #6366F1; /* Indigo 500 */
-  --accent-light:  #EEF2FF;
+  --accent:        #0061FF; /* Global Blue */
+  --accent-light:  #F0F7FF;
   --secondary:     #0F172A; /* Slate 900 - Text & Dark elements */
   --bg-secondary:  #F1F5F9; /* Slate 100 - Overlays & Sections */
-  --bg-active:     #EEF2FF; /* Indigo 50 - Active states */
+  --bg-active:     #F0F7FF; /* Global Blue 50 - Active states */
 
   /* Text & Feedback */
   --text-primary:  #0F172A;
@@ -46,7 +46,7 @@ body {
 /* ── Scrollbar ─────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.25); border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: rgba(0,97,255,0.25); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 /* ── Animations ─────────────────────────────────── */

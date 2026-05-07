@@ -47,7 +47,7 @@ export default function SSOLogin() {
       <div style={styles.card}>
         {status === 'loading' && (
           <>
-            <Loader2 size={48} className="spin" color="#6366F1" />
+            <Loader2 size={48} className="spin" color="#0061FF" />
             <h1 style={styles.title}>Validando Acesso Master...</h1>
             <p style={styles.desc}>Conectando à HUB para autorizar sua sessão de suporte.</p>
           </>

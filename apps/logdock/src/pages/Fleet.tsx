@@ -203,7 +203,7 @@ const FleetPage: React.FC = () => {
                       {vehicle.status === 'operational' && <CheckCircle2 size={14} />}
                       {vehicle.status === 'maintenance' && <Clock size={14} />}
                       {vehicle.status === 'critical' && <AlertTriangle size={14} />}
-                      {vehicle.status.charAt(0).toUpperCase() + vehicle.status.slice(1)}
+                      {(vehicle.status || '').charAt(0).toUpperCase() + (vehicle.status || '').slice(1)}
                     </div>
                   </td>
                   <td style={styles.td}>{vehicle.lastMaintenance ? new Date(vehicle.lastMaintenance).toLocaleDateString('pt-BR') : vehicle.last_maintenance_date ? new Date(vehicle.last_maintenance_date).toLocaleDateString('pt-BR') : 'N/A'}</td>

@@ -422,20 +422,20 @@ const styles: Record<string, React.CSSProperties> = {
   autoTitle: { fontSize: '14px', fontWeight: '600', color: '#1E1E1E', flex: 1 },
   
   // Modal Styles
-  autoModalBody: { display: 'flex', backgroundColor: '#1E1E1E', minHeight: '500px' },
-  modalLeft: { flex: 1, padding: '40px', display: 'flex', flexDirection: 'column' },
-  modalRight: { flex: 1, backgroundColor: '#0F172A11', padding: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  autoModalBody: { display: 'flex', backgroundColor: '#1A1A1A', minHeight: '600px', overflow: 'hidden' },
+  modalLeft: { flex: 1.2, padding: '48px', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.05)' },
+  modalRight: { flex: 0.8, background: 'linear-gradient(135deg, rgba(0,97,255,0.05) 0%, rgba(139,92,246,0.05) 100%)', padding: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   autoTimeline: { display: 'flex', flexDirection: 'column', gap: '0' },
-  timelineItem: { display: 'flex', gap: '20px', alignItems: 'flex-start' },
-  timelineLine: { width: '2px', height: '32px', backgroundColor: '#333', marginLeft: '17px' },
+  timelineItem: { display: 'flex', gap: '24px', alignItems: 'flex-start' },
+  timelineLine: { width: '2px', height: '40px', backgroundColor: 'rgba(255,255,255,0.05)', marginLeft: '17px' },
   timelineIcon: { width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  minusIcon: { width: '24px', height: '24px', borderRadius: '50%', border: '2px solid #444', backgroundColor: '#1E1E1E', position: 'relative' },
-  actionCircle: { width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF' },
-  addCircle: { width: '36px', height: '36px', borderRadius: '50%', border: '2px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', cursor: 'pointer' },
-  autoStepBox: { flex: 1, backgroundColor: '#2A2A2A', borderRadius: '12px', border: '1px solid #333', display: 'flex', flexDirection: 'column' },
-  autoStepHeader: { padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid #333', color: '#FFF', fontSize: '14px' },
-  selectorBtn: { backgroundColor: '#333', border: 'none', borderRadius: '8px', padding: '8px 16px', color: '#FFF', fontSize: '13px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
-  ruleBtn: { width: '100%', padding: '12px', backgroundColor: '#333', border: 'none', borderRadius: '8px', color: '#FFF', fontWeight: '700', fontSize: '13px', cursor: 'pointer' },
+  minusIcon: { width: '24px', height: '24px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)', backgroundColor: '#1A1A1A', position: 'relative' },
+  actionCircle: { width: '36px', height: '36px', borderRadius: '12px', backgroundColor: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', boxShadow: '0 0 20px rgba(0, 97, 255, 0.3)' },
+  addCircle: { width: '36px', height: '36px', borderRadius: '50%', border: '2px dashed rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', transition: 'all 0.2s' },
+  autoStepBox: { flex: 1, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  autoStepHeader: { padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', color: '#FFF', fontSize: '14px', fontWeight: 600 },
+  selectorBtn: { backgroundColor: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '12px', padding: '10px 18px', color: '#FFF', fontSize: '13px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
+  ruleBtn: { width: '100%', padding: '14px', backgroundColor: '#0061FF', border: 'none', borderRadius: '14px', color: '#FFF', fontWeight: '800', fontSize: '13px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0, 97, 255, 0.2)' },
   
   // Radio Styles
   radioList: { padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' },
@@ -459,13 +459,13 @@ const styles: Record<string, React.CSSProperties> = {
   badgePdf: { position: 'absolute', right: '-10px', top: '50%', transform: 'translateY(-50%)', backgroundColor: '#EF4444', color: '#FFF', fontSize: '10px', fontWeight: '900', padding: '4px 8px', borderRadius: '4px' },
   
   // Modal Footer
-  modalFooter: { padding: '24px 40px', borderTop: '1px solid #333', backgroundColor: '#1E1E1E', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  opinionBtn: { background: 'none', border: 'none', color: '#FFF', fontWeight: '800', fontSize: '13px', textDecoration: 'underline', cursor: 'pointer' },
-  cancelBtn: { padding: '10px 24px', backgroundColor: '#333', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: '800', cursor: 'pointer' },
-  saveBtn: { padding: '10px 24px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: '900', cursor: 'pointer' },
+  modalFooter: { padding: '32px 48px', borderTop: '1px solid rgba(255,255,255,0.05)', backgroundColor: '#1A1A1A', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  opinionBtn: { background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontWeight: '800', fontSize: '13px', textDecoration: 'none', cursor: 'pointer', transition: 'all 0.2s' },
+  cancelBtn: { padding: '14px 28px', backgroundColor: 'rgba(255,255,255,0.05)', color: '#FFF', border: 'none', borderRadius: '14px', fontWeight: '800', cursor: 'pointer', transition: 'all 0.2s' },
+  saveBtn: { padding: '14px 40px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '14px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 8px 24px rgba(0, 97, 255, 0.25)', transition: 'all 0.2s' },
   
   selectRow: { display: 'flex', alignItems: 'center', gap: '12px' },
-  modalSelect: { backgroundColor: '#333', border: 'none', borderRadius: '8px', padding: '8px 12px', color: '#FFF', fontSize: '13px', fontWeight: '600' }
+  modalSelect: { backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '12px 16px', color: '#FFF', fontSize: '13px', fontWeight: '700', outline: 'none' }
 };
 
 export default AutomationsPage;

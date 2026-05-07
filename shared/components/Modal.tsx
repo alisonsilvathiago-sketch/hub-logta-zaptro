@@ -16,6 +16,8 @@ interface ModalProps {
   hideHeader?: boolean;
   hideTitle?: boolean;
   maxWidth?: string;
+  darkMode?: boolean;
+  darkMode?: boolean;
   primaryAction?: {
     label: string;
     onClick: () => void;
@@ -42,7 +44,8 @@ const Modal: React.FC<ModalProps> = ({
   hideTitle = false,
   maxWidth,
   primaryAction,
-  secondaryAction
+  secondaryAction,
+  darkMode = false
 }) => {
   const platform = getPlatform();
   if (!isOpen) return null;
@@ -64,8 +67,8 @@ const Modal: React.FC<ModalProps> = ({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(15, 23, 42, 0.6)',
-        backdropFilter: 'blur(12px)',
+        background: 'rgba(0, 0, 0, 0.3)',
+        backdropFilter: 'none',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -78,7 +81,7 @@ const Modal: React.FC<ModalProps> = ({
     >
       <div 
         style={{
-          background: '#fff',
+          background: darkMode ? '#1E1E1E' : '#fff',
           borderRadius: '32px', 
           width: '100%',
           maxWidth: getWidth(),
@@ -89,14 +92,14 @@ const Modal: React.FC<ModalProps> = ({
           display: 'flex',
           flexDirection: 'column',
           maxHeight: '92vh',
-          border: '1px solid var(--border)'
+          border: darkMode ? '1px solid #333' : '1px solid var(--border)'
         }}
       >
         {!hideHeader && (
           <div style={{
-            background: '#FFFFFF',
+            background: darkMode ? '#1E1E1E' : '#FFFFFF',
             padding: '32px',
-            borderBottom: '1px solid var(--border)',
+            borderBottom: darkMode ? '1px solid #333' : '1px solid var(--border)',
             position: 'relative',
             display: 'flex',
             alignItems: 'center',
@@ -108,8 +111,8 @@ const Modal: React.FC<ModalProps> = ({
                 width: '48px',
                 height: '48px',
                 borderRadius: '16px',
-                background: 'var(--bg-active)',
-                color: '#6366F1',
+                background: darkMode ? '#2A2A2A' : 'var(--bg-active)',
+                color: '#0061FF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -125,7 +128,7 @@ const Modal: React.FC<ModalProps> = ({
                 <h2 style={{ 
                   fontSize: '22px', 
                   fontWeight: '700', 
-                  color: '#1E1B4B', 
+                  color: darkMode ? '#FFF' : '#1E1B4B', 
                   margin: 0, 
                   letterSpacing: '-0.4px'
                 }}>
@@ -142,8 +145,8 @@ const Modal: React.FC<ModalProps> = ({
             <button 
               onClick={onClose}
               style={{
-                background: 'var(--bg-overlay)',
-                border: '1px solid var(--border)',
+                background: darkMode ? '#333' : 'var(--bg-overlay)',
+                border: darkMode ? '1px solid #444' : '1px solid var(--border)',
                 width: 'auto',
                 height: '36px',
                 padding: '0 12px',
@@ -158,7 +161,7 @@ const Modal: React.FC<ModalProps> = ({
               }}
               className="hover-scale"
             >
-              <Kbd style={{ fontSize: '9px', padding: '0 4px', height: '18px', minWidth: '18px' }}>Esc</Kbd>
+              <Kbd style={{ fontSize: '9px', padding: '0 4px', height: '18px', minWidth: '18px', background: darkMode ? '#1E1E1E' : undefined }}>Esc</Kbd>
               <X size={20} strokeWidth={2.5} />
             </button>
           </div>
@@ -168,7 +171,7 @@ const Modal: React.FC<ModalProps> = ({
           padding: padding, 
           overflowY: 'auto',
           flex: 1,
-          background: '#fff'
+          background: darkMode ? '#1E1E1E' : '#fff'
         }}>
           {children}
         </div>

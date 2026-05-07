@@ -35,21 +35,23 @@ import ErrorBoundary from '@shared/components/ErrorBoundary';
 import { KeyboardProvider } from './core/context/KeyboardContext';
 import CommandPalette from '@shared/components/CommandPalette';
 import ShortcutHelp from '@shared/components/ShortcutHelp';
-import HubDrive from './hub/modules/hub/Drive';
+import HubLogDock from './hub/modules/hub/LogDock';
+import LogDockLogin from './hub/pages/LogDockLogin';
+import LogDockLayout from './hub/layouts/LogDockLayout';
 import GlobalLoader from '@shared/components/GlobalLoader';
 
-import { runGlobalIntelligenceAudit } from './core/lib/masterIntelligence';
+import { runMasterAuditSync } from './core/lib/masterIntelligence';
 
 const App: React.FC = () => {
   React.useEffect(() => {
     // 🧠 Master Intelligence Background Guardian
     // Executa auditoria global a cada 5 minutos
     const auditInterval = setInterval(() => {
-      runGlobalIntelligenceAudit();
+      runMasterAuditSync();
     }, 1000 * 60 * 5);
 
     // Executa a primeira vez após carregar
-    runGlobalIntelligenceAudit();
+    runMasterAuditSync();
 
     return () => clearInterval(auditInterval);
   }, []);
@@ -111,6 +113,8 @@ const App: React.FC = () => {
         
         <Routes>
           <Route path="/" element={<HubLogin />} />
+          <Route path="/app" element={<Navigate to="/logdock/app" replace />} />
+          <Route path="/auth/logdock" element={<LogDockLogin />} />
           
           {/* Rota de Checkout Público */}
           <Route path="/checkout" element={<PublicCheckout />} />
@@ -118,6 +122,15 @@ const App: React.FC = () => {
           <Route path="/pagar/:id" element={<PaymentCheckout />} />
           <Route path="/combustivel" element={<PublicFuelDashboard />} />
           <Route path="/fuel" element={<AnalyticalFuelDashboard />} />
+          
+          {/* Rota Expandida LogDock (Focada) */}
+          <Route path="/logdock" element={
+            <ErrorBoundary>
+              <LogDockLayout />
+            </ErrorBoundary>
+          }>
+            <Route path="app" element={<HubLogDock />} />
+          </Route>
 
           {/* Rotas do Hub Master */}
           <Route path="/master" element={
@@ -168,7 +181,7 @@ const App: React.FC = () => {
             <Route path="plans" element={<HubPlans />} />
             <Route path="notifications" element={<HubNotifications />} />
             <Route path="automacoes" element={<Workflows />} />
-            <Route path="drive" element={<HubDrive />} />
+            <Route path="logdock" element={<HubLogDock />} />
             <Route path="integracoes" element={<Navigate to="/master/automacoes?tab=integracoes" replace />} />
             <Route path="profile" element={<AccountSettings />} />
           </Route>

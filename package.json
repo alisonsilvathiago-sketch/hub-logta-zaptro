@@ -6,6 +6,8 @@
   "scripts": {
     "install:hub": "cd hub && npm install",
     "build:hub": "cd hub && npm run build",
+    "install:logdock": "npm ci --prefix apps/logdock",
+    "build:logdock": "npm run build --prefix apps/logdock",
     "build": "npm run install:hub && npm run build:hub",
     "dev:hub": "cd hub && npm run dev"
   },

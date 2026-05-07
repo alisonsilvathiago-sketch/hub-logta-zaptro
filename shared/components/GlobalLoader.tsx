@@ -32,8 +32,8 @@ export const GlobalLoader: React.FC = () => {
       <div style={{
         height: '100%',
         width: '40%',
-        backgroundColor: '#6366F1',
-        boxShadow: '0 0 10px #6366F1',
+        backgroundColor: '#0061FF',
+        boxShadow: '0 0 10px #0061FF',
         animation: 'loaderMove 1.5s infinite ease-in-out'
       }} />
       <style>{`
