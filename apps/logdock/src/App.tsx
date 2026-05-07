@@ -3791,7 +3791,12 @@ const LogDockDashboard: React.FC = () => {
                       }
                     }}
                   >
-                    <span style={{ fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: isSidebarCollapsed ? '100%' : 'auto' }}>🚚</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: isSidebarCollapsed ? '100%' : 'auto' }}>
+                      <svg viewBox="0 0 100 100" style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
+                        <path d="M10 10 V90 H90 V60 H40 V10 Z" fill={activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' ? '#FFF' : '#2563EB'}></path>
+                        <rect x="50" y="10" width="40" height="40" fill={activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' ? '#FFF' : '#2563EB'}></rect>
+                      </svg>
+                    </div>
                     {!isSidebarCollapsed && <span>Logta SaaS</span>}
                   </button>
                 )}
