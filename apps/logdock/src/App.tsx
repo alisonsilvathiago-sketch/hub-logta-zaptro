@@ -3677,7 +3677,6 @@ const LogDockDashboard: React.FC = () => {
               { id: 'arquivos', label: 'Meu Drive', icon: <Files size={16} /> },
               { id: 'relatorios', label: 'Relatórios', icon: <Activity size={16} /> },
               { id: 'alertas', label: 'Alertas', icon: <Bell size={16} />, badge: '12' },
-              { id: 'configuracoes', label: 'Configurações', icon: <Settings size={16} /> },
             ].map(item => (
               <button 
                 key={item.id}
@@ -3700,7 +3699,7 @@ const LogDockDashboard: React.FC = () => {
                   alignItems: 'center', 
                   justifyContent: isSidebarCollapsed ? 'center' : 'space-between', 
                   color: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id))
-                    ? (theme === 'dark' ? '#FFF' : '#0061FF') 
+                    ? (theme === 'dark' ? '#FFF' : (item.id === 'inicio' ? '#000000' : '#0061FF')) 
                     : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'), 
                   boxShadow: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.05)') : 'none',
                   cursor: 'pointer', 
