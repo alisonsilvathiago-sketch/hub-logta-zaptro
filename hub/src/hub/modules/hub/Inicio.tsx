@@ -97,13 +97,6 @@ const HubInicio: React.FC = () => {
       default: return <Sparkles size={16} />;
     }
   };
-
-  const promptSuggestions = [
-    { title: "Métrica de Clientes", desc: "Quantas empresas temos cadastradas hoje?", prompt: "Quantas empresas estão cadastradas e ativas no sistema master?" },
-    { title: "Saúde Operacional", desc: "Qual o uptime global dos serviços?", prompt: "Qual é o status atual de uptime global dos nossos sistemas?" },
-    { title: "Armazenamento", desc: "Quanto de armazenamento temos?", prompt: "Qual o uso global de armazenamento em nuvem no momento?" }
-  ];
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       
@@ -330,45 +323,6 @@ const HubInicio: React.FC = () => {
               <Send size={15} />
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* QUICK INSIGHT SUGGESTION CARDS */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0 }}>Consultas Rápidas Recomendadas</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-          {promptSuggestions.map((card, i) => (
-            <div 
-              key={i}
-              onClick={() => handleSend(card.prompt)}
-              style={{
-                background: '#FFFFFF',
-                padding: '24px',
-                borderRadius: '20px',
-                border: '1px solid #E2E8F0',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.03)';
-                e.currentTarget.style.borderColor = '#0061FF';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.borderColor = '#E2E8F0';
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0061FF', fontWeight: 800, fontSize: '14px' }}>
-                <Sparkles size={14} fill="#0061FF" /> {card.title}
-              </div>
-              <p style={{ color: '#64748B', fontSize: '12px', margin: 0, lineHeight: '1.5' }}>{card.desc}</p>
-            </div>
-          ))}
         </div>
       </div>
 
