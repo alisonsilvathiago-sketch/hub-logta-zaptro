@@ -30,6 +30,7 @@ import HubNotifications from './hub/pages/HubNotifications';
 import HubChat from './hub/modules/hub/Chat';
 import LogisticaHub from './hub/modules/hub/Logistica';
 import Workflows from './hub/modules/hub/Workflows';
+import IaGatewayCenter from './hub/modules/hub/IaGateway';
 import PublicFuelDashboard from './hub/pages/PublicFuelDashboard';
 import AnalyticalFuelDashboard from './hub/pages/AnalyticalFuelDashboard';
 import ErrorBoundary from '@shared/components/ErrorBoundary';
@@ -183,6 +184,7 @@ const App: React.FC = () => {
             <Route path="plans" element={<HubPlans />} />
             <Route path="notifications" element={<HubNotifications />} />
             <Route path="automacoes" element={<Workflows />} />
+            <Route path="automacoes/ia-gateway" element={<IaGatewayCenter />} />
             <Route path="logdock" element={<HubLogDock />} />
             <Route path="integracoes" element={<Navigate to="/master/automacoes?tab=integracoes" replace />} />
             <Route path="profile" element={<AccountSettings />} />
