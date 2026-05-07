@@ -3671,7 +3671,7 @@ const LogDockDashboard: React.FC = () => {
           {/* NAVIGATION MENU */}
           <div style={{ flex: 1, overflowY: 'auto', padding: isSidebarCollapsed ? '20px 10px' : '12px 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {[
-              { id: 'inicio', label: 'Dashboard', icon: <Home size={16} /> },
+              { id: 'inicio', label: 'LogDock IA', icon: <Home size={16} /> },
               { id: 'operacoes', label: 'Operações', icon: <Box size={16} /> },
               { id: 'transportadores', label: 'Transportadores', icon: <Truck size={16} /> },
               { id: 'arquivos', label: 'Meu Drive', icon: <Files size={16} /> },
@@ -3689,21 +3689,21 @@ const LogDockDashboard: React.FC = () => {
                 }}
                 title={isSidebarCollapsed ? item.label : undefined}
                 style={{ 
-                  width: '100%', 
-                  height: isSidebarCollapsed ? '54px' : 'auto',
-                  padding: isSidebarCollapsed ? '0' : '14px 18px', 
-                  borderRadius: '12px', 
-                  backgroundColor: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '#1A1A1A' : '#F8F9FA') : 'transparent', 
-                  border: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1') : 'none', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: isSidebarCollapsed ? 'center' : 'space-between', 
-                  color: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id))
-                    ? (theme === 'dark' ? '#FFF' : (item.id === 'inicio' ? '#000000' : '#0061FF')) 
-                    : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'), 
-                  boxShadow: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.05)') : 'none',
-                  cursor: 'pointer', 
-                  transition: 'all 0.2s ease' 
+                   width: '100%', 
+                   height: isSidebarCollapsed ? '54px' : 'auto',
+                   padding: isSidebarCollapsed ? '0' : '14px 18px', 
+                   borderRadius: '12px', 
+                   backgroundColor: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '#1A1A1A' : (item.id === 'inicio' ? '#000000' : '#F8F9FA')) : 'transparent', 
+                   border: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : (item.id === 'inicio' ? '1px solid #000000' : '1px solid #D1D1D1')) : 'none', 
+                   display: 'flex', 
+                   alignItems: 'center', 
+                   justifyContent: isSidebarCollapsed ? 'center' : 'space-between', 
+                   color: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id))
+                     ? (theme === 'dark' ? '#FFF' : (item.id === 'inicio' ? '#FFFFFF' : '#0061FF')) 
+                     : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'), 
+                   boxShadow: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : (item.id === 'inicio' ? '0 4px 12px rgba(0,0,0,0.25)' : '0 4px 12px rgba(0,0,0,0.05)')) : 'none',
+                   cursor: 'pointer', 
+                   transition: 'all 0.2s ease' 
                 }}
                 onMouseEnter={e => {
                   if (!(activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)))) {
