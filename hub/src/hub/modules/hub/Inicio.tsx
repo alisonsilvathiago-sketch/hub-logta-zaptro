@@ -58,32 +58,22 @@ const HubInicio: React.FC = () => {
   const testConnection = async () => {
     setOllamaStatus('testing');
     try {
-      const response = await fetch(`${ollamaUrl}/api/tags`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+      const targetUrl = ollamaUrl.includes('108.174.151.98') ? `${ollamaUrl}/api/generate` : ollamaUrl;
+      const response = await fetch(targetUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: ollamaModel, prompt: 'ping', stream: false })
       });
       if (response.ok) {
         setOllamaStatus('online');
-        toast.success('Ollama conectado com sucesso!');
+        toast.success('Ollama conectado com sucesso via Gateway!');
       } else {
         setOllamaStatus('offline');
         toast.error('Ollama respondeu com status inválido.');
       }
     } catch (err) {
-      try {
-        const response = await fetch(`${ollamaUrl}/api/generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: ollamaModel, prompt: 'ping', stream: false })
-        });
-        if (response.ok) {
-          setOllamaStatus('online');
-          toast.success('Conectado com sucesso ao Ollama!');
-          return;
-        }
-      } catch {}
       setOllamaStatus('offline');
-      toast.error('Erro de CORS ou rede ao conectar ao Ollama.');
+      toast.error('Erro de conexão ou CORS ao acessar o Gateway de IA.');
     }
   };
 

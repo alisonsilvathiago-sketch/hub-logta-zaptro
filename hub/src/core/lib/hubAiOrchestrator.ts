@@ -144,7 +144,8 @@ ${req.prompt}
 `;
 
   try {
-    const response = await fetch(`${ollamaUrl}/api/generate`, {
+    const targetUrl = ollamaUrl.includes('108.174.151.98') ? `${ollamaUrl}/api/generate` : ollamaUrl;
+    const response = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
