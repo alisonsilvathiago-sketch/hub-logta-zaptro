@@ -118,7 +118,7 @@ const HubInicio: React.FC = () => {
         </div>
         
         <button 
-          onClick={() => navigate('/master/automacoes/ia-gateway')}
+          onClick={() => navigate('/master/settings?tab=ia-gateway')}
           style={{
             padding: '12px 24px',
             borderRadius: '14px',

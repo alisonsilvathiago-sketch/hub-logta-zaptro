@@ -14,6 +14,7 @@ import { useLocation } from 'react-router-dom';
 
 // Sub-componentes
 import MasterBilling from './Billing';
+import IaGatewayCenter from './IaGateway';
 import InteractionsTab from './Interactions';
 import EvolutionManager from './EvolutionManager';
 import HubNotifications from '../../pages/HubNotifications';
@@ -110,6 +111,7 @@ const MasterSettings: React.FC = () => {
     { id: 'interacoes', label: 'Interações & Hub', icon: <LinkIcon size={18} /> },
     { id: 'evolution', label: 'Evolution API Hub', icon: <Smartphone size={18} /> },
     { id: 'notificacoes', label: 'Central de Alertas', icon: <Bell size={18} /> },
+    { id: 'ia-gateway', label: 'Gateway IA & Multiagentes', icon: <Cpu size={18} /> },
     { id: 'sistema', label: 'Status do Núcleo', icon: <Database size={18} /> },
   ];
 
@@ -134,6 +136,7 @@ const MasterSettings: React.FC = () => {
       case 'interacoes': return <InteractionsTab />;
       case 'evolution': return <EvolutionManager />;
       case 'notificacoes': return <HubNotifications />;
+      case 'ia-gateway': return <IaGatewayCenter />;
       case 'sistema': return <CoreStatusTab />;
       default: return <div style={styles.tabPlaceholder}>Selecione um módulo no menu lateral.</div>;
     }
