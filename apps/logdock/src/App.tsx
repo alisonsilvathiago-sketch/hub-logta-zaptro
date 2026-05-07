@@ -3629,7 +3629,7 @@ const LogDockDashboard: React.FC = () => {
         {/* TIER 2: EXPLORER / NAVIGATION TREE SIDEBAR */}
         <aside style={{ 
           width: isSidebarCollapsed ? '84px' : '320px', 
-          background: theme === 'dark' ? '#0F0F0F' : '#F1F1F1', 
+          background: theme === 'dark' ? '#0F0F0F' : '#f8f9fa', 
           color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : '#64748B', 
           display: 'flex', 
           flexDirection: 'column', 
