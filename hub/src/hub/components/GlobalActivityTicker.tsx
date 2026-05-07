@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@core/lib/supabase';
 import { 
   Building2, DollarSign, Briefcase, 
@@ -15,6 +16,7 @@ interface Activity {
 }
 
 const GlobalActivityTicker: React.FC = () => {
+  const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
@@ -79,10 +81,36 @@ const GlobalActivityTicker: React.FC = () => {
     }, 5000);
   };
 
+  const handleActivityClick = (activity: Activity) => {
+    if (activity.type === 'company') {
+      navigate('/master/companies');
+    } else if (activity.type === 'payment') {
+      navigate('/master/billing?tab=financeiro');
+    } else if (activity.type === 'plan') {
+      navigate('/master/plans');
+    } else {
+      navigate('/master/notifications');
+    }
+  };
+
   return (
     <div style={styles.toastStack}>
       {activities.map((activity) => (
-        <div key={activity.id} style={styles.toastCard}>
+        <div 
+          key={activity.id} 
+          style={{ ...styles.toastCard, cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
+          onClick={() => handleActivityClick(activity)}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+            e.currentTarget.style.boxShadow = '0 25px 35px rgba(0,0,0,0.5)';
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'none';
+            e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0,0,0,0.3)';
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+          }}
+        >
           <div style={styles.toastHeader}>
             <div style={styles.livePulse} />
             <span style={styles.toastTitle}>ATIVIDADE EM TEMPO REAL</span>
