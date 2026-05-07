@@ -8,6 +8,13 @@ export default defineConfig({
     port: 5175,
     host: 'localhost',
     strictPort: true,
+    proxy: {
+      '/api/ai': {
+        target: 'http://108.174.151.98:11434',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/ai/, ''),
+      }
+    }
   },
   resolve: {
     alias: {

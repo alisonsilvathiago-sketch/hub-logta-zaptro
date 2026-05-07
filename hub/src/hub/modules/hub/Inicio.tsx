@@ -28,7 +28,7 @@ const HubInicio: React.FC = () => {
   ]);
 
   // Ollama Configuration State
-  const [ollamaUrl, setOllamaUrl] = useState('http://108.174.151.98:11434');
+  const [ollamaUrl, setOllamaUrl] = useState('/api/ai');
   const [ollamaModel, setOllamaModel] = useState('llama3.2');
   const [ollamaStatus, setOllamaStatus] = useState<'testing' | 'online' | 'offline'>('online');
 

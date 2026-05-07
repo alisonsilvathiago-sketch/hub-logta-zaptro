@@ -6,6 +6,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/ai/:path*",
+      "destination": "http://108.174.151.98:11434/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
