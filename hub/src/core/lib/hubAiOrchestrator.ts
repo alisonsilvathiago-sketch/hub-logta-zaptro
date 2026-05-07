@@ -6,6 +6,8 @@
  * MUST route their AI prompts through this orchestrator.
  */
 
+import { OLLAMA_CONFIG } from './ai/config/ollama.config';
+
 export interface AISystemRequest {
   systemId: 'crm' | 'logistica' | 'financeiro' | 'atendimento' | 'whatsapp' | 'master';
   prompt: string;
@@ -143,6 +145,10 @@ USER REQUEST:
 ${req.prompt}
 `;
 
+  let successResponse: any = null;
+  let usedSource: 'VPS' | 'Localhost' = 'VPS';
+
+  // Step 1: Try Primary VPS Gateway Route (/api/ai)
   try {
     const targetUrl = ollamaUrl.includes('108.174.151.98') ? `${ollamaUrl}/api/generate` : ollamaUrl;
     const response = await fetch(targetUrl, {
@@ -154,14 +160,44 @@ ${req.prompt}
         stream: false
       })
     });
-
-    if (!response.ok) {
+    if (response.ok) {
+      successResponse = await response.json();
+      usedSource = 'VPS';
+    } else {
       throw new Error(`Ollama Gateway returned status ${response.status}`);
     }
+  } catch (vpsErr) {
+    console.warn("[AI Gateway]: VPS/Proxy down, attempting local failover to localhost:11434...", vpsErr);
+  }
 
-    const data = await response.json();
-    const latencyMs = Date.now() - startTime;
-    const tokensUsed = Math.floor(data.response.length / 4) + 120; // Estimated
+  // Step 2: Try Localhost Failover (Local Mac Ollama)
+  if (!successResponse) {
+    try {
+      const response = await fetch(`${OLLAMA_CONFIG.local}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: model,
+          prompt: enrichedPrompt,
+          stream: false
+        })
+      });
+      if (response.ok) {
+        successResponse = await response.json();
+        usedSource = 'Localhost';
+      } else {
+        throw new Error(`Local Ollama returned status ${response.status}`);
+      }
+    } catch (localErr) {
+      console.error("[AI Gateway Failover]: Localhost Ollama also offline.", localErr);
+    }
+  }
+
+  const latencyMs = Date.now() - startTime;
+
+  // Step 3: Handle Final Succeeded Response
+  if (successResponse) {
+    const tokensUsed = Math.floor(successResponse.response.length / 4) + 120; // Estimated
 
     // Track telemetry local update
     GATEWAY_TELEMETRY.totalCalls += 1;
@@ -170,24 +206,22 @@ ${req.prompt}
     return {
       success: true,
       systemId: req.systemId,
-      agentName: config.agentName,
-      response: data.response,
+      agentName: `${config.agentName} (${usedSource})`,
+      response: successResponse.response,
       latencyMs,
       tokensUsed,
       timestamp: new Date().toLocaleTimeString()
     };
-  } catch (err) {
-    console.error(`[AI Gateway Error on System ${req.systemId.toUpperCase()}]:`, err);
-    
-    const latencyMs = Date.now() - startTime;
-    return {
-      success: false,
-      systemId: req.systemId,
-      agentName: config.agentName,
-      response: "Erro ao conectar com a IA.",
-      latencyMs,
-      tokensUsed: 0,
-      timestamp: new Date().toLocaleTimeString()
-    };
   }
+
+  // Step 4: Handle All Nodes Offline (Clean Error)
+  return {
+    success: false,
+    systemId: req.systemId,
+    agentName: config.agentName,
+    response: "Erro ao conectar com a IA. Tanto a VPS de produção quanto o Ollama Local (localhost) estão offline.",
+    latencyMs,
+    tokensUsed: 0,
+    timestamp: new Date().toLocaleTimeString()
+  };
 }
