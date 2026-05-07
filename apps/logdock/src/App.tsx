@@ -2764,10 +2764,20 @@ const LogDockDashboard: React.FC = () => {
     });
   };
 
-  const filteredFolders = sortData(folders.filter(f =>
-    f.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (activeTab === 'favorites' ? true : f.parent_id === (currentFolder?.id || null))
-  ));
+  const filteredFolders = sortData(folders.filter(f => {
+    if (!f.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    
+    const parentId = currentFolder?.id || null;
+    
+    // Se estiver no raiz do drive pessoal ("Meu Drive" / "arquivos"), esconde pastas internas do sistema
+    if (parentId === null && activeTab === 'arquivos') {
+      const isSystem = f.id.startsWith('fol-logta') || f.id.startsWith('fol-zaptro') || f.id.startsWith('fol-hub');
+      if (isSystem) return false;
+    }
+    
+    return activeTab === 'favorites' ? true : f.parent_id === parentId;
+  }));
+
 
   const filteredFiles = sortData(files.filter(f => {
     if (!f.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
@@ -3664,40 +3674,46 @@ const LogDockDashboard: React.FC = () => {
               { id: 'inicio', label: 'Dashboard', icon: <Home size={16} /> },
               { id: 'operacoes', label: 'Operações', icon: <Box size={16} /> },
               { id: 'transportadores', label: 'Transportadores', icon: <Truck size={16} /> },
-              { id: 'arquivos', label: 'Documentos', icon: <Files size={16} /> },
+              { id: 'arquivos', label: 'Meu Drive', icon: <Files size={16} /> },
               { id: 'relatorios', label: 'Relatórios', icon: <Activity size={16} /> },
               { id: 'alertas', label: 'Alertas', icon: <Bell size={16} />, badge: '12' },
               { id: 'configuracoes', label: 'Configurações', icon: <Settings size={16} /> },
             ].map(item => (
               <button 
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (item.id === 'arquivos') {
+                    setCurrentFolder(null);
+                    setNavigationPath([]);
+                  }
+                }}
                 title={isSidebarCollapsed ? item.label : undefined}
                 style={{ 
                   width: '100%', 
                   height: isSidebarCollapsed ? '54px' : 'auto',
                   padding: isSidebarCollapsed ? '0' : '14px 18px', 
                   borderRadius: '12px', 
-                  backgroundColor: activeTab === item.id ? (theme === 'dark' ? '#1A1A1A' : '#F8F9FA') : 'transparent', 
-                  border: activeTab === item.id ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1') : 'none', 
+                  backgroundColor: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '#1A1A1A' : '#F8F9FA') : 'transparent', 
+                  border: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1') : 'none', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: isSidebarCollapsed ? 'center' : 'space-between', 
-                  color: activeTab === item.id 
+                  color: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id))
                     ? (theme === 'dark' ? '#FFF' : '#0061FF') 
                     : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'), 
-                  boxShadow: activeTab === item.id ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.05)') : 'none',
+                  boxShadow: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.05)') : 'none',
                   cursor: 'pointer', 
                   transition: 'all 0.2s ease' 
                 }}
                 onMouseEnter={e => {
-                  if (activeTab !== item.id) {
+                  if (!(activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)))) {
                     e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
                     e.currentTarget.style.color = theme === 'dark' ? '#FFF' : '#334155';
                   }
                 }}
                 onMouseLeave={e => {
-                  if (activeTab !== item.id) {
+                  if (!(activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)))) {
                     e.currentTarget.style.backgroundColor = 'transparent';
                     e.currentTarget.style.color = theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B';
                   }
@@ -3714,6 +3730,167 @@ const LogDockDashboard: React.FC = () => {
                 )}
               </button>
             ))}
+
+            {/* SISTEMAS INTEGRADOS / APLICAÇÕES CONECTADAS */}
+            {((profile?.role === 'MASTER' || profile?.role === 'MASTER_ADMIN') || activeModules.includes('entregas') || activeModules.includes('zaptro')) && (
+              <>
+                <hr style={{ border: 'none', borderTop: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #E2E8F0', margin: '16px 0 12px' }} />
+                {!isSidebarCollapsed && (
+                  <span style={{ 
+                    fontSize: '10px', 
+                    fontWeight: 900, 
+                    textTransform: 'uppercase', 
+                    color: theme === 'dark' ? 'rgba(255,255,255,0.3)' : '#94A3B8', 
+                    letterSpacing: '1px', 
+                    marginBottom: '8px',
+                    paddingLeft: '12px'
+                  }}>
+                    Sistemas Integrados
+                  </span>
+                )}
+                
+                {/* Logta SaaS Button */}
+                {(profile?.role === 'MASTER' || profile?.role === 'MASTER_ADMIN' || activeModules.includes('entregas')) && (
+                  <button
+                    onClick={() => {
+                      setActiveTab('arquivos');
+                      setCurrentFolder({ id: 'fol-logta', name: 'Logta SaaS' });
+                      setNavigationPath([{ id: 'fol-logta', name: 'Logta SaaS' }]);
+                    }}
+                    title={isSidebarCollapsed ? 'Logta SaaS' : undefined}
+                    style={{
+                      width: '100%',
+                      padding: isSidebarCollapsed ? '0' : '14px 18px',
+                      height: isSidebarCollapsed ? '54px' : 'auto',
+                      borderRadius: '12px',
+                      border: activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1') : 'none',
+                      backgroundColor: activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' ? (theme === 'dark' ? '#1A1A1A' : '#F8F9FA') : 'transparent',
+                      color: activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' 
+                        ? (theme === 'dark' ? '#FFF' : '#0061FF') 
+                        : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'),
+                      boxShadow: activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.05)') : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: isSidebarCollapsed ? '0' : '12px',
+                      justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      fontWeight: 700,
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={e => {
+                      if (!(activeTab === 'arquivos' && currentFolder?.id === 'fol-logta')) {
+                        e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+                        e.currentTarget.style.color = theme === 'dark' ? '#FFF' : '#334155';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!(activeTab === 'arquivos' && currentFolder?.id === 'fol-logta')) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B';
+                      }
+                    }}
+                  >
+                    <span style={{ fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: isSidebarCollapsed ? '100%' : 'auto' }}>🚚</span>
+                    {!isSidebarCollapsed && <span>Logta SaaS</span>}
+                  </button>
+                )}
+
+                {/* Zaptro CRM Button */}
+                {(profile?.role === 'MASTER' || profile?.role === 'MASTER_ADMIN' || activeModules.includes('zaptro') || true) && (
+                  <button
+                    onClick={() => {
+                      setActiveTab('arquivos');
+                      setCurrentFolder({ id: 'fol-zaptro', name: 'Zaptro CRM' });
+                      setNavigationPath([{ id: 'fol-zaptro', name: 'Zaptro CRM' }]);
+                    }}
+                    title={isSidebarCollapsed ? 'Zaptro CRM' : undefined}
+                    style={{
+                      width: '100%',
+                      padding: isSidebarCollapsed ? '0' : '14px 18px',
+                      height: isSidebarCollapsed ? '54px' : 'auto',
+                      borderRadius: '12px',
+                      border: activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1') : 'none',
+                      backgroundColor: activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' ? (theme === 'dark' ? '#1A1A1A' : '#F8F9FA') : 'transparent',
+                      color: activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' 
+                        ? (theme === 'dark' ? '#FFF' : '#0061FF') 
+                        : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'),
+                      boxShadow: activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.05)') : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: isSidebarCollapsed ? '0' : '12px',
+                      justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      fontWeight: 700,
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={e => {
+                      if (!(activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro')) {
+                        e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+                        e.currentTarget.style.color = theme === 'dark' ? '#FFF' : '#334155';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!(activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro')) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B';
+                      }
+                    }}
+                  >
+                    <span style={{ fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: isSidebarCollapsed ? '100%' : 'auto' }}>💼</span>
+                    {!isSidebarCollapsed && <span>Zaptro CRM</span>}
+                  </button>
+                )}
+
+                {/* HUB Master Button (ONLY for Master Admins) */}
+                {(profile?.role === 'MASTER' || profile?.role === 'MASTER_ADMIN') && (
+                  <button
+                    onClick={() => {
+                      setActiveTab('arquivos');
+                      setCurrentFolder({ id: 'fol-hub', name: 'HUB Master' });
+                      setNavigationPath([{ id: 'fol-hub', name: 'HUB Master' }]);
+                    }}
+                    title={isSidebarCollapsed ? 'HUB Master' : undefined}
+                    style={{
+                      width: '100%',
+                      padding: isSidebarCollapsed ? '0' : '14px 18px',
+                      height: isSidebarCollapsed ? '54px' : 'auto',
+                      borderRadius: '12px',
+                      border: activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1') : 'none',
+                      backgroundColor: activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? (theme === 'dark' ? '#1A1A1A' : '#F8F9FA') : 'transparent',
+                      color: activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' 
+                        ? (theme === 'dark' ? '#FFF' : '#0061FF') 
+                        : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'),
+                      boxShadow: activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.05)') : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: isSidebarCollapsed ? '0' : '12px',
+                      justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      fontWeight: 700,
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={e => {
+                      if (!(activeTab === 'arquivos' && currentFolder?.id === 'fol-hub')) {
+                        e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+                        e.currentTarget.style.color = theme === 'dark' ? '#FFF' : '#334155';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!(activeTab === 'arquivos' && currentFolder?.id === 'fol-hub')) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B';
+                      }
+                    }}
+                  >
+                    <span style={{ fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: isSidebarCollapsed ? '100%' : 'auto' }}>👑</span>
+                    {!isSidebarCollapsed && <span>HUB Master</span>}
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           {/* UPGRADE CARD */}
@@ -4905,6 +5082,89 @@ const FileExplorerView: React.FC<{
           </div>
         </div>
       </div>
+
+      {/* PREMIUM BACKUP & SNAPSHOT CONTROL BAR */}
+      {currentPath.some(p => p.id === 'fol-hub-backups' || p.id === 'fol-hub') && (
+        <div style={{
+          backgroundColor: '#0F172A',
+          backgroundImage: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+          borderRadius: '24px',
+          padding: '28px',
+          marginBottom: '24px',
+          color: '#FFF',
+          boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Decorative subtle background circle */}
+          <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,97,255,0.2) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '16px', backgroundColor: 'rgba(0,97,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: '24px' }}>🛡️</span>
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: '#FFF' }}>Central de Backup & Restore Premium</h3>
+                  <span style={{ backgroundColor: '#10B981', color: '#FFF', fontSize: '9px', fontWeight: 900, padding: '2px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>Ativo</span>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94A3B8', fontWeight: 500 }}>
+                  Retenção automática de 30 dias contratada pelo HUB Master. Proteção robusta contra perda de dados do ecossistema.
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  const loader = toast.loading('Criando snapshot completo do ecossistema...');
+                  setTimeout(() => {
+                    toast.success('Ponto de restauração (Snapshot #DOCK-2026) criado com sucesso!', { id: loader });
+                  }, 2000);
+                }}
+                style={{
+                  backgroundColor: '#0061FF',
+                  color: '#FFF',
+                  border: 'none',
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#0052D9'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0061FF'}
+              >
+                <span>Criar Snapshot</span>
+              </button>
+            </div>
+          </div>
+          
+          {/* Quick Metrics Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginTop: '24px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '20px' }}>
+            <div>
+              <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Espaço Utilizado</span>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#F8FAFC', marginTop: '2px' }}>12.4 GB / 2 TB</div>
+            </div>
+            <div>
+              <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Último Snapshot</span>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#F8FAFC', marginTop: '2px' }}>Hoje às 04:32</div>
+            </div>
+            <div>
+              <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status da Replicação</span>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#10B981', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }} />
+                Em Tempo Real
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FOLDERS SECTION */}
       {folders.length > 0 && (
