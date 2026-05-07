@@ -3843,7 +3843,12 @@ const LogDockDashboard: React.FC = () => {
                       }
                     }}
                   >
-                    <span style={{ fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: isSidebarCollapsed ? '100%' : 'auto' }}>💼</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: isSidebarCollapsed ? '100%' : 'auto' }}>
+                      <svg viewBox="0 0 100 100" style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
+                        <rect x="0" y="0" width="100" height="100" rx="28" fill={activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' ? '#FFF' : '#000000'}></rect>
+                        <path d="M55 18 L30 52 H50 L45 82 L70 48 H50 Z" fill={activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' ? '#000000' : '#CCFF00'}></path>
+                      </svg>
+                    </div>
                     {!isSidebarCollapsed && <span>Zaptro CRM</span>}
                   </button>
                 )}
