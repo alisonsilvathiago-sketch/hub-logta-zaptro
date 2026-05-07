@@ -3763,12 +3763,12 @@ const LogDockDashboard: React.FC = () => {
                       padding: isSidebarCollapsed ? '0' : '14px 18px',
                       height: isSidebarCollapsed ? '54px' : 'auto',
                       borderRadius: '12px',
-                      border: activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1') : 'none',
-                      backgroundColor: activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' ? (theme === 'dark' ? '#1A1A1A' : '#F8F9FA') : 'transparent',
+                      border: activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgb(209, 209, 209)') : 'none',
+                      backgroundColor: activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' ? (theme === 'dark' ? '#1A1A1A' : 'rgb(248, 249, 250)') : 'transparent',
                       color: activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' 
-                        ? (theme === 'dark' ? '#FFF' : '#0061FF') 
+                        ? (theme === 'dark' ? '#FFF' : 'rgb(0, 97, 255)') 
                         : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'),
-                      boxShadow: activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.05)') : 'none',
+                      boxShadow: activeTab === 'arquivos' && currentFolder?.id === 'fol-logta' ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.4)' : 'rgba(0, 0, 0, 0.15) 0px 4px 12px') : 'none',
                       display: 'flex',
                       alignItems: 'center',
                       gap: isSidebarCollapsed ? '0' : '12px',
@@ -3815,12 +3815,12 @@ const LogDockDashboard: React.FC = () => {
                       padding: isSidebarCollapsed ? '0' : '14px 18px',
                       height: isSidebarCollapsed ? '54px' : 'auto',
                       borderRadius: '12px',
-                      border: activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1') : 'none',
-                      backgroundColor: activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' ? (theme === 'dark' ? '#1A1A1A' : '#F8F9FA') : 'transparent',
+                      border: activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgb(209, 209, 209)') : 'none',
+                      backgroundColor: activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' ? (theme === 'dark' ? '#1A1A1A' : 'rgb(248, 249, 250)') : 'transparent',
                       color: activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' 
-                        ? (theme === 'dark' ? '#FFF' : '#0061FF') 
+                        ? (theme === 'dark' ? '#FFF' : 'rgb(0, 97, 255)') 
                         : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'),
-                      boxShadow: activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.05)') : 'none',
+                      boxShadow: activeTab === 'arquivos' && currentFolder?.id === 'fol-zaptro' ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.4)' : 'rgba(0, 0, 0, 0.15) 0px 4px 12px') : 'none',
                       display: 'flex',
                       alignItems: 'center',
                       gap: isSidebarCollapsed ? '0' : '12px',
@@ -3862,12 +3862,12 @@ const LogDockDashboard: React.FC = () => {
                       padding: isSidebarCollapsed ? '0' : '14px 18px',
                       height: isSidebarCollapsed ? '54px' : 'auto',
                       borderRadius: '12px',
-                      border: activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1') : 'none',
-                      backgroundColor: activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? (theme === 'dark' ? '#1A1A1A' : '#F8F9FA') : 'transparent',
+                      border: activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgb(209, 209, 209)') : 'none',
+                      backgroundColor: activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? (theme === 'dark' ? '#1A1A1A' : 'rgb(248, 249, 250)') : 'transparent',
                       color: activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' 
-                        ? (theme === 'dark' ? '#FFF' : '#0061FF') 
+                        ? (theme === 'dark' ? '#FFF' : 'rgb(0, 97, 255)') 
                         : (theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'),
-                      boxShadow: activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.05)') : 'none',
+                      boxShadow: activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? (theme === 'dark' ? '0 4px 12px rgba(0,0,0,0.4)' : 'rgba(0, 0, 0, 0.15) 0px 4px 12px') : 'none',
                       display: 'flex',
                       alignItems: 'center',
                       gap: isSidebarCollapsed ? '0' : '12px',
