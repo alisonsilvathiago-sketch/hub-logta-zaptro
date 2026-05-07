@@ -3910,52 +3910,27 @@ const LogDockDashboard: React.FC = () => {
             )}
           </div>
 
-          {/* UPGRADE CARD */}
+          {/* MINIMALIST STORAGE FOOTER */}
           {!isSidebarCollapsed && (
-            <div style={{
-              marginTop: 'auto', padding: '24px', borderRadius: '24px',
-              background: theme === 'dark' ? '#141414' : '#FFFFFF',
-              border: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1', position: 'relative', overflow: 'hidden',
-              marginBottom: '24px',
-              margin: '24px',
-              boxShadow: theme === 'dark' ? 'none' : '0 4px 12px rgba(0,0,0,0.05)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '32px' }}>🚀</span>
-                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: theme === 'dark' ? '#1A1A1A' : '#F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                  <MoreHorizontal size={16} color={theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B'} />
-                </div>
+            <div 
+              style={{
+                padding: '16px 24px',
+                borderTop: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #F1F5F9',
+                marginTop: 'auto',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onClick={() => setOpenFilePreview({ name: 'Visualização de Armazenamento', type: 'application/pdf', isStoragePopup: true })}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '11px', fontWeight: 800, color: theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B' }}>
+                <span>Armazenamento</span>
+                <span>{storageStats.percent}%</span>
               </div>
-
-              <h4 
-                onClick={() => setOpenFilePreview({ name: 'Plano 2TB Plus.pdf', type: 'application/pdf', isStoragePopup: true })}
-                style={{ margin: '20px 0 10px', fontSize: '15px', fontWeight: 900, color: theme === 'dark' ? '#FFFFFF' : '#334155', cursor: 'pointer' }}
-              >
-                Uso de Armazenamento
-              </h4>
-              
-              <div 
-                onClick={() => setOpenFilePreview({ name: 'Plano 2TB Plus.pdf', type: 'application/pdf', isStoragePopup: true })}
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px', cursor: 'pointer' }}
-              >
-                <span style={{ fontSize: '13px', fontWeight: 800, color: theme === 'dark' ? '#FFF' : '#334155' }}>{storageStats.used} / {storageStats.total}</span>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: theme === 'dark' ? 'rgba(255,255,255,0.4)' : '#64748B' }}>{storageStats.percent}%</span>
+              <div style={{ width: '100%', height: '4px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#E2E8F0', borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{ width: `${storageStats.percent}%`, height: '100%', backgroundColor: storageStats.percent > 90 ? '#EF4444' : '#0061FF', borderRadius: '2px' }} />
               </div>
-
-              <div 
-                onClick={() => setOpenFilePreview({ name: 'Plano 2TB Plus.pdf', type: 'application/pdf', isStoragePopup: true })}
-                style={{ width: '100%', height: '6px', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F1F1', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px', cursor: 'pointer' }}
-              >
-                <div style={{ width: `${storageStats.percent}%`, height: '100%', backgroundColor: storageStats.percent > 90 ? '#EF4444' : '#0061FF', borderRadius: '3px' }} />
-              </div>
-
-              <button 
-                onClick={() => setOpenFilePreview({ name: 'Visualização de Armazenamento', type: 'application/pdf', isStoragePopup: true })}
-                style={{ width: '100%', marginTop: '16px', padding: '14px 24px', borderRadius: '16px', backgroundColor: 'rgb(181, 217, 0)', color: '#000000', border: 'none', fontSize: '13px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', transition: '0.2s', boxShadow: 'rgba(181, 217, 0, 0.15) 0px 4px 12px' }}
-              >
-                <Zap size={16} fill="#000000" />
-                <span>Fazer upgrade</span>
-              </button>
             </div>
           )}
         </aside>
