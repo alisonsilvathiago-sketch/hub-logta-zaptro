@@ -3678,7 +3678,7 @@ const LogDockDashboard: React.FC = () => {
                   height: isSidebarCollapsed ? '54px' : 'auto',
                   padding: isSidebarCollapsed ? '0' : '14px 18px', 
                   borderRadius: '12px', 
-                  backgroundColor: activeTab === item.id ? (theme === 'dark' ? '#1A1A1A' : '#FFF') : 'transparent', 
+                  backgroundColor: activeTab === item.id ? (theme === 'dark' ? '#1A1A1A' : '#F8F9FA') : 'transparent', 
                   border: activeTab === item.id ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid #D1D1D1') : 'none', 
                   display: 'flex', 
                   alignItems: 'center', 
