@@ -63,13 +63,54 @@ export default function UnifiedFileUploader({ companyId, clientId, module, refer
     setUploading(true);
     try {
       const date = new Date().toISOString().split('T')[0];
-      const filePath = `${companyId}/clientes/${clientId}/${module}/${date}-${file.name}`;
+      
+      // 1. Versionamento Inteligente de Arquivos Existentes
+      const { data: existingFiles } = await supabase
+        .from('files')
+        .select('id, name')
+        .eq('company_id', companyId)
+        .eq('client_id', clientId)
+        .eq('category', module)
+        .eq('name', file.name);
 
-      const { error: uploadError } = await supabase.storage
-        .from('hub-drive')
-        .upload(filePath, file, { upsert: true });
+      let version = 1;
+      let finalName = file.name;
 
-      if (uploadError) throw uploadError;
+      if (existingFiles && existingFiles.length > 0) {
+        version = existingFiles.length + 1;
+        const nameParts = file.name.split('.');
+        const ext = nameParts.pop();
+        const baseName = nameParts.join('.');
+        finalName = `${baseName}_v${version}.${ext}`;
+      }
+
+      const filePath = `${companyId}/clientes/${clientId}/${module}/${date}-${finalName}`;
+
+      // 2. Retry automático com Exponential Backoff (3 tentativas)
+      const maxRetries = 3;
+      let attempt = 0;
+      let uploaded = false;
+      let uploadError = null;
+
+      while (attempt < maxRetries && !uploaded) {
+        try {
+          const { error } = await supabase.storage
+            .from('hub-drive')
+            .upload(filePath, file, { upsert: true });
+
+          if (error) throw error;
+          uploaded = true;
+        } catch (err: any) {
+          attempt++;
+          uploadError = err;
+          console.warn(`Tentativa de upload ${attempt}/${maxRetries} falhou. Aguardando próximo envio...`);
+          if (attempt < maxRetries) {
+            await new Promise(res => setTimeout(res, attempt * 1000));
+          }
+        }
+      }
+
+      if (!uploaded) throw uploadError || new Error('Upload excedeu o limite de tentativas.');
 
       const { error: dbError } = await supabase
         .from('files')
@@ -78,7 +119,7 @@ export default function UnifiedFileUploader({ companyId, clientId, module, refer
           client_id: clientId,
           category: module,
           entity_type: 'cliente',
-          name: file.name,
+          name: finalName,
           path: filePath,
           type: file.type,
           size: file.size,
@@ -86,7 +127,8 @@ export default function UnifiedFileUploader({ companyId, clientId, module, refer
           metadata: { 
             source: 'unified_uploader', 
             reference_id: referenceId,
-            auto_archived: true 
+            auto_archived: true,
+            version: version
           }
         });
 
