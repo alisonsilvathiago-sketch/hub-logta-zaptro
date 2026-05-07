@@ -3668,8 +3668,7 @@ const LogDockDashboard: React.FC = () => {
 
 
 
-          {/* NAVIGATION MENU */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: isSidebarCollapsed ? '20px 10px' : '12px 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: isSidebarCollapsed ? '20px 10px' : '12px 24px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {[
               { id: 'inicio', label: 'LogDock IA', icon: <Home size={16} /> },
               { id: 'operacoes', label: 'Operações', icon: <Box size={16} /> },
@@ -3691,7 +3690,7 @@ const LogDockDashboard: React.FC = () => {
                 style={{ 
                    width: '100%', 
                    height: isSidebarCollapsed ? '54px' : 'auto',
-                   padding: isSidebarCollapsed ? '0' : '14px 18px', 
+                   padding: isSidebarCollapsed ? '0' : '10px 16px', 
                    borderRadius: '12px', 
                    backgroundColor: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '#1A1A1A' : (item.id === 'inicio' ? '#000000' : '#F8F9FA')) : 'transparent', 
                    border: activeTab === item.id && (!currentFolder || !['fol-logta', 'fol-zaptro', 'fol-hub'].includes(currentFolder.id)) ? (theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : (item.id === 'inicio' ? '1px solid #000000' : '1px solid #D1D1D1')) : 'none', 
