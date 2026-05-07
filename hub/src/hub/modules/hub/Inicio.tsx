@@ -4,7 +4,7 @@ import {
   Sparkles, Send, Mic, Plus, ArrowRight, Bot, 
   TrendingUp, Truck, CreditCard, MessageCircle, RefreshCw
 } from 'lucide-react';
-import { dispatchToAiGateway, SYSTEM_PERSONALITIES } from '../../../core/lib/hubAiOrchestrator';
+import { dispatchToAiGateway, SYSTEM_PERSONALITIES, processMultimodalFile } from '../../../core/lib/hubAiOrchestrator';
 
 interface Message {
   sender: 'user' | 'bot';
@@ -29,22 +29,55 @@ const HubInicio: React.FC = () => {
 
   // Send Prompt to Gateway Orquestrador
   const handleSend = async (prompt: string) => {
-    if (!prompt.trim()) return;
-    setMessages(prev => [...prev, { sender: 'user', text: prompt }]);
+    let finalPrompt = prompt.trim();
+    
+    // Check if we are sending an audio or file attachment
+    if (isRecording) {
+      finalPrompt = "gravacao_operacional.wav";
+      setIsRecording(false);
+    } else if (selectedFile) {
+      finalPrompt = selectedFile;
+    }
+
+    if (!finalPrompt) return;
+
+    setMessages(prev => [...prev, { 
+      sender: 'user', 
+      text: selectedFile ? `[Arquivo Anexo: ${selectedFile}]` : (finalPrompt.endsWith('.wav') ? `[Áudio Operacional: 12s]` : finalPrompt) 
+    }]);
+
     setInputValue('');
     setIsTyping(true);
 
     try {
-      const response = await dispatchToAiGateway({
-        systemId: activeSystem,
-        prompt: prompt
-      });
+      if (selectedFile || finalPrompt.endsWith('.wav')) {
+        const fileObj = {
+          name: selectedFile || finalPrompt,
+          size: 1024 * 340, // 340kb
+          type: selectedFile?.endsWith('.png') ? 'image/png' : (finalPrompt.endsWith('.wav') ? 'audio/wav' : 'application/pdf')
+        };
+        
+        const response = await processMultimodalFile(fileObj);
+        
+        setMessages(prev => [...prev, {
+          sender: 'bot',
+          text: `${response.responseText}\n\n📍 Entidades Detectadas: ${response.parseResult.detectedEntities?.join(', ') || ''}\n🔗 Abrir tela sugerida: ${response.parseResult.suggestedRoute}`,
+          agentName: response.agentName
+        }]);
+        
+        setSelectedFile(null);
+      } else {
+        const response = await dispatchToAiGateway({
+          systemId: activeSystem,
+          prompt: finalPrompt
+        });
 
-      setMessages(prev => [...prev, {
-        sender: 'bot',
-        text: response.response,
-        agentName: response.agentName
-      }]);
+        setMessages(prev => [...prev, {
+          sender: 'bot',
+          text: response.response,
+          agentName: response.agentName
+        }]);
+      }
     } catch {
       setMessages(prev => [...prev, {
         sender: 'bot',

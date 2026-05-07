@@ -28,3 +28,7 @@ export { OLLAMA_CONFIG } from './ai/config/ollama.config';
 
 // 8. Export Playbooks & Deploy Scripts
 export { INSTALLATION_PLAYBOOK } from './ai/utils/scripts';
+
+// 9. Export Multimodal Pipeline Services
+export * from './ai/multimodal/types';
+export { processMultimodalFile } from './ai/multimodal/pipeline';
