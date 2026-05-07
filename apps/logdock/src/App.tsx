@@ -3895,7 +3895,14 @@ const LogDockDashboard: React.FC = () => {
                       }
                     }}
                   >
-                    <span style={{ fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: isSidebarCollapsed ? '100%' : 'auto' }}>👑</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: isSidebarCollapsed ? '100%' : 'auto' }}>
+                      <svg viewBox="0 0 100 100" style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
+                        <path d="M10 32 L25 55 L50 22 L75 55 L90 32 L80 78 H20 Z" fill={activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? '#FFF' : '#F59E0B'} stroke={activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? '#FFF' : '#D97706'} strokeWidth="4" strokeLinejoin="round"></path>
+                        <circle cx="10" cy="27" r="4" fill={activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? '#FFF' : '#F59E0B'}></circle>
+                        <circle cx="50" cy="17" r="4" fill={activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? '#FFF' : '#F59E0B'}></circle>
+                        <circle cx="90" cy="27" r="4" fill={activeTab === 'arquivos' && currentFolder?.id === 'fol-hub' ? '#FFF' : '#F59E0B'}></circle>
+                      </svg>
+                    </div>
                     {!isSidebarCollapsed && <span>HUB Master</span>}
                   </button>
                 )}
