@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
-import { validateTenantAccess, AccessStatus } from '../lib/accessControl';
+import { validateTenantAccess, type AccessStatus } from '../lib/accessControl';
 import BlockedScreen from '../components/BlockedScreen';
 
 export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
