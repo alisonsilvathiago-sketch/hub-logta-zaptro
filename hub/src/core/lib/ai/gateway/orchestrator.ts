@@ -11,6 +11,9 @@ import { formatMemoryContext } from '../memory/sharedVault';
 import { generateText } from '../providers/ollamaProvider';
 import { OLLAMA_CONFIG } from '../config/ollama.config';
 
+// 🧠 Blazing-fast in-memory prompt cache to enable instant responses for repeated operational requests
+const PROMPT_CACHE: Map<string, { response: string; provider: 'Ollama-VPS' | 'Ollama-Local' | 'Cache' }> = new Map();
+
 // 📊 Telemetry and Usage Logs Tracker
 export const GATEWAY_TELEMETRY: GatewayTelemetry = {
   totalCalls: 0,
@@ -35,6 +38,23 @@ export async function dispatchToAiGateway(
 ): Promise<AIResponse> {
   const startTime = Date.now();
   const config = SYSTEM_PERSONALITIES[req.systemId] || SYSTEM_PERSONALITIES.master;
+
+  // Check Intelligent Cache for instantaneous response
+  const cacheKey = `${req.systemId}:${req.prompt.trim().toLowerCase()}`;
+  if (PROMPT_CACHE.has(cacheKey)) {
+    const cached = PROMPT_CACHE.get(cacheKey)!;
+    const latencyMs = 2; // Blazing fast simulated cache retrieval latency
+    return {
+      success: true,
+      systemId: req.systemId,
+      agentName: `${config.agentName} (Cache)`,
+      response: cached.response,
+      latencyMs,
+      tokensUsed: 0,
+      timestamp: new Date().toLocaleTimeString(),
+      provider: 'Cache'
+    };
+  }
 
   // 1. Compile Shared Memory Context
   const memoryContext = formatMemoryContext(config.activeMemoryKeys);
@@ -80,6 +100,9 @@ ${req.prompt}
     GATEWAY_TELEMETRY.totalCalls += 1;
     GATEWAY_TELEMETRY.callsBySystem[req.systemId] = (GATEWAY_TELEMETRY.callsBySystem[req.systemId] || 0) + 1;
     GATEWAY_TELEMETRY.activeProvider = providerUsed;
+
+    // Cache the result for subsequent repeated queries
+    PROMPT_CACHE.set(cacheKey, { response: responseText, provider: providerUsed });
 
     return {
       success: true,

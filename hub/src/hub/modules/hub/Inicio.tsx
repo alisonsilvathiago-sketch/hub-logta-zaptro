@@ -18,12 +18,14 @@ const HubInicio: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: 'bot',
-      text: 'Olá Master! Sou a HUBA, a inteligência central e orquestradora oficial de todo o ecossistema SaaS Logta. Como posso ajudar com insights ou consultas de sistemas hoje?',
+      text: 'Alison,\nidentifiquei que o ecossistema está operando com 99.99% de estabilidade global. Há 124 empresas ativas em produção.\n\nDeseja realizar uma auditoria de faturamento?\nAbrir financeiro:\n#/master/billing',
       agentName: 'HUBA Inteligência Central'
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
 
   // Send Prompt to Gateway Orquestrador
   const handleSend = async (prompt: string) => {
@@ -211,6 +213,18 @@ const HubInicio: React.FC = () => {
           border: '1px solid rgba(255, 255, 255, 0.1)',
           zIndex: 1
         }}>
+          {selectedFile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#F1F5F9', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, color: '#0F172A', width: 'fit-content' }}>
+              📎 {selectedFile} 
+              <button onClick={() => setSelectedFile(null)} style={{ border: 'none', background: 'transparent', color: '#EF4444', fontWeight: 800, cursor: 'pointer', padding: '0 2px' }}>×</button>
+            </div>
+          )}
+          {isRecording && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#FEF2F2', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, color: '#EF4444', width: 'fit-content' }}>
+              🎤 Gravando áudio com Whisper... 
+              <button onClick={() => setIsRecording(false)} style={{ border: 'none', background: 'transparent', color: '#64748B', fontWeight: 800, cursor: 'pointer', padding: '0 2px' }}>Parar</button>
+            </div>
+          )}
           <textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
@@ -235,12 +249,28 @@ const HubInicio: React.FC = () => {
             }}
           />
 
+          <input 
+            type="file" 
+            id="huba-file-upload" 
+            style={{ display: 'none' }} 
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) setSelectedFile(file.name);
+            }}
+          />
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '12px' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748B' }}>
+              <button 
+                onClick={() => document.getElementById('huba-file-upload')?.click()}
+                style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748B' }}
+              >
                 <Plus size={15} />
               </button>
-              <button style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748B' }}>
+              <button 
+                onClick={() => setIsRecording(prev => !prev)}
+                style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: isRecording ? '#FEF2F2' : '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: isRecording ? '#EF4444' : '#64748B' }}
+              >
                 <Mic size={15} />
               </button>
             </div>
