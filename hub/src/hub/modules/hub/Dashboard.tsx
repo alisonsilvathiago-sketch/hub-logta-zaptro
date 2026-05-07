@@ -11,7 +11,7 @@ const MasterHubDashboard: React.FC = () => {
   const userName = profile?.full_name?.split(' ')[0] || 'Master';
 
   return (
-    <div style={{ padding: '40px', background: '#f8fafc', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
       
       {/* HUB MASTER HEADER */}
       <div style={{ marginBottom: 48, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
