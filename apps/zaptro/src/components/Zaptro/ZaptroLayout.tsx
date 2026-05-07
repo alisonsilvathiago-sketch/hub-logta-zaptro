@@ -296,6 +296,7 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
 }) => {
   const { signOut, profile, onlineUsers, user, refreshProfile, isMaster, stopImpersonating } = useAuth();
   const { company, isLoading: tenantLoading, fetchCompanyData } = useTenant();
+  const navigate = useNavigate();
   
   const isImpersonating = !!localStorage.getItem('hub-impersonate-tenant');
   const [planRechecking, setPlanRechecking] = useState(false);
