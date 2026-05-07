@@ -5,7 +5,7 @@ import {
   Building2, Users, CreditCard, FileText,
   Link, Zap, HardDrive, Database, Shield,
   LogOut, Box, ChevronRight, UserCircle, CalendarDays,
-  DollarSign, Archive
+  DollarSign, Archive, Sparkles
 } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
 
@@ -19,7 +19,8 @@ const MasterSidebar: React.FC = () => {
   const platform = getPlatform();
 
   const menuStructure = [
-    { label: 'Dashboard', icon: LayoutDashboard, path: '/master', shortcut: 'H' },
+    {label: 'Início', icon: Sparkles, path: '/master', shortcut: 'H' },
+    { label: 'Resultados', icon: LayoutDashboard, path: '/master/resultados' },
     { label: 'CRM & Expansão', icon: TrendingUp, path: '/master/crm', shortcut: 'C' },
     { label: 'Agenda Ruby', icon: CalendarDays, path: '/master/agenda' },
     { label: 'HubChat', icon: MessageSquare, path: '/master/hubchat' },

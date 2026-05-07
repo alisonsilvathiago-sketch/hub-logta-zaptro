@@ -7,6 +7,7 @@ import HubLogin from './hub/pages/Login';
 // Master Layout & Pages
 import MasterLayout from './hub/layouts/MasterLayout';
 import Dashboard from './hub/modules/hub/Dashboard';
+import Inicio from './hub/modules/hub/Inicio';
 import CompanyManagement from './hub/modules/hub/Companies';
 import CompanyProfile from './hub/modules/hub/CompanyProfile';
 import BillingManagement from './hub/modules/hub/Billing';
@@ -139,7 +140,8 @@ const App: React.FC = () => {
             </ErrorBoundary>
           }>
             {/* Core Hub Routes */}
-            <Route index element={<Dashboard />} />
+            <Route index element={<Inicio />} />
+            <Route path="resultados" element={<Dashboard />} />
             
             {/* CRM Routes */}
             <Route path="crm" element={<CRM />} />
