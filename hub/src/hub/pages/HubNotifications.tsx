@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError } from '@core/lib/toast';
+import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 
 const MasterNotifications: React.FC = () => {
   const [companies, setCompanies] = useState<any[]>([]);
@@ -117,10 +118,43 @@ const MasterNotifications: React.FC = () => {
            </div>
            
            <form style={styles.form} onSubmit={handleSend}>
-              <div style={styles.tabGroup}>
-                 <button type="button" onClick={() => setTargetType('GLOBAL')} style={{...styles.tab, ...(targetType === 'GLOBAL' ? styles.tabActive : {})}}><LayoutGrid size={16} /> Global</button>
-                 <button type="button" onClick={() => setTargetType('COMPANY')} style={{...styles.tab, ...(targetType === 'COMPANY' ? styles.tabActive : {})}}><Building2 size={16} /> Empresa</button>
-                 <button type="button" onClick={() => setTargetType('USER')} style={{...styles.tab, ...(targetType === 'USER' ? styles.tabActive : {})}}><Users size={16} /> Usuário</button>
+              <div
+                style={{
+                  ...hubPillTabStripStyles.container,
+                  marginBottom: '16px',
+                  width: '100%',
+                }}
+              >
+                 <button
+                   type="button"
+                   onClick={() => setTargetType('GLOBAL')}
+                   style={{
+                     ...hubPillTabStripStyles.button,
+                     ...(targetType === 'GLOBAL' ? hubPillTabStripStyles.buttonActive : {}),
+                   }}
+                 >
+                   <LayoutGrid size={18} color={targetType === 'GLOBAL' ? 'var(--accent)' : 'var(--text-secondary)'} /> Global
+                 </button>
+                 <button
+                   type="button"
+                   onClick={() => setTargetType('COMPANY')}
+                   style={{
+                     ...hubPillTabStripStyles.button,
+                     ...(targetType === 'COMPANY' ? hubPillTabStripStyles.buttonActive : {}),
+                   }}
+                 >
+                   <Building2 size={18} color={targetType === 'COMPANY' ? 'var(--accent)' : 'var(--text-secondary)'} /> Empresa
+                 </button>
+                 <button
+                   type="button"
+                   onClick={() => setTargetType('USER')}
+                   style={{
+                     ...hubPillTabStripStyles.button,
+                     ...(targetType === 'USER' ? hubPillTabStripStyles.buttonActive : {}),
+                   }}
+                 >
+                   <Users size={18} color={targetType === 'USER' ? 'var(--accent)' : 'var(--text-secondary)'} /> Usuário
+                 </button>
               </div>
 
               <div style={styles.field}>
@@ -245,7 +279,7 @@ const styles = {
   container: { padding: '40px', display: 'flex', flexDirection: 'column' as const, gap: '32px' },
   header: { display: 'flex', flexDirection: 'column' as const, gap: '12px' },
   title: { fontSize: '28px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: '0.4px' },
-  subtitle: { fontSize: '16px', color: '#6b7280', margin: 0, fontWeight: '400', letterSpacing: '0.2px' },
+  subtitle: { fontSize: '13px', color: '#6b7280', margin: 0, fontWeight: '400', letterSpacing: '0.2px' },
   
   grid: { display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px' },
   card: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #e2e8f0', padding: '32px', height: 'fit-content' },
@@ -253,10 +287,6 @@ const styles = {
   cardTitle: { fontSize: '18px', fontWeight: '600', color: '#000000', margin: 0, letterSpacing: '0.3px' },
   
   form: { display: 'flex', flexDirection: 'column' as const, gap: '20px' },
-  tabGroup: { display: 'flex', gap: '8px', backgroundColor: '#ebebeb', padding: '6px', borderRadius: '16px', marginBottom: '8px' },
-  tab: { flex: 1, padding: '10px', borderRadius: '12px', border: 'none', background: 'none', color: '#64748b', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
-  tabActive: { backgroundColor: 'white', color: 'var(--primary)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
-  
   field: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
   row: { display: 'flex', gap: '16px' },
   label: { fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.8px' },

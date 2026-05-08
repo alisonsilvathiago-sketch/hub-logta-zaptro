@@ -523,16 +523,16 @@ const SupportTicketsContent: React.FC = () => {
 };
 
 const styles: Record<string, any> = {
-  tabHeader: { padding: '40px 40px 0', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '24px', backgroundColor: 'white' },
+  tabHeader: { padding: '0 0 24px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '24px', backgroundColor: 'white' },
   bread: { fontSize: '11px', fontWeight: '800', color: 'var(--accent)', letterSpacing: '1px', textTransform: 'uppercase' },
   tabSwitch: { display: 'flex', backgroundColor: 'var(--bg-secondary)', padding: '6px', borderRadius: '20px', gap: '6px', marginBottom: '-1px', width: 'fit-content' },
   tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 24px', border: 'none', borderRadius: '16px', background: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: '700', color: 'var(--text-secondary)', transition: 'all 0.2s' },
   tabActive: { backgroundColor: 'var(--accent)', color: 'white', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)' },
 
-  container: { padding: '40px', backgroundColor: 'transparent' },
+  container: { padding: '0', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
   title: { fontSize: '32px', fontWeight: '700', color: 'var(--secondary)', margin: 0, letterSpacing: '-0.5px' },
-  subtitle: { color: 'var(--text-secondary)', fontSize: '16px', fontWeight: '500', marginTop: '6px' },
+  subtitle: { color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '500', marginTop: '6px' },
   stats: { display: 'flex', alignItems: 'center', gap: '32px', backgroundColor: 'white', padding: '20px 32px', borderRadius: '32px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', border: '1px solid var(--border)' },
   miniStat: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
   miniStatValue: { fontSize: '24px', color: 'var(--secondary)', fontWeight: '800' },
@@ -615,7 +615,7 @@ const styles: Record<string, any> = {
   emptyIconBox: { width: '120px', height: '120px', borderRadius: '40px', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', border: '1px solid var(--border)' },
   emptyMsg: { padding: '60px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '15px', fontWeight: '600' },
 
-  analyticsContainer: { padding: '40px' },
+  analyticsContainer: { padding: '32px 0 0' },
   metricsRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' },
   analyticsGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' },
   chartMain: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', padding: '32px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },

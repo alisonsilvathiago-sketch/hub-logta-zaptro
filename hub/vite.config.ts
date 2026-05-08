@@ -10,7 +10,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api/ai': {
-        target: 'http://108.174.151.98:11434/api/generate',
+        target: 'http://localhost:11434/api/generate',
         changeOrigin: true,
         rewrite: (path) => '',
       }

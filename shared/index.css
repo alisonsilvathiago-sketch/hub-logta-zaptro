@@ -46,6 +46,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   letter-spacing: 0.2px;
+  text-shadow: none;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -82,9 +83,11 @@ h4 { font-size: 1.25rem; font-weight: 600; }
 .sr-only  { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
 
 /* ── Global Cards ── */
+/* :not(.hub-metric-card): wrapper KPI; :not([class*="hub-metric-card__"]): evita .hub-metric-card__label
+   etc. — também casam em [class*="card"] por conterem a substring "card". Ver HubMetricCard.css */
 .card,
-[class*="card"],
-[class*="Card"] {
+[class*="card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]),
+[class*="Card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]) {
   border-radius: 22px;
   background-color: #ffffff !important;
   color: #1F2937;
@@ -99,9 +102,9 @@ h4 { font-size: 1.25rem; font-weight: 600; }
 }
 
 .card:hover,
-[class*="card"]:hover,
-[class*="Card"]:hover,
-.hover-scale:hover {
+[class*="card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):hover,
+[class*="Card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):hover,
+.hover-scale:not(.hub-metric-card):hover {
   transform: translateY(-4px) !important;
   box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08) !important;
 }

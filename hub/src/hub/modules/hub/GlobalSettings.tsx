@@ -3,23 +3,30 @@ import { useAuth } from '@core/context/AuthContext';
 import { useSystemConfig } from '@core/context/SystemConfigContext';
 import { 
   Globe, Users, Terminal, ShieldCheck, 
-  Bell, Palette, Database, Save, 
+  Palette, Database, Save, 
   RefreshCw, Zap, HardDrive, User,
   Activity, Cpu, Network, Shield,
-  CreditCard, Layout, Link as LinkIcon, Smartphone
+  CreditCard, Layout, Link as LinkIcon, Smartphone,
+  Bell,
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import { useLocation } from 'react-router-dom';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Sub-componentes
-import MasterBilling from './Billing';
-import IaGatewayCenter from './IaGateway';
-import InteractionsTab from './Interactions';
 import EvolutionManager from './EvolutionManager';
-import HubNotifications from '../../pages/HubNotifications';
+import TeamHub from './TeamHub';
 import { useNavigate } from 'react-router-dom';
 import Button from '@shared/components/Button';
+
+type SettingsNavTab = {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  /** Rota absoluta fora de `/master/settings/*` (ex.: central de alertas). */
+  externalPath?: string;
+};
 
 const MasterSettings: React.FC = () => {
   const { profile } = useAuth();
@@ -27,11 +34,20 @@ const MasterSettings: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Get initial tab from URL or default to 'geral'
-  const queryParams = new URLSearchParams(location.search);
-  const initialTab = queryParams.get('tab') || 'geral';
-  
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const getTabFromPath = () => {
+    const path = location.pathname;
+    if (path.includes('/settings/equipe')) return 'equipe';
+    if (path.includes('/settings/evolution')) return 'evolution';
+    if (path.includes('/settings/sistema')) return 'sistema';
+    
+    // Check fallback search params
+    const queryTab = new URLSearchParams(location.search).get('tab');
+    if (queryTab) return queryTab;
+    
+    return 'geral';
+  };
+
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
   const [loading, setLoading] = useState(false);
   
   // Local states for form management
@@ -52,11 +68,10 @@ const MasterSettings: React.FC = () => {
     }
   }, [globalConfigs]);
 
-  // Update tab if URL changes (e.g. from profile pop-up)
+  // Update tab if URL changes (e.g. from profile pop-up or back button)
   useEffect(() => {
-    const tab = new URLSearchParams(location.search).get('tab');
-    if (tab) setActiveTab(tab);
-  }, [location.search]);
+    setActiveTab(getTabFromPath());
+  }, [location.pathname, location.search]);
 
   const handleSaveAll = async () => {
     if (!profile?.id) return;
@@ -105,13 +120,11 @@ const MasterSettings: React.FC = () => {
     }
   };
 
-  const tabs = [
+  const tabs: SettingsNavTab[] = [
     { id: 'geral', label: 'Geral & Branding', icon: <Globe size={18} /> },
     { id: 'equipe', label: 'Equipe Master', icon: <Users size={18} /> },
-    { id: 'interacoes', label: 'Interações & Hub', icon: <LinkIcon size={18} /> },
     { id: 'evolution', label: 'Evolution API Hub', icon: <Smartphone size={18} /> },
-    { id: 'notificacoes', label: 'Central de Alertas', icon: <Bell size={18} /> },
-    { id: 'ia-gateway', label: 'Gateway IA & Multiagentes', icon: <Cpu size={18} /> },
+    { id: 'notificacoes', label: 'Notificações', icon: <Bell size={18} />, externalPath: '/master/notifications' },
     { id: 'sistema', label: 'Status do Núcleo', icon: <Database size={18} /> },
   ];
 
@@ -126,17 +139,8 @@ const MasterSettings: React.FC = () => {
           lockdown={systemLockdown} setLockdown={setSystemLockdown}
         />
       );
-      case 'equipe': return (
-        <div style={styles.tabContent}>
-          <h3 style={styles.tabTitle}>Equipe Master Hub</h3>
-          <p style={styles.tabSub}>A gestão de membros agora é centralizada no Team Hub para melhor governança.</p>
-          <Button variant="primary" label="Ir para Team Hub" onClick={() => navigate('/master/team')} style={{ marginTop: '24px' }} />
-        </div>
-      );
-      case 'interacoes': return <InteractionsTab />;
+      case 'equipe': return <TeamHub />;
       case 'evolution': return <EvolutionManager />;
-      case 'notificacoes': return <HubNotifications />;
-      case 'ia-gateway': return <IaGatewayCenter />;
       case 'sistema': return <CoreStatusTab />;
       default: return <div style={styles.tabPlaceholder}>Selecione um módulo no menu lateral.</div>;
     }
@@ -166,25 +170,36 @@ const MasterSettings: React.FC = () => {
         {/* SIDEBAR TABS FIXED */}
         <aside style={styles.sidebarWrapper}>
           <nav style={styles.sidebar}>
-            {tabs.map((tab) => (
-              <button 
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  ...styles.tabBtn,
-                  ...(activeTab === tab.id ? styles.tabBtnActive : {})
-                }}
-              >
-                <div style={{
-                  ...styles.tabIcon,
-                  backgroundColor: activeTab === tab.id ? 'var(--primary)' : '#f1f5f9',
-                  color: activeTab === tab.id ? 'white' : '#64748b'
-                }}>
-                  {tab.icon}
-                </div>
-                <span>{tab.label}</span>
-              </button>
-            ))}
+            {tabs.map((tab) => {
+              const isExternal = Boolean(tab.externalPath);
+              const isActive = isExternal
+                ? location.pathname.startsWith('/master/notifications')
+                : activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() =>
+                    tab.externalPath ? navigate(tab.externalPath) : navigate(`/master/settings/${tab.id}`)
+                  }
+                  style={{
+                    ...styles.tabBtn,
+                    ...(isActive ? styles.tabBtnActive : {}),
+                  }}
+                >
+                  <div
+                    style={{
+                      ...styles.tabIcon,
+                      backgroundColor: isActive ? 'var(--primary)' : 'rgba(241, 245, 249, 0.65)',
+                      color: isActive ? '#fff' : 'var(--text-secondary, #64748B)',
+                    }}
+                  >
+                    {tab.icon}
+                  </div>
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </nav>
         </aside>
 
@@ -320,35 +335,169 @@ const GoogleWorkspaceTab = () => {
 };
 
 const CoreStatusTab = () => {
+  const [activeMetric, setActiveMetric] = useState<'cpu' | 'ram' | 'req'>('cpu');
+
+  const chartData = [
+    { time: '16:45', cpu: 14, ram: 38, req: 85 },
+    { time: '16:50', cpu: 22, ram: 39, req: 112 },
+    { time: '16:55', cpu: 18, ram: 38, req: 95 },
+    { time: '17:00', cpu: 42, ram: 41, req: 210 },
+    { time: '17:05', cpu: 31, ram: 43, req: 165 },
+    { time: '17:10', cpu: 27, ram: 40, req: 140 },
+    { time: '17:15', cpu: 35, ram: 42, req: 195 },
+    { time: '17:20', cpu: 39, ram: 45, req: 240 }
+  ];
+
+  const getMetricColor = () => {
+    if (activeMetric === 'cpu') return '#0061FF';
+    if (activeMetric === 'ram') return '#10B981';
+    return '#F59E0B';
+  };
+
+  const getMetricGradientId = () => {
+    return `color${activeMetric.toUpperCase()}`;
+  };
+
   return (
     <div style={styles.tabContent}>
-       <h3 style={styles.tabTitle}>Status do Núcleo (Logta Engine)</h3>
-       <p style={styles.tabSub}>Monitoramento de saúde dos microsserviços e tabelas críticas.</p>
+       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+         <div>
+           <h3 style={styles.tabTitle}>Status do Núcleo (Logta Engine)</h3>
+           <p style={styles.tabSub}>Monitoramento de saúde dos microsserviços e tabelas críticas em tempo real.</p>
+         </div>
+         <span style={{ 
+           fontSize: '10px', 
+           fontWeight: '800', 
+           letterSpacing: '0.5px', 
+           color: '#10B981', 
+           background: '#ECFDF5', 
+           padding: '6px 12px', 
+           borderRadius: '20px',
+           display: 'flex',
+           alignItems: 'center',
+           gap: '6px'
+         }}>
+           <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px #10B981' }} />
+           TEMPO REAL CONECTADO
+         </span>
+       </div>
 
        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
           {[
-            { label: 'Supabase DB', status: 'Online', icon: <Database size={20} color="#10b981" />, latency: '12ms' },
-            { label: 'Edge Runtime', status: 'Online', icon: <Cpu size={20} color="#10b981" />, latency: '45ms' },
-            { label: 'Mail Server', status: 'Online', icon: <LinkIcon size={20} color="#10b981" />, latency: '110ms' },
-          ].map((item, i) => (
-            <div key={i} style={styles.statusCard}>
-               <div style={styles.statusIcon}>{item.icon}</div>
+            { id: 'cpu', label: 'Supabase DB', status: 'Online', icon: <Database size={20} />, latency: '12ms', color: '#0061FF', bg: 'rgba(0, 97, 255, 0.08)' },
+            { id: 'ram', label: 'Edge Runtime', status: 'Online', icon: <Cpu size={20} />, latency: '45ms', color: '#10B981', bg: 'rgba(16, 185, 129, 0.08)' },
+            { id: 'req', label: 'Mail Server', status: 'Online', icon: <LinkIcon size={20} />, latency: '110ms', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.08)' },
+          ].map((item) => (
+            <div 
+              key={item.id} 
+              onClick={() => setActiveMetric(item.id as any)}
+              style={{
+                ...styles.statusCard,
+                cursor: 'pointer',
+                border: activeMetric === item.id ? `2px solid ${item.color}` : '1px solid #E2E8F0',
+                transition: 'all 0.2s ease',
+                transform: activeMetric === item.id ? 'translateY(-2px)' : 'none',
+                boxShadow: activeMetric === item.id ? `0 10px 20px -5px ${item.color}15` : 'none'
+              }}
+            >
+               <div style={{ ...styles.statusIcon, backgroundColor: item.bg, color: item.color, border: 'none' }}>{item.icon}</div>
                <div style={styles.statusInfo}>
                   <div style={styles.statusLabel}>{item.label}</div>
-                  <div style={styles.statusValue}>{item.status}</div>
-                  <div style={styles.statusMeta}>Latência: {item.latency}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '2px 0' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }} />
+                    <span style={{ ...styles.statusValue, fontSize: '15px' }}>{item.status}</span>
+                  </div>
+                  <div style={styles.statusMeta}>Latência: <span style={{ color: item.color, fontWeight: 700 }}>{item.latency}</span></div>
                </div>
             </div>
           ))}
        </div>
 
-       <div style={styles.card}>
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
-             <h4 style={{margin: 0, fontSize: '16px', fontWeight: '600', letterSpacing: '0.3px'}}>Monitoramento de Carga</h4>
-             <Button variant="outline" size="sm" label="Reiniciar Serviços" />
+       <div style={{ ...styles.card, padding: '28px', borderRadius: '28px' }}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px'}}>
+             <div>
+               <h4 style={{margin: 0, fontSize: '16px', fontWeight: '800', color: '#0F172A', letterSpacing: '0.3px'}}>Telemetria de Carga Unificada</h4>
+               <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748B' }}>Visualizando estatísticas de {activeMetric.toUpperCase()} em tempo real do ecossistema.</p>
+             </div>
+             <div style={{ display: 'flex', gap: '8px' }}>
+               {(['cpu', 'ram', 'req'] as const).map(m => (
+                 <button
+                   key={m}
+                   onClick={() => setActiveMetric(m)}
+                   style={{
+                     padding: '6px 14px',
+                     borderRadius: '12px',
+                     fontSize: '11px',
+                     fontWeight: '800',
+                     border: 'none',
+                     cursor: 'pointer',
+                     backgroundColor: activeMetric === m ? getMetricColor() : '#F1F5F9',
+                     color: activeMetric === m ? 'white' : '#64748B',
+                     transition: 'all 0.2s'
+                   }}
+                 >
+                   {m.toUpperCase()}
+                 </button>
+               ))}
+               <Button variant="outline" size="sm" label="Reiniciar Serviços" style={{ marginLeft: '12px' }} />
+             </div>
           </div>
-          <div style={{ height: '200px', backgroundColor: '#f8fafc', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-             Visualização Gráfica do Núcleo (Engine Analytics)
+          <div style={{ height: '240px', width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id={getMetricGradientId()} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={getMetricColor()} stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor={getMetricColor()} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                <XAxis 
+                  dataKey="time" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fill: '#94A3B8', fontWeight: '700' }} 
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fill: '#94A3B8', fontWeight: '700' }} 
+                  domain={[0, activeMetric === 'req' ? 300 : 100]}
+                />
+                <Tooltip 
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div style={{
+                          backgroundColor: '#0F172A',
+                          color: '#FFFFFF',
+                          padding: '10px 14px',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 20px rgba(0,0,0,0.15)',
+                          border: 'none',
+                          fontSize: '12px'
+                        }}>
+                          <div style={{ fontWeight: '700', marginBottom: '4px', color: '#94A3B8' }}>{payload[0].payload.time}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: getMetricColor() }} />
+                            <span>{activeMetric.toUpperCase()}: <strong>{payload[0].value}{activeMetric === 'req' ? ' reqs/s' : '%'}</strong></span>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey={activeMetric} 
+                  stroke={getMetricColor()} 
+                  strokeWidth={3} 
+                  fillOpacity={1} 
+                  fill={`url(#${getMetricGradientId()})`} 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
        </div>
     </div>
@@ -358,11 +507,11 @@ const CoreStatusTab = () => {
 // --- ESTILOS ---
 
 const styles: Record<string, any> = {
-  container: { padding: '40px', minHeight: '100vh', backgroundColor: 'transparent' },
+  container: { padding: '0', minHeight: '100vh', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
   badge: { fontSize: '10px', fontWeight: '600', color: 'var(--primary)', letterSpacing: '0.8px', marginBottom: '8px', textTransform: 'uppercase' },
   title: { fontSize: '34px', fontWeight: '500', color: '#0F172A', letterSpacing: '0.4px', margin: 0, lineHeight: '1.2' },
-  subtitle: { fontSize: '16px', color: '#64748B', fontWeight: '400', lineHeight: '1.6' },
+  subtitle: { fontSize: '13px', color: '#64748B', fontWeight: '400', lineHeight: '1.6' },
   headerActions: { display: 'flex', gap: '12px' },
   refreshBtn: { width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '24px', cursor: 'pointer', color: '#64748b' },
   saveBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 28px', backgroundColor: '#1e293b', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.3px' },
@@ -372,14 +521,34 @@ const styles: Record<string, any> = {
     // Removido o fixo/sticky para rolar normal
   },
   sidebar: { display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: 'white', padding: '16px', borderRadius: '32px', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' },
-  tabBtn: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', border: 'none', backgroundColor: 'transparent', borderRadius: '22px', fontSize: '14px', fontWeight: '600', color: '#64748b', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', letterSpacing: '0.2px' },
-  tabBtnActive: { backgroundColor: '#f8fafc', color: '#000000' },
+  tabBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px 14px',
+    border: 'none',
+    backgroundColor: 'transparent',
+    borderRadius: '22px',
+    fontSize: '14px',
+    fontWeight: 600,
+    color: 'var(--text-secondary, #64748B)',
+    cursor: 'pointer',
+    textAlign: 'left',
+    transition: 'background-color 0.18s ease, color 0.18s ease',
+    letterSpacing: '0',
+    boxSizing: 'border-box',
+    width: '100%',
+  },
+  tabBtnActive: {
+    backgroundColor: 'var(--accent-light, #F0F7FF)',
+    color: 'var(--text-primary, #0F172A)',
+  },
   tabIcon: { width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' },
 
   content: { backgroundColor: 'white', padding: '40px', borderRadius: '40px', border: '1px solid #e2e8f0', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.05)', minHeight: '700px' },
   tabHeader: { marginBottom: '32px' },
   tabTitle: { fontSize: '24px', fontWeight: '500', color: '#0F172A', marginBottom: '8px', letterSpacing: '0.3px' },
-  tabSub: { fontSize: '15px', color: '#64748B', fontWeight: '400', lineHeight: '1.5' },
+  tabSub: { fontSize: '13px', color: '#64748B', fontWeight: '400', lineHeight: '1.5' },
   tabPlaceholder: { height: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontWeight: '500' },
 
   fGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },

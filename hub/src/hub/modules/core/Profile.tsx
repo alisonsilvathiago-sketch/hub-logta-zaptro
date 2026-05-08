@@ -120,24 +120,21 @@ const ProfilePage: React.FC = () => {
         {/* LEFT COLUMN: AVATAR & QUICK INFO */}
         <div style={styles.leftCol}>
           <div style={styles.card}>
-            <div style={styles.profileHero}>
-              <div style={styles.banner} />
-              <div style={styles.avatarSection}>
-                <div style={styles.avatarWrapper}>
-                  {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} style={styles.largeAvatar} />
-                  ) : (
-                    <div style={styles.avatarPlaceholder}>{profile?.full_name?.[0]}</div>
-                  )}
-                  <label style={styles.uploadLabel}>
-                    <Camera size={18} color="white" />
-                    <input type="file" style={{ display: 'none' }} accept="image/*" onChange={handleAvatarUpload} />
-                  </label>
-                </div>
-                <div style={styles.heroInfo}>
-                  <h2 style={styles.heroName}>{profile?.full_name || 'Usuário'}</h2>
-                  <p style={styles.heroRole}>{formData.role}</p>
-                </div>
+            <div style={styles.avatarSection}>
+              <div style={styles.avatarWrapper}>
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} style={styles.largeAvatar} alt="" />
+                ) : (
+                  <div style={styles.avatarPlaceholder}>{profile?.full_name?.[0]}</div>
+                )}
+                <label style={styles.uploadLabel}>
+                  <Camera size={18} color="white" />
+                  <input type="file" style={{ display: 'none' }} accept="image/*" onChange={handleAvatarUpload} />
+                </label>
+              </div>
+              <div style={styles.heroInfo}>
+                <h2 style={styles.heroName}>{profile?.full_name || 'Usuário'}</h2>
+                <p style={styles.heroRole}>{formData.role}</p>
               </div>
             </div>
 
@@ -199,7 +196,7 @@ const ProfilePage: React.FC = () => {
               <div style={styles.row}>
                 <div style={styles.inputGroup}>
                   <label style={styles.label}>E-mail</label>
-                  <div style={{ ...styles.inputWrapper, backgroundColor: '#F8FAFC' }}>
+                  <div style={styles.inputWrapper}>
                     <Mail size={18} color="#94A3B8" />
                     <input 
                       style={styles.input} 
@@ -281,11 +278,16 @@ const ProfilePage: React.FC = () => {
 };
 
 const styles: Record<string, any> = {
-  container: { padding: '40px', backgroundColor: '#F4F4F4', minHeight: '100vh', fontFamily: "'Outfit', sans-serif" },
+  container: {
+    padding: '40px',
+    backgroundColor: 'transparent',
+    minHeight: '100vh',
+    fontFamily: "'Outfit', sans-serif",
+  },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
   headerInfo: { display: 'flex', flexDirection: 'column', gap: '4px' },
   pageTitle: { fontSize: '32px', fontWeight: '800', color: '#0F172A', margin: 0, letterSpacing: '-1.5px' },
-  pageSub: { fontSize: '14px', color: '#94A3B8', fontWeight: '500' },
+  pageSub: { fontSize: '13px', color: '#94A3B8', fontWeight: '500' },
   saveBtn: { 
     backgroundColor: '#0061FF', color: 'white', border: 'none', padding: '12px 24px', 
     borderRadius: '24px', fontWeight: '700', cursor: 'pointer', display: 'flex', 
@@ -299,9 +301,14 @@ const styles: Record<string, any> = {
   card: { backgroundColor: 'white', borderRadius: '32px', padding: '32px', border: '1px solid #E2E8F0', overflow: 'hidden' },
   cardTitle: { fontSize: '18px', fontWeight: '800', color: '#0F172A', marginBottom: '24px' },
 
-  profileHero: { marginBottom: '24px' },
-  banner: { height: '100px', backgroundColor: '#0061FF', borderRadius: '24px', marginBottom: '-50px' },
-  avatarSection: { padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' },
+  avatarSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '16px',
+    marginBottom: '24px',
+    padding: 0,
+  },
   avatarWrapper: { position: 'relative' },
   largeAvatar: { width: '100px', height: '100px', borderRadius: '32px', objectFit: 'cover', border: '4px solid white', boxShadow: '0 10px 15px rgba(0,0,0,0.1)' },
   avatarPlaceholder: { width: '100px', height: '100px', borderRadius: '32px', backgroundColor: '#0061FF', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', fontWeight: '800', border: '4px solid white' },
@@ -320,13 +327,43 @@ const styles: Record<string, any> = {
   row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' },
   inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
   label: { fontSize: '13px', fontWeight: '700', color: '#64748B', marginLeft: '4px' },
-  inputWrapper: { display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#F1F5F9', padding: '0 16px', borderRadius: '24px', height: '52px', border: '1px solid transparent', transition: 'all 0.2s' },
+  inputWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    backgroundColor: '#FFFFFF',
+    padding: '0 16px',
+    borderRadius: '24px',
+    height: '52px',
+    border: '1px solid #E2E8F0',
+    transition: 'all 0.2s',
+  },
   input: { flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: '14px', fontWeight: '600', color: '#0F172A' },
-  textarea: { backgroundColor: '#F1F5F9', border: 'none', outline: 'none', borderRadius: '24px', padding: '16px', fontSize: '14px', fontWeight: '600', color: '#0F172A', minHeight: '100px', resize: 'none', fontFamily: 'inherit' },
+  textarea: {
+    backgroundColor: '#FFFFFF',
+    border: '1px solid #E2E8F0',
+    outline: 'none',
+    borderRadius: '24px',
+    padding: '16px',
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#0F172A',
+    minHeight: '100px',
+    resize: 'none',
+    fontFamily: 'inherit',
+  },
   inputHint: { fontSize: '11px', color: '#94A3B8', fontWeight: '500', marginLeft: '4px' },
 
   securityList: { display: 'flex', flexDirection: 'column', gap: '16px' },
-  securityItem: { display: 'flex', alignItems: 'center', gap: '16px', padding: '12px', borderRadius: '24px', backgroundColor: '#F8FAFC' },
+  securityItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    padding: '12px',
+    borderRadius: '24px',
+    backgroundColor: '#FFFFFF',
+    border: '1px solid #E2E8F0',
+  },
   securityIcon: { width: '44px', height: '44px', borderRadius: '18px', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' },
   securityText: { flex: 1, display: 'flex', flexDirection: 'column' },
   securityLabel: { fontSize: '14px', fontWeight: '700', color: '#0F172A' },

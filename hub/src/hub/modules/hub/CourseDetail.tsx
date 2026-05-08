@@ -220,7 +220,7 @@ const styles = {
   cHeaderInfo: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', border: '1px solid #e2e8f0' },
   badge: { display: 'inline-block', padding: '6px 14px', backgroundColor: '#ebebeb', color: '#1e293b', fontSize: '10px', fontWeight: '700', borderRadius: '24px', marginBottom: '16px', letterSpacing: '0.5px' },
   title: { fontSize: '28px', fontWeight: '700', color: '#000000', margin: '0 0 12px 0', letterSpacing: '-1px' },
-  subtitle: { fontSize: '16px', color: '#6b7280', margin: 0, lineHeight: '1.6' },
+  subtitle: { fontSize: '13px', color: '#6b7280', margin: 0, lineHeight: '1.6' },
 
   content: { display: 'flex', flexDirection: 'column' as const, gap: '24px' },
   sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },

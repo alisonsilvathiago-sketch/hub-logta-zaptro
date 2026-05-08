@@ -1,23 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Search, Bell, User, ChevronDown, 
-  Settings, LogOut, Menu, Globe, ChevronRight,
-  Shield, Database, Link as LinkIcon, Zap, HardDrive, Users, Brain
+  Settings, LogOut, Menu, ChevronRight,
+  Shield, Database, Zap, HardDrive, Users, Brain,
+  KeyRound, Webhook, ScrollText, Plug, UserCog, Calendar, MessageSquare, Activity
 } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
 import SyncIndicator from './SyncIndicator';
 
 import Kbd from '@shared/components/Kbd';
 import { getPlatform } from '@core/lib/platform';
+import {
+  MASTER_ROUTE_TOKEN_PARAM,
+  getExpectedMasterRouteToken,
+} from '@core/lib/masterRouteToken';
 
 const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ onMenuClick, isMobile }) => {
   const { profile, signOut } = useAuth();
-  console.log('[Header] Rendering for user:', profile?.email);
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const profilePopoverRef = useRef<HTMLDivElement>(null);
   const platform = getPlatform();
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const close = (e: MouseEvent) => {
+      const el = profilePopoverRef.current;
+      if (el && !el.contains(e.target as Node)) setDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [dropdownOpen]);
 
   // Mapeamento de rotas para nomes amigáveis
   const getBreadcrumbs = () => {
@@ -34,10 +49,20 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
       'crm': 'CRM & Vendas',
       'clientes': 'Clientes',
       'companies': 'Empresas',
+      'resultados': 'Resultados',
+      'modulos-sync': 'Módulos & Sync',
+      'metricas-score': 'Métricas & Score',
+      'automacoes': 'Automações',
+      'ia-gateway': 'Gateway IA',
+      'integracoes': 'Integrações',
+      'saude': 'Saúde & VPS',
+      'seguranca': 'Segurança',
+      'usuarios-hub': 'Usuários Hub',
       'billing': 'Financeiro',
       'team': 'Equipe Master',
       'reports': 'Relatórios',
       'settings': 'Configurações',
+      'notifications': 'Notificações',
       'infrastructure': 'Infraestrutura',
       'backup': 'Backups',
       'security': 'Segurança',
@@ -46,7 +71,9 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
       'agenda': 'Agenda Hub',
       'hubchat': 'HubChat',
       'logistica': 'A Logística',
-      'logdock': 'LogDock'
+      'logdock': 'LogDock',
+      zaptro: 'Zaptro',
+      logta: 'Logta SaaS',
     };
 
     paths.forEach((p, i) => {
@@ -62,6 +89,18 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
   };
 
   const breadcrumbs = getBreadcrumbs();
+
+  const goAgenda = () => {
+    const params = new URLSearchParams(location.search);
+    params.set(MASTER_ROUTE_TOKEN_PARAM, getExpectedMasterRouteToken('/master/agenda'));
+    navigate({ pathname: '/master/agenda', search: params.toString() });
+  };
+
+  const goHubChat = () => {
+    const params = new URLSearchParams(location.search);
+    params.set(MASTER_ROUTE_TOKEN_PARAM, getExpectedMasterRouteToken('/master/hubchat'));
+    navigate({ pathname: '/master/hubchat', search: params.toString() });
+  };
 
   return (
     <header style={styles.header}>
@@ -97,23 +136,119 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
       </div>
 
       <div style={styles.rightSection}>
-        <div style={styles.iconAction} onClick={() => (window as any).toggleSpotlight?.()}>
-          <Search size={20} />
-          <div style={styles.kbdHint}>
-            <Kbd style={{ height: '14px', minWidth: '14px', fontSize: '8px', padding: '0 2px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF', margin: 0 }}>{platform.cmd}</Kbd>
-            <Kbd style={{ height: '14px', minWidth: '14px', fontSize: '8px', padding: '0 2px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF', margin: 0 }}>K</Kbd>
+        {/* Collaborators Working Now */}
+        <div style={{ display: 'flex', alignItems: 'center', marginRight: '4px' }} title="8 colaboradores trabalhando agora">
+          {[
+            { img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&h=80&q=80', name: 'Ana' },
+            { img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&h=80&q=80', name: 'Lucas' },
+            { img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=80&h=80&q=80', name: 'Carla' },
+            { img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&h=80&q=80', name: 'Mateus' }
+          ].map((collab, idx) => (
+            <div
+              key={idx}
+              title={collab.name}
+              style={{
+                position: 'relative',
+                marginLeft: idx === 0 ? '0' : '-8px',
+                zIndex: 10 - idx,
+              }}
+            >
+              <img
+                src={collab.img}
+                alt={collab.name}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  border: '2px solid #FFFFFF',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
+              <span
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  bottom: 0,
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: idx < 3 ? '#22C55E' : '#94A3B8',
+                  border: '2px solid #FFFFFF',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          ))}
+          <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            backgroundColor: '#F1F5F9',
+            border: '2px solid #FFFFFF',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            marginLeft: '-8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '11px',
+            fontWeight: 800,
+            color: '#475569',
+            zIndex: 5
+          }}>
+            +8
           </div>
         </div>
 
-        <div style={styles.iconAction} onClick={() => navigate('/master/settings')}>
-          <Settings size={20} />
-        </div>
-        <div style={styles.iconAction}>
+        <button
+          type="button"
+          title="Agenda"
+          aria-label="Abrir Agenda"
+          style={{ ...styles.iconAction, border: 'none', flexShrink: 0 }}
+          onClick={goAgenda}
+        >
+          <Calendar size={20} strokeWidth={2} color="#64748B" />
+        </button>
+
+        <button
+          type="button"
+          title="HubChat"
+          aria-label="Abrir HubChat"
+          style={{ ...styles.iconAction, border: 'none', flexShrink: 0 }}
+          onClick={goHubChat}
+        >
+          <MessageSquare size={20} strokeWidth={2} color="#64748B" />
+        </button>
+
+        <button
+          type="button"
+          title="Busca (atalho)"
+          aria-label="Abrir busca do hub"
+          style={{ ...styles.iconAction, border: 'none', flexShrink: 0 }}
+          onClick={() => (window as any).toggleSpotlight?.()}
+        >
+          <Search size={20} />
+          <div style={styles.kbdHint}>
+            <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '11px', padding: '0 3px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF', margin: 0 }}>{platform.cmd}</Kbd>
+            <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '11px', padding: '0 3px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF', margin: 0 }}>K</Kbd>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          title="Notificações"
+          aria-label="Notificações"
+          style={{ ...styles.iconAction, border: 'none', flexShrink: 0 }}
+          onClick={() => navigate('/master/notifications')}
+        >
           <Bell size={20} />
           <div style={styles.notificationBadge} />
-        </div>
+        </button>
         
         <div 
+          ref={profilePopoverRef}
           style={styles.userProfile} 
           onClick={(e) => {
             e.stopPropagation();
@@ -131,66 +266,102 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
           )}
           
           {dropdownOpen && (
-            <div style={styles.dropdown} onClick={e => e.stopPropagation()}>
-              <div style={styles.dropdownSection}>
-                <div style={styles.dropdownSectionTitle}>CONTA</div>
-                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/profile'); }}>
-                  <User size={14} /> Meu Perfil
+            <div style={styles.dropdown} onClick={(e) => e.stopPropagation()}>
+              <div style={styles.profileMenuHero}>
+                <div style={styles.profileMenuAvatarLarge}>
+                  {profile?.full_name ? profile.full_name[0] : <User size={20} />}
                 </div>
-                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/settings'); }}>
-                  <Settings size={14} /> Configuração Master
-                </div>
-              </div>
-
-              <div style={styles.divider} />
-
-              <div style={styles.dropdownSection}>
-                <div style={styles.dropdownSectionTitle}>ADMINISTRAÇÃO</div>
-                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/automacoes'); }}>
-                  <Zap size={14} /> Automações & Integrações
-                </div>
-                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/admins'); }}>
-                  <Users size={14} /> Usuários Hub
+                <div style={styles.profileMenuHeroText}>
+                  <div style={styles.profileMenuName}>{profile?.full_name || 'Administrador master'}</div>
+                  <div style={styles.profileMenuEmail}>{profile?.email || '—'}</div>
                 </div>
               </div>
 
-              <div style={styles.divider} />
+              <div style={styles.dropdownScroll}>
+                <div style={styles.dropdownSection}>
+                  <div style={styles.dropdownSectionTitle}>Conta</div>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/profile'); }}>
+                    <User size={16} strokeWidth={2} color="#475569" />
+                    <span>Meu perfil</span>
+                  </button>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/settings'); }}>
+                    <Settings size={16} strokeWidth={2} color="#475569" />
+                    <span>Preferências e configurações</span>
+                  </button>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/notifications'); }}>
+                    <Bell size={16} strokeWidth={2} color="#475569" />
+                    <span>Notificações</span>
+                  </button>
+                </div>
 
-              <div style={styles.dropdownSection}>
-                <div style={styles.dropdownSectionTitle}>SISTEMA</div>
-                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/infrastructure'); }}>
-                  <Database size={14} /> Infraestrutura
-                </div>
-                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/backup'); }}>
-                  <HardDrive size={14} /> Backups do Ecossistema
-                </div>
-                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/security'); }}>
-                  <Shield size={14} /> Segurança
-                </div>
-                <div style={styles.dropdownItem} onClick={() => { setDropdownOpen(false); navigate('/master/intelligence'); }}>
-                  <Brain size={14} /> Operational Intelligence
-                </div>
-              </div>
+                <div style={styles.divider} />
 
-              <div style={styles.divider} />
+                <div style={styles.dropdownSection}>
+                  <div style={styles.dropdownSectionTitle}>Infraestrutura</div>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/infrastructure/saude'); }}>
+                    <Activity size={16} strokeWidth={2} color="#475569" />
+                    <span>Visão geral</span>
+                  </button>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/infrastructure/seguranca'); }}>
+                    <Shield size={16} strokeWidth={2} color="#475569" />
+                    <span>Segurança</span>
+                  </button>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/infrastructure/backup'); }}>
+                    <HardDrive size={16} strokeWidth={2} color="#475569" />
+                    <span>Backup & storage</span>
+                  </button>
+                </div>
 
-              <div style={styles.dropdownSection}>
-                <div style={styles.dropdownSectionTitle}>OUTROS PRODUTOS</div>
-                <div 
-                  style={{...styles.dropdownItem, backgroundColor: '#F0F7FF', color: '#2563EB'}} 
-                  onClick={() => { setDropdownOpen(false); navigate('/logdock/app'); }}
+                <div style={styles.divider} />
+
+                <div style={styles.dropdownSection}>
+                  <div style={styles.dropdownSectionTitle}>Equipe master</div>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); const p = new URLSearchParams(location.search); p.set('tab', 'usuarios-hub'); const qs = p.toString(); navigate(`/master/settings/equipe${qs ? `?${qs}` : '?tab=usuarios-hub'}`); }}>
+                    <Users size={16} strokeWidth={2} color="#475569" />
+                    <span>Usuários Hub</span>
+                  </button>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/settings/equipe'); }}>
+                    <UserCog size={16} strokeWidth={2} color="#475569" />
+                    <span>Equipe Master</span>
+                  </button>
+                </div>
+
+                <div style={styles.divider} />
+
+                <div style={styles.dropdownSection}>
+                  <div style={styles.dropdownSectionTitle}>Outros produtos</div>
+                  <button type="button" className="hub-menu-row" style={{ ...styles.menuRow, ...styles.menuRowHighlight }} onClick={() => { setDropdownOpen(false); navigate('/logdock/app'); }}>
+                    <HardDrive size={16} strokeWidth={2} color="#0061FF" />
+                    <span>LogDock.com.br (Focado)</span>
+                  </button>
+                  <button
+                    type="button"
+                    style={styles.menuRow}
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+                      window.open(isLocal ? 'http://localhost:5174' : 'https://app.zaptro.com.br', '_blank', 'noopener,noreferrer');
+                    }}
+                  >
+                    <Zap size={16} strokeWidth={2} color="#475569" />
+                    <span>Zaptro Commerce</span>
+                  </button>
+                </div>
+
+                <div style={styles.divider} />
+
+                <button
+                  type="button"
+                  className="hub-menu-row-danger"
+                  style={styles.menuRowDanger}
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    signOut();
+                  }}
                 >
-                  <HardDrive size={14} /> LogDock.com.br (Focado)
-                </div>
-                <div style={styles.dropdownItem}>
-                  <Zap size={14} /> Zaptro Commerce
-                </div>
-              </div>
-              
-              <div style={styles.divider} />
-              
-              <div style={{ ...styles.dropdownItem, color: '#EF4444' }} onClick={() => { setDropdownOpen(false); signOut(); }}>
-                <LogOut size={14} /> Sair do Painel
+                  <LogOut size={16} strokeWidth={2} color="#DC2626" />
+                  <span>Sair do painel</span>
+                </button>
               </div>
             </div>
           )}
@@ -228,7 +399,10 @@ const styles: Record<string, any> = {
     backgroundColor: '#F6F7F8', color: '#64748B', 
     display: 'flex', alignItems: 'center', justifyContent: 'center', 
     cursor: 'pointer', transition: 'all 0.2s', border: '1px solid #E5E7EB',
-    position: 'relative'
+    position: 'relative',
+    fontSize: '11px',
+    padding: 0,
+    boxSizing: 'border-box' as const,
   },
   notificationBadge: { position: 'absolute', top: '12px', right: '12px', width: '8px', height: '8px', backgroundColor: '#EF4444', borderRadius: '50%', border: '2px solid white' },
   kbdHint: { 
@@ -259,23 +433,137 @@ const styles: Record<string, any> = {
     fontWeight: '800', fontSize: '16px', boxShadow: '0 4px 6px rgba(99, 102, 241, 0.2)'
   },
   userInfo: { display: 'flex', alignItems: 'center', gap: '8px' },
-  userName: { fontSize: '14px', fontWeight: '700', color: '#0F172A' },
+  userName: { fontSize: '11px', fontWeight: '700', color: '#0F172A' },
   
   dropdown: {
-    position: 'absolute' as const, top: '100%', right: 0, backgroundColor: '#FFFFFF',
-    width: '240px', borderRadius: '24px', border: '1px solid #E2E8F0',
-    boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.15)', padding: '12px', marginTop: '12px',
-    display: 'flex', flexDirection: 'column' as const, gap: '4px',
+    position: 'absolute' as const,
+    top: 'calc(100% + 10px)',
+    right: 0,
+    width: 320,
+    maxWidth: 'calc(100vw - 48px)',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    border: '1px solid rgba(15, 23, 42, 0.08)',
+    boxShadow:
+      '0 0 0 1px rgba(15, 23, 42, 0.03), 0 4px 6px rgba(15, 23, 42, 0.04), 0 24px 48px -12px rgba(15, 23, 42, 0.18)',
+    padding: 8,
+    zIndex: 1000,
+    animation: 'hubProfileMenuIn 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
   },
-  dropdownSection: { display: 'flex', flexDirection: 'column', gap: '2px' },
-  dropdownSectionTitle: { fontSize: '10px', fontWeight: '800', color: '#94A3B8', padding: '8px 12px', letterSpacing: '1px' },
-  dropdownItem: {
-    padding: '10px 12px', borderRadius: '24px', fontSize: '13px', fontWeight: '600',
-    color: '#64748B', display: 'flex', alignItems: 'center', gap: '10px',
-    transition: 'all 0.2s', cursor: 'pointer'
+  dropdownScroll: {
+    maxHeight: 'min(72vh, 520px)',
+    overflowY: 'auto' as const,
+    padding: '4px 4px 6px',
+    scrollbarWidth: 'thin' as const,
   },
-  divider: { height: '1px', backgroundColor: '#F1F5F9', margin: '6px 0' },
-  menuBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }
+  profileMenuHero: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '10px 12px',
+    borderRadius: 12,
+    marginBottom: 4,
+    background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+    border: '1px solid #E2E8F0',
+  },
+  profileMenuAvatarLarge: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#0061FF',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 800,
+    fontSize: 18,
+    flexShrink: 0,
+    boxShadow: '0 8px 20px rgba(0, 97, 255, 0.25)',
+  },
+  profileMenuHeroText: { minWidth: 0, flex: 1 },
+  profileMenuName: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#0F172A',
+    letterSpacing: '-0.02em',
+    lineHeight: 1.25,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
+  },
+  profileMenuEmail: {
+    fontSize: 12,
+    fontWeight: 500,
+    color: '#64748B',
+    marginTop: 2,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
+  },
+  dropdownSection: { display: 'flex', flexDirection: 'column', gap: 2 },
+  dropdownSectionTitle: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: '#94A3B8',
+    padding: '8px 10px 4px',
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase' as const,
+  },
+  menuRow: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    padding: '8px 10px',
+    borderRadius: 10,
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    textAlign: 'left' as const,
+    fontSize: 13,
+    fontWeight: 600,
+    color: '#334155',
+    fontFamily: 'inherit',
+    transition: 'background-color 0.15s ease, color 0.15s ease',
+  },
+  menuRowHighlight: {
+    backgroundColor: '#EFF6FF',
+    color: '#0061FF',
+  },
+  menuRowDanger: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    padding: '8px 10px',
+    borderRadius: 10,
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    textAlign: 'left' as const,
+    fontSize: 13,
+    fontWeight: 700,
+    color: '#DC2626',
+    fontFamily: 'inherit',
+    marginTop: 2,
+    transition: 'background-color 0.15s ease',
+  },
+  divider: { height: 1, backgroundColor: '#F1F5F9', margin: '6px 6px' },
+  menuBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: '8px' },
 };
+
+if (typeof document !== 'undefined' && !document.getElementById('hub-profile-menu-keyframes')) {
+  const s = document.createElement('style');
+  s.id = 'hub-profile-menu-keyframes';
+  s.textContent = `
+    @keyframes hubProfileMenuIn {
+      from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .hub-menu-row:hover { background-color: rgba(15, 23, 42, 0.04) !important; }
+    .hub-menu-row-danger:hover { background-color: rgba(220, 38, 38, 0.08) !important; }
+  `;
+  document.head.appendChild(s);
+}
 
 export default Header;

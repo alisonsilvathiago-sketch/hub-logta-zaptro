@@ -28,6 +28,16 @@
   box-shadow: 0 4px 12px rgba(0, 97, 255, 0.2);
 }
 
+/* MasterLayout aplica `span { color: var(--text-body) }` — força branco no primário */
+.hub-button--primary .hub-button__label,
+.hub-button--primary .hub-button__icon {
+  color: #ffffff !important;
+}
+
+.hub-button--primary .hub-button__icon svg {
+  stroke: #ffffff;
+}
+
 .hub-button--primary:hover:not(:disabled) {
   background-color: #0056E0;
   transform: translateY(-1px);
@@ -74,6 +84,17 @@
 
 .hub-button--md {
   padding: 12px 24px;
+}
+
+.hub-button--primary.hub-button--md {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 14px;
+}
+
+.hub-button--primary.hub-button--md .hub-button__label > div > span:first-of-type {
+  color: #ffffff !important;
+  font-size: 17px;
 }
 
 .hub-button--lg {

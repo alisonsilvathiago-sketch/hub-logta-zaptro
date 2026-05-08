@@ -11,6 +11,7 @@ import {
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import { supabase } from '@core/lib/supabase';
 import LogtaModal from '@shared/components/Modal';
+import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
 
 const EvolutionManager = () => {
   const [loading, setLoading] = useState(true);
@@ -93,14 +94,6 @@ const EvolutionManager = () => {
     container: { display: 'flex', flexDirection: 'column', gap: '24px', animation: 'fadeIn 0.4s ease-out' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
     title: { fontSize: '28px', fontWeight: '500', color: 'var(--primary)', margin: 0, letterSpacing: '0.4px' },
-    statsRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' },
-    statCard: {
-      backgroundColor: 'white', padding: '20px', borderRadius: '20px', border: '1px solid var(--border)',
-      display: 'flex', alignItems: 'center', gap: '16px', boxShadow: 'var(--shadow-sm)'
-    },
-    statIcon: { width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    statTitle: { fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' },
-    statValue: { fontSize: '18px', fontWeight: '500', color: 'var(--text-main)', letterSpacing: '0.2px' },
 
     tableContainer: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' },
     table: { width: '100%', borderCollapse: 'collapse' as const },
@@ -129,7 +122,7 @@ const EvolutionManager = () => {
       <div style={styles.header}>
         <div>
           <h2 style={styles.title}>Evolution API Hub</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '15px', color: 'var(--text-muted)', fontWeight: '400', letterSpacing: '0.2px' }}>Monitoramento e gestão de motores WhatsApp de alta escala.</p>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted)', fontWeight: '400', letterSpacing: '0.2px' }}>Monitoramento e gestão de motores WhatsApp de alta escala.</p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <button style={{ ...styles.actionBtn, backgroundColor: 'var(--primary)', color: 'white', border: 'none', padding: '12px 24px', fontWeight: '600' }} onClick={fetchInstances}>
@@ -138,35 +131,35 @@ const EvolutionManager = () => {
         </div>
       </div>
 
-      <div style={styles.statsRow}>
-        <div style={styles.statCard}>
-          <div style={{ ...styles.statIcon, backgroundColor: '#F0F7FF', color: '#0061FF' }}><Activity size={24} /></div>
-          <div>
-            <div style={styles.statTitle}>NÚCLEO MASTER</div>
-            <div style={styles.statValue}>OPERACIONAL</div>
-          </div>
-        </div>
-        <div style={styles.statCard}>
-          <div style={{ ...styles.statIcon, backgroundColor: '#F0FDF4', color: '#16A34A' }}><Smartphone size={24} /></div>
-          <div>
-            <div style={styles.statTitle}>INSTÂNCIAS ATIVAS</div>
-            <div style={styles.statValue}>{instances.filter(i => i.status === 'connected').length} / {instances.length}</div>
-          </div>
-        </div>
-        <div style={styles.statCard}>
-          <div style={{ ...styles.statIcon, backgroundColor: '#F5F3FF', color: '#7C3AED' }}><Zap size={24} /></div>
-          <div>
-            <div style={styles.statTitle}>CARGA DO CLUSTER</div>
-            <div style={styles.statValue}>14.2%</div>
-          </div>
-        </div>
-        <div style={styles.statCard}>
-          <div style={{ ...styles.statIcon, backgroundColor: '#FEF2F2', color: '#EF4444' }}><AlertCircle size={24} /></div>
-          <div>
-            <div style={styles.statTitle}>MOTORES OFFLINE</div>
-            <div style={{ ...styles.statValue, color: '#EF4444' }}>{instances.filter(i => i.status !== 'connected').length}</div>
-          </div>
-        </div>
+      <div style={{ ...HUB_METRIC_GRID_STYLE, gap: '20px' }}>
+        <HubMetricCard
+          label="Núcleo Master"
+          value="OPERACIONAL"
+          icon={Activity}
+          accent="#0061FF"
+          softBg="#F0F7FF"
+        />
+        <HubMetricCard
+          label="Instâncias Ativas"
+          value={`${instances.filter(i => i.status === 'connected').length} / ${instances.length}`}
+          icon={Smartphone}
+          accent="#16A34A"
+          softBg="#F0FDF4"
+        />
+        <HubMetricCard
+          label="Carga do Cluster"
+          value="14.2%"
+          icon={Zap}
+          accent="#7C3AED"
+          softBg="#F5F3FF"
+        />
+        <HubMetricCard
+          label="Motores Offline"
+          value={<span style={{ color: '#EF4444' }}>{instances.filter(i => i.status !== 'connected').length}</span>}
+          icon={AlertCircle}
+          accent="#EF4444"
+          softBg="#FEF2F2"
+        />
       </div>
 
       <div style={styles.tableContainer}>

@@ -5,6 +5,7 @@ import {
   ExternalLink, ChevronRight, Layout,
   Eye, HelpCircle
 } from 'lucide-react';
+import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import LogtaModal from '@shared/components/Modal';
@@ -82,8 +83,8 @@ export const MasterKnowledge: React.FC = () => {
     <div style={styles.container} className="animate-fade-in">
       <header style={styles.header}>
         <div>
-          <h1 style={styles.title}>Base de Conhecimento</h1>
-          <p style={styles.subtitle}>Gerencie os artigos e tutoriais que ajudam seus clientes a extrair o máximo do Logta.</p>
+          <h1 style={styles.title}>Biblioteca Central Unificada</h1>
+          <p style={styles.subtitle}>Gestão de conhecimento, documentações, logs e mídias integradas entre Zaptro, Logta e LogDock.</p>
         </div>
         <div style={styles.headerActions}>
            <button style={styles.catBtn} onClick={() => setActiveTab(activeTab === 'articles' ? 'categories' : 'articles')}>
@@ -91,24 +92,15 @@ export const MasterKnowledge: React.FC = () => {
               {activeTab === 'articles' ? 'Gerenciar Categorias' : 'Gerenciar Artigos'}
            </button>
            <button style={styles.addBtn} onClick={() => { setEditingItem(null); setShowArtModal(true); }}>
-              <Plus size={18} /> Novo Artigo
+              <Plus size={18} /> Publicar na Biblioteca
            </button>
         </div>
       </header>
 
-      <div style={styles.statsBar}>
-         <div style={styles.statCard}>
-            <span style={styles.statLabel}>Total de Artigos</span>
-            <span style={styles.statValue}>{articles.length}</span>
-         </div>
-         <div style={styles.statCard}>
-            <span style={styles.statLabel}>Categorias Ativas</span>
-            <span style={styles.statValue}>{categories.length}</span>
-         </div>
-         <div style={styles.statCard}>
-            <span style={styles.statLabel}>Visualizações (30d)</span>
-            <span style={styles.statValue}>1.2k</span>
-         </div>
+      <div style={HUB_METRIC_GRID_STYLE}>
+         <HubMetricCard label="Total de Artigos" value={articles.length} icon={FileText} accent="#0061FF" />
+         <HubMetricCard label="Categorias Ativas" value={categories.length} icon={Layers} accent="#10B981" />
+         <HubMetricCard label="Visualizações (30d)" value="1.2k" icon={Eye} accent="#F59E0B" />
       </div>
 
       <div style={styles.searchBar}>
@@ -129,7 +121,12 @@ export const MasterKnowledge: React.FC = () => {
           {articles.map(art => (
             <div key={art.id} style={styles.card}>
                <div style={styles.cardHeader}>
-                  <div style={styles.cardCategory}>{art.kb_categories?.name?.toUpperCase()}</div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                     <div style={styles.cardCategory}>{art.kb_categories?.name?.toUpperCase()}</div>
+                     <div style={{ ...styles.cardCategory, backgroundColor: art.system === 'logta' ? 'rgba(0, 97, 255, 0.12)' : art.system === 'zaptro' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)', color: art.system === 'logta' ? '#0061FF' : art.system === 'zaptro' ? '#10B981' : '#F59E0B' }}>
+                       {(art.system || 'logdock').toUpperCase()}
+                     </div>
+                  </div>
                   <div style={styles.cardActions}>
                      <button style={styles.actionBtn} onClick={() => { setEditingItem(art); setNewArticle(art); setShowArtModal(true); }}><Edit2 size={14} /></button>
                      <button style={styles.actionBtn} onClick={() => handleDeleteArticle(art.id)}><Trash2 size={14} /></button>
@@ -165,16 +162,25 @@ export const MasterKnowledge: React.FC = () => {
       {/* Article Modal */}
       <LogtaModal isOpen={showArtModal} onClose={() => setShowArtModal(false)} size="lg" title={editingItem ? 'Editar Artigo' : 'Publicar Novo Artigo'}>
          <div style={styles.form}>
-            <div style={styles.fRow}>
+            <div style={{...styles.fRow, gridTemplateColumns: '2fr 1fr 1fr'}}>
                <div style={styles.fGroup}>
-                  <label style={styles.fLabel}>Título do Artigo</label>
-                  <input style={styles.input} value={newArticle.title} onChange={e => setNewArticle({...newArticle, title: e.target.value})} placeholder="Ex: Como configurar notificações..." />
+                  <label style={styles.fLabel}>Título do Documento / Artigo</label>
+                  <input style={styles.input} value={newArticle.title} onChange={e => setNewArticle({...newArticle, title: e.target.value})} placeholder="Ex: Manual de faturamento unificado..." />
                </div>
                <div style={styles.fGroup}>
                   <label style={styles.fLabel}>Categoria</label>
                   <select style={styles.input} value={newArticle.category_id} onChange={e => setNewArticle({...newArticle, category_id: e.target.value})}>
                      <option value="">Selecionar...</option>
                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+               </div>
+               <div style={styles.fGroup}>
+                  <label style={styles.fLabel}>Sistema Vinculado</label>
+                  <select style={styles.input} value={(newArticle as any).system || 'logdock'} onChange={e => setNewArticle({...newArticle, system: e.target.value} as any)}>
+                     <option value="logdock">LogDock Central</option>
+                     <option value="logta">Logta SaaS</option>
+                     <option value="zaptro">Zaptro CRM</option>
+                     <option value="all">Unificados (Todos)</option>
                   </select>
                </div>
             </div>
@@ -190,21 +196,16 @@ export const MasterKnowledge: React.FC = () => {
 };
 
 const styles: Record<string, any> = {
-  container: { padding: '40px', backgroundColor: 'transparent' },
+  container: { padding: '0', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '40px' },
   bread: { fontSize: '11px', fontWeight: '700', color: 'var(--primary)', letterSpacing: '1px', marginBottom: '8px' },
   title: { fontSize: '36px', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-1.5px', marginBottom: '8px' },
-  subtitle: { fontSize: '16px', color: 'var(--text-muted)', maxWidth: '600px' },
+  subtitle: { fontSize: '13px', color: 'var(--text-muted)', maxWidth: '600px' },
   headerActions: { display: 'flex', gap: '12px' },
   addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '24px', fontWeight: '600', cursor: 'pointer' },
   catBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '24px', fontWeight: '600', color: 'var(--text-main)', cursor: 'pointer' },
 
-  statsBar: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '40px' },
-  statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '4px' },
-  statLabel: { fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' },
-  statValue: { fontSize: '28px', fontWeight: '700', color: 'var(--text-main)' },
-
-  searchBar: { display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '20px' },
+ { display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '20px' },
   searchWrapper: { flex: 1, position: 'relative', display: 'flex', alignItems: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '24px', padding: '0 16px' },
   searchInput: { flex: 1, padding: '16px', border: 'none', outline: 'none', fontSize: '14px', fontWeight: '600' },
   filters: { display: 'flex', gap: '10px' },

@@ -11,6 +11,7 @@ import {
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError } from '@core/lib/toast';
 import { useAuth } from '@core/context/AuthContext';
+import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
 
 const CompanyProfile: React.FC = () => {
   const { id } = useParams();
@@ -20,6 +21,17 @@ const CompanyProfile: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmWord, setDeleteConfirmWord] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [editData, setEditData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    cnpj: '',
+    address: ''
+  });
   const [extraData, setExtraData] = useState({
     routes: [],
     whatsapp: [],
@@ -59,6 +71,13 @@ const CompanyProfile: React.FC = () => {
 
       if (error) throw error;
       setCompany(data);
+      setEditData({
+        name: data.name || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        cnpj: data.cnpj || '',
+        address: data.address || ''
+      });
 
       // Sincronização em tempo real: Buscando dados operacionais da empresa
       const [rRes, wRes, vRes, iRes] = await Promise.all([
@@ -111,6 +130,66 @@ const CompanyProfile: React.FC = () => {
       toastError('Erro ao sincronizar dados.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUpdateCompanyPopup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .update({
+          name: editData.name,
+          email: editData.email,
+          phone: editData.phone,
+          cnpj: editData.cnpj,
+          address: editData.address
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      await supabase.from('audit_log').insert([{
+        action: 'COMPANY_UPDATE_MASTER',
+        details: `Master Admin updated company ${editData.name} details via popup`,
+        module: 'HUB_MASTER',
+        company_id: id
+      }]);
+
+      toastSuccess('Cadastro da empresa atualizado com sucesso!');
+      setShowEditModal(false);
+      fetchCompanyData();
+    } catch (err) {
+      console.error('Error saving popup changes:', err);
+      toastError('Erro ao atualizar cadastro.');
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  const handleDeleteCompany = async () => {
+    if (deleteConfirmWord !== 'EXCLUIR') {
+      toastError('Por favor, digite a palavra EXCLUIR para confirmar.');
+      return;
+    }
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toastSuccess('Empresa excluída permanentemente!');
+      navigate('/master/companies');
+    } catch (err) {
+      console.error('Error deleting company:', err);
+      toastError('Erro ao excluir empresa.');
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -261,8 +340,65 @@ const CompanyProfile: React.FC = () => {
           <button style={styles.impersonateBtn} onClick={() => impersonate(company.id, company.origin || 'logta')}>
             <Key size={18} /> Entrar como Admin
           </button>
-          <button style={styles.primaryBtn}><Edit3 size={18} /> Editar Cadastro</button>
+          <button style={styles.primaryBtn} onClick={() => setShowEditModal(true)}><Edit3 size={18} /> Editar Cadastro</button>
+          <button 
+            style={{
+              padding: '10px', 
+              borderRadius: '14px', 
+              borderColor: '#FEE2E2', 
+              borderStyle: 'solid', 
+              borderWidth: '1px',
+              backgroundColor: 'white', 
+              color: '#EF4444', 
+              cursor: 'pointer', 
+              transition: '0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '44px',
+              height: '44px'
+            }}
+            onClick={() => setShowDeleteModal(true)}
+            title="Excluir Empresa"
+          >
+            <Trash2 size={16} />
+          </button>
         </div>
+      </div>
+
+      {/* METRIC CARDS SECTION */}
+      <div
+        style={{
+          ...HUB_METRIC_GRID_STYLE,
+          marginBottom: '32px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+          width: '100%',
+        }}
+      >
+        <HubMetricCard
+          label="Colaboradores"
+          value={company.collaborators?.length || 0}
+          icon={Users}
+          accent="#0061FF"
+        />
+        <HubMetricCard
+          label="Clientes Base"
+          value={company.clients_count || 0}
+          icon={Database}
+          accent="#10B981"
+        />
+        <HubMetricCard
+          label="Veículos Ativos"
+          value={extraData.vehicles.length}
+          icon={Truck}
+          accent="#F59E0B"
+        />
+        <HubMetricCard
+          label="MRR Hub"
+          value={`R$ ${company.mrr || '497,00'}`}
+          icon={CreditCard}
+          accent="#8B5CF6"
+        />
       </div>
 
       {/* NAVIGATION TABS */}
@@ -326,144 +462,164 @@ const CompanyProfile: React.FC = () => {
         )}
         {activeTab === 'overview' && (
           <div style={styles.overviewGrid}>
-            <div style={styles.mainCol}>
-              <div style={styles.card}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h3 style={styles.cardTitle}>Informações Principais</h3>
-                  <button 
-                    style={{...styles.primaryBtn, padding: '6px 12px', fontSize: '12px'}} 
-                    onClick={handleSave}
-                    disabled={saving}
-                  >
-                    {saving ? 'Sincronizando...' : 'Salvar Alterações'}
-                  </button>
-                </div>
-                <div style={styles.infoGrid}>
-                  <div style={styles.infoItem}>
-                    <label style={styles.infoLabel}>Nome da Empresa</label>
-                    <input 
-                      style={styles.input} 
-                      value={company.name} 
-                      onChange={e => setCompany({...company, name: e.target.value})} 
-                    />
-                  </div>
-                  <div style={styles.infoItem}>
-                    <label style={styles.infoLabel}>E-mail Master</label>
-                    <input 
-                      style={styles.input} 
-                      value={company.email} 
-                      onChange={e => setCompany({...company, email: e.target.value})} 
-                    />
-                  </div>
-                  <div style={styles.infoItem}>
-                    <label style={styles.infoLabel}>WhatsApp / Contato</label>
-                    <input 
-                      style={styles.input} 
-                      value={company.phone} 
-                      onChange={e => setCompany({...company, phone: e.target.value})} 
-                    />
-                  </div>
-                  <div style={styles.infoItem}>
-                    <label style={styles.infoLabel}>CNPJ / Identificador</label>
-                    <input 
-                      style={styles.input} 
-                      value={company.cnpj} 
-                      onChange={e => setCompany({...company, cnpj: e.target.value})} 
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <div style={styles.statsRow}>
-                <div style={styles.statCard}>
-                  <Users size={20} color="#0061FF" />
-                  <div><h4>{company.collaborators?.length || 0}</h4><p>Colaboradores</p></div>
-                </div>
-                <div style={styles.statCard}>
-                  <Database size={20} color="#10B981" />
-                  <div><h4>{company.clients_count || 0}</h4><p>Clientes Base</p></div>
-                </div>
-                <div style={styles.statCard}>
-                  <Truck size={20} color="#F59E0B" />
-                  <div><h4>{extraData.vehicles.length}</h4><p>Veículos Ativos</p></div>
-                </div>
-                <div style={styles.statCard}>
-                  <CreditCard size={20} color="#8B5CF6" />
-                  <div><h4>R$ {company.mrr || '0,00'}</h4><p>MRR Hub</p></div>
-                </div>
-              </div>
 
-              <div style={styles.card}>
-                <h3 style={styles.cardTitle}>Serviços & Add-ons (Realtime)</h3>
-                <div style={styles.grid2}>
-                  <div style={styles.waCard}>
-                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                      <span style={styles.infoLabel}>Backup Cloud</span>
-                      <Shield size={16} color={company.backup_enabled ? '#10B981' : '#94A3B8'} />
-                    </div>
-                    <div style={{fontSize: '18px', fontWeight: '800', marginTop: '10px'}}>
-                      {company.backup_enabled ? 'Ativo' : 'Pendente'}
-                    </div>
-                    <div style={{fontSize: '11px', color: '#64748B'}}>{company.storage_limit_gb || 5}GB Limite</div>
-                  </div>
-                  <div style={styles.waCard}>
-                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                      <span style={styles.infoLabel}>WhatsApp Credits</span>
-                      <MessageSquare size={16} color="#0061FF" />
-                    </div>
-                    <div style={{fontSize: '18px', fontWeight: '800', marginTop: '10px'}}>
-                      {company.wa_credits || 0}
-                    </div>
-                    <div style={{fontSize: '11px', color: '#64748B'}}>Créditos de Mensagem</div>
-                  </div>
-                  <div style={styles.waCard}>
-                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                      <span style={styles.infoLabel}>AI Credits</span>
-                      <Zap size={16} color="#F59E0B" />
-                    </div>
-                    <div style={{fontSize: '18px', fontWeight: '800', marginTop: '10px'}}>
-                      {company.ai_credits || 0}
-                    </div>
-                    <div style={{fontSize: '11px', color: '#64748B'}}>Tokens de Inteligência</div>
-                  </div>
-                  <div style={styles.waCard}>
-                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                      <span style={styles.infoLabel}>Evolution API</span>
-                      <Database size={16} color="#8B5CF6" />
-                    </div>
-                    <div style={{fontSize: '18px', fontWeight: '800', marginTop: '10px'}}>
-                      {company.api_credits || 0}
-                    </div>
-                    <div style={{fontSize: '11px', color: '#64748B'}}>Créditos de API Externa</div>
-                  </div>
-                </div>
+            <div style={{ ...styles.card, ...styles.overviewCellInfo }}>
+              <div style={{ display: 'flex', justify_content: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ ...styles.cardTitle, marginBottom: 0 }}>Informações Principais</h3>
                 <button 
-                  style={{...styles.primaryBtn, width: '100%', marginTop: '16px', backgroundColor: '#0061FF'}} 
-                  onClick={() => handleRubyAction('ADD_CREDITS')}
+                  style={{...styles.primaryBtn, padding: '8px 16px', fontSize: '12px', backgroundColor: '#0061FF', color: 'white'}} 
+                  onClick={() => setShowEditModal(true)}
                 >
-                  <Plus size={18} /> Adicionar Créditos Rubi
+                  Editar Cadastro
                 </button>
+              </div>
+              <div style={{ ...styles.infoGrid, gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+                <div style={styles.infoItem}>
+                  <label style={styles.infoLabel}>Nome da Empresa</label>
+                  <p style={{ fontSize: '15px', fontWeight: '600', color: '#1E293B', margin: '4px 0 0 0' }}>{company.name}</p>
+                </div>
+                <div style={styles.infoItem}>
+                  <label style={styles.infoLabel}>E-mail Master</label>
+                  <p style={{ fontSize: '15px', fontWeight: '600', color: '#1E293B', margin: '4px 0 0 0' }}>{company.email}</p>
+                </div>
+                <div style={styles.infoItem}>
+                  <label style={styles.infoLabel}>WhatsApp / Contato</label>
+                  <p style={{ fontSize: '15px', fontWeight: '600', color: '#1E293B', margin: '4px 0 0 0' }}>{company.phone || '---'}</p>
+                </div>
+                <div style={styles.infoItem}>
+                  <label style={styles.infoLabel}>CNPJ / Identificador</label>
+                  <p style={{ fontSize: '15px', fontWeight: '600', color: '#1E293B', margin: '4px 0 0 0' }}>{company.cnpj || '---'}</p>
+                </div>
+                <div style={styles.infoItem}>
+                  <label style={styles.infoLabel}>Data de Criação</label>
+                  <p style={{ fontSize: '15px', fontWeight: '600', color: '#1E293B', margin: '4px 0 0 0' }}>{company.created_at ? new Date(company.created_at).toLocaleDateString('pt-BR') : '08/05/2026'}</p>
+                </div>
+                <div style={styles.infoItem}>
+                  <label style={styles.infoLabel}>Plano Atual</label>
+                  <p style={{ fontSize: '15px', fontWeight: '600', color: '#0061FF', margin: '4px 0 0 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Zap size={14} fill="#0061FF" /> {company.plan || 'Rubi Master Enterprise'}
+                  </p>
+                </div>
+                <div style={styles.infoItem}>
+                  <label style={styles.infoLabel}>Endereço Sede</label>
+                  <p style={{ fontSize: '15px', fontWeight: '600', color: '#1E293B', margin: '4px 0 0 0' }}>{company.address || 'Av. Paulista, 1000 - São Paulo/SP'}</p>
+                </div>
+                <div style={styles.infoItem}>
+                  <label style={styles.infoLabel}>Limite de Usuários</label>
+                  <p style={{ fontSize: '15px', fontWeight: '600', color: '#1E293B', margin: '4px 0 0 0' }}>{company.user_limit || '50 Contas Ativas'}</p>
+                </div>
               </div>
             </div>
 
-            <div style={styles.sideCol}>
-              <div style={{...styles.card, backgroundColor: '#0F172A', color: 'white'}}>
-                <h3 style={{...styles.cardTitle, color: 'white'}}>Status de Sincronização</h3>
-                <div style={styles.syncList}>
-                  <div style={styles.syncItem}>
-                    <div style={{...styles.syncDot, backgroundColor: extraData.routes.length > 0 ? '#10B981' : '#64748B'}} /> 
-                    <span>Logta Engine: {extraData.routes.length > 0 ? 'Operacional' : 'Ocioso'}</span>
+            <div style={{ ...styles.card, ...styles.overviewSyncCard, backgroundColor: '#FFFFFF', color: '#0F172A', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(15, 23, 42, 0.02)', position: 'relative', overflow: 'hidden' }}>
+              <h3 style={{ ...styles.cardTitle, color: '#0F172A', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Activity size={18} color="#0061FF" /> Status de Sincronização
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+                {/* SYSTEM 1 */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '16px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', transition: '0.2s', width: '100%', boxSizing: 'border-box' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '12px', backgroundColor: 'rgba(0, 97, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Database size={16} color="#0061FF" />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '13px', fontWeight: '700', color: '#0F172A', margin: 0 }}>Logta Engine</p>
+                      <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '500' }}>Operação e Rotas</span>
+                    </div>
                   </div>
-                  <div style={styles.syncItem}>
-                    <div style={{...styles.syncDot, backgroundColor: extraData.whatsapp.some((w:any) => w.status === 'open') ? '#10B981' : '#F43F5E'}} /> 
-                    <span>Zapto API: {extraData.whatsapp.some((w:any) => w.status === 'open') ? 'Conectado' : 'Desconectado'}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700', backgroundColor: extraData.routes.length > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)', color: extraData.routes.length > 0 ? '#10B981' : '#64748B' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: extraData.routes.length > 0 ? '#10B981' : '#64748B', display: 'inline-block' }} />
+                    {extraData.routes.length > 0 ? 'Online' : 'Ocioso'}
+                  </span>
+                </div>
+
+                {/* SYSTEM 2 */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '16px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', transition: '0.2s', width: '100%', boxSizing: 'border-box' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '12px', backgroundColor: 'rgba(236, 72, 153, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <MessageSquare size={16} color="#EC4899" />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '13px', fontWeight: '700', color: '#0F172A', margin: 0 }}>Zapto API</p>
+                      <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '500' }}>WhatsApp Gateway</span>
+                    </div>
                   </div>
-                  <div style={styles.syncItem}>
-                    <div style={{...styles.syncDot, backgroundColor: '#10B981'}} /> 
-                    <span>Sincronia Rubi: Ativa</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700', backgroundColor: extraData.whatsapp.some((w:any) => w.status === 'open') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)', color: extraData.whatsapp.some((w:any) => w.status === 'open') ? '#10B981' : '#F43F5E' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: extraData.whatsapp.some((w:any) => w.status === 'open') ? '#10B981' : '#F43F5E', display: 'inline-block' }} />
+                    {extraData.whatsapp.some((w:any) => w.status === 'open') ? 'Conectado' : 'Desconectado'}
+                  </span>
+                </div>
+
+                {/* SYSTEM 3 */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '16px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', transition: '0.2s', width: '100%', boxSizing: 'border-box' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '12px', backgroundColor: 'rgba(16, 185, 129, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Zap size={16} color="#10B981" />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '13px', fontWeight: '700', color: '#0F172A', margin: 0 }}>Sincronia Rubi</p>
+                      <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '500' }}>Realtime Mirroring</span>
+                    </div>
                   </div>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }} />
+                    Ativa
+                  </span>
                 </div>
               </div>
+            </div>
+
+            <div style={{ ...styles.card, ...styles.overviewFullBleed }}>
+              <h3 style={styles.cardTitle}>Serviços & Add-ons (Realtime)</h3>
+              <div style={styles.grid2}>
+                <div style={styles.waCard}>
+                  <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                    <span style={styles.infoLabel}>Backup Cloud</span>
+                    <Shield size={16} color={company.backup_enabled ? '#10B981' : '#94A3B8'} />
+                  </div>
+                  <div style={{fontSize: '18px', fontWeight: '800', marginTop: '10px'}}>
+                    {company.backup_enabled ? 'Ativo' : 'Pendente'}
+                  </div>
+                  <div style={{fontSize: '11px', color: '#64748B'}}>{company.storage_limit_gb || 5}GB Limite</div>
+                </div>
+                <div style={styles.waCard}>
+                  <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                    <span style={styles.infoLabel}>WhatsApp Credits</span>
+                    <MessageSquare size={16} color="#0061FF" />
+                  </div>
+                  <div style={{fontSize: '18px', fontWeight: '800', marginTop: '10px'}}>
+                    {company.wa_credits || 0}
+                  </div>
+                  <div style={{fontSize: '11px', color: '#64748B'}}>Créditos de Mensagem</div>
+                </div>
+                <div style={styles.waCard}>
+                  <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                    <span style={styles.infoLabel}>AI Credits</span>
+                    <Zap size={16} color="#F59E0B" />
+                  </div>
+                  <div style={{fontSize: '18px', fontWeight: '800', marginTop: '10px'}}>
+                    {company.ai_credits || 0}
+                  </div>
+                  <div style={{fontSize: '11px', color: '#64748B'}}>Tokens de Inteligência</div>
+                </div>
+                <div style={styles.waCard}>
+                  <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                    <span style={styles.infoLabel}>Evolution API</span>
+                    <Database size={16} color="#8B5CF6" />
+                  </div>
+                  <div style={{fontSize: '18px', fontWeight: '800', marginTop: '10px'}}>
+                    {company.api_credits || 0}
+                  </div>
+                  <div style={{fontSize: '11px', color: '#64748B'}}>Créditos de API Externa</div>
+                </div>
+              </div>
+              <button 
+                style={{...styles.primaryBtn, width: '100%', marginTop: '16px', backgroundColor: '#0061FF'}} 
+                onClick={() => handleRubyAction('ADD_CREDITS')}
+              >
+                <Plus size={18} /> Adicionar Créditos Rubi
+              </button>
             </div>
           </div>
         )}
@@ -586,6 +742,133 @@ const CompanyProfile: React.FC = () => {
           </div>
         )}
       </div>
+      {/* EDIT MODAL POPUP */}
+      {showEditModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent} className="animate-fade-in">
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>Editar Cadastro da Empresa</h2>
+              <button style={styles.closeBtn} onClick={() => setShowEditModal(false)}>&times;</button>
+            </div>
+            <form onSubmit={handleUpdateCompanyPopup} style={styles.modalForm}>
+              <div style={styles.formRow}>
+                <label style={styles.formLabel}>Nome da Empresa</label>
+                <input
+                  type="text"
+                  style={styles.formInput}
+                  value={editData.name}
+                  onChange={e => setEditData({ ...editData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div style={styles.formRow}>
+                <label style={styles.formLabel}>E-mail Master</label>
+                <input
+                  type="email"
+                  style={styles.formInput}
+                  value={editData.email}
+                  onChange={e => setEditData({ ...editData, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div style={styles.formRow}>
+                <label style={styles.formLabel}>WhatsApp / Contato</label>
+                <input
+                  type="text"
+                  style={styles.formInput}
+                  value={editData.phone}
+                  onChange={e => setEditData({ ...editData, phone: e.target.value })}
+                />
+              </div>
+              <div style={styles.formRow}>
+                <label style={styles.formLabel}>CNPJ / Identificador</label>
+                <input
+                  type="text"
+                  style={styles.formInput}
+                  value={editData.cnpj}
+                  onChange={e => setEditData({ ...editData, cnpj: e.target.value })}
+                />
+              </div>
+              <div style={styles.formRow}>
+                <label style={styles.formLabel}>Endereço / Sede</label>
+                <input
+                  type="text"
+                  style={styles.formInput}
+                  value={editData.address}
+                  onChange={e => setEditData({ ...editData, address: e.target.value })}
+                />
+              </div>
+              <div style={styles.modalFooter}>
+                <button type="button" style={styles.cancelBtn} onClick={() => setShowEditModal(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" style={styles.submitBtn} disabled={saving}>
+                  {saving ? 'Gravando...' : 'Salvar Alterações'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE MODAL POPUP */}
+      {showDeleteModal && (
+        <div style={styles.modalOverlay}>
+          <div style={{ ...styles.modalContent, maxWidth: '480px' }} className="animate-fade-in">
+            <div style={styles.modalHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <AlertTriangle color="#EF4444" size={24} />
+                <h2 style={{ ...styles.modalTitle, color: '#EF4444' }}>Excluir Empresa Permanentemente</h2>
+              </div>
+              <button style={styles.closeBtn} onClick={() => { setShowDeleteModal(false); setDeleteConfirmWord(''); }}>&times;</button>
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+              <p style={{ fontSize: '14px', color: '#64748B', lineHeight: '1.5', margin: 0 }}>
+                Esta ação é irreversível e excluirá todos os dados operacionais, de faturamento, colaboradores e logs associados a <strong>{company.name}</strong>.
+              </p>
+              <p style={{ fontSize: '14px', fontWeight: '700', color: '#1E293B', marginTop: '12px' }}>
+                Para confirmar a exclusão permanente, digite a palavra <span style={{ color: '#EF4444' }}>EXCLUIR</span> abaixo:
+              </p>
+            </div>
+            <div style={styles.formRow}>
+              <input
+                type="text"
+                placeholder="Digite EXCLUIR em letras maiúsculas"
+                style={{
+                  ...styles.formInput,
+                  borderColor: deleteConfirmWord === 'EXCLUIR' ? '#EF4444' : '#E2E8F0',
+                  boxShadow: deleteConfirmWord === 'EXCLUIR' ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : 'none',
+                }}
+                value={deleteConfirmWord}
+                onChange={e => setDeleteConfirmWord(e.target.value)}
+                required
+              />
+            </div>
+            <div style={{ ...styles.modalFooter, marginTop: '24px' }}>
+              <button 
+                type="button" 
+                style={styles.cancelBtn} 
+                onClick={() => { setShowDeleteModal(false); setDeleteConfirmWord(''); }}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                style={{
+                  ...styles.submitBtn, 
+                  backgroundColor: deleteConfirmWord === 'EXCLUIR' ? '#EF4444' : '#94A3B8', 
+                  cursor: deleteConfirmWord === 'EXCLUIR' ? 'pointer' : 'not-allowed',
+                  boxShadow: deleteConfirmWord === 'EXCLUIR' ? '0 4px 14px rgba(239, 68, 68, 0.3)' : 'none',
+                }} 
+                onClick={handleDeleteCompany}
+                disabled={deleteConfirmWord !== 'EXCLUIR' || deleting}
+              >
+                {deleting ? 'Excluindo...' : 'Confirmar Exclusão'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -608,14 +891,57 @@ const styles: Record<string, any> = {
   primaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '14px', border: 'none', backgroundColor: '#0061FF', color: 'white', fontWeight: '600', fontSize: '14px', cursor: 'pointer', letterSpacing: '0.3px' },
   impersonateBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '14px', border: 'none', backgroundColor: '#0F172A', color: 'white', fontWeight: '600', fontSize: '14px', cursor: 'pointer', letterSpacing: '0.3px' },
   
-  tabNav: { display: 'flex', gap: '4px', borderBottom: '1px solid #E2E8F0', marginBottom: '32px' },
-  tabBtn: { padding: '12px 20px', border: 'none', background: 'transparent', color: '#64748B', fontSize: '14px', fontWeight: '600', cursor: 'pointer', borderBottom: '2px solid transparent', letterSpacing: '0.2px' },
-  activeTab: { color: '#0061FF', borderBottom: '2px solid #0061FF', fontWeight: '500' },
+  tabNav: { 
+    display: 'flex', 
+    gap: '8px', 
+    backgroundColor: '#FFFFFF', 
+    padding: '8px', 
+    borderRadius: '20px', 
+    border: 'none', 
+    boxShadow: 'none', 
+    marginBottom: '32px',
+    alignItems: 'center',
+    width: 'fit-content',
+    maxWidth: '100%',
+    flexWrap: 'wrap'
+  },
+  tabBtn: { 
+    padding: '10px 24px', 
+    borderRadius: '16px', 
+    border: 'none', 
+    background: 'transparent', 
+    color: '#64748B', 
+    fontSize: '14px', 
+    fontWeight: '700', 
+    cursor: 'pointer', 
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '8px', 
+    justifyContent: 'center' 
+  },
+  activeTab: { 
+    backgroundColor: '#0061FF', 
+    color: '#FFFFFF', 
+    boxShadow: '0 4px 14px rgba(0, 97, 255, 0.2)' 
+  },
   
-  contentArea: { },
-  overviewGrid: { display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' },
-  mainCol: { display: 'flex', flexDirection: 'column', gap: '24px' },
-  sideCol: { display: 'flex', flexDirection: 'column', gap: '24px' },
+  contentArea: { width: '100%', maxWidth: '100%', minWidth: 0 },
+  overviewGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 0.38fr)',
+    gap: '24px',
+    alignItems: 'stretch',
+    width: '100%',
+  },
+  /** Primeira linha: formulário; evita estouro em grids estreitos */
+  overviewCellInfo: { minWidth: 0 },
+  /** Cartão de status alinhado à primeira linha (Informações + sync lado a lado) */
+  overviewSyncCard: { display: 'flex', flexDirection: 'column', minWidth: 0, justifyContent: 'flex-start' },
+  /** KPIs e bloco de serviços ocupam a largura total (sem “vazio” na coluna direita) */
+  overviewFullBleed: { gridColumn: '1 / -1', width: '100%', minWidth: 0 },
+  mainCol: { display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0 },
+  sideCol: { display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0 },
   
   card: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid #E2E8F0' },
   cardTitle: { fontSize: '16px', fontWeight: '600', color: '#0F172A', margin: '0 0 20px 0', letterSpacing: '0.3px' },
@@ -624,9 +950,6 @@ const styles: Record<string, any> = {
   infoItem: { display: 'flex', flexDirection: 'column', gap: '4px' },
   infoLabel: { fontSize: '11px', fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.8px' },
   input: { padding: '10px', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: '500', color: '#0F172A', outline: 'none' },
-  
-  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' },
-  statCard: { backgroundColor: 'white', padding: '20px', borderRadius: '24px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '16px' },
   
   syncList: { display: 'flex', flexDirection: 'column', gap: '12px' },
   syncItem: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: '600' },
@@ -650,7 +973,21 @@ const styles: Record<string, any> = {
   waCard: { padding: '16px', borderRadius: '16px', border: '1px solid #E2E8F0', backgroundColor: '#F8FAF9' },
   tableWrapper: { overflowX: 'auto' },
   addOnList: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  addOnItem: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '8px', borderRadius: '8px', backgroundColor: '#F8FAF9' }
+  addOnItem: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '8px', borderRadius: '8px', backgroundColor: '#F8FAF9' },
+
+  // MODAL STYLES
+  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
+  modalContent: { backgroundColor: 'white', borderRadius: '24px', padding: '32px', width: '100%', maxWidth: '580px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', border: '1px solid #E2E8F0', position: 'relative' },
+  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
+  modalTitle: { fontSize: '20px', fontWeight: '600', color: '#0F172A', margin: 0, letterSpacing: '-0.02em' },
+  closeBtn: { background: 'none', border: 'none', fontSize: '24px', color: '#94A3B8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '32px', width: '32px', borderRadius: '50%', transition: 'background-color 0.2s' },
+  modalForm: { display: 'flex', flexDirection: 'column', gap: '18px' },
+  formRow: { display: 'flex', flexDirection: 'column', gap: '6px' },
+  formLabel: { fontSize: '12px', fontWeight: '600', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  formInput: { padding: '12px 16px', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: '500', color: '#0F172A', outline: 'none', backgroundColor: '#F8FAFC', transition: 'border-color 0.2s, box-shadow 0.2s' },
+  modalFooter: { display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' },
+  cancelBtn: { padding: '12px 24px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontSize: '14px', fontWeight: '600', cursor: 'pointer', transition: 'background-color 0.2s' },
+  submitBtn: { padding: '12px 24px', borderRadius: '12px', border: 'none', backgroundColor: '#0061FF', color: 'white', fontSize: '14px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0, 97, 255, 0.2)', transition: 'background-color 0.2s' }
 };
 
 export default CompanyProfile;

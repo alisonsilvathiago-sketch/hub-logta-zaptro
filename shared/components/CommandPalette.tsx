@@ -1,7 +1,71 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, Command, ArrowRight, Zap, Briefcase, Truck, Users, Settings } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  Search,
+  Command,
+  ArrowRight,
+  Zap,
+  Briefcase,
+  Truck,
+  Users,
+  Settings,
+  Calendar,
+  MessageSquare,
+  CreditCard,
+  Building2,
+  Fuel,
+  Activity,
+  Shield,
+  HardDrive,
+  Workflow,
+  Cpu,
+  Plug,
+  Anchor,
+  Bell,
+  UserCircle,
+  LayoutDashboard,
+  MapPin,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getPlatform } from '../lib/platform';
+
+type PaletteCmd = {
+  id: string;
+  title: string;
+  /** Termos extras para busca (combustível, rastreamento, etc.) */
+  keywords?: string;
+  icon: React.ReactNode;
+  path: string;
+};
+
+const ALL_COMMANDS: PaletteCmd[] = [
+  { id: 'home', title: 'Início do Hub', keywords: 'painel principal', icon: <Zap size={18} />, path: '/master' },
+  { id: 'resultados', title: 'Resultados e KPIs', keywords: 'dashboard métricas', icon: <LayoutDashboard size={18} />, path: '/master/resultados' },
+  { id: 'crm', title: 'CRM & Expansão', keywords: 'vendas pipeline', icon: <Briefcase size={18} />, path: '/master/crm' },
+  { id: 'clientes', title: 'Clientes Hub', keywords: 'carteira relacionamento', icon: <Users size={18} />, path: '/master/clientes' },
+  { id: 'agenda', title: 'Agenda Hub', keywords: 'compromissos calendário', icon: <Calendar size={18} />, path: '/master/agenda' },
+  { id: 'hubchat', title: 'HubChat', keywords: 'mensagens conversas', icon: <MessageSquare size={18} />, path: '/master/hubchat' },
+  { id: 'logistica', title: 'Logística (painel)', keywords: 'operações cargas entregas frota', icon: <Truck size={18} />, path: '/master/logistica' },
+  { id: 'logistica-controle', title: 'Logística — Monitoramento & rastreamento', keywords: 'mapa rotas veículos ao vivo', icon: <MapPin size={18} />, path: '/master/logistica/controle' },
+  { id: 'logistica-combustivel', title: 'Logística — Central de combustível', keywords: 'abastecimento preço diesel gasolina', icon: <Fuel size={18} />, path: '/master/logistica/combustivel' },
+  { id: 'logistica-estrategia', title: 'Logística — Inteligência estratégica', keywords: 'roi analytics operacional', icon: <Activity size={18} />, path: '/master/logistica/estrategia' },
+  { id: 'financeiro', title: 'Financeiro / Billing', keywords: 'cobrança mrr receitas', icon: <CreditCard size={18} />, path: '/master/billing?tab=financeiro' },
+  { id: 'planos', title: 'Planos SaaS', keywords: 'assinaturas faturamento', icon: <Zap size={18} />, path: '/master/billing/planos' },
+  { id: 'empresas', title: 'Empresas — lista', keywords: 'tenant instâncias saas', icon: <Building2 size={18} />, path: '/master/companies' },
+  { id: 'empresas-modulos', title: 'Empresas — Módulos & Sync', keywords: 'integração sistemas', icon: <Building2 size={18} />, path: '/master/companies/modulos-sync' },
+  { id: 'empresas-metricas', title: 'Empresas — Métricas & Score', keywords: 'performance health score', icon: <Building2 size={18} />, path: '/master/companies/metricas-score' },
+  { id: 'automacoes', title: 'Automações', keywords: 'workflows triggers', icon: <Workflow size={18} />, path: '/master/automacoes' },
+  { id: 'ia-gateway', title: 'Gateway IA', keywords: 'modelos tokens testes llm', icon: <Cpu size={18} />, path: '/master/ia-gateway' },
+  { id: 'integracoes', title: 'Integrações', keywords: 'apis conectores', icon: <Plug size={18} />, path: '/master/integracoes' },
+  { id: 'integracoes-webhooks', title: 'Integrações — Webhooks', keywords: 'callbacks eventos', icon: <Plug size={18} />, path: '/master/integracoes/webhooks' },
+  { id: 'logdock', title: 'LogDock (Hub)', keywords: 'logs auditoria dock', icon: <Anchor size={18} />, path: '/master/logdock' },
+  { id: 'infra-saude', title: 'Infraestrutura — Visão geral', keywords: 'saúde uptime vps', icon: <Activity size={18} />, path: '/master/infrastructure/saude' },
+  { id: 'infra-seg', title: 'Infraestrutura — Segurança', keywords: 'tokens firewall', icon: <Shield size={18} />, path: '/master/infrastructure/seguranca' },
+  { id: 'backup', title: 'Infraestrutura — Backup & storage', keywords: 'armazenamento restore', icon: <HardDrive size={18} />, path: '/master/infrastructure/backup' },
+  { id: 'notificacoes', title: 'Notificações', keywords: 'alertas centro avisos', icon: <Bell size={18} />, path: '/master/notifications' },
+  { id: 'settings', title: 'Configurações globais', keywords: 'preferências sistema branding', icon: <Settings size={18} />, path: '/master/settings' },
+  { id: 'equipe', title: 'Equipe Master', keywords: 'usuários hub admins membros', icon: <Users size={18} />, path: '/master/settings/equipe' },
+  { id: 'perfil', title: 'Meu perfil', keywords: 'conta usuário', icon: <UserCircle size={18} />, path: '/master/account' },
+];
 
 export const CommandPalette: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,16 +75,26 @@ export const CommandPalette: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const platform = getPlatform();
 
-  const commands = [
-    { id: 'logistica', title: 'Ir para Logística', icon: <Truck size={18} />, path: '/master/logistica' },
-    { id: 'crm', title: 'Ir para CRM / Vendas', icon: <Briefcase size={18} />, path: '/master/crm' },
-    { id: 'financeiro', title: 'Ver Financeiro / Billing', icon: <Settings size={18} />, path: '/master/billing?tab=financeiro' },
-    { id: 'backup', title: 'Gerenciar Backups', icon: <Settings size={18} />, path: '/master/infrastructure?tab=backup' },
-    { id: 'planos', title: 'Criar / Editar Planos', icon: <Zap size={18} />, path: '/master/plans' },
-    { id: 'empresas', title: 'Gerenciar Empresas / SaaS', icon: <Users size={18} />, path: '/master/companies' },
-    { id: 'clientes', title: 'Meus Clientes', icon: <Users size={18} />, path: '/master/clientes' },
-    { id: 'home', title: 'Página Inicial / Hub', icon: <Zap size={18} />, path: '/master' },
-  ].filter(cmd => cmd.title.toLowerCase().includes(search.toLowerCase()));
+  const commands = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return ALL_COMMANDS;
+    return ALL_COMMANDS.filter(
+      (cmd) =>
+        cmd.title.toLowerCase().includes(q) ||
+        (cmd.keywords && cmd.keywords.toLowerCase().includes(q))
+    );
+  }, [search]);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [search]);
+
+  useEffect(() => {
+    setSelectedIndex((i) => {
+      if (!commands.length) return 0;
+      return Math.min(i, commands.length - 1);
+    });
+  }, [commands.length]);
 
   useEffect(() => {
     const handleOpen = () => {
@@ -46,12 +120,15 @@ export const CommandPalette: React.FC = () => {
   }, [isOpen]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    const len = commands.length;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev + 1) % commands.length);
+      if (!len) return;
+      setSelectedIndex(prev => (prev + 1) % len);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev - 1 + commands.length) % commands.length);
+      if (!len) return;
+      setSelectedIndex(prev => (prev - 1 + len) % len);
     } else if (e.key === 'Enter') {
       const selected = commands[selectedIndex];
       if (selected) {

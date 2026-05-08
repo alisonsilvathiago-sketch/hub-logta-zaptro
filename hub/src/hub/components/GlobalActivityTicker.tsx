@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@core/lib/supabase';
 import { 
   Building2, DollarSign, Briefcase, 
-  Trash2, PlusCircle, RefreshCw, 
-  Zap, Bell
+  Bell
 } from 'lucide-react';
 
 interface Activity {
   id: string;
-  type: 'company' | 'payment' | 'plan';
+  type: 'company' | 'payment' | 'plan' | 'audit';
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   message: string;
   timestamp: Date;
@@ -54,7 +53,7 @@ const GlobalActivityTicker: React.FC = () => {
     };
   }, []);
 
-  const addActivity = (type: Activity['type'] | 'audit', action: Activity['action'], label: string) => {
+  const addActivity = (type: Activity['type'], action: Activity['action'], label: string) => {
     let message = '';
     
     if (type === 'audit') {
@@ -67,7 +66,7 @@ const GlobalActivityTicker: React.FC = () => {
     
     const newActivity: Activity = {
       id: Math.random().toString(36).substring(7),
-      type: type === 'audit' ? 'company' : type,
+      type,
       action,
       message,
       timestamp: new Date()
@@ -82,14 +81,21 @@ const GlobalActivityTicker: React.FC = () => {
   };
 
   const handleActivityClick = (activity: Activity) => {
-    if (activity.type === 'company') {
-      navigate('/master/companies');
-    } else if (activity.type === 'payment') {
-      navigate('/master/billing?tab=financeiro');
-    } else if (activity.type === 'plan') {
-      navigate('/master/plans');
-    } else {
-      navigate('/master/notifications');
+    switch (activity.type) {
+      case 'company':
+        navigate('/master/companies');
+        break;
+      case 'payment':
+        navigate('/master/billing/faturamento');
+        break;
+      case 'plan':
+        navigate('/master/billing/planos');
+        break;
+      case 'audit':
+        navigate('/master/infrastructure');
+        break;
+      default:
+        navigate('/master/notifications');
     }
   };
 
@@ -122,6 +128,7 @@ const GlobalActivityTicker: React.FC = () => {
               {activity.type === 'company' && <Building2 size={16} color="#0061FF" />}
               {activity.type === 'payment' && <DollarSign size={16} color="#10B981" />}
               {activity.type === 'plan' && <Briefcase size={16} color="#F59E0B" />}
+              {activity.type === 'audit' && <Bell size={16} color="#F59E0B" />}
             </div>
             <span style={styles.toastMessage}>{activity.message}</span>
           </div>

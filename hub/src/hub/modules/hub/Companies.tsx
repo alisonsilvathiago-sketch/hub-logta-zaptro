@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Building2, Search, Filter, MoreVertical, 
   CheckCircle, ShieldAlert, Edit2, ExternalLink,
@@ -7,7 +7,8 @@ import {
   Globe, Mail, Phone, Plus, X, Save, Settings,
   Activity, CreditCard, Lock, History, UserPlus,
   ArrowDownRight, TrendingUp, Briefcase, Eye,
-  Pause, Trash2, RefreshCw, Layers, GraduationCap, Zap
+  Pause, Trash2, RefreshCw, Layers, GraduationCap, Zap,
+  Database, BarChart3,
 } from 'lucide-react';
 import SyncIndicator from '../../components/SyncIndicator';
 import { 
@@ -18,9 +19,12 @@ import {
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import LogtaModal from '@shared/components/Modal';
 import Pagination from '@shared/components/Pagination';
+import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
+import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 import { supabase } from '@core/lib/supabase';
 import { useAuth } from '@core/context/AuthContext';
 import type { Company, Profile } from '@core/types';
+import { SystemsManagementContent, PerformanceContent } from './TeamHub';
 
 // Mock data for charts if DB doesn't have enough history
 const growthData = [
@@ -32,6 +36,7 @@ const growthData = [
 
 const CompanyManagement: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, impersonate } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
@@ -373,77 +378,124 @@ const CompanyManagement: React.FC = () => {
     { type: 'success', text: 'Sincronização global de frotas operando com latência de 45ms.' }
   ];
 
+  type CompaniesShellSection = 'empresas' | 'modulos-sync' | 'metricas-score';
+  const companiesShellSection: CompaniesShellSection = location.pathname.endsWith('/modulos-sync')
+    ? 'modulos-sync'
+    : location.pathname.endsWith('/metricas-score')
+      ? 'metricas-score'
+      : 'empresas';
+
+  const goCompaniesShell = (s: CompaniesShellSection) => {
+    const paths: Record<CompaniesShellSection, string> = {
+      empresas: '/master/companies',
+      'modulos-sync': '/master/companies/modulos-sync',
+      'metricas-score': '/master/companies/metricas-score',
+    };
+    navigate({ pathname: paths[s], search: location.search });
+  };
+
   return (
     <div style={styles.container} className="animate-fade-in">
       {/* PAGE TITLE & ACTION */}
       <div style={styles.pageHeader}>
         <div>
-          <h1 style={styles.pageTitle}>Central de Comando Master</h1>
-          <p style={styles.pageSub}>Governança global, faturamento e saúde das instâncias Logta & Zaptro.</p>
+          <h1 style={styles.pageTitle}>
+            {companiesShellSection === 'empresas' && 'Central de Comando Master'}
+            {companiesShellSection === 'modulos-sync' && 'Módulos & Sync'}
+            {companiesShellSection === 'metricas-score' && 'Métricas & Score'}
+          </h1>
+          <p style={styles.pageSub}>
+            {companiesShellSection === 'empresas' &&
+              'Governança global, faturamento e saúde das instâncias Logta & Zaptro.'}
+            {companiesShellSection === 'modulos-sync' &&
+              'Sistemas conectados, sincronização global e broadcast entre produtos do ecossistema.'}
+            {companiesShellSection === 'metricas-score' &&
+              'Indicadores, score e desempenho da equipe master no Hub.'}
+          </p>
         </div>
+        {companiesShellSection === 'empresas' && (
         <div style={styles.headerActions}>
            <button style={styles.refreshBtn} onClick={fetchData}><RefreshCw size={18} /></button>
            <button style={styles.addBtn} onClick={() => setIsAddModalOpen(true)}>
              <Plus size={18} /> NOVA UNIDADE
            </button>
         </div>
+        )}
       </div>
 
-      {/* DASHBOARD MASTER (CONTROL CENTER VERSION) */}
-      <div style={styles.statsGrid}>
-        <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
-            <Globe size={20} color="#0061FF" />
-          </div>
-          <div style={styles.statContent}>
-            <p style={styles.statLabel}>Unidade Global</p>
-            <h3 style={styles.statValue}>{stats.total}</h3>
-          </div>
-          <div style={{...styles.statTrend, color: '#10B981'}}>
-            OPERANDO
-          </div>
-        </div>
+      <nav style={hubPillTabStripStyles.container} aria-label="Seções da central de empresas">
+        <button
+          type="button"
+          style={{
+            ...hubPillTabStripStyles.button,
+            ...(companiesShellSection === 'empresas' ? hubPillTabStripStyles.buttonActive : {}),
+          }}
+          onClick={() => goCompaniesShell('empresas')}
+        >
+          <Building2 size={18} strokeWidth={2} color={companiesShellSection === 'empresas' ? 'var(--accent)' : 'var(--text-secondary)'} />
+          Empresas
+        </button>
+        <button
+          type="button"
+          style={{
+            ...hubPillTabStripStyles.button,
+            ...(companiesShellSection === 'modulos-sync' ? hubPillTabStripStyles.buttonActive : {}),
+          }}
+          onClick={() => goCompaniesShell('modulos-sync')}
+        >
+          <Database size={18} strokeWidth={2} color={companiesShellSection === 'modulos-sync' ? 'var(--accent)' : 'var(--text-secondary)'} />
+          Módulos & Sync
+        </button>
+        <button
+          type="button"
+          style={{
+            ...hubPillTabStripStyles.button,
+            ...(companiesShellSection === 'metricas-score' ? hubPillTabStripStyles.buttonActive : {}),
+          }}
+          onClick={() => goCompaniesShell('metricas-score')}
+        >
+          <BarChart3 size={18} strokeWidth={2} color={companiesShellSection === 'metricas-score' ? 'var(--accent)' : 'var(--text-secondary)'} />
+          Métricas & Score
+        </button>
+      </nav>
 
-        <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#0061FF'}}>
-            <Activity size={20} color="#FFFFFF" />
-          </div>
-          <div style={styles.statContent}>
-            <p style={styles.statLabel}>Online Agora</p>
-            <h3 style={styles.statValue}>{stats.online}</h3>
-          </div>
-        </div>
-
-        <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
-            <ShieldAlert size={20} color="#0061FF" />
-          </div>
-          <div style={styles.statContent}>
-            <p style={styles.statLabel}>Erros Críticos</p>
-            <h3 style={styles.statValue}>{stats.criticalErrors}</h3>
-          </div>
-          <div style={{...styles.statTrend, color: '#EF4444'}}>
-            ATENÇÃO
-          </div>
-        </div>
-
-        <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#0052D9'}}>
-            <DollarSign size={20} color="#FFFFFF" />
-          </div>
-          <div style={styles.statContent}>
-            <p style={styles.statLabel}>Receita Global (MRR)</p>
-            <h3 style={styles.statValue}>
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.revenue)}
-            </h3>
-          </div>
-          <div style={{...styles.statTrend, color: '#10B981'}}>
-            +4.2% <TrendingUp size={12} />
-          </div>
-        </div>
+      {companiesShellSection === 'empresas' && (
+      <>
+      <div style={{ ...HUB_METRIC_GRID_STYLE, marginBottom: '40px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+        <HubMetricCard
+          label="Unidade Global"
+          value={stats.total}
+          icon={Globe}
+          accent="#0061FF"
+          topRight={<span style={{ color: '#10B981' }}>OPERANDO</span>}
+        />
+        <HubMetricCard
+          label="Online Agora"
+          value={stats.online}
+          icon={Activity}
+          iconVariant="solid"
+          accent="#0061FF"
+        />
+        <HubMetricCard
+          label="Erros Críticos"
+          value={stats.criticalErrors}
+          icon={ShieldAlert}
+          accent="#0061FF"
+          topRight={<span style={{ color: '#EF4444' }}>ATENÇÃO</span>}
+        />
+        <HubMetricCard
+          label="Receita Global (MRR)"
+          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.revenue)}
+          icon={DollarSign}
+          iconVariant="solid"
+          accent="#0052D9"
+          topRight={
+            <span style={{ color: '#10B981', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              +4.2% <TrendingUp size={12} />
+            </span>
+          }
+        />
       </div>
-
-      {/* DASHBOARD MASTER (CONTROL CENTER VERSION) */}
 
       {/* SEGMENTATION TABS */}
       <div style={styles.segmentTabs}>
@@ -608,6 +660,12 @@ const CompanyManagement: React.FC = () => {
           onItemsPerPageChange={handleItemsPerPageChange}
         />
       </div>
+
+      </>
+      )}
+
+      {companiesShellSection === 'modulos-sync' && <SystemsManagementContent />}
+      {companiesShellSection === 'metricas-score' && <PerformanceContent />}
 
       {/* MODAL DETALHES EMPRESA */}
       <LogtaModal 
@@ -1171,37 +1229,29 @@ const CompanyManagement: React.FC = () => {
 };
 
 const styles: Record<string, any> = {
-  container: { padding: '40px', backgroundColor: 'transparent' },
+  container: { padding: '0', backgroundColor: 'transparent' },
   pageHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
   pageTitle: { fontSize: '32px', fontWeight: '700', color: 'var(--secondary)', margin: 0, letterSpacing: '-0.5px' },
-  pageSub: { color: 'var(--text-secondary)', fontSize: '16px', fontWeight: '500', marginTop: '6px' },
+  pageSub: { color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '500', marginTop: '6px' },
   headerActions: { display: 'flex', gap: '16px' },
   refreshBtn: { width: '48px', height: '48px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' },
   addBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },
 
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' },
-  statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '32px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden' },
-  statIconBox: { width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statContent: { flex: 1 },
-  statLabel: { fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' },
-  statValue: { fontSize: '24px', fontWeight: '800', color: 'var(--secondary)', margin: 0 },
-  statTrend: { fontSize: '10px', fontWeight: '800', padding: '4px 10px', borderRadius: '8px', backgroundColor: 'var(--bg-secondary)' },
-
-  segmentTabs: { display: 'flex', gap: '8px', marginBottom: '32px', backgroundColor: 'var(--bg-secondary)', padding: '6px', borderRadius: '20px', width: 'fit-content' },
+  segmentTabs: { display: 'flex', gap: '8px', marginBottom: '32px', backgroundColor: '#FFFFFF', padding: '6px', borderRadius: '20px', width: 'fit-content', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)' },
   segmentBtn: { padding: '10px 24px', borderRadius: '16px', fontSize: '14px', fontWeight: '700', color: 'var(--text-secondary)', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' },
-  segmentBtnActive: { backgroundColor: 'white', color: 'var(--accent)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' },
+  segmentBtnActive: { backgroundColor: '#F1F5F9', color: 'var(--accent)', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' },
   tabCounter: { backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '6px', fontSize: '10px' },
 
   controls: { display: 'flex', justifyContent: 'space-between', gap: '24px', marginBottom: '24px' },
   searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'white', padding: '0 24px', borderRadius: '20px', border: '1px solid var(--border)', height: '56px' },
-  searchInput: { border: 'none', backgroundColor: 'transparent', outline: 'none', fontSize: '15px', fontWeight: '600', color: 'var(--secondary)', width: '100%' },
+  searchInput: { border: 'none', backgroundColor: 'transparent', outline: 'none', fontSize: '12px', fontWeight: '500', color: 'var(--secondary)', width: '100%' },
   controlActions: { display: 'flex', gap: '12px' },
   filterBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', borderRadius: '20px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--secondary)', fontWeight: '700', fontSize: '14px', cursor: 'pointer' },
   syncBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', borderRadius: '20px', border: '1px solid var(--border)', backgroundColor: 'var(--secondary)', color: 'white', fontWeight: '700', fontSize: '14px', cursor: 'pointer' },
 
   listCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  tableHead: { backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' },
+  tableHead: { backgroundColor: '#FFFFFF', borderBottom: '1px solid var(--border)' },
   th: { padding: '20px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' },
   tr: { borderBottom: '1px solid var(--bg-secondary)', transition: 'all 0.2s' },
   td: { padding: '24px' },

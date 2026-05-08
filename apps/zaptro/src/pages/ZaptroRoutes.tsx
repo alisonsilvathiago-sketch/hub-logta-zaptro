@@ -318,7 +318,7 @@ const ZaptroRoutesInner: React.FC = () => {
         <div style={{ height: '100%', width: '100%', position: 'relative' }}>
           <style dangerouslySetInnerHTML={{ __html: `
             .zaptro-grayscale-map .leaflet-tile-container {
-              filter: grayscale(100%) brightness(0.9) contrast(1.1);
+              filter: none !important;
             }
             .leaflet-popup-content-wrapper {
               border-radius: 16px !important;
@@ -368,8 +368,8 @@ const ZaptroRoutesInner: React.FC = () => {
             zoomControl={false}
           >
             <TileLayer 
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-              attribution='&copy; CARTO'
+              url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+              attribution="&copy; Google Maps"
             />
             
             {/* Veículos em rota (usando dados reais da página) */}

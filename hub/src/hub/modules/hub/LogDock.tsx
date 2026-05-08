@@ -11,13 +11,14 @@ import {
   ArrowLeft, Copy, Edit3, ShieldAlert, CheckCircle2,
   AlertTriangle, MousePointer2, RefreshCw, Box,
   Truck, ClipboardCheck, History, MoreCircle,
-  FileSearch, LockKeyhole
+  FileSearch, LockKeyhole, Zap
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
 import { useAuth } from '@core/context/AuthContext';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import Button from '@shared/components/Button';
 import LogtaModal from '@shared/components/Modal';
+import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
 
 // --- Interfaces ---
 interface LogDockFile {
@@ -486,35 +487,19 @@ const HubLogDock: React.FC = () => {
           {activeTab === 'all' && !searchTerm && (
             <div style={styles.dashboardSection}>
                <h3 style={styles.sectionTitle}>Visão Geral da Operação</h3>
-               <div style={styles.statsGrid}>
-                  <div style={styles.statCard}>
-                     <div style={{...styles.statIcon, backgroundColor: '#EFF6FF'}}><Box color="#3B82F6" /></div>
-                     <div style={styles.statInfo}>
-                        <span style={styles.statValue}>{folders.length}</span>
-                        <span style={styles.statLabel}>Containers Ativos</span>
-                     </div>
-                  </div>
-                  <div style={styles.statCard}>
-                     <div style={{...styles.statIcon, backgroundColor: '#F0FDF4'}}><FileCheck color="#10B981" /></div>
-                     <div style={styles.statInfo}>
-                        <span style={styles.statValue}>{files.length}</span>
-                        <span style={styles.statLabel}>Arquivos Protegidos</span>
-                     </div>
-                  </div>
-                  <div style={styles.statCard}>
-                     <div style={{...styles.statIcon, backgroundColor: '#FEF2F2'}}><AlertTriangle color="#EF4444" /></div>
-                     <div style={styles.statInfo}>
-                        <span style={styles.statValue}>3</span>
-                        <span style={styles.statLabel}>Pendências POD</span>
-                     </div>
-                  </div>
+               <div style={{ ...HUB_METRIC_GRID_STYLE, marginBottom: 0 }}>
+                  <HubMetricCard label="Containers Ativos" value={folders.length} icon={Box} accent="#3B82F6" softBg="#EFF6FF" />
+                  <HubMetricCard label="Arquivos Protegidos" value={files.length} icon={FileCheck} accent="#10B981" softBg="#F0FDF4" />
+                  <HubMetricCard label="Pendências POD" value={3} icon={AlertTriangle} accent="#EF4444" softBg="#FEF2F2" />
                </div>
             </div>
           )}
 
           <div style={styles.contentHeader}>
             <div style={styles.breadcrumb}>
-              <span>LogDock</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Box size={28} color="#2563EB" /> LOGDOCK CONTROL CENTER
+              </span>
               {activeTab !== 'all' && (
                 <><ChevronRight size={16} color="#94A3B8" /><span style={{color: '#2563EB', fontWeight: '900'}}>{activeTab.toUpperCase()}</span></>
               )}
@@ -701,12 +686,6 @@ const styles: Record<string, React.CSSProperties> = {
   content: { flex: 1, padding: '40px', overflowY: 'auto' },
   dashboardSection: { marginBottom: '48px' },
   sectionTitle: { fontSize: '12px', fontWeight: '900', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px' },
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' },
-  statCard: { backgroundColor: '#FFF', border: '1px solid #F1F5F9', borderRadius: '24px', padding: '24px', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' },
-  statIcon: { width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statInfo: { display: 'flex', flexDirection: 'column' },
-  statValue: { fontSize: '24px', fontWeight: '900', color: '#0F172A' },
-  statLabel: { fontSize: '13px', fontWeight: '700', color: '#94A3B8' },
   contentHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
   breadcrumb: { display: 'flex', alignItems: 'center', gap: '14px', fontSize: '28px', fontWeight: '900', color: '#0F172A', letterSpacing: '-1px' },
   viewToggles: { display: 'flex', gap: '8px', backgroundColor: '#F8FAFC', padding: '6px', borderRadius: '14px', border: '1px solid #F1F5F9' },

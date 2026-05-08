@@ -15,7 +15,10 @@ import { supabase } from '@core/lib/supabase';
 import { useAuth } from '@core/context/AuthContext';
 import { toastSuccess, toastError, toastLoading, toastDismiss, toastInfo } from '@core/lib/toast';
 import Pagination from '@shared/components/Pagination';
-import { useSearchParams } from 'react-router-dom';
+import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
+import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import UserManagement from './Admins';
 
 // --- TYPES ---
 interface StaffMember {
@@ -58,52 +61,96 @@ interface Company {
   wa_credits?: number;
 }
 
+const TEAM_TABS = ['membros', 'usuarios-hub'] as const;
+type TeamTabId = (typeof TEAM_TABS)[number];
+
+function normalizeTeamTab(tab: string | null): TeamTabId {
+  if (tab && TEAM_TABS.includes(tab as TeamTabId)) return tab as TeamTabId;
+  return 'membros';
+}
+
+function normalizePermissions(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === 'string');
+  if (raw && typeof raw === 'object') {
+    return Object.entries(raw as Record<string, unknown>)
+      .filter(([, v]) => Boolean(v))
+      .map(([k]) => k);
+  }
+  return [];
+}
+
 // Beautiful preset premium avatars
 const PRESET_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=256&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&q=80',
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=256&q=80',
-  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=256&q=80',
-  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=256&q=80',
-  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=256&q=80',
+  '/assets/avatars/avatar1.jpg',
+  '/assets/avatars/avatar2.jpg',
+  '/assets/avatars/avatar3.jpg',
+  '/assets/avatars/avatar4.jpg',
 ];
 
+const TEAM_HUB_PATH = '/master/settings/equipe';
+
 const TeamHub: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'membros';
-  const setActiveTab = (tab: string) => setSearchParams({ tab });
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  /** Abas `sistemas` / `performance` migram para Empresas (URLs dedicadas). */
+  React.useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t !== 'sistemas' && t !== 'performance') return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('tab');
+    const qs = next.toString();
+    const path = t === 'sistemas' ? '/master/companies/modulos-sync' : '/master/companies/metricas-score';
+    navigate(`${path}${qs ? `?${qs}` : ''}`, { replace: true });
+  }, [searchParams, navigate]);
+
+  const activeTab = normalizeTeamTab(searchParams.get('tab'));
+
+  const goTeamTab = (tabId: TeamTabId) => {
+    const next = new URLSearchParams(searchParams);
+    if (tabId === 'membros') next.delete('tab');
+    else next.set('tab', tabId);
+    const q = next.toString();
+    navigate({ pathname: TEAM_HUB_PATH, search: q || undefined, hash: location.hash });
+  };
+
+  const pillStrip = (
+    <div
+      style={{
+        ...hubPillTabStripStyles.container,
+        marginBottom: 0,
+        width: '100%',
+      }}
+    >
+      {[
+        { id: 'membros' as const, label: 'Arquitetos HQ', icon: Users },
+        { id: 'usuarios-hub' as const, label: 'Usuários Hub', icon: ShieldCheck },
+      ].map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          style={{
+            ...hubPillTabStripStyles.button,
+            ...(activeTab === tab.id ? hubPillTabStripStyles.buttonActive : {}),
+          }}
+          onClick={() => goTeamTab(tab.id)}
+        >
+          <tab.icon
+            size={18}
+            color={activeTab === tab.id ? 'var(--accent)' : 'var(--text-secondary)'}
+          />
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
-    <div style={styles.container} className="animate-fade-in">
-      <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Painel de Controle HQ Master</h1>
-          <p style={styles.subtitle}>Sincronização de sistemas, gestão de colaboradores HQ e orquestração global.</p>
-        </div>
-        <div style={styles.headerActions}>
-           <div style={styles.tabSwitch}>
-              {[
-                { id: 'membros', label: 'Arquitetos HQ', icon: Users },
-                { id: 'sistemas', label: 'Módulos & Sync', icon: Database },
-                { id: 'performance', label: 'Métricas & Score', icon: BarChart3 },
-              ].map(tab => (
-                <button 
-                  key={tab.id}
-                  style={{...styles.tabBtn, ...(activeTab === tab.id ? styles.tabActive : {})}}
-                  onClick={() => setActiveTab(tab.id)}
-                >
-                  <tab.icon size={16} /> {tab.label}
-                </button>
-              ))}
-           </div>
-        </div>
-      </header>
-
+    <div style={styles.embeddedRoot} className="animate-fade-in">
+      <div style={styles.embeddedTabsWrap}>{pillStrip}</div>
       {activeTab === 'membros' && <StaffManagementContent />}
-      {activeTab === 'sistemas' && <SystemsManagementContent />}
-      {activeTab === 'performance' && <PerformanceContent />}
+      {activeTab === 'usuarios-hub' && <UserManagement embedded />}
     </div>
   );
 };
@@ -234,7 +281,7 @@ const StaffManagementContent: React.FC = () => {
             full_name: item.profile?.full_name || 'Usuário Master',
             email: item.profile?.email || '',
             avatar_url: item.profile?.avatar_url || PRESET_AVATARS[Math.floor(Math.random() * PRESET_AVATARS.length)],
-            permissions: item.profile?.permissions || [],
+            permissions: normalizePermissions(item.profile?.permissions),
             tem_logta: item.profile?.tem_logta ?? true,
             tem_zaptro: item.profile?.tem_zaptro ?? true,
           }
@@ -285,7 +332,7 @@ const StaffManagementContent: React.FC = () => {
     setFormStatus(member.status);
     setFormAvatar(member.profile.avatar_url || PRESET_AVATARS[0]);
     
-    const userPermsArray = member.profile.permissions || [];
+    const userPermsArray = normalizePermissions(member.profile.permissions);
     setFormPerms({
       crm: userPermsArray.includes('crm'),
       financeiro: userPermsArray.includes('financeiro'),
@@ -643,6 +690,15 @@ const StaffManagementContent: React.FC = () => {
                       />
                     ))}
                   </div>
+                  <div style={{ marginTop: '14px' }}>
+                    <label style={{ ...styles.fieldLabel, fontSize: '11px', textTransform: 'none', color: '#64748B' }}>Ou informe a URL de uma foto personalizada (foto dele mesmo):</label>
+                    <input 
+                      style={styles.formInput} 
+                      placeholder="Cole a URL da sua imagem (ex: https://site.com/sua-foto.jpg)" 
+                      value={PRESET_AVATARS.includes(formAvatar) ? '' : formAvatar} 
+                      onChange={e => setFormAvatar(e.target.value || PRESET_AVATARS[0])} 
+                    />
+                  </div>
                 </div>
 
                 {/* Permissions Matrix */}
@@ -733,83 +789,99 @@ const StaffManagementContent: React.FC = () => {
        {/* MODAL: DETALHES COMPLETOS DO COLABORADOR */}
        {isDetailModalOpen && selectedMember && (
          <div style={styles.modalOverlay}>
-           <div style={{...styles.modalContent, maxWidth: '650px'}} className="animate-fade-in">
-             <div style={styles.modalHeader}>
-               <h3 style={{margin: 0, fontSize: '20px'}}>Ficha do Arquiteto Master</h3>
-               <button style={styles.closeBtn} onClick={() => setIsDetailModalOpen(false)}><X size={20} /></button>
+           <div style={{...styles.modalContent, maxWidth: '680px'}} className="animate-fade-in">
+             <div style={{ ...styles.modalHeader, backgroundColor: '#fff' }}>
+               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#0F172A', letterSpacing: '-0.02em' }}>
+                 Ficha do Arquiteto Master
+               </h3>
+               <button style={styles.closeBtn} onClick={() => setIsDetailModalOpen(false)} aria-label="Fechar"><X size={20} /></button>
              </div>
-             <div style={{padding: '32px'}}>
+             <div style={{ padding: '28px' }}>
                 <div style={styles.detailProfileRow}>
                    <img src={selectedMember.profile.avatar_url || PRESET_AVATARS[0]} alt="" style={styles.detailAvatar} />
                    <div>
-                      <h2 style={{margin: '0 0 4px', fontSize: '22px', fontWeight: '700'}}>{selectedMember.profile.full_name}</h2>
-                      <p style={{margin: '0 0 8px', color: '#64748b', fontSize: '14px'}}>{selectedMember.profile.email}</p>
-                      <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                      <h2 style={{ margin: '0 0 6px', fontSize: '20px', fontWeight: 600, color: '#0F172A', letterSpacing: '-0.02em' }}>
+                        {selectedMember.profile.full_name}
+                      </h2>
+                      <p style={{ margin: '0 0 12px', color: '#64748B', fontSize: '14px', fontWeight: 400 }}>{selectedMember.profile.email}</p>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                          <span style={styles.deptBadge}>{selectedMember.department}</span>
                          <span style={styles.tierBadge}>{selectedMember.tier}</span>
                       </div>
                    </div>
                 </div>
 
-                <div style={{marginTop: '32px'}}>
-                   <h3 style={styles.sectionTitle}>Matriz de Acessos Unificados (SSO)</h3>
+                <div style={{ marginTop: '28px' }}>
+                   <h3 style={styles.modalSectionTitle}>Matriz de acessos unificados (SSO)</h3>
                    <div style={styles.systemsMatrixGrid}>
-                      <div style={{...styles.matrixCard, opacity: selectedMember.profile.permissions?.includes('logistica') ? 1 : 0.5}}>
-                         <CloudLightning color="#0061FF" size={24} />
-                         <div>
-                            <strong>Logta SaaS</strong>
-                            <p>{selectedMember.profile.permissions?.includes('logistica') ? 'Permissão Ativa' : 'Sem Acesso'}</p>
+                      <div style={{...styles.matrixCard, opacity: selectedMember.profile.permissions?.includes('logistica') ? 1 : 0.65}}>
+                         <div style={styles.matrixIconShell}>
+                           <CloudLightning color="#0061FF" size={22} strokeWidth={2} />
+                         </div>
+                         <div style={{ minWidth: 0 }}>
+                            <span style={styles.matrixCardName}>Logta SaaS</span>
+                            <p style={styles.matrixCardMeta}>
+                              {selectedMember.profile.permissions?.includes('logistica') ? 'Permissão ativa' : 'Sem acesso'}
+                            </p>
                          </div>
                       </div>
-                      <div style={{...styles.matrixCard, opacity: selectedMember.profile.permissions?.includes('crm') ? 1 : 0.5}}>
-                         <Zap color="#10b981" size={24} />
-                         <div>
-                            <strong>Zaptro</strong>
-                            <p>{selectedMember.profile.permissions?.includes('crm') ? 'Permissão Ativa' : 'Sem Acesso'}</p>
+                      <div style={{...styles.matrixCard, opacity: selectedMember.profile.permissions?.includes('crm') ? 1 : 0.65}}>
+                         <div style={{ ...styles.matrixIconShell, background: 'rgba(16, 185, 129, 0.12)' }}>
+                           <Zap color="#10b981" size={22} strokeWidth={2} />
+                         </div>
+                         <div style={{ minWidth: 0 }}>
+                            <span style={styles.matrixCardName}>Zaptro</span>
+                            <p style={styles.matrixCardMeta}>
+                              {selectedMember.profile.permissions?.includes('crm') ? 'Permissão ativa' : 'Sem acesso'}
+                            </p>
                          </div>
                       </div>
-                      <div style={{...styles.matrixCard, opacity: selectedMember.profile.permissions?.includes('backup') ? 1 : 0.5}}>
-                         <Database color="#f59e0b" size={24} />
-                         <div>
-                            <strong>LogDock Archives</strong>
-                            <p>{selectedMember.profile.permissions?.includes('backup') ? 'Permissão Ativa' : 'Sem Acesso'}</p>
+                      <div style={{...styles.matrixCard, opacity: selectedMember.profile.permissions?.includes('backup') ? 1 : 0.65}}>
+                         <div style={{ ...styles.matrixIconShell, background: 'rgba(245, 158, 11, 0.14)' }}>
+                           <Database color="#f59e0b" size={22} strokeWidth={2} />
+                         </div>
+                         <div style={{ minWidth: 0 }}>
+                            <span style={styles.matrixCardName}>LogDock Archives</span>
+                            <p style={styles.matrixCardMeta}>
+                              {selectedMember.profile.permissions?.includes('backup') ? 'Permissão ativa' : 'Sem acesso'}
+                            </p>
                          </div>
                       </div>
                    </div>
                 </div>
 
-                <div style={{marginTop: '32px'}}>
-                   <h3 style={styles.sectionTitle}>Histórico de Auditoria HQ (Últimas 24h)</h3>
+                <div style={{ marginTop: '28px' }}>
+                   <h3 style={styles.modalSectionTitle}>Histórico de auditoria HQ (últimas 24h)</h3>
                    <div style={styles.auditLogTimeline}>
                       <div style={styles.timelineItem}>
                          <div style={styles.timelineDot} />
-                         <div>
-                            <strong>Sincronização de Banco de Dados</strong>
-                            <p>Sincronizou tabelas do módulo Zaptro com a base master.</p>
+                         <div style={{ minWidth: 0 }}>
+                            <span style={styles.timelineTitle}>Sincronização de banco de dados</span>
+                            <p style={styles.timelineBody}>Sincronizou tabelas do módulo Zaptro com a base master.</p>
                             <span style={styles.timelineTime}>há 2 horas</span>
                          </div>
                       </div>
                       <div style={styles.timelineItem}>
                          <div style={styles.timelineDot} />
-                         <div>
-                            <strong>Alteração de Plano de Assinatura</strong>
-                            <p>Alterou faturamento da empresa "Logística Transvale Ltda" para PLANO OURO.</p>
+                         <div style={{ minWidth: 0 }}>
+                            <span style={styles.timelineTitle}>Alteração de plano de assinatura</span>
+                            <p style={styles.timelineBody}>Alterou faturamento da empresa &quot;Logística Transvale Ltda&quot; para plano Ouro.</p>
                             <span style={styles.timelineTime}>há 5 horas</span>
                          </div>
                       </div>
                       <div style={styles.timelineItem}>
                          <div style={styles.timelineDot} />
-                         <div>
-                            <strong>Acesso ao Sistema LogDock</strong>
-                            <p>Auditou logs de backup preventivo de contratos fiscais.</p>
+                         <div style={{ minWidth: 0 }}>
+                            <span style={styles.timelineTitle}>Acesso ao sistema LogDock</span>
+                            <p style={styles.timelineBody}>Auditou logs de backup preventivo de contratos fiscais.</p>
                             <span style={styles.timelineTime}>há 1 dia</span>
                          </div>
                       </div>
                    </div>
                 </div>
 
-                <div style={{...styles.formActions, marginTop: '32px'}}>
-                   <button style={{...styles.primaryBtn, width: '100%', justifyContent: 'center'}} onClick={() => setIsDetailModalOpen(false)}>Fechar Ficha</button>
+                <div style={{ ...styles.formActions, marginTop: '28px', paddingTop: '20px', borderTop: '1px solid #F1F5F9' }}>
+                   <button type="button" style={{ ...styles.primaryBtn, width: '100%', justifyContent: 'center', borderRadius: '14px', padding: '14px 24px' }} onClick={() => setIsDetailModalOpen(false)}>Fechar ficha</button>
                 </div>
              </div>
            </div>
@@ -822,7 +894,7 @@ const StaffManagementContent: React.FC = () => {
 // ==========================================
 // 2. SISTEMAS CONECTADOS / ORCHESTRATOR TAB
 // ==========================================
-const SystemsManagementContent: React.FC = () => {
+export const SystemsManagementContent: React.FC = () => {
   const { impersonate } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStep, setSyncStep] = useState('');
@@ -1009,35 +1081,37 @@ const SystemsManagementContent: React.FC = () => {
                     backgroundColor: sys.status === 'online' ? '#ecfdf5' : '#fef2f2',
                     color: sys.status === 'online' ? '#10b981' : '#ef4444'
                   }}>
-                    <span style={{
-                      display: 'inline-block',
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      marginRight: '6px',
-                      backgroundColor: sys.status === 'online' ? '#10b981' : '#ef4444',
-                      animation: 'pulse 1s infinite'
-                    }} />
+                    <div
+                      role="presentation"
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        flexShrink: 0,
+                        backgroundColor: sys.status === 'online' ? '#10b981' : '#ef4444',
+                        animation: 'pulse 1s infinite',
+                      }}
+                    />
                     {sys.status.toUpperCase()}
                   </span>
                </div>
 
                <div style={styles.sysMetaRow}>
                   <div style={styles.metaCol}>
-                     <span>Latência</span>
-                     <strong>{sys.latency}ms</strong>
+                     <span style={styles.sysMetricLabel}>Latência</span>
+                     <strong style={styles.sysMetricValue}>{sys.latency}ms</strong>
                   </div>
                   <div style={styles.metaCol}>
-                     <span>CPU</span>
-                     <strong>{sys.cpu}%</strong>
+                     <span style={styles.sysMetricLabel}>CPU</span>
+                     <strong style={styles.sysMetricValue}>{sys.cpu}%</strong>
                   </div>
                   <div style={styles.metaCol}>
-                     <span>RAM</span>
-                     <strong>{sys.ram.split(' ')[0]}</strong>
+                     <span style={styles.sysMetricLabel}>RAM</span>
+                     <strong style={styles.sysMetricValue}>{sys.ram.split(' ')[0]}</strong>
                   </div>
-                  <div style={styles.metaCol}>
-                     <span>Tabelas</span>
-                     <strong>{sys.tables}</strong>
+                  <div style={{ ...styles.metaCol, ...styles.metaColLast }}>
+                     <span style={styles.sysMetricLabel}>Tabelas</span>
+                     <strong style={styles.sysMetricValue}>{sys.tables}</strong>
                   </div>
                </div>
 
@@ -1192,7 +1266,7 @@ const SystemsManagementContent: React.FC = () => {
 // ==========================================
 // 3. PERFORMANCE / CHARTS TAB
 // ==========================================
-const PerformanceContent: React.FC = () => {
+export const PerformanceContent: React.FC = () => {
   const chartData = [
     { name: 'Alison T.', acoes: 45, tarefas: 12 },
     { name: 'Mariana C.', acoes: 32, tarefas: 8 },
@@ -1210,28 +1284,10 @@ const PerformanceContent: React.FC = () => {
 
   return (
     <div className="animate-slide-up">
-       <div style={styles.statsGrid}>
-          <div style={styles.statCard}>
-             <div style={{...styles.statIconBox, backgroundColor: 'rgba(0, 97, 255, 0.1)', color: '#0061FF'}}><Trophy size={20} /></div>
-             <div style={styles.statInfo}>
-                <p style={styles.statLabel}>Eficiência HQ Global</p>
-                <h3 style={styles.statValue}>99.2%</h3>
-             </div>
-          </div>
-          <div style={styles.statCard}>
-             <div style={{...styles.statIconBox, backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981'}}><Zap size={20} /></div>
-             <div style={styles.statInfo}>
-                <p style={styles.statLabel}>Protocolos Sync / 24h</p>
-                <h3 style={styles.statValue}>1,452</h3>
-             </div>
-          </div>
-          <div style={styles.statCard}>
-             <div style={{...styles.statIconBox, backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B'}}><Server size={20} /></div>
-             <div style={styles.statInfo}>
-                <p style={styles.statLabel}>Sistemas Conectados</p>
-                <h3 style={styles.statValue}>3 Módulos</h3>
-             </div>
-          </div>
+       <div style={{ ...HUB_METRIC_GRID_STYLE, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+          <HubMetricCard label="Eficiência HQ Global" value="99.2%" icon={Trophy} accent="#0061FF" />
+          <HubMetricCard label="Protocolos Sync / 24h" value="1,452" icon={Zap} accent="#10b981" />
+          <HubMetricCard label="Sistemas Conectados" value="3 Módulos" icon={Server} accent="#F59E0B" />
        </div>
 
        <div style={styles.chartRow}>
@@ -1279,14 +1335,12 @@ const PerformanceContent: React.FC = () => {
 // --- PREMIUM BEAUTIFUL STYLES ---
 const styles: Record<string, any> = {
   container: { padding: '0' },
+  embeddedRoot: { padding: 0, margin: 0, width: '100%' },
+  embeddedTabsWrap: { marginBottom: '28px' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
   title: { fontSize: '28px', fontWeight: '500', color: '#000', margin: 0, letterSpacing: '0.4px' },
-  subtitle: { color: '#64748b', fontSize: '15px', fontWeight: '400', margin: 0 },
+  subtitle: { color: '#64748b', fontSize: '13px', fontWeight: '400', margin: 0 },
   headerActions: { display: 'flex', gap: '16px' },
-  tabSwitch: { display: 'flex', backgroundColor: '#ebebeb', padding: '4px', borderRadius: '24px', gap: '4px' },
-  tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px', border: 'none', backgroundColor: 'transparent', color: '#64748B', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' },
-  tabActive: { backgroundColor: 'white', color: '#0061FF', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
-
   mainCard: { backgroundColor: 'white', borderRadius: '28px', border: '1px solid #e2e8f0', overflow: 'hidden' },
   cardHeader: { padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' },
   searchBox: { display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#f8fafc', padding: '12px 20px', borderRadius: '14px', border: '1px solid #e2e8f0', width: '380px', maxWidth: '100%' },
@@ -1316,13 +1370,13 @@ const styles: Record<string, any> = {
   // Modals Styles
   modalOverlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10005, padding: '20px' },
   modalContent: { backgroundColor: 'white', borderRadius: '28px', width: '100%', maxWidth: '600px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden' },
-  modalHeader: { padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' },
+  modalHeader: { padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff' },
   closeBtn: { background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' },
   
   fieldLabel: { fontSize: '12px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px', display: 'block', letterSpacing: '0.5px' },
-  formInput: { width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', outline: 'none', transition: 'border-color 0.2s', backgroundColor: '#f8fafc' },
-  formSelect: { width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', outline: 'none', backgroundColor: '#f8fafc' },
-  formTextarea: { width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', outline: 'none', backgroundColor: '#f8fafc', resize: 'vertical' },
+  formInput: { width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '12px', outline: 'none', transition: 'border-color 0.2s', backgroundColor: '#f8fafc' },
+  formSelect: { width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '12px', outline: 'none', backgroundColor: '#f8fafc' },
+  formTextarea: { width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '12px', outline: 'none', backgroundColor: '#f8fafc', resize: 'vertical' },
   
   avatarGrid: { display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '10px', marginTop: '8px' },
   avatarOption: { width: '100%', aspectRatio: '1/1', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s', objectFit: 'cover' },
@@ -1336,28 +1390,123 @@ const styles: Record<string, any> = {
   randomBtn: { padding: '8px 16px', backgroundColor: '#f1f5f9', border: '1px dashed #cbd5e1', borderRadius: '10px', fontSize: '12px', fontWeight: '700', color: '#475569', cursor: 'pointer' },
 
   detailProfileRow: { display: 'flex', gap: '24px', alignItems: 'center' },
-  detailAvatar: { width: '90px', height: '90px', borderRadius: '24px', objectFit: 'cover', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' },
-  sectionTitle: { fontSize: '14px', fontWeight: '800', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid #cbd5e1', paddingBottom: '8px', marginBottom: '16px' },
-  
-  systemsMatrixGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' },
-  matrixCard: { display: 'flex', gap: '12px', alignItems: 'center', padding: '16px', borderRadius: '16px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' },
-  
-  auditLogTimeline: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  timelineItem: { display: 'flex', gap: '16px', position: 'relative' },
-  timelineDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF', marginTop: '6px', flexShrink: 0 },
-  timelineTime: { fontSize: '11px', color: '#94a3b8', fontWeight: '600' },
+  detailAvatar: { width: '88px', height: '88px', borderRadius: '20px', objectFit: 'cover', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)' },
+  modalSectionTitle: {
+    fontSize: '11px',
+    fontWeight: 600,
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    borderBottom: '1px solid #E2E8F0',
+    paddingBottom: '10px',
+    marginBottom: '14px',
+    marginTop: 0,
+  },
+
+  systemsMatrixGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px' },
+  matrixCard: {
+    display: 'flex',
+    gap: '14px',
+    alignItems: 'center',
+    padding: '14px 16px',
+    borderRadius: '16px',
+    border: '1px solid #E2E8F0',
+    backgroundColor: '#FFFFFF',
+    boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)',
+  },
+  matrixIconShell: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    background: 'rgba(0, 97, 255, 0.08)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  matrixCardName: { fontSize: '14px', fontWeight: 600, color: '#0F172A', display: 'block', lineHeight: 1.25 },
+  matrixCardMeta: { fontSize: '13px', fontWeight: 500, color: '#64748B', margin: '6px 0 0', lineHeight: 1.35 },
+
+  auditLogTimeline: { display: 'flex', flexDirection: 'column', gap: '18px' },
+  timelineItem: { display: 'flex', gap: '14px', position: 'relative', alignItems: 'flex-start' },
+  timelineDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF', marginTop: '7px', flexShrink: 0 },
+  timelineTitle: { fontSize: '14px', fontWeight: 600, color: '#0F172A', display: 'block' },
+  timelineBody: { fontSize: '13px', fontWeight: 400, color: '#475569', margin: '6px 0 0', lineHeight: 1.45 },
+  timelineTime: { fontSize: '11px', color: '#94A3B8', fontWeight: 500, display: 'block', marginTop: '6px' },
+
+  /** Seções em outras abas (Orquestrador) — mesmo peso visual do modal */
+  sectionTitle: {
+    fontSize: '11px',
+    fontWeight: 600,
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    borderBottom: '1px solid #E2E8F0',
+    paddingBottom: '10px',
+    marginBottom: '14px',
+    marginTop: 0,
+  },
 
   // Systems Management Styles
   systemsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '32px' },
   sysCard: { backgroundColor: 'white', borderRadius: '28px', border: '1px solid #e2e8f0', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' },
   sysHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   sysIconBox: { width: '48px', height: '48px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1' },
-  sysName: { fontSize: '15px', fontWeight: '700', color: '#1e293b' },
+  sysName: { fontSize: '13px', fontWeight: '700', color: '#1e293b' },
   sysUrl: { fontSize: '12px', color: '#94a3b8', margin: 0 },
-  sysStatus: { fontSize: '10px', fontWeight: '800', padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center' },
-  
-  sysMetaRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', padding: '16px 0' },
-  metaCol: { display: 'flex', flexDirection: 'column', gap: '4px' },
+  sysStatus: {
+    fontSize: '10px',
+    fontWeight: '800',
+    padding: '4px 10px',
+    borderRadius: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+
+  sysMetaRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '8px',
+    borderTop: '1px solid #f1f5f9',
+    borderBottom: '1px solid #f1f5f9',
+    padding: '12px 0',
+  },
+  metaCol: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+    borderRight: '1px solid #f1f5f9',
+    paddingRight: '10px',
+    minWidth: 0,
+  },
+  metaColLast: { borderRight: 'none', paddingRight: 0 },
+  sysMetricLabel: {
+    fontSize: '10px',
+    fontWeight: 600,
+    color: '#64748B',
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    lineHeight: 1.2,
+    margin: 0,
+    padding: 0,
+    border: 'none',
+    boxShadow: 'none',
+    background: 'none',
+    backgroundColor: 'transparent',
+  },
+  sysMetricValue: {
+    fontSize: '12px',
+    fontWeight: 600,
+    color: '#0F172A',
+    lineHeight: 1.25,
+    margin: 0,
+    padding: 0,
+    border: 'none',
+    boxShadow: 'none',
+    background: 'none',
+    backgroundColor: 'transparent',
+  },
   sysActions: { display: 'flex', gap: '12px' },
   sysBtnOutline: { flex: 1, padding: '10px', border: '1px solid #cbd5e1', borderRadius: '12px', backgroundColor: 'transparent', color: '#475569', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' },
   sysBtnPrimary: { flex: 1, padding: '10px', border: 'none', borderRadius: '12px', backgroundColor: '#0F172A', color: 'white', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' },
@@ -1369,12 +1518,6 @@ const styles: Record<string, any> = {
   orquestradorGrid: { display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' },
   orquestradorCard: { backgroundColor: 'white', borderRadius: '28px', border: '1px solid #e2e8f0', padding: '24px' },
   ssoStatusRow: { display: 'flex', gap: '16px', alignItems: 'flex-start' },
-
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' },
-  statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '16px' },
-  statIconBox: { width: '52px', height: '52px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statLabel: { fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 },
-  statValue: { fontSize: '28px', fontWeight: '500', color: '#1e293b', margin: '4px 0 0' },
 
   chartRow: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' },
   chartCard: { backgroundColor: 'white', padding: '24px', borderRadius: '28px', border: '1px solid #e2e8f0' },

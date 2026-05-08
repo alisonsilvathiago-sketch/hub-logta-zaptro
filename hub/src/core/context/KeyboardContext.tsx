@@ -22,7 +22,7 @@ export const KeyboardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       key: 'p',
       ctrl: true,
       description: 'Ir para Perfil',
-      action: () => navigate('/master/configuracoes/perfil')
+      action: () => navigate('/master/account')
     });
 
     registerShortcut({
@@ -42,7 +42,7 @@ export const KeyboardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     registerShortcut({
       key: 'h',
       ctrl: true,
-      description: 'Ir para Dashboard',
+      description: 'Ir para Início',
       action: () => navigate('/master')
     });
 
@@ -57,15 +57,15 @@ export const KeyboardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       key: 'b',
       ctrl: true,
       description: 'Ir para Backup',
-      action: () => navigate('/master/infrastructure?tab=backup')
+      action: () => navigate('/master/infrastructure/backup')
     });
 
     registerShortcut({
       key: 'p',
       ctrl: true,
       shift: true,
-      description: 'Criar / Ver Planos',
-      action: () => navigate('/master/plans')
+      description: 'Ir para Planos (Faturamento)',
+      action: () => navigate('/master/billing/planos')
     });
 
     registerShortcut({

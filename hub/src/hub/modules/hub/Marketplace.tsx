@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError } from '@core/lib/toast';
+import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
 
 const MasterMarketplace: React.FC = () => {
   const [apps, setApps] = useState<any[]>([]);
@@ -62,28 +63,28 @@ const MasterMarketplace: React.FC = () => {
       </header>
 
       {/* DASHBOARD STATS */}
-      <div style={styles.statsGrid}>
-         <div style={styles.statCard}>
-            <div style={styles.statIcon}><Zap size={24} color="var(--primary)" /></div>
-            <div>
-               <p style={styles.statLabel}>Apps Ativos</p>
-               <h3 style={styles.statValue}>{apps.filter(a => a.is_active).length}</h3>
-            </div>
-         </div>
-         <div style={styles.statCard}>
-            <div style={{...styles.statIcon, backgroundColor: '#f0fdf4'}}><Activity size={24} color="#10b981" /></div>
-            <div>
-               <p style={styles.statLabel}>Instalações Totais</p>
-               <h3 style={styles.statValue}>1,254</h3>
-            </div>
-         </div>
-         <div style={styles.statCard}>
-            <div style={{...styles.statIcon, backgroundColor: 'rgba(99, 102, 241, 0.12)'}}><BarChart2 size={24} color="#0061FF" /></div>
-            <div>
-               <p style={styles.statLabel}>Receita Add-ons (Mês)</p>
-               <h3 style={styles.statValue}>R$ 12.450</h3>
-            </div>
-         </div>
+      <div style={HUB_METRIC_GRID_STYLE}>
+         <HubMetricCard
+            label="Apps Ativos"
+            value={apps.filter(a => a.is_active).length}
+            icon={Zap}
+            accent="#6366f1"
+            softBg="var(--primary-light)"
+         />
+         <HubMetricCard
+            label="Instalações Totais"
+            value="1,254"
+            icon={Activity}
+            accent="#10b981"
+            softBg="#f0fdf4"
+         />
+         <HubMetricCard
+            label="Receita Add-ons (Mês)"
+            value="R$ 12.450"
+            icon={BarChart2}
+            accent="#0061FF"
+            softBg="rgba(99, 102, 241, 0.12)"
+         />
       </div>
 
       {/* REFINEMENT BAR */}
@@ -160,20 +161,14 @@ const MasterMarketplace: React.FC = () => {
 };
 
 const styles = {
-  container: { padding: '40px', display: 'flex', flexDirection: 'column' as const, gap: '32px' },
+  container: { padding: '0', display: 'flex', flexDirection: 'column' as const, gap: '32px' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   headerInfo: { display: 'flex', flexDirection: 'column' as const, gap: '4px' },
   title: { fontSize: '28px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: '-1.2px' },
-  subtitle: { fontSize: '15px', color: '#6b7280', margin: 0 },
+  subtitle: { fontSize: '13px', color: '#6b7280', margin: 0 },
   primaryBtn: { backgroundColor: 'var(--primary)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '24px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)' },
   
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' },
-  statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '20px' },
-  statIcon: { width: '56px', height: '56px', borderRadius: '22px', backgroundColor: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statLabel: { fontSize: '12px', fontWeight: '600', color: '#64748b', margin: 0, textTransform: 'uppercase' as const },
-  statValue: { fontSize: '24px', fontWeight: '700', color: '#000000', margin: '4px 0 0 0' },
-
-  refinement: { backgroundColor: 'white', padding: '16px', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex' },
+ { backgroundColor: 'white', padding: '16px', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex' },
   searchWrap: { display: 'flex', alignItems: 'center', gap: '12px', padding: '0 16px', borderRight: '1px solid #e8e8e8', width: '400px' },
   searchInput: { border: 'none', outline: 'none', fontSize: '14px', fontWeight: '600', color: '#000000', width: '100%' },
 

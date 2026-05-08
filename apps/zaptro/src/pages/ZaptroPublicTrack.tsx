@@ -564,8 +564,8 @@ const ZaptroPublicTrack: React.FC = () => {
               zoomControl={false}
             >
               <TileLayer
-                attribution="&copy; OpenStreetMap"
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                attribution="&copy; Google Maps"
+                url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
               />
               <Polyline 
                 positions={displayTrail.map(p => [p.lat, p.lng])} 

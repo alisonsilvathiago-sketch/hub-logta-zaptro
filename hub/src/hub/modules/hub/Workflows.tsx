@@ -14,6 +14,7 @@ import { supabase } from '@core/lib/supabase';
 import { useAuth } from '@core/context/AuthContext';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import LogtaModal from '@shared/components/Modal';
+import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
 
 interface Workflow {
   id: string;
@@ -37,13 +38,65 @@ interface NotificationSetting {
 
 const WorkflowManagement: React.FC = () => {
   const { profile } = useAuth();
-  const [activeTab, setActiveTab] = useState<'workflows' | 'notifications' | 'integracoes'>('workflows');
+  const [activeTab, setActiveTab] = useState<'workflows' | 'notifications' | 'events' | 'executions'>('workflows');
   const [loading, setLoading] = useState(true);
   
   // States for Workflows
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState<Partial<Workflow> | null>(null);
+  
+  // Optional Flows Presets and Modals
+  const [isOptionalModalOpen, setIsOptionalModalOpen] = useState(false);
+  const optionalPresets = [
+    { name: 'Aviso de Backup Semanal (Opcional)', trigger: 'SYSTEM_CRON', action: 'send_email', metadata: { schedule: 'weekly', send_to: 'admin' } },
+    { name: 'Relatório de Inadimplência via Zap (Opcional)', trigger: 'payment_received', action: 'BLOCK_OPERATIONAL_FLOW', metadata: { delay: '48h', warn: true } },
+    { name: 'Alerta de Geofencing Crítico (Opcional)', trigger: 'DELIVERY_LOCATION_MISMATCH_DETECTED', action: 'BLOCK_AND_REQUIRE_VISUAL_OVERRIDE', metadata: { require_photo: true } },
+    { name: 'Relatório ROI Diário do Hub (Opcional)', trigger: 'lead_converted', action: 'provision_company', metadata: { calculate_roi: true } }
+  ];
+
+  const handleInstallOptional = async (preset: any) => {
+    const tid = toastLoading(`Instalando fluxo opcional "${preset.name}"...`);
+    try {
+      const { error } = await supabase
+        .from('hub_workflows')
+        .insert([{
+          name: preset.name,
+          trigger: preset.trigger,
+          action: preset.action,
+          is_active: true,
+          metadata: preset.metadata
+        }]);
+
+      if (error) throw error;
+      toastSuccess(`Fluxo opcional "${preset.name}" instalado com sucesso!`);
+      setIsOptionalModalOpen(false);
+      fetchData();
+    } catch (err: any) {
+      toastError('Erro ao registrar fluxo opcional: ' + err.message);
+    } finally {
+      toastDismiss(tid);
+    }
+  };
+
+  const handleDeleteWorkflow = async (id: string) => {
+    const isConfirmed = window.confirm('Deseja realmente excluir este workflow permanentemente?');
+    if (!isConfirmed) return;
+    const tid = toastLoading('Excluindo workflow do banco...');
+    try {
+      const { error } = await supabase
+        .from('hub_workflows')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      toastSuccess('Workflow excluído com sucesso!');
+      fetchData();
+    } catch (err: any) {
+      toastError('Erro ao excluir workflow.');
+    } finally {
+      toastDismiss(tid);
+    }
+  };
 
   // States for Notifications (The Brain)
   const [notifs, setNotifs] = useState<NotificationSetting[]>([]);
@@ -179,57 +232,89 @@ const WorkflowManagement: React.FC = () => {
            <button style={styles.refreshBtn} onClick={fetchData} title="Sincronizar Matriz">
               <RefreshCw size={18} />
            </button>
+           <button style={{ ...styles.primaryBtn, backgroundColor: '#10B981' }} onClick={() => setIsOptionalModalOpen(true)} title="Fluxos Opcionais">
+              <Layers size={18} /> Fluxos Opcionais
+           </button>
            <button style={styles.primaryBtn} onClick={() => { setSelectedWorkflow({}); setIsModalOpen(true); }}>
               <Plus size={18} /> Novo Workflow
            </button>
         </div>
       </header>
 
-      <div style={styles.tabContainer}>
+      <nav style={styles.tabContainer} aria-label="Seções de automação">
          <button 
-            style={{...styles.tab, ...(activeTab === 'workflows' ? styles.activeTab : {})}}
+            type="button"
+            style={{...styles.tab, ...(activeTab === 'workflows' ? styles.tabActive : {})}}
             onClick={() => setActiveTab('workflows')}
+            aria-current={activeTab === 'workflows' ? 'page' : undefined}
          >
-            <Cpu size={16} /> Fluxos Operacionais
+            <Cpu size={18} strokeWidth={activeTab === 'workflows' ? 2.25 : 2} /> Fluxos operacionais
          </button>
          <button 
-            style={{...styles.tab, ...(activeTab === 'notifications' ? styles.activeTab : {})}}
+            type="button"
+            style={{...styles.tab, ...(activeTab === 'notifications' ? styles.tabActive : {})}}
             onClick={() => setActiveTab('notifications')}
+            aria-current={activeTab === 'notifications' ? 'page' : undefined}
          >
-            <BellRing size={16} /> Matriz de E-mails (Brain)
+            <BellRing size={18} strokeWidth={activeTab === 'notifications' ? 2.25 : 2} /> Matriz de e-mails (Brain)
          </button>
          <button 
-            style={{...styles.tab, ...(activeTab === 'integracoes' ? styles.activeTab : {})}}
-            onClick={() => setActiveTab('integracoes')}
+            type="button"
+            style={{...styles.tab, ...(activeTab === 'events' ? styles.tabActive : {})}}
+            onClick={() => setActiveTab('events')}
+            aria-current={activeTab === 'events' ? 'page' : undefined}
          >
-            <Globe size={16} /> Integrações & API
+            <Layers size={18} strokeWidth={activeTab === 'events' ? 2.25 : 2} /> Eventos, filas & SLA
          </button>
-      </div>
+         <button 
+            type="button"
+            style={{...styles.tab, ...(activeTab === 'executions' ? styles.tabActive : {})}}
+            onClick={() => setActiveTab('executions')}
+            aria-current={activeTab === 'executions' ? 'page' : undefined}
+         >
+            <Activity size={18} strokeWidth={activeTab === 'executions' ? 2.25 : 2} /> Histórico de execuções
+         </button>
+      </nav>
 
       {activeTab === 'workflows' && (
         <>
-          <div style={styles.statsRow}>
-             <div style={styles.statBox}>
-                <div style={styles.statIcon}><Zap size={20} color="var(--primary)" /></div>
-                <div style={styles.statInfo}>
-                   <div style={styles.statLabel}>Fluxos Ativos</div>
-                   <div style={styles.statValue}>{workflows.filter(w => w.is_active).length}</div>
-                </div>
-             </div>
-             <div style={styles.statBox}>
-                <div style={styles.statIcon}><Activity size={20} color="#10b981" /></div>
-                <div style={styles.statInfo}>
-                   <div style={styles.statLabel}>Execuções / 24h</div>
-                   <div style={styles.statValue}>1,284</div>
-                </div>
-             </div>
-             <div style={styles.statBox}>
-                <div style={styles.statIcon}><Layers size={20} color="#F59E0B" /></div>
-                <div style={styles.statInfo}>
-                   <div style={styles.statLabel}>SLA de Automação</div>
-                   <div style={styles.statValue}>99.8%</div>
-                </div>
-             </div>
+          <div
+            style={{
+              ...HUB_METRIC_GRID_STYLE,
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
+            }}
+          >
+            <HubMetricCard
+              className="hub-metric-card premium-card hub-metric-card--elevated"
+              hover={false}
+              label="Fluxos ativos"
+              icon={Zap}
+              iconVariant="soft"
+              accent="#0061FF"
+              iconSize={20}
+              value={loading ? '—' : workflows.filter((w) => w.is_active).length}
+            />
+            <HubMetricCard
+              className="hub-metric-card premium-card hub-metric-card--elevated"
+              hover={false}
+              label="Execuções / 24h"
+              icon={Activity}
+              iconVariant="solid"
+              accent="#10B981"
+              iconSize={20}
+              value="1,284"
+            />
+            <HubMetricCard
+              className="hub-metric-card premium-card hub-metric-card--elevated"
+              hover={false}
+              label="SLA de automação"
+              icon={Layers}
+              iconVariant="soft"
+              accent="#F59E0B"
+              softBg="rgba(245, 158, 11, 0.12)"
+              iconSize={20}
+              value="99.8%"
+            />
           </div>
 
           <div style={styles.workflowGrid}>
@@ -284,6 +369,12 @@ const WorkflowManagement: React.FC = () => {
                       onClick={(e) => { e.stopPropagation(); setSelectedWorkflow(wf); setIsModalOpen(true); }}
                     >
                       <Edit3 size={16} />
+                    </button>
+                    <button 
+                      style={{...styles.actionIconBtn, color: '#ef4444', borderColor: '#fee2e2'}} 
+                      onClick={(e) => { e.stopPropagation(); handleDeleteWorkflow(wf.id); }}
+                    >
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
@@ -351,7 +442,99 @@ const WorkflowManagement: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'integracoes' && <IntegrationsContent />}
+      {activeTab === 'events' && (
+        <div style={styles.notifSection}>
+           <div style={styles.notifHeader}>
+              <h2 style={styles.sectionTitle}>Eventos, Filas & SLA</h2>
+              <p style={styles.sectionSub}>Monitoramento de barramentos de eventos ativos, filas BullMQ/Memória e latência de processamento.</p>
+           </div>
+           
+           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+              <div style={styles.card}>
+                 <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: '700' }}>Fila Principal (BullMQ / Redis)</h4>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {[
+                      { name: 'Envio de E-mails Transacionais', count: '0 pendentes', status: 'Ativo', color: '#10b981' },
+                      { name: 'Processamento de Webhooks Asaas', count: '2 na fila', status: 'Processando', color: '#f59e0b' },
+                      { name: 'Sincronização de Logs de Auditoria', count: '0 pendentes', status: 'Ativo', color: '#10b981' },
+                    ].map((f, i) => (
+                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                          <div>
+                             <div style={{ fontSize: '13px', fontWeight: '600', color: '#0F172A' }}>{f.name}</div>
+                             <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>{f.count}</div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '700', color: f.color }}>
+                             <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: f.color }} />
+                             {f.status}
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+
+              <div style={styles.card}>
+                 <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: '700' }}>Monitoramento de SLA & Latência</h4>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {[
+                      { metric: 'Latência Média de Resposta', value: '18ms', desc: 'Processamento de gatilho' },
+                      { metric: 'Taxa de Sucesso dos Fluxos', value: '99.82%', desc: 'Sem falhas críticas' },
+                      { metric: 'Uptime do Barramento de Eventos', value: '100%', desc: 'Serviço operacional' },
+                    ].map((s, i) => (
+                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                          <div>
+                             <div style={{ fontSize: '13px', fontWeight: '600', color: '#0F172A' }}>{s.metric}</div>
+                             <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>{s.desc}</div>
+                          </div>
+                          <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--primary)' }}>{s.value}</div>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {activeTab === 'executions' && (
+        <div style={styles.notifSection}>
+           <div style={styles.notifHeader}>
+              <h2 style={styles.sectionTitle}>Histórico de Execuções</h2>
+              <p style={styles.sectionSub}>Trilha de auditoria das últimas ações executadas automaticamente pelos workflows ativos.</p>
+           </div>
+           
+           <div style={{ backgroundColor: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                 <thead>
+                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                       <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>Workflow / Ação</th>
+                       <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>Gatilho</th>
+                       <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>Duração</th>
+                       <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>Status</th>
+                       <th style={{ textAlign: 'right', padding: '16px 24px', fontSize: '11px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>Data / Hora</th>
+                    </tr>
+                 </thead>
+                 <tbody>
+                    {[
+                      { wf: 'Notificar Nova Empresa', trigger: 'CLIENT_SIGNUP', duration: '12ms', status: 'SUCCESS', time: 'Hoje, 16:12' },
+                      { wf: 'Enviar Alerta de Faturamento', trigger: 'BILLING_OVERDUE', duration: '45ms', status: 'SUCCESS', time: 'Hoje, 14:05' },
+                      { wf: 'Sincronizar Backups Mensais', trigger: 'SYSTEM_CRON', duration: '120ms', status: 'SUCCESS', time: 'Ontem, 00:01' },
+                      { wf: 'Verificar Saúde da Infraestrutura', trigger: 'SYSTEM_TICK', duration: '8ms', status: 'SUCCESS', time: 'Ontem, 23:55' },
+                    ].map((ex, i) => (
+                       <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '16px 24px', fontSize: '13px', fontWeight: '600', color: '#0F172A' }}>{ex.wf}</td>
+                          <td style={{ padding: '16px 24px', fontSize: '12px' }}><code style={{ fontFamily: 'monospace', color: 'var(--primary)', fontWeight: '700' }}>{ex.trigger}</code></td>
+                          <td style={{ padding: '16px 24px', fontSize: '13px', color: '#64748B', fontWeight: '500' }}>{ex.duration}</td>
+                          <td style={{ padding: '16px 24px', fontSize: '12px' }}>
+                             <span style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', backgroundColor: '#ecfdf5', color: '#10b981' }}>{ex.status}</span>
+                          </td>
+                          <td style={{ padding: '16px 24px', fontSize: '13px', color: '#94a3b8', textAlign: 'right', fontWeight: '500' }}>{ex.time}</td>
+                       </tr>
+                    ))}
+                 </tbody>
+              </table>
+           </div>
+        </div>
+      )}
+
 
       {/* MODAL WORKFLOW */}
       <LogtaModal 
@@ -434,138 +617,93 @@ const WorkflowManagement: React.FC = () => {
           </div>
         </div>
       </LogtaModal>
-    </div>
-  );
-};
 
-const IntegrationsContent: React.FC = () => {
-  const [googleConfig, setGoogleConfig] = useState<any>(null);
-
-  useEffect(() => {
-    const fetchConfigs = async () => {
-      const { data } = await supabase
-        .from('master_settings')
-        .select('value')
-        .eq('key', 'GOOGLE_SERVICE_ACCOUNT_KEY')
-        .maybeSingle();
-      setGoogleConfig(data?.value || null);
-    };
-    fetchConfigs();
-  }, []);
-
-  const handleCopyWebhook = () => {
-    navigator.clipboard.writeText('https://rrjnkmgkhbtapumgmhhr.supabase.co/functions/v1/hub-core/webhook-asaas');
-    toastSuccess('Endpoint copiado para a área de transferência.');
-  };
-
-  return (
-    <div style={styles.notifSection}>
-      <div style={styles.notifHeader}>
-        <h2 style={styles.sectionTitle}>Integrações & Conectores Master</h2>
-        <p style={styles.sectionSub}>Gerencie a conectividade global do ecossistema e chaves de alta segurança.</p>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-        <div style={styles.guardBanner}>
-          <div style={styles.guardIcon}><ShieldCheck size={28} color="var(--primary)" /></div>
-          <div>
-             <h3 style={styles.guardTitle}>Protocolo de Alta Governança</h3>
-             <p style={styles.guardSub}>Chaves e segredos são armazenados com criptografia em repouso no cofre master.</p>
-          </div>
-          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-             <div style={styles.guardLabel}>ESTADO DE ACESSO</div>
-             <div style={styles.guardBadge}><div style={styles.statusDot} /> MASTER ADMIN</div>
-          </div>
-        </div>
-
-        <div style={styles.integrationGrid}>
-          <div style={styles.card}>
-            <div style={styles.cardHeader}>
-              <div style={{...styles.planIcon, backgroundColor: '#fef2f2', color: '#ef4444'}}><Cloud size={24} /></div>
-              <div>
-                <h3 style={styles.cardTitle}>Google Cloud & Workspace</h3>
-                <p style={styles.cardSub}>Meet, LogDock e Agenda.</p>
-              </div>
-              <div style={{ marginLeft: 'auto' }}>
-                <span style={{...styles.statusBadge, backgroundColor: googleConfig ? '#ecfdf5' : '#fff7ed', color: googleConfig ? '#10b981' : '#f97316'}}>
-                  {googleConfig ? 'ATIVO' : 'PENDENTE'}
+      {/* MODAL FLUXOS OPCIONAIS */}
+      <LogtaModal 
+        isOpen={isOptionalModalOpen} 
+        onClose={() => setIsOptionalModalOpen(false)} 
+        title="Catálogo de Fluxos Opcionais"
+        subtitle="Ative extensões inteligentes de monitoramento e automação pré-configuradas no ecossistema."
+        icon={<Layers />}
+        size="lg"
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', padding: '10px' }}>
+          {optionalPresets.map((preset, idx) => (
+            <div key={idx} style={{ padding: '24px', backgroundColor: '#F8FAFC', borderRadius: '24px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '10px', fontWeight: '800', backgroundColor: '#ECFDF5', color: '#10B981', padding: '4px 10px', borderRadius: '12px', letterSpacing: '0.8px' }}>
+                  OPCIONAL PRESET
+                </span>
+                <span style={{ fontSize: '11px', fontWeight: '600', color: '#64748B' }}>
+                  Ação: {preset.action.replace(/_/g, ' ')}
                 </span>
               </div>
+              <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: '#0F172A' }}>{preset.name}</h4>
+              <p style={{ margin: 0, fontSize: '12px', color: '#64748B', lineHeight: '1.5' }}>
+                Gatilho associado: <code style={{ fontFamily: 'monospace', color: '#0061FF', fontWeight: '700' }}>{preset.trigger}</code>
+              </p>
+              <button 
+                style={{ ...styles.primaryBtn, width: '100%', backgroundColor: '#10B981', marginTop: 'auto', justifyContent: 'center' }}
+                onClick={() => handleInstallOptional(preset)}
+              >
+                <Plus size={16} /> ATIVAR ESTE FLUXO
+              </button>
             </div>
-            <div style={styles.configArea}>
-               <label style={styles.infoLabel}>SERVICE ACCOUNT ID</label>
-               <div style={styles.codeBlock}><code>{googleConfig?.client_email || 'Aguardando configuração...'}</code></div>
-            </div>
-            <button style={{ ...styles.actionBtn, marginTop: '20px', color: '#ef4444', borderColor: '#fee2e2' }}>
-              <Settings size={14} /> RE-CONFIGURAR CHAVE
-            </button>
-          </div>
-
-          <div style={styles.card}>
-            <div style={styles.cardHeader}>
-              <div style={{...styles.planIcon, backgroundColor: '#eff6ff', color: 'var(--primary)'}}><DollarSign size={24} /></div>
-              <div>
-                <h3 style={styles.cardTitle}>Gateway Asaas</h3>
-                <p style={styles.cardSub}>Fluxos financeiros master.</p>
-              </div>
-              <div style={{ marginLeft: 'auto' }}>
-                <span style={{...styles.statusBadge, backgroundColor: '#ecfdf5', color: '#10b981'}}>CONECTADO</span>
-              </div>
-            </div>
-            <div style={styles.configArea}>
-               <label style={styles.infoLabel}>API KEY MASTER</label>
-               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <code style={{ fontSize: '11px', color: 'var(--text-muted)', flex: 1 }}>$a***************************************</code>
-                  <Eye size={14} color="#94a3b8" />
-               </div>
-            </div>
-            <button style={{ ...styles.actionBtn, marginTop: '20px' }}><Settings size={14} /> AJUSTES</button>
-          </div>
+          ))}
         </div>
-
-        <div style={styles.card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <div>
-               <h3 style={styles.cardTitle}><Zap size={18} color="#f59e0b" fill="#f59e0b" /> Webhooks Ativos</h3>
-               <p style={styles.cardSub}>Escuta global de eventos externos.</p>
-            </div>
-            <button style={styles.refreshBtn}><RefreshCw size={14} /></button>
-          </div>
-          <div style={styles.webhookUrlArea}>
-            <label style={styles.infoLabel}>ENDPOINT (ASAAS)</label>
-            <div style={styles.urlInputRow}>
-               <code style={styles.urlCode}>.../functions/v1/hub-core/webhook-asaas</code>
-               <button style={styles.copyBtn} onClick={handleCopyWebhook}><Copy size={16} /></button>
-            </div>
-          </div>
-        </div>
-      </div>
+      </LogtaModal>
     </div>
   );
 };
+
 
 const styles: Record<string, any> = {
   container: { padding: '0' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-  title: { fontSize: '28px', fontWeight: '500', color: 'var(--primary)', letterSpacing: '0.4px', margin: 0 },
-  subtitle: { fontSize: '15px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '400', letterSpacing: '0.2px' },
+  title: { fontSize: '28px', fontWeight: '600', color: 'var(--text-primary, #0F172A)', letterSpacing: '-0.02em', margin: 0 },
+  subtitle: { fontSize: '13px', color: 'var(--text-secondary, #64748B)', marginTop: '6px', fontWeight: '400', letterSpacing: '0', lineHeight: 1.5 },
   headerActions: { display: 'flex', gap: '12px' },
   refreshBtn: { width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', color: 'var(--text-muted)' },
   primaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '14px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.3px' },
   
-  tabContainer: { display: 'flex', gap: '8px', marginBottom: '32px', borderBottom: '1px solid var(--border)', paddingBottom: '1px' },
-  tab: { padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: 'var(--text-muted)', backgroundColor: 'transparent', border: 'none', borderBottom: '2px solid transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s', letterSpacing: '0.4px' },
-  activeTab: { color: 'var(--primary)', borderBottomColor: 'var(--primary)', backgroundColor: 'var(--primary-light)', borderRadius: '12px 12px 0 0' },
-
-  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' },
-  statBox: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'center', boxShadow: 'var(--shadow-sm)' },
-  statIcon: { width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statInfo: { flex: 1 },
-  statLabel: { fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' },
-  statValue: { fontSize: '24px', fontWeight: '500', color: 'var(--text-main)', letterSpacing: '0.2px' },
+  tabContainer: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: '8px 32px',
+    marginBottom: '32px',
+    borderBottom: '1px solid var(--border, #E2E8F0)',
+    paddingBottom: 0,
+  },
+  tab: {
+    position: 'relative',
+    border: 'none',
+    background: 'none',
+    padding: '14px 0',
+    marginBottom: '-1px',
+    fontSize: '14px',
+    lineHeight: 1.35,
+    fontWeight: 500,
+    fontFamily: 'inherit',
+    letterSpacing: 0,
+    color: 'var(--text-secondary, #64748B)',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    transition: 'color 0.15s ease, border-color 0.15s ease, font-weight 0.15s ease',
+    outline: 'none',
+    borderBottom: '3px solid transparent',
+    WebkitFontSmoothing: 'antialiased',
+  },
+  tabActive: {
+    color: 'var(--primary, #0061FF)',
+    fontWeight: 600,
+    borderBottom: '3px solid var(--primary, #0061FF)',
+  },
 
   workflowGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '24px' },
-  wfCard: { backgroundColor: 'white', borderRadius: '28px', border: '1px solid var(--border)', padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px', transition: 'all 0.2s', boxShadow: 'var(--shadow-sm)' },
+  wfCard: { backgroundColor: 'var(--bg-card, #fff)', borderRadius: '28px', border: '1px solid var(--border)', padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px', transition: 'all 0.2s', boxShadow: 'none' },
   wfCardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   wfIcon: { width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   wfStatus: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: '600', color: 'var(--text-muted)', backgroundColor: '#f1f5f9', padding: '6px 14px', borderRadius: '20px', letterSpacing: '0.6px' },
@@ -580,7 +718,7 @@ const styles: Record<string, any> = {
   wfActions: { display: 'flex', gap: '10px' },
   actionIconBtn: { padding: '10px', borderRadius: '10px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s' },
 
-  notifSection: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', padding: '32px', boxShadow: 'var(--shadow-lg)' },
+  notifSection: { backgroundColor: 'var(--bg-card, #fff)', borderRadius: '32px', border: '1px solid var(--border)', padding: '32px', boxShadow: 'none' },
   notifHeader: { marginBottom: '32px' },
   sectionTitle: { fontSize: '20px', fontWeight: '500', color: 'var(--text-main)', margin: '0 0 8px 0', letterSpacing: '0.4px' },
   sectionSub: { fontSize: '14px', color: 'var(--text-muted)', fontWeight: '400', letterSpacing: '0.2px' },
@@ -609,14 +747,14 @@ const styles: Record<string, any> = {
   textarea: { padding: '16px 18px', borderRadius: '16px', border: '1px solid var(--border)', outline: 'none', fontSize: '13px', fontWeight: '500', fontFamily: 'monospace', minHeight: '120px', backgroundColor: '#f8fafc', letterSpacing: '0.2px' },
   
   // Integration Styles
-  guardBanner: { backgroundColor: '#1e293b', padding: '28px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '20px', border: '1px solid #334155', boxShadow: 'var(--shadow-lg)', marginBottom: '32px' },
+  guardBanner: { backgroundColor: '#1e293b', padding: '28px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '20px', border: '1px solid #334155', boxShadow: 'none', marginBottom: '32px' },
   guardIcon: { backgroundColor: 'rgba(99, 102, 241, 0.1)', padding: '14px', borderRadius: '16px' },
   guardTitle: { margin: 0, color: '#f8fafc', fontSize: '18px', fontWeight: '500', letterSpacing: '0.4px' },
   guardSub: { margin: '4px 0 0', color: '#94a3b8', fontSize: '13px', fontWeight: '400', letterSpacing: '0.2px' },
   guardLabel: { fontSize: '10px', color: 'var(--primary)', fontWeight: '700', marginBottom: '6px', letterSpacing: '1px' },
   guardBadge: { color: '#10b981', fontWeight: '600', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '6px 14px', borderRadius: '20px' },
   integrationGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
-  card: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column' },
+  card: { backgroundColor: 'var(--bg-card, #fff)', padding: '32px', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: 'none', display: 'flex', flexDirection: 'column' },
   cardHeader: { display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '32px' },
   cardTitle: { fontSize: '18px', fontWeight: '500', color: 'var(--text-main)', margin: 0, letterSpacing: '0.3px' },
   cardSub: { fontSize: '14px', color: 'var(--text-muted)', margin: '2px 0 0', fontWeight: '400' },

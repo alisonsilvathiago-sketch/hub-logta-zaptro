@@ -8,20 +8,23 @@ import {
    UserCheck, Wallet, ShieldCheck, Target, Zap, 
    Users, Ban, CheckCircle2, MoreHorizontal, Settings,
    Eye, Edit3, Trash2, X, Plus, ChevronRight, Copy, Link as LinkIcon,
-   Layout, FileText, Tag
+   Layout, FileText, Tag, Coins
 } from 'lucide-react';
 import { 
    BarChart, Bar, XAxis, YAxis, CartesianGrid, 
    Tooltip, ResponsiveContainer, AreaChart, Area,
-   PieChart, Pie, Cell, Legend
+   PieChart, Pie, Cell
 } from 'recharts';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError } from '@core/lib/toast';
 import Modal from '@shared/components/Modal';
+import HubMetricCard from '@shared/components/HubMetricCard';
+import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 import Pagination from '@shared/components/Pagination';
 
 import MasterFinanceiro from './Financeiro';
+import ClientIaCredits from './ClientIaCredits';
 
 const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
   const [loading, setLoading] = useState(true);
@@ -31,14 +34,31 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
   const [isChargeModalOpen, setIsChargeModalOpen] = useState(false);
   const [chargeModalType, setChargeModalType] = useState<'plan' | 'charge'>('charge');
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = summaryOnly ? 'dashboard' : (searchParams.get('tab') || 'dashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getTabFromPath = () => {
+    if (summaryOnly) return 'dashboard';
+    const path = location.pathname;
+    if (path.includes('/billing/creditos-ia')) return 'creditos-ia';
+    if (path.includes('/billing/faturamento')) return 'faturamento';
+    if (path.includes('/billing/financeiro')) return 'financeiro';
+    if (path.includes('/billing/planos')) return 'planos';
+    if (path.includes('/billing/marketing')) return 'marketing';
+    
+    // Check fallback search params
+    const queryTab = searchParams.get('tab');
+    if (queryTab) return queryTab;
+    
+    return 'dashboard';
+  };
+
+  const activeTab = getTabFromPath();
+
   const setActiveTab = (tab: string) => {
     if (summaryOnly) return;
-    if (tab === 'dashboard') {
-      setSearchParams({});
-    } else {
-      setSearchParams({ tab });
-    }
+    const pathname = tab === 'dashboard' ? '/master/billing' : `/master/billing/${tab}`;
+    navigate({ pathname, search: location.search });
   };
 
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
@@ -77,9 +97,36 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [newPlan, setNewPlan] = useState({ name: '', products: [], cycle: '1', price: '', wa_credits: 0, ai_credits: 0 });
 
+  const [editPlanDraft, setEditPlanDraft] = useState({
+    name: '',
+    slug: '',
+    price: '',
+    contract_months: '1',
+    wa_credits: '0',
+    ai_credits: '0',
+    description: '',
+    is_active: true,
+    backup_enabled: false,
+  });
+
   useEffect(() => {
     fetchData();
   }, [activeTab, currentPage, itemsPerPage]); // Re-fetch when page or limit changes
+
+  useEffect(() => {
+    if (!isDetailModalOpen || !selectedPlan) return;
+    setEditPlanDraft({
+      name: String(selectedPlan.name ?? ''),
+      slug: String(selectedPlan.slug ?? ''),
+      price: String(selectedPlan.price ?? ''),
+      contract_months: String(selectedPlan.contract_months ?? '1'),
+      wa_credits: String(selectedPlan.wa_credits ?? 0),
+      ai_credits: String(selectedPlan.ai_credits ?? 0),
+      description: String(selectedPlan.description ?? ''),
+      is_active: selectedPlan.is_active !== false,
+      backup_enabled: !!selectedPlan.backup_enabled,
+    });
+  }, [isDetailModalOpen, selectedPlan]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -131,23 +178,49 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
     localStorage.setItem('hub_billing_per_page', String(val));
   };
 
+  const openChargeModal = (type: 'plan' | 'charge') => {
+    setChargeModalType(type);
+    if (type === 'plan') {
+      setNewCharge(prev => ({
+        ...prev,
+        client_id: '',
+        custom_client_name: '',
+        email: '',
+        phone: '',
+        cpfCnpj: '',
+        isRecurring: true,
+      }));
+    }
+    setIsChargeModalOpen(true);
+  };
+
   const handleGenerateCharge = async () => {
     setSaving(true);
     try {
-      let clientName = newCharge.custom_client_name;
+      const isPublicPlan = chargeModalType === 'plan';
+      let clientName = newCharge.custom_client_name.trim();
       let clientEmail = newCharge.email;
       let clientPhone = newCharge.phone;
 
-      if (newCharge.client_id) {
-        const client = companies.find(c => c.id === newCharge.client_id);
-        if (client) {
-          clientName = client.name;
-          clientEmail = client.email || clientEmail;
-          clientPhone = client.phone || clientPhone;
+      if (!isPublicPlan) {
+        if (newCharge.client_id) {
+          const client = companies.find(c => c.id === newCharge.client_id);
+          if (client) {
+            clientName = client.name;
+            clientEmail = client.email || clientEmail;
+            clientPhone = client.phone || clientPhone;
+          }
         }
+        if (!clientName) {
+          throw new Error('Informe o cliente (lista ou nome personalizado) para gerar cobrança direta.');
+        }
+      } else {
+        clientName = 'Checkout público — plano Master';
+        clientEmail = 'financeiro@logta.com.br';
+        clientPhone = '';
       }
 
-      if (!clientName) throw new Error('Nome do cliente é obrigatório');
+      const isSubscription = isPublicPlan ? true : newCharge.isRecurring;
 
       // 1. Chamar Edge Function para criar cobrança no Asaas
       const { data: { session } } = await supabase.auth.getSession();
@@ -161,12 +234,12 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
           client: clientName,
           email: clientEmail || 'financeiro@logta.com.br',
           phone: clientPhone || '',
-          cpfCnpj: newCharge.cpfCnpj,
+          cpfCnpj: isPublicPlan ? '' : newCharge.cpfCnpj,
           amount: newCharge.amount,
           due_date: newCharge.dueDate,
           method: newCharge.method.toLowerCase(),
           description: `Cobrança ${chargeModalType === 'plan' ? 'Plano' : 'Manual'} - ${newCharge.selectedProducts.join(', ')}`,
-          is_subscription: newCharge.isRecurring
+          is_subscription: isSubscription
         })
       });
 
@@ -184,7 +257,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
         asaas_id: result.payment_id,
         metadata: {
           products: newCharge.selectedProducts,
-          is_recurring: newCharge.isRecurring,
+          is_recurring: isSubscription,
           type: chargeModalType
         }
       }]);
@@ -205,7 +278,8 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
         dueDate: new Date().toISOString().split('T')[0], 
         method: 'PIX', 
         isRecurring: true, 
-        selectedProducts: [] as string[] 
+        selectedProducts: [] as string[],
+        coupon: ''
       });
       fetchCharges();
     } catch (err: any) {
@@ -260,6 +334,46 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
     }
   };
 
+  const handleUpdatePlan = async () => {
+    if (!selectedPlan?.id) return;
+    const slug = editPlanDraft.slug.trim().toLowerCase().replace(/\s+/g, '-');
+    if (!slug) {
+      toastError('Informe um slug válido para o link de checkout.');
+      return;
+    }
+    const price = parseFloat(editPlanDraft.price.replace(',', '.'));
+    if (!Number.isFinite(price) || price < 0) {
+      toastError('Preço inválido.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('plans')
+        .update({
+          name: editPlanDraft.name.trim(),
+          slug,
+          price,
+          contract_months: parseInt(editPlanDraft.contract_months, 10) || 1,
+          wa_credits: parseInt(editPlanDraft.wa_credits, 10) || 0,
+          ai_credits: parseInt(editPlanDraft.ai_credits, 10) || 0,
+          description: editPlanDraft.description.trim() || null,
+          is_active: editPlanDraft.is_active,
+          backup_enabled: editPlanDraft.backup_enabled,
+        })
+        .eq('id', selectedPlan.id);
+      if (error) throw error;
+      toastSuccess('Plano atualizado no catálogo.');
+      setIsDetailModalOpen(false);
+      fetchPlans();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao atualizar plano';
+      toastError(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const calculateMetrics = () => {
     const mrr = (plans || []).reduce((acc, p) => {
       const activeCount = (companies || []).filter(c => c?.plan_id === p?.id && c?.status === 'active').length;
@@ -280,9 +394,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
       return today > expiry && today <= graceLimit;
     }).length;
 
-    const churn = (companies || []).length > 0 ? (blockedTenants / companies.length) * 100 : 0;
-
-    return { mrr, activeTenants, blockedTenants, graceTenants, churn };
+    return { mrr, activeTenants, blockedTenants, graceTenants };
   };
 
   const metrics = calculateMetrics();
@@ -293,10 +405,53 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
     { name: 'Backup/API', value: (companies || []).filter(c => !['logta', 'zaptro', 'LOGTA', 'ZAPTRO'].includes(c?.origin || '')).length || 5, color: 'var(--orange)' },
   ];
 
+  const distributionTotal =
+    productData.reduce((s, p) => s + Number(p.value), 0) || 1;
+  const distributionSorted = [...productData].sort(
+    (a, b) => Number(b.value) - Number(a.value)
+  );
+  const distributionTop = distributionSorted[0];
+  const distributionTopPct = Math.min(
+    100,
+    (Number(distributionTop.value) / distributionTotal) * 100
+  );
+  const GAUGE_SEGMENTS = 18;
+  const distributionFilledSegments = Math.max(
+    0,
+    Math.min(
+      GAUGE_SEGMENTS,
+      Math.round((distributionTopPct / 100) * GAUGE_SEGMENTS)
+    )
+  );
+  const distributionGaugeData = Array.from({ length: GAUGE_SEGMENTS }, (_, i) => {
+    const inactive = 'rgba(237, 242, 247, 0.92)';
+    if (i >= distributionFilledSegments) {
+      return { name: `g${i}`, value: 1, fill: inactive };
+    }
+    const ratio =
+      distributionFilledSegments <= 1 ? 0 : i / (distributionFilledSegments - 1);
+    const fill =
+      ratio < 0.38 ? '#0061FF' : ratio < 0.72 ? '#3B82F6' : '#93C5FD';
+    return { name: `g${i}`, value: 1, fill };
+  });
+
+  const revenueChartData = [
+    { name: 'Jan', value: 4000 },
+    { name: 'Fev', value: 3000 },
+    { name: 'Mar', value: 2000 },
+    { name: 'Abr', value: Math.max(0, Number(metrics.mrr)) || 22400 },
+  ];
+  const revenuePrev = revenueChartData[revenueChartData.length - 2]?.value ?? 0;
+  const revenueLast = revenueChartData[revenueChartData.length - 1]?.value ?? 0;
+  const revenueMomPct =
+    revenuePrev > 0 ? ((revenueLast - revenuePrev) / revenuePrev) * 100 : null;
+
   const tabs = [
     { id: 'dashboard', label: 'Estratégico', icon: Layout },
     { id: 'faturamento', label: 'Faturamento', icon: DollarSign },
+    { id: 'planos', label: 'Planos', icon: Tag },
     { id: 'financeiro', label: 'Financeiro', icon: Wallet },
+    { id: 'creditos-ia', label: 'Créditos IA', icon: Coins },
   ];
 
   const getStatusColor = (status: string) => {
@@ -318,160 +473,228 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
   return (
     <div style={styles.outerContainer} className="animate-fade-in">
       <div style={styles.innerContainer}>
-        {/* PAGE TITLE */}
-        <div style={styles.headerTitleRow}>
-          <h1 style={styles.pageTitle}>Financeiro & Receita Master</h1>
-          <p style={styles.pageSub}>Governança de assinaturas, MRR e saúde financeira do ecossistema.</p>
-        </div>
-
-        {/* HEADER ACTIONS */}
         {!summaryOnly && (
-          <header style={styles.header}>
-            <div style={styles.kpiBrief}>
-               <div style={styles.miniKpi}>
-                  <span className="kpi-label">MRR ATUAL</span>
-                  <span className="kpi-value" style={{ fontSize: '32px !important' }}>R$ 22.400</span>
-               </div>
-               <div style={styles.miniKpi}>
-                  <span className="kpi-label">CHURN (30D)</span>
-                  <span className="kpi-value" style={{ fontSize: '32px !important', color: '#EF4444' }}>1.2%</span>
-               </div>
+          <header style={styles.billingTopBar}>
+            <div style={styles.billingTopBarLead}>
+              <h1 style={styles.pageTitle}>Financeiro & Receita Master</h1>
+              <p style={styles.pageSub}>Governança de assinaturas, MRR e saúde financeira do ecossistema.</p>
             </div>
             <div style={styles.topActions}>
-              <button style={styles.secondaryBtn} onClick={() => {
-                setChargeModalType('charge');
-                setIsChargeModalOpen(true);
-              }}>
+              <button
+                type="button"
+                style={{ ...styles.secondaryBtn, whiteSpace: 'nowrap' }}
+                onClick={() => openChargeModal('charge')}
+              >
                 <DollarSign size={18} /> NOVA COBRANÇA
               </button>
-              <button style={styles.primaryBtn} onClick={() => {
-                setChargeModalType('plan');
-                setIsChargeModalOpen(true);
-              }}>
+              <button
+                type="button"
+                style={{ ...styles.primaryBtn, whiteSpace: 'nowrap' }}
+                onClick={() => openChargeModal('plan')}
+              >
                 <Zap size={18} color="#FACC15" fill="#FACC15" /> NOVO PLANO
               </button>
             </div>
           </header>
         )}
 
-        {/* MAIN TAB NAVIGATION */}
+        {/* Abas principais — layout único em todas as seções */}
         {!summaryOnly && (
-          <div style={styles.tabContainer}>
+          <div style={hubPillTabStripStyles.container}>
             {tabs.map(tab => (
               <button 
                 key={tab.id}
-                style={{...styles.tabLink, ...(activeTab === tab.id ? styles.tabActive : {})}}
+                type="button"
+                style={{
+                  ...hubPillTabStripStyles.button,
+                  ...(activeTab === tab.id ? hubPillTabStripStyles.buttonActive : {}),
+                }}
                 onClick={() => setActiveTab(tab.id as any)}
               >
-                <tab.icon size={18} color={activeTab === tab.id ? 'white' : 'var(--text-secondary)'} />
+                <tab.icon size={18} color={activeTab === tab.id ? 'var(--accent)' : 'var(--text-secondary)'} />
                 {tab.label}
               </button>
             ))}
           </div>
         )}
 
+        {!summaryOnly && activeTab === 'financeiro' && (
+          <div style={styles.financeiroContextBanner}>
+            <div style={styles.financeiroContextText}>
+              <span style={styles.financeiroContextKicker}>Área de foco · Financeiro</span>
+              <p style={styles.financeiroContextTitle}>Conciliação, NF-e e gateway Asaas</p>
+              <p style={styles.financeiroContextSub}>
+                O que aparece abaixo é só este módulo. Para MRR, cobranças manuais e planos, volte a <strong>Estratégico</strong> ou <strong>Faturamento</strong>.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!summaryOnly && activeTab === 'creditos-ia' && (
+          <div style={styles.financeiroContextBanner}>
+            <div style={styles.financeiroContextText}>
+              <span style={styles.financeiroContextKicker}>Área de foco · Créditos IA</span>
+              <p style={styles.financeiroContextTitle}>Saldos por cliente e consumo de IA</p>
+              <p style={styles.financeiroContextSub}>
+                Os saldos ficam em <code style={{ fontSize: 13, background: '#F1F5F9', padding: '2px 8px', borderRadius: 6 }}>IA_CLIENT_CREDITS_BALANCE</code>. Ajuste na tabela abaixo ou abra o Gateway IA para provedores e políticas.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!summaryOnly && activeTab === 'planos' && (
+          <div style={styles.financeiroContextBanner}>
+            <div style={styles.financeiroContextText}>
+              <span style={styles.financeiroContextKicker}>Área de foco · Planos ativos</span>
+              <p style={styles.financeiroContextTitle}>Catálogo e pacotes do checkout</p>
+              <p style={styles.financeiroContextSub}>
+                Edite nome, preço, ciclo, créditos WA/IA, slug do link e flags de backup/atividade. Clique em um cartão para abrir o editor ou use <strong>NOVO PLANO</strong> no topo.
+              </p>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'dashboard' && (
           <>
             <div style={styles.statsGrid}>
-              <div style={styles.statCard} className="hover-scale">
-                <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
-                  <TrendingUp size={20} color="#0061FF" />
-                </div>
-                <div style={styles.statContent}>
-                  <p style={styles.statLabel}>MRR (Mensal Recorrente)</p>
-                  <h3 style={styles.statValue}>R$ {metrics.mrr.toLocaleString('pt-BR')}</h3>
-                </div>
-                <div style={{...styles.statTrend, color: '#10B981'}}>
-                  +12.5% <TrendingUp size={12} />
-                </div>
-              </div>
-
-              <div style={styles.statCard} className="hover-scale">
-                <div style={{...styles.statIconBox, backgroundColor: '#0061FF'}}>
-                  <Users size={20} color="#FFFFFF" />
-                </div>
-                <div style={styles.statContent}>
-                  <p style={styles.statLabel}>Tenants Ativos</p>
-                  <h3 style={styles.statValue}>{metrics.activeTenants}</h3>
-                </div>
-                <div style={{...styles.statTrend, color: '#0061FF'}}>
-                  META: 50
-                </div>
-              </div>
-
-              <div style={styles.statCard} className="hover-scale">
-                <div style={{...styles.statIconBox, backgroundColor: '#F59E0B15'}}>
-                  <Clock size={20} color="#F59E0B" />
-                </div>
-                <div style={styles.statContent}>
-                  <p style={styles.statLabel}>Em Carência (Buffer)</p>
-                  <h3 style={styles.statValue}>{metrics.graceTenants}</h3>
-                </div>
-                <div style={{...styles.statTrend, color: '#F59E0B'}}>
-                  3 DIAS
-                </div>
-              </div>
-
-              <div style={styles.statCard} className="hover-scale">
-                <div style={{...styles.statIconBox, backgroundColor: '#EF444415'}}>
-                  <Ban size={20} color="#EF4444" />
-                </div>
-                <div style={styles.statContent}>
-                  <p style={styles.statLabel}>Inativos / Bloqueados</p>
-                  <h3 style={styles.statValue}>{metrics.blockedTenants}</h3>
-                </div>
-                <div style={{...styles.statTrend, color: '#EF4444'}}>
-                  CHURN
-                </div>
-              </div>
+              <HubMetricCard
+                label="MRR (Mensal Recorrente)"
+                icon={TrendingUp}
+                iconVariant="soft"
+                accent="#0061FF"
+                topRight={
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontSize: 15,
+                      fontWeight: 800,
+                      color: '#10B981',
+                    }}
+                  >
+                    +12.5% <TrendingUp size={14} />
+                  </span>
+                }
+                value={`R$ ${metrics.mrr.toLocaleString('pt-BR')}`}
+              />
+              <HubMetricCard
+                label="Tenants Ativos"
+                icon={Users}
+                iconVariant="solid"
+                accent="#0061FF"
+                topRight={
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#0061FF' }}>META: 50</span>
+                }
+                value={metrics.activeTenants}
+              />
+              <HubMetricCard
+                label="Em Carência (Buffer)"
+                icon={Clock}
+                iconVariant="soft"
+                accent="#F59E0B"
+                softBg="#F59E0B15"
+                topRight={
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#F59E0B' }}>3 DIAS</span>
+                }
+                value={metrics.graceTenants}
+              />
+              <HubMetricCard
+                label="Inativos / Bloqueados"
+                icon={Ban}
+                iconVariant="soft"
+                accent="#EF4444"
+                softBg="#EF444415"
+                topRight={
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#EF4444' }}>CHURN</span>
+                }
+                value={metrics.blockedTenants}
+              />
             </div>
 
-            <div style={styles.chartGrid}>
+            <div
+              className="billing-master-chart-grid"
+              style={styles.chartGrid}
+            >
               <div style={styles.chartCard}>
                 <div style={styles.chartHeaderInner}>
                   <h3 style={styles.chartTitle}><Target size={16} color="var(--accent)" /> DISTRIBUIÇÃO POR PRODUTO</h3>
                   <div style={styles.chartTag}>REAL-TIME</div>
                 </div>
-                <div style={{ height: 320, position: 'relative' }}>
+                <p style={styles.chartSubcopy}>
+                  Percentual de <strong style={{ color: '#334155' }}>assinaturas ativas</strong> por produto — o arco mostra a fatia do líder; a legenda traz o recorte em contas.
+                </p>
+                <div style={{ height: 380, position: 'relative' }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart margin={{ top: 4, right: 8, left: 8, bottom: 8 }}>
                       <Pie
-                        data={productData}
-                        innerRadius={85}
-                        outerRadius={115}
-                        paddingAngle={8}
+                        data={distributionGaugeData}
                         dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="76%"
+                        startAngle={180}
+                        endAngle={0}
+                        innerRadius="54%"
+                        outerRadius="98%"
+                        paddingAngle={3}
+                        cornerRadius={5}
                         stroke="none"
                       >
-                        {productData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        {distributionGaugeData.map((entry, index) => (
+                          <Cell key={`g-${index}`} fill={entry.fill} />
                         ))}
                       </Pie>
-                      <Tooltip 
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            return (
-                              <div style={styles.customTooltip}>
-                                <div style={{...styles.tooltipDot, backgroundColor: payload[0].payload.color}} />
-                                <span style={styles.tooltipLabel}>{payload[0].name}</span>
-                                <span style={styles.tooltipValue}>{payload[0].value}%</span>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Legend 
-                        verticalAlign="bottom" 
-                        align="center"
-                        iconType="circle"
-                        formatter={(value) => <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>{value}</span>}
+                      <Tooltip
+                        content={() => (
+                          <div style={styles.customTooltip}>
+                            <div
+                              style={{
+                                ...styles.tooltipDot,
+                                backgroundColor: String(distributionTop.color),
+                              }}
+                            />
+                            <span style={styles.tooltipLabel}>{distributionTop.name}</span>
+                            <span style={styles.tooltipValue}>
+                              {distributionTopPct.toFixed(1)}% do mix ·{' '}
+                              {Number(distributionTop.value).toLocaleString('pt-BR')} /{' '}
+                              {distributionTotal.toLocaleString('pt-BR')}
+                            </span>
+                          </div>
+                        )}
                       />
                     </PieChart>
                   </ResponsiveContainer>
-                  <div style={styles.pieCenterLabel}>
-                    <div style={styles.pieCenterValue}>100%</div>
-                    <div style={styles.pieCenterText}>ATIVOS</div>
+                  <div style={styles.distributionGaugeCenter}>
+                    <div style={styles.distributionGaugeKicker}>
+                      <span>
+                        {distributionTopPct.toFixed(1)}% das assinaturas ativas hoje estão em{' '}
+                        <strong style={{ color: '#334155', fontWeight: 800 }}>{distributionTop.name}</strong>
+                      </span>
+                      <span style={styles.distributionGaugeKickerMeta}>
+                        {distributionTotal.toLocaleString('pt-BR')} contas no ecossistema · mix somado
+                      </span>
+                    </div>
+                    <div style={styles.distributionGaugeValue}>
+                      {Number(distributionTop.value).toLocaleString('pt-BR')}
+                    </div>
+                    <div style={styles.distributionGaugeLabel}>{distributionTop.name}</div>
+                  </div>
+                  <div style={styles.distributionMixLegend}>
+                    {productData.map((p) => (
+                      <div key={p.name} style={styles.distributionMixItem}>
+                        <span
+                          style={{
+                            ...styles.distributionMixDot,
+                            background: p.color as string,
+                          }}
+                        />
+                        <span style={styles.distributionMixName}>{p.name}</span>
+                        <span style={styles.distributionMixCount}>
+                          {Number(p.value).toLocaleString('pt-BR')}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -481,14 +704,19 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                   <h3 style={styles.chartTitle}><Zap size={16} color="#0061FF" /> CRESCIMENTO DE RECEITA (ASAAS)</h3>
                   <div style={{...styles.chartTag, backgroundColor: '#E0E7FF', color: '#4338CA'}}>ASAAS SYNC</div>
                 </div>
+                <p style={styles.chartSubcopy}>
+                  Tendência de faturamento (série do gateway). Compare com o mix de assinaturas ao lado para ver se <strong style={{ color: '#334155' }}>receita e base</strong> evoluem na mesma direção.
+                  {revenueMomPct != null ? (
+                    <span style={styles.chartSubcopyHighlight}>
+                      {' '}
+                      Último mês da série: {revenueMomPct >= 0 ? '+' : ''}
+                      {revenueMomPct.toFixed(1)}% vs. mês anterior.
+                    </span>
+                  ) : null}
+                </p>
                 <div style={{ height: 320 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={[
-                        { name: 'Jan', value: 4000 },
-                        { name: 'Fev', value: 3000 },
-                        { name: 'Mar', value: 2000 },
-                        { name: 'Abr', value: metrics.mrr },
-                    ]}>
+                    <AreaChart data={revenueChartData}>
                       <defs>
                         <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#0061FF" stopOpacity={0.3}/>
@@ -649,18 +877,22 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                {plans.map(plan => (
                   <div 
                     key={plan.id} 
-                    style={{...styles.planCard, cursor: 'pointer'}} 
+                    style={{
+                      ...styles.planCard,
+                      cursor: 'pointer',
+                      ...(plan.is_active === false ? { opacity: 0.75 } : {}),
+                    }} 
                     className="hover-scale"
                     onClick={() => { setSelectedPlan(plan); setIsDetailModalOpen(true); }}
                   >
                      <div style={styles.planCardHeader}>
                         <div style={styles.planIcon}><Briefcase size={20} /></div>
-                        <span style={styles.planTypeTag}>{plan.type}</span>
+                        <span style={styles.planTypeTag}>{plan.type}{plan.is_active === false ? ' · INATIVO' : ''}</span>
                      </div>
                      <h4 style={styles.planCardTitle}>{plan.name}</h4>
                      <div style={styles.planPrice}>
                         <span style={styles.currency}>R$</span>
-                        <span style={styles.amount}>{plan.price.toLocaleString('pt-BR')}</span>
+                        <span style={styles.amount}>{Number(plan.price ?? 0).toLocaleString('pt-BR')}</span>
                         <span style={styles.period}>/ {plan.contract_months} meses</span>
                      </div>
                      <div style={styles.planFeatures}>
@@ -670,9 +902,11 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                      </div>
                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '20px' }}>
                         <button 
+                            type="button"
                             style={{...styles.planActionBtn, backgroundColor: '#F0F7FF', color: '#0061FF'}} 
                             title="Copiar Link"
-                            onClick={() => {
+                            onClick={(e) => {
+                                e.stopPropagation();
                                 navigator.clipboard.writeText(`https://checkout.logta.com/p/${plan.slug}`);
                                 toastSuccess('Link do plano copiado!');
                             }}
@@ -680,16 +914,26 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                             <LinkIcon size={14} />
                         </button>
                         <button 
+                            type="button"
                             style={{...styles.planActionBtn, backgroundColor: '#F8FAFC', color: '#1E293B'}} 
                             title="Editar"
-                            onClick={() => { setSelectedPlan(plan); setIsDetailModalOpen(true); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedPlan(plan);
+                              setIsDetailModalOpen(true);
+                            }}
                         >
                             <Edit3 size={14} />
                         </button>
                         <button 
+                            type="button"
                             style={{...styles.planActionBtn, backgroundColor: '#FEF2F2', color: '#EF4444'}} 
                             title="Excluir"
-                            onClick={() => { setSelectedPlan(plan); setIsDeleteModalOpen(true); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedPlan(plan);
+                              setIsDeleteModalOpen(true);
+                            }}
                         >
                             <Trash2 size={14} />
                         </button>
@@ -702,8 +946,10 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
 
 
 
+        {activeTab === 'creditos-ia' && <ClientIaCredits embedded />}
+
         {activeTab === 'financeiro' && (
-          <div style={{ flex: 1, backgroundColor: 'white', borderRadius: '32px', border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+          <div style={styles.financeiroPanel}>
             <MasterFinanceiro />
           </div>
         )}
@@ -783,12 +1029,16 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
         <Modal
           isOpen={isChargeModalOpen}
           onClose={() => setIsChargeModalOpen(false)}
-          title={chargeModalType === 'plan' ? 'Novo Plano Recorrente' : 'Gerar Cobrança Direta'}
-          subtitle="Preencha os dados para gerar o link ou código de pagamento."
+          title={chargeModalType === 'plan' ? 'Novo plano (checkout público)' : 'Nova cobrança direta'}
+          subtitle={
+            chargeModalType === 'plan'
+              ? 'Defina pacote, valor e forma de pagamento. Quem comprar preenche nome, documento e contato no link — não é necessário cliente aqui.'
+              : 'Indique para quem é a cobrança e se ela será avulsa ou assinatura recorrente para essa pessoa ou empresa.'
+          }
           icon={<LinkIcon />}
-          size="xl"
+          size="lg"
           primaryAction={{
-            label: 'CONFIRMAR E GERAR COBRANÇA',
+            label: chargeModalType === 'plan' ? 'GERAR LINK DO PLANO' : 'CONFIRMAR E GERAR COBRANÇA',
             onClick: handleGenerateCharge,
             loading: saving
           }}
@@ -797,195 +1047,286 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
             onClick: () => setIsChargeModalOpen(false)
           }}
         >
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-            <div style={styles.formGroup}>
-              <label style={styles.infoLabel}>CLIENTE / EMPRESA</label>
-              <select 
-                style={styles.input} 
-                value={newCharge.client_id}
-                onChange={e => setNewCharge({...newCharge, client_id: e.target.value})}
-              >
-                  <option value="">Selecionar da lista...</option>
-                  {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+          {chargeModalType === 'plan' && (
+            <div style={styles.chargeModalHint}>
+              <strong style={{ fontWeight: 800 }}>Plano para todo o público:</strong>{' '}
+              o mesmo link serve a qualquer comprador; os dados de cliente ficam no checkout, não neste formulário.
             </div>
-            <div style={styles.formGroup}>
-              <label style={styles.infoLabel}>NOME PERSONALIZADO</label>
-              <input 
-                style={styles.input} 
-                placeholder="Ex: Cliente Avulso" 
-                value={newCharge.custom_client_name}
-                onChange={e => setNewCharge({...newCharge, custom_client_name: e.target.value})}
-              />
-            </div>
-            <div style={styles.formGroup}>
-                <label style={styles.infoLabel}>CPF OU CNPJ</label>
-                <input 
-                  style={styles.input} 
-                  placeholder="00.000.000/0001-00" 
-                  value={newCharge.cpfCnpj}
-                  onChange={e => setNewCharge({...newCharge, cpfCnpj: e.target.value})}
-                />
-            </div>
-          </div>
+          )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginTop: '16px' }}>
-            <div style={styles.formGroup}>
-              <label style={styles.infoLabel}>E-MAIL</label>
-              <input 
-                style={styles.input} 
-                placeholder="email@exemplo.com" 
-                value={newCharge.email}
-                onChange={e => setNewCharge({...newCharge, email: e.target.value})}
-              />
-            </div>
-            <div style={styles.formGroup}>
-              <label style={styles.infoLabel}>WHATSAPP</label>
-              <input 
-                style={styles.input} 
-                placeholder="(00) 00000-0000" 
-                value={newCharge.phone}
-                onChange={e => setNewCharge({...newCharge, phone: e.target.value})}
-              />
-            </div>
-            <div style={styles.formGroup}>
-                <label style={styles.infoLabel}>DATA DE VENCIMENTO</label>
-                <input 
-                  type="date"
-                  style={styles.input}
-                  value={newCharge.dueDate}
-                  onChange={e => setNewCharge({...newCharge, dueDate: e.target.value})}
-                />
-            </div>
-          </div>
-
-          <div style={{ marginTop: '24px' }}>
-            <label style={styles.infoLabel}>SELECIONE OS PRODUTOS</label>
-            <div style={styles.productGrid}>
-              {[
-                { id: 'logta', label: 'Assinatura Logta', icon: Layout },
-                { id: 'zaptro', label: 'Assinatura Zaptro', icon: Zap },
-                { id: 'wa', label: 'Créditos WhatsApp', icon: Mail },
-                { id: 'ai', label: 'Créditos IA', icon: Activity },
-                { id: 'backup', label: 'Backup Cloud', icon: ShieldCheck },
-              ].map(prod => (
-                <div 
-                  key={prod.id} 
-                  style={{
-                    ...styles.productCardMini,
-                    borderColor: newCharge.selectedProducts.includes(prod.id) ? '#0061FF' : '#E2E8F0',
-                    backgroundColor: newCharge.selectedProducts.includes(prod.id) ? '#F0F7FF' : '#FFFFFF'
-                  }}
-                  onClick={() => {
-                    const current = [...newCharge.selectedProducts];
-                    if (current.includes(prod.id)) {
-                      setNewCharge({...newCharge, selectedProducts: current.filter(x => x !== prod.id)});
-                    } else {
-                      setNewCharge({...newCharge, selectedProducts: [...current, prod.id]});
-                    }
-                  }}
-                >
-                  <prod.icon size={18} color={newCharge.selectedProducts.includes(prod.id) ? '#0061FF' : '#94A3B8'} />
-                  <span style={{ fontSize: '11px', fontWeight: '700' }}>{prod.label}</span>
+          {chargeModalType === 'charge' && (
+            <div style={styles.chargeModalSection}>
+              <div style={styles.chargeModalSectionTitle}>Quem vai pagar</div>
+              <p style={styles.chargeModalSectionSub}>
+                Use para cobrança ou assinatura ligada a uma empresa ou pessoa específica (boleto, PIX direto, cartão etc.).
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ ...styles.formGroup, gridColumn: '1 / -1' }}>
+                  <label style={styles.infoLabel}>CLIENTE / EMPRESA</label>
+                  <select
+                    style={styles.input}
+                    value={newCharge.client_id}
+                    onChange={e => setNewCharge({ ...newCharge, client_id: e.target.value })}
+                  >
+                    <option value="">Selecionar da lista...</option>
+                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
                 </div>
-              ))}
-            </div>
-          </div>
-
-
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1fr', gap: '24px', marginTop: '16px', alignItems: 'end' }}>
-              <div style={styles.formGroup}>
-                <label style={styles.infoLabel}>VALOR TOTAL (R$)</label>
-                <input 
-                  type="number" 
-                  style={styles.input} 
-                  placeholder="0,00" 
-                  value={newCharge.amount}
-                  onChange={e => setNewCharge({...newCharge, amount: e.target.value})}
-                />
+                <div style={styles.formGroup}>
+                  <label style={styles.infoLabel}>NOME (avulso ou complemento)</label>
+                  <input
+                    style={styles.input}
+                    placeholder="Ex: Cliente Avulso"
+                    value={newCharge.custom_client_name}
+                    onChange={e => setNewCharge({ ...newCharge, custom_client_name: e.target.value })}
+                  />
+                </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.infoLabel}>CPF OU CNPJ</label>
+                  <input
+                    style={styles.input}
+                    placeholder="00.000.000/0001-00"
+                    value={newCharge.cpfCnpj}
+                    onChange={e => setNewCharge({ ...newCharge, cpfCnpj: e.target.value })}
+                  />
+                </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.infoLabel}>E-MAIL</label>
+                  <input
+                    style={styles.input}
+                    placeholder="email@exemplo.com"
+                    value={newCharge.email}
+                    onChange={e => setNewCharge({ ...newCharge, email: e.target.value })}
+                  />
+                </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.infoLabel}>WHATSAPP</label>
+                  <input
+                    style={styles.input}
+                    placeholder="(00) 00000-0000"
+                    value={newCharge.phone}
+                    onChange={e => setNewCharge({ ...newCharge, phone: e.target.value })}
+                  />
+                </div>
+                <div style={{ ...styles.formGroup, gridColumn: '1 / -1', maxWidth: '280px' }}>
+                  <label style={styles.infoLabel}>DATA DE VENCIMENTO</label>
+                  <input
+                    type="date"
+                    style={styles.input}
+                    value={newCharge.dueDate}
+                    onChange={e => setNewCharge({ ...newCharge, dueDate: e.target.value })}
+                  />
+                </div>
               </div>
-              <div style={styles.formGroup}>
-                <label style={styles.infoLabel}>MÉTODO DE RECEBIMENTO</label>
-                <div style={{ display: 'flex', gap: '8px' }}>
+            </div>
+          )}
+
+          <div
+            style={{
+              ...styles.chargeModalSection,
+              ...(chargeModalType === 'plan' ? { backgroundColor: '#FFFFFF' } : {}),
+            }}
+          >
+            <div style={styles.chargeModalTwoCol}>
+              <div style={{ minWidth: 0 }}>
+                <div style={styles.chargeModalSectionTitle}>Itens inclusos</div>
+                <p style={{ ...styles.chargeModalSectionSub, marginBottom: '12px' }}>
+                  Selecione o que entra neste {chargeModalType === 'plan' ? 'plano' : 'pacote cobrado'}.
+                </p>
+                <label style={{ ...styles.infoLabel, marginBottom: 0 }}>PRODUTOS</label>
+                <div style={styles.productGridModal}>
                   {[
-                    { id: 'PIX', label: 'PIX', icon: Zap },
-                    { id: 'BOLETO', label: 'Boleto', icon: BarChart3 },
-                    { id: 'CREDIT_CARD', label: 'Cartão', icon: CreditCard },
-                    { id: 'LINK', label: 'Link', icon: LinkIcon },
-                  ].map(method => (
-                    <button 
-                      key={method.id}
+                    { id: 'logta', label: 'Assinatura Logta', icon: Layout },
+                    { id: 'zaptro', label: 'Assinatura Zaptro', icon: Zap },
+                    { id: 'wa', label: 'Créditos WhatsApp', icon: Mail },
+                    { id: 'ai', label: 'Créditos IA', icon: Activity },
+                    { id: 'backup', label: 'Backup Cloud', icon: ShieldCheck },
+                  ].map(prod => (
+                    <div
+                      key={prod.id}
                       style={{
-                        ...styles.methodBtn,
-                        borderColor: newCharge.method === method.id ? '#0061FF' : '#E2E8F0',
-                        backgroundColor: newCharge.method === method.id ? '#F0F7FF' : '#FFFFFF',
-                        color: newCharge.method === method.id ? '#0061FF' : '#64748B',
-                        padding: '10px 14px',
-                        flex: 1
+                        ...styles.productCardMini,
+                        borderColor: newCharge.selectedProducts.includes(prod.id) ? '#0061FF' : '#E2E8F0',
+                        backgroundColor: newCharge.selectedProducts.includes(prod.id) ? '#F0F7FF' : '#FFFFFF'
                       }}
-                      onClick={() => setNewCharge({...newCharge, method: method.id})}
+                      onClick={() => {
+                        const current = [...newCharge.selectedProducts];
+                        if (current.includes(prod.id)) {
+                          setNewCharge({ ...newCharge, selectedProducts: current.filter(x => x !== prod.id) });
+                        } else {
+                          setNewCharge({ ...newCharge, selectedProducts: [...current, prod.id] });
+                        }
+                      }}
                     >
-                      <method.icon size={16} />
-                      {method.label}
-                    </button>
+                      <prod.icon size={18} color={newCharge.selectedProducts.includes(prod.id) ? '#0061FF' : '#94A3B8'} />
+                      <span style={{ fontSize: '11px', fontWeight: '700' }}>{prod.label}</span>
+                    </div>
                   ))}
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '14px' }}>
-                  <div 
-                  style={{
-                    width: '40px', 
-                    height: '20px', 
-                    borderRadius: '10px', 
-                    backgroundColor: newCharge.isRecurring ? '#0061FF' : '#E2E8F0',
-                    position: 'relative',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onClick={() => setNewCharge({...newCharge, isRecurring: !newCharge.isRecurring})}
-                  >
-                    <div style={{
-                      width: '16px',
-                      height: '16px',
-                      borderRadius: '50%',
-                      backgroundColor: '#FFFFFF',
-                      position: 'absolute',
-                      top: '2px',
-                      left: newCharge.isRecurring ? '22px' : '2px',
-                      transition: 'all 0.2s'
-                    }} />
-                  </div>
-                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#1E293B' }}>Assinatura Recorrente</span>
-              </div>
-            </div>
 
-          <div style={{ marginTop: '24px', padding: '16px', borderRadius: '16px', backgroundColor: 'var(--bg-overlay)', border: '1px solid var(--border)' }}>
-              <label style={styles.infoLabel}>CUPOM DE DESCONTO (OPCIONAL)</label>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <input 
-                  style={{ ...styles.input, flex: 1 }} 
-                  placeholder="Ex: ZAPTRO20" 
-                  value={newCharge.coupon}
-                  onChange={e => {
-                    const code = e.target.value.toUpperCase();
-                    let newAmount = newCharge.amount;
-                    
-                    if (code === 'ZAPTRO20' && newCharge.coupon !== 'ZAPTRO20') {
+              <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0' }}>
+                <div style={styles.chargeModalSectionTitle}>Valor e pagamento</div>
+                <p style={{ ...styles.chargeModalSectionSub, marginBottom: '14px', color: '#94A3B8' }}>
+                  Valor, forma de recebimento e recorrência.
+                </p>
+                <div style={styles.formGroup}>
+                  <label style={styles.infoLabel}>VALOR (R$)</label>
+                  <input
+                    type="number"
+                    style={styles.input}
+                    placeholder="0,00"
+                    value={newCharge.amount}
+                    onChange={e => setNewCharge({ ...newCharge, amount: e.target.value })}
+                  />
+                </div>
+                <div style={{ ...styles.formGroup, marginTop: '14px' }}>
+                  <label style={styles.infoLabel}>MÉTODO</label>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { id: 'PIX', label: 'PIX', icon: Zap },
+                      { id: 'BOLETO', label: 'Boleto', icon: BarChart3 },
+                      { id: 'CREDIT_CARD', label: 'Cartão', icon: CreditCard },
+                      { id: 'LINK', label: 'Link', icon: LinkIcon },
+                    ].map(method => (
+                      <button
+                        key={method.id}
+                        type="button"
+                        style={{
+                          ...styles.methodBtn,
+                          borderColor: newCharge.method === method.id ? '#0061FF' : '#E2E8F0',
+                          backgroundColor: newCharge.method === method.id ? '#F0F7FF' : '#FFFFFF',
+                          color: newCharge.method === method.id ? '#0061FF' : '#64748B',
+                          padding: '10px 12px',
+                          flex: '1 1 72px',
+                          minWidth: '72px'
+                        }}
+                        onClick={() => setNewCharge({ ...newCharge, method: method.id })}
+                      >
+                        <method.icon size={16} />
+                        {method.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    marginTop: '12px',
+                    paddingTop: '12px',
+                    borderTop: '1px solid #E2E8F0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    gap: '8px',
+                  }}
+                >
+                  <label style={{ ...styles.infoLabel, marginBottom: 0 }}>CUPOM (OPCIONAL)</label>
+                  <input
+                    type="text"
+                    style={{ ...styles.input, width: '100%', maxWidth: '100%', height: '40px' }}
+                    placeholder="Ex: ZAPTRO20"
+                    value={newCharge.coupon}
+                    onChange={e => {
+                      const code = e.target.value.toUpperCase();
+                      let newAmount = newCharge.amount;
+
+                      if (code === 'ZAPTRO20' && newCharge.coupon !== 'ZAPTRO20') {
                         const original = parseFloat(newCharge.amount) || 0;
                         newAmount = (original * 0.8).toFixed(2);
                         toastSuccess('CUPOM ATIVADO: 20% DE DESCONTO!');
-                    }
-                    
-                    setNewCharge({...newCharge, coupon: code, amount: newAmount});
-                  }}
-                />
-                {newCharge.coupon === 'ZAPTRO20' && (
-                  <div style={{ backgroundColor: 'var(--bg-overlay)', color: '#166534', padding: '10px 16px', borderRadius: '12px', fontSize: '11px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <CheckCircle size={14} /> -20% ATIVO
+                      }
+
+                      setNewCharge({ ...newCharge, coupon: code, amount: newAmount });
+                    }}
+                  />
+                  {newCharge.coupon === 'ZAPTRO20' && (
+                    <div
+                      style={{
+                        backgroundColor: '#ECFDF5',
+                        color: '#166534',
+                        padding: '8px 12px',
+                        borderRadius: '10px',
+                        fontSize: '11px',
+                        fontWeight: '900',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        flexShrink: 0,
+                        alignSelf: 'flex-start',
+                      }}
+                    >
+                      <CheckCircle size={14} /> -20% ATIVO
+                    </div>
+                  )}
+                </div>
+
+                {chargeModalType === 'charge' ? (
+                  <div
+                    style={{
+                      marginTop: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '14px',
+                      padding: '12px 14px',
+                      borderRadius: '14px',
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #E2E8F0'
+                    }}
+                  >
+                    <div
+                      role="switch"
+                      aria-checked={newCharge.isRecurring}
+                      tabIndex={0}
+                      style={{
+                        width: '44px',
+                        height: '24px',
+                        borderRadius: '12px',
+                        backgroundColor: newCharge.isRecurring ? '#0061FF' : '#E2E8F0',
+                        position: 'relative',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        flexShrink: 0
+                      }}
+                      onClick={() => setNewCharge({ ...newCharge, isRecurring: !newCharge.isRecurring })}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setNewCharge({ ...newCharge, isRecurring: !newCharge.isRecurring });
+                        }
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          backgroundColor: '#FFFFFF',
+                          position: 'absolute',
+                          top: '3px',
+                          left: newCharge.isRecurring ? '23px' : '3px',
+                          transition: 'all 0.2s',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: '800', color: '#0F172A' }}>Assinatura recorrente (este cliente)</div>
+                      <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px', lineHeight: 1.4 }}>
+                        Ative para cobrar o mesmo valor automaticamente em ciclo. Desative para pagamento único ou parcelas definidas no Asaas.
+                      </div>
+                    </div>
                   </div>
+                ) : (
+                  <p style={{ ...styles.chargeModalRecurringNote, marginTop: '14px', marginBottom: 0 }}>
+                    <Zap size={14} color="#0061FF" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <span>
+                      Links de <strong>plano público</strong> são tratados como assinatura recorrente no gateway (cobrança repetida no cartão/assinatura).
+                    </span>
+                  </p>
                 )}
               </div>
+            </div>
           </div>
         </Modal>
 
@@ -1057,34 +1398,134 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
         <Modal
           isOpen={isDetailModalOpen && !!selectedPlan}
           onClose={() => setIsDetailModalOpen(false)}
-          title={`Plano: ${selectedPlan?.name}`}
-          icon={<Eye />}
+          title={`Editar plano: ${selectedPlan?.name ?? ''}`}
+          subtitle="Alterações são gravadas na tabela plans e refletem no checkout público (slug)."
+          size="lg"
+          icon={<Edit3 />}
           primaryAction={{
-            label: 'ABRIR CHECKOUT',
-            onClick: () => window.open(`https://checkout.logta.com/p/${selectedPlan?.slug}`, '_blank')
+            label: 'SALVAR ALTERAÇÕES',
+            onClick: handleUpdatePlan,
+            loading: saving,
           }}
           secondaryAction={{
             label: 'Fechar',
-            onClick: () => setIsDetailModalOpen(false)
+            onClick: () => setIsDetailModalOpen(false),
           }}
         >
-          <div style={{backgroundColor: 'var(--bg-overlay)', padding: '24px', borderRadius: '16px', marginBottom: '24px', border: '1px solid #E2E8F0'}}>
-              <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '12px'}}>
-                <span style={styles.infoLabel}>Link de Pagamento (Asaas)</span>
-                <button style={{border: 'none', background: 'none', color: '#0061FF', cursor: 'pointer', fontWeight: '700', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px'}} onClick={() => {
-                    navigator.clipboard.writeText(`https://checkout.logta.com/p/${selectedPlan?.slug}`);
+          <div style={{backgroundColor: 'var(--bg-overlay)', padding: '24px', borderRadius: '16px', marginBottom: '20px', border: '1px solid #E2E8F0'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px'}}>
+                <span style={styles.infoLabel}>Link de pagamento (slug)</span>
+                <button type="button" style={{border: 'none', background: 'none', color: '#0061FF', cursor: 'pointer', fontWeight: '700', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px'}} onClick={() => {
+                    navigator.clipboard.writeText(`https://checkout.logta.com/p/${editPlanDraft.slug}`);
                     toastSuccess('Checkout copiado!');
                 }}><Copy size={14} /> COPIAR</button>
               </div>
               <code style={{fontSize: '13px', color: '#1E293B', wordBreak: 'break-all', fontWeight: '600'}}>
-                https://checkout.logta.com/p/{selectedPlan?.slug}
+                https://checkout.logta.com/p/{editPlanDraft.slug || selectedPlan?.slug}
               </code>
+              <button
+                type="button"
+                style={{ marginTop: '14px', padding: '10px 16px', borderRadius: '10px', border: '1px solid #0061FF', background: '#F0F7FF', color: '#0061FF', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
+                onClick={() => window.open(`https://checkout.logta.com/p/${editPlanDraft.slug || selectedPlan?.slug}`, '_blank')}
+              >
+                Abrir checkout em nova aba
+              </button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div style={styles.featureItem}><CheckCircle size={16} color="#10B981" /> <strong>Ciclo:</strong> {selectedPlan?.contract_months} meses</div>
-              <div style={styles.featureItem}><CheckCircle size={16} color="#10B981" /> <strong>Preço:</strong> R$ {selectedPlan?.price.toLocaleString('pt-BR')}</div>
-              <div style={styles.featureItem}><CheckCircle size={16} color="#10B981" /> <strong>WhatsApp:</strong> {selectedPlan?.wa_credits} créditos</div>
-              <div style={styles.featureItem}><CheckCircle size={16} color="#10B981" /> <strong>Inteligência:</strong> {selectedPlan?.ai_credits} créditos</div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div style={styles.formGroup}>
+              <label style={styles.infoLabel}>Nome do plano</label>
+              <input
+                style={styles.input}
+                value={editPlanDraft.name}
+                onChange={(e) => setEditPlanDraft((d) => ({ ...d, name: e.target.value }))}
+              />
+            </div>
+            <div style={styles.formGroup}>
+              <label style={styles.infoLabel}>Slug (URL)</label>
+              <input
+                style={styles.input}
+                value={editPlanDraft.slug}
+                onChange={(e) => setEditPlanDraft((d) => ({ ...d, slug: e.target.value }))}
+                placeholder="ex: combo-master-anual"
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+            <div style={styles.formGroup}>
+              <label style={styles.infoLabel}>Preço (R$)</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                style={styles.input}
+                value={editPlanDraft.price}
+                onChange={(e) => setEditPlanDraft((d) => ({ ...d, price: e.target.value }))}
+              />
+            </div>
+            <div style={styles.formGroup}>
+              <label style={styles.infoLabel}>Ciclo (meses)</label>
+              <select
+                style={styles.input}
+                value={editPlanDraft.contract_months}
+                onChange={(e) => setEditPlanDraft((d) => ({ ...d, contract_months: e.target.value }))}
+              >
+                {[1, 3, 6, 12, 24, 48].map((m) => (
+                  <option key={m} value={String(m)}>{m} {m === 1 ? 'mês' : 'meses'}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+            <div style={styles.formGroup}>
+              <label style={styles.infoLabel}>Créditos WhatsApp</label>
+              <input
+                type="number"
+                min={0}
+                style={styles.input}
+                value={editPlanDraft.wa_credits}
+                onChange={(e) => setEditPlanDraft((d) => ({ ...d, wa_credits: e.target.value }))}
+              />
+            </div>
+            <div style={styles.formGroup}>
+              <label style={styles.infoLabel}>Créditos IA</label>
+              <input
+                type="number"
+                min={0}
+                style={styles.input}
+                value={editPlanDraft.ai_credits}
+                onChange={(e) => setEditPlanDraft((d) => ({ ...d, ai_credits: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.infoLabel}>Descrição (opcional)</label>
+            <textarea
+              style={{ ...styles.input, minHeight: '88px', resize: 'vertical' }}
+              value={editPlanDraft.description}
+              onChange={(e) => setEditPlanDraft((d) => ({ ...d, description: e.target.value }))}
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginTop: '8px', alignItems: 'center' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: 700, color: '#334155', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={editPlanDraft.is_active}
+                onChange={(e) => setEditPlanDraft((d) => ({ ...d, is_active: e.target.checked }))}
+              />
+              Plano ativo no catálogo
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: 700, color: '#334155', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={editPlanDraft.backup_enabled}
+                onChange={(e) => setEditPlanDraft((d) => ({ ...d, backup_enabled: e.target.checked }))}
+              />
+              Backup incluso
+            </label>
           </div>
         </Modal>
 
@@ -1204,11 +1645,11 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
           title="Visualização de Fatura Master"
           subtitle={`Referência: ${selectedCharge?.asaas_id || 'Interna'}`}
           icon={<FileText color="#0061FF" />}
-          size="xl"
+          size="lg"
         >
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
                 {/* LEFT: BOLETO PREVIEW */}
-                <div style={{ backgroundColor: 'var(--bg-overlay)', borderRadius: '24px', padding: '40px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ backgroundColor: '#FFFFFF', borderRadius: '24px', padding: '40px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ fontWeight: '900', fontSize: '20px', color: '#1E293B' }}>LOGTA <span style={{ color: '#0061FF' }}>SaaS</span></div>
                         <div style={{ textAlign: 'right' }}>
@@ -1239,7 +1680,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
 
                 {/* RIGHT: INFO & ACTIONS */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <div style={{ backgroundColor: '#F0F9FF', padding: '24px', borderRadius: '24px', border: '1px solid #BAE6FD' }}>
+                    <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '24px', border: '1px solid #BAE6FD' }}>
                         <label style={styles.infoLabel}>VALOR DA FATURA</label>
                         <div style={{ fontSize: '32px', fontWeight: '900', color: '#0369A1' }}>R$ {selectedCharge?.amount.toLocaleString('pt-BR')}</div>
                         <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
@@ -1287,31 +1728,71 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
 };
 
 const styles: Record<string, any> = {
-  outerContainer: { padding: '40px', backgroundColor: 'transparent' },
+  outerContainer: { padding: '0', backgroundColor: 'transparent' },
   innerContainer: { maxWidth: '100%', margin: '0' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
+  billingTopBar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '24px',
+    marginBottom: '40px',
+    flexWrap: 'nowrap',
+  },
+  billingTopBarLead: { flex: '1 1 auto', minWidth: 0 },
   pageTitle: { fontSize: '32px', fontWeight: '700', color: 'var(--secondary)', margin: 0, letterSpacing: '-0.5px' },
-  pageSub: { color: 'var(--text-secondary)', fontSize: '16px', fontWeight: '500', marginTop: '6px' },
-  topActions: { display: 'flex', gap: '16px' },
-  primaryBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },
+  pageSub: { color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '500', marginTop: '6px' },
+  topActions: { display: 'flex', gap: '16px', flexWrap: 'nowrap', flexShrink: 0, alignItems: 'center' },
+  primaryBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', backgroundColor: 'var(--text-title)', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },
   secondaryBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--secondary)', fontWeight: '700', fontSize: '14px', cursor: 'pointer' },
-  
-  tabContainer: { display: 'flex', gap: '8px', marginBottom: '32px', backgroundColor: 'var(--bg-secondary)', padding: '6px', borderRadius: '20px', width: 'fit-content' },
-  tabLink: { padding: '10px 24px', borderRadius: '16px', fontSize: '14px', fontWeight: '700', color: 'var(--text-secondary)', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' },
-  tabActive: { backgroundColor: 'white', color: 'var(--accent)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' },
 
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' },
-  statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '32px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden' },
-  statIconBox: { width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statContent: { flex: 1 },
-  statLabel: { fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' },
-  statValue: { fontSize: '24px', fontWeight: '800', color: 'var(--secondary)', margin: 0 },
-  statTrend: { fontSize: '10px', fontWeight: '800', padding: '4px 10px', borderRadius: '8px', backgroundColor: 'var(--bg-secondary)' },
+  financeiroContextBanner: {
+    marginBottom: '20px',
+    padding: '18px 22px',
+    borderRadius: '16px',
+    background: 'linear-gradient(135deg, #EFF6FF 0%, #EEF2FF 55%, #F8FAFC 100%)',
+    border: '1px solid #BFDBFE',
+  },
+  financeiroContextText: { maxWidth: '52rem' },
+  financeiroContextKicker: { fontSize: '11px', fontWeight: 800, color: '#0061FF', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '6px' },
+  financeiroContextTitle: { fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: '0 0 8px' },
+  financeiroContextSub: { fontSize: '14px', color: '#475569', margin: 0, lineHeight: 1.55, fontWeight: 500 },
+  financeiroPanel: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '20px',
+    border: '1px solid #E2E8F0',
+    overflow: 'hidden',
+    boxShadow: '0 8px 30px rgba(15, 23, 42, 0.07)',
+  },
 
-  chartGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '40px' },
+  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '32px' },
+
+  chartGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '24px',
+    marginBottom: '40px',
+    padding: 0,
+    background: 'none',
+    backgroundColor: 'transparent',
+    border: 'none',
+    borderStyle: 'none',
+    borderWidth: 0,
+    boxShadow: 'none',
+    color: 'var(--text-primary)',
+    boxSizing: 'border-box',
+  },
   chartCard: { backgroundColor: '#FFF', padding: '32px', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
-  chartHeaderInner: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
+  chartHeaderInner: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' },
   chartTitle: { fontSize: '13px', fontWeight: '800', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, letterSpacing: '0.5px' },
+  chartSubcopy: {
+    fontSize: '14px',
+    fontWeight: 500,
+    color: '#64748B',
+    margin: '0 0 20px',
+    lineHeight: 1.55,
+    maxWidth: '48rem',
+  },
+  chartSubcopyHighlight: { fontWeight: 700, color: '#475569' },
   chartTag: { padding: '4px 10px', backgroundColor: '#F1F5F9', color: '#64748B', borderRadius: '8px', fontSize: '10px', fontWeight: '800' },
   
   customTooltip: { backgroundColor: '#FFF', padding: '12px 16px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '10px' },
@@ -1322,6 +1803,67 @@ const styles: Record<string, any> = {
   pieCenterLabel: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' },
   pieCenterValue: { fontSize: '28px', fontWeight: '900', color: '#0F172A', lineHeight: '1' },
   pieCenterText: { fontSize: '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' },
+  distributionGaugeCenter: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    transform: 'translate(-50%, -52%)',
+    textAlign: 'center',
+    pointerEvents: 'none',
+    width: 'min(300px, 88%)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  distributionGaugeKicker: {
+    fontSize: '13px',
+    fontWeight: 700,
+    color: '#64748B',
+    marginBottom: '4px',
+    lineHeight: 1.4,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    textAlign: 'center',
+    maxWidth: '260px',
+  },
+  distributionGaugeKickerMeta: {
+    fontSize: '11px',
+    fontWeight: 700,
+    color: '#94A3B8',
+    letterSpacing: '0.02em',
+    lineHeight: 1.35,
+  },
+  distributionGaugeValue: {
+    fontSize: 'clamp(34px, 5.8vw, 48px)',
+    fontWeight: 900,
+    color: '#0F172A',
+    lineHeight: 1.05,
+    letterSpacing: '-0.03em',
+  },
+  distributionGaugeLabel: {
+    fontSize: '17px',
+    fontWeight: 600,
+    color: '#94A3B8',
+    marginTop: '6px',
+    lineHeight: 1.35,
+  },
+  distributionMixLegend: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '16px 22px',
+    padding: '8px 16px 0',
+    marginTop: '-4px',
+  },
+  distributionMixItem: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' },
+  distributionMixDot: { width: 8, height: 8, borderRadius: 999, flexShrink: 0 },
+  distributionMixName: { fontWeight: 700, color: '#475569' },
+  distributionMixCount: { fontWeight: 800, color: '#94A3B8', fontVariantNumeric: 'tabular-nums' },
 
   tableCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
   table: { width: '100%', borderCollapse: 'collapse' },
@@ -1334,9 +1876,6 @@ const styles: Record<string, any> = {
   actionIconBtn: { width: '36px', height: '36px', borderRadius: '10px', border: '1px solid var(--border)', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' },
 
   card: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', padding: '28px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
-  headerTitleRow: { marginBottom: '20px' },
-  kpiBrief: { display: 'flex', alignItems: 'stretch', gap: '12px' },
-  miniKpi: { minWidth: '210px', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '6px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' },
   subActionsRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', gap: '16px' },
   subTabContainer: { display: 'flex', gap: '8px', backgroundColor: 'var(--bg-secondary)', borderRadius: '14px', padding: '6px' },
   subTabBtn: { border: 'none', borderRadius: '10px', padding: '10px 16px', fontSize: '12px', fontWeight: '800', letterSpacing: '0.6px', backgroundColor: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' },
@@ -1361,8 +1900,20 @@ const styles: Record<string, any> = {
   formGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
   input: { width: '100%', height: '44px', borderRadius: '12px', border: '1px solid var(--border)', padding: '0 12px', fontSize: '14px', fontWeight: '600', color: 'var(--secondary)', backgroundColor: 'white', outline: 'none' },
   productGrid: { display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '10px', marginTop: '10px' },
-  productCardMini: { border: '1px solid var(--border)', borderRadius: '12px', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none', transition: 'all 0.2s' },
-  methodBtn: { border: '1px solid var(--border)', borderRadius: '12px', backgroundColor: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '44px', transition: 'all 0.2s' },
+  productGridModal: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))', gap: '10px', marginTop: '10px' },
+  chargeModalSection: { backgroundColor: '#F8FAFC', borderRadius: '20px', padding: '20px 22px', border: '1px solid #E2E8F0', marginBottom: '4px' },
+  chargeModalSectionTitle: { fontSize: '14px', fontWeight: '800', color: '#0F172A', margin: '0 0 6px', letterSpacing: '-0.02em' },
+  chargeModalSectionSub: { fontSize: '13px', color: '#64748B', margin: '0 0 16px', lineHeight: 1.45 },
+  chargeModalHint: { backgroundColor: '#EFF6FF', borderRadius: '16px', padding: '16px 20px', border: '1px solid #BFDBFE', marginBottom: '16px', fontSize: '14px', color: '#1e40af', lineHeight: 1.55, fontWeight: 500 },
+  chargeModalTwoCol: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: '28px',
+    alignItems: 'start',
+  },
+  chargeModalRecurringNote: { fontSize: '13px', color: '#64748B', margin: '16px 0 0', lineHeight: 1.55, display: 'flex', alignItems: 'flex-start', gap: '10px' },
+  productCardMini: { border: '1px solid var(--border)', borderRadius: '12px', padding: '10px 12px', height: '75px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none', transition: 'all 0.2s' },
+  methodBtn: { border: '1px solid var(--border)', borderRadius: '12px', backgroundColor: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '66px', transition: 'all 0.2s' },
 
   planName: { fontSize: '16px', fontWeight: '700', color: 'var(--secondary)', marginBottom: '4px' },
   planBrand: { fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600' },

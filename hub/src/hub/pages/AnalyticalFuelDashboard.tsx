@@ -9,6 +9,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell
 } from 'recharts';
+import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
 
 const AnalyticalFuelDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -43,10 +44,10 @@ const AnalyticalFuelDashboard: React.FC = () => {
   ];
 
   const fuelStats = [
-    { label: 'Média Nacional', value: 'R$ 5,89', trend: '+1.2%', icon: <TrendingUp size={20} /> },
-    { label: 'Economia Sugerida', value: 'R$ 12k/mês', trend: 'IA ATIVA', icon: <Brain size={20} /> },
-    { label: 'Postos Monitorados', value: '14.200', trend: 'ANP SYNC', icon: <ShieldCheck size={20} /> },
-    { label: 'Preço Alvo', value: 'R$ 5,45', trend: 'OTIMIZADO', icon: <Zap size={20} /> },
+    { label: 'Média Nacional', value: 'R$ 5,89', trend: '+1.2%', icon: TrendingUp },
+    { label: 'Economia Sugerida', value: 'R$ 12k/mês', trend: 'IA ATIVA', icon: Brain },
+    { label: 'Postos Monitorados', value: '14.200', trend: 'ANP SYNC', icon: ShieldCheck },
+    { label: 'Preço Alvo', value: 'R$ 5,45', trend: 'OTIMIZADO', icon: Zap },
   ];
 
   return (
@@ -95,18 +96,17 @@ const AnalyticalFuelDashboard: React.FC = () => {
             />
           </div>
         </div>
-        <div style={styles.statsGrid}>
+        <div style={{ ...HUB_METRIC_GRID_STYLE, marginBottom: '40px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
           {fuelStats.map((stat, i) => (
-            <div key={i} style={styles.statCard}>
-              <div style={{ ...styles.iconBox, backgroundColor: i % 2 === 0 ? '#F5F3FF' : '#0061FF', color: i % 2 === 0 ? '#0061FF' : '#FFF' }}>
-                {stat.icon}
-              </div>
-              <div>
-                <p style={styles.statLabel}>{stat.label}</p>
-                <h3 style={styles.statValue}>{stat.value}</h3>
-                <span style={styles.statTrend}>{stat.trend}</span>
-              </div>
-            </div>
+            <HubMetricCard
+              key={stat.label}
+              label={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+              iconVariant={i % 2 === 1 ? 'solid' : 'soft'}
+              accent="#0061FF"
+              topRight={<span style={{ color: '#10B981' }}>{stat.trend}</span>}
+            />
           ))}
         </div>
 
@@ -228,19 +228,13 @@ const styles = {
   backBtn: { border: '1px solid #E2E8F0', background: 'none', padding: '10px', borderRadius: '12px', cursor: 'pointer', color: '#64748B' },
   logoBox: { display: 'flex', alignItems: 'center', gap: '16px' },
   title: { fontSize: '20px', fontWeight: '900', color: '#0F172A', margin: 0, letterSpacing: '-0.5px' },
-  subtitle: { fontSize: '12px', color: '#64748B', margin: 0, fontWeight: '500' },
+  subtitle: { fontSize: '13px', color: '#64748B', margin: 0, fontWeight: '500' },
   headerActions: { display: 'flex', alignItems: 'center', gap: '16px' },
   searchBox: { display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#F1F5F9', padding: '10px 16px', borderRadius: '12px', width: '320px' },
   searchInput: { border: 'none', background: 'none', fontSize: '13px', color: '#1E293B', width: '100%', fontWeight: '600', outline: 'none' },
   syncBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#FFF', border: '1px solid #E2E8F0', borderRadius: '12px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', color: '#1E293B' },
   publicBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#0061FF', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', color: '#FFF' },
   content: { padding: '40px' },
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' },
-  statCard: { backgroundColor: '#FFF', padding: '24px', borderRadius: '24px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '20px' },
-  iconBox: { width: '48px', height: '48px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statLabel: { fontSize: '11px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: '4px' },
-  statValue: { fontSize: '22px', fontWeight: '900', color: '#0F172A', margin: 0 },
-  statTrend: { fontSize: '11px', fontWeight: '800', color: '#10B981', display: 'block', marginTop: '4px' },
   mainGrid: { display: 'grid', gridTemplateColumns: '1fr 380px', gap: '24px' },
   chartCol: { display: 'flex', flexDirection: 'column' as const, gap: '24px' },
   card: { backgroundColor: '#FFF', padding: '32px', borderRadius: '28px', border: '1px solid #E2E8F0' },

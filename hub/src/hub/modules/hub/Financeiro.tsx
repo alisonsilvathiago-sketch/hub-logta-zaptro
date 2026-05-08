@@ -14,6 +14,7 @@ import {
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import LogtaModal from '@shared/components/Modal';
+import HubMetricCard from '@shared/components/HubMetricCard';
 import Pagination from '@shared/components/Pagination';
 
 const MasterFinanceiro: React.FC = () => {
@@ -97,8 +98,8 @@ const MasterFinanceiro: React.FC = () => {
     <div style={styles.container} className="animate-fade-in">
       <header style={styles.header}>
         <div>
-          <h1 style={styles.title}>Conciliação de Receita Master</h1>
-          <p style={styles.subtitle}>Gestão inteligente de Notas Fiscais e sincronização com Asaas.</p>
+          <h2 style={styles.title}>Conciliação de receita</h2>
+          <p style={styles.subtitle}>Pagamentos, NF-e e sincronização com Asaas.</p>
         </div>
         <div style={styles.headerActions}>
            <button style={styles.syncBtn} onClick={() => {
@@ -114,72 +115,73 @@ const MasterFinanceiro: React.FC = () => {
       </header>
 
 
-      {/* TABS CONTROL */}
+      {/* Sub-abas — estilo linha (diferente das abas principais) */}
       <div style={styles.tabsContainer}>
         <button 
           style={{...styles.tabBtn, ...(activeTab === 'CONCILIACAO' ? styles.tabActive : {})}}
           onClick={() => setActiveTab('CONCILIACAO')}
         >
-          <Zap size={16} color={activeTab === 'CONCILIACAO' ? 'white' : 'var(--text-secondary)'} /> Conciliação Pendente
+          <Zap size={16} color={activeTab === 'CONCILIACAO' ? 'var(--accent)' : 'var(--text-secondary)'} /> Conciliação Pendente
         </button>
         <button 
           style={{...styles.tabBtn, ...(activeTab === 'NOTAS' ? styles.tabActive : {})}}
           onClick={() => setActiveTab('NOTAS')}
         >
-          <FileText size={16} color={activeTab === 'NOTAS' ? 'white' : 'var(--text-secondary)'} /> Notas Emitidas
+          <FileText size={16} color={activeTab === 'NOTAS' ? 'var(--accent)' : 'var(--text-secondary)'} /> Notas Emitidas
         </button>
       </div>
 
       {/* MAIN LIST */}
       <div style={styles.statsGrid}>
-        <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
-            <DollarSign size={20} color="#0061FF" />
-          </div>
-          <div style={styles.statContent}>
-            <p style={styles.statLabel}>Total Conciliado</p>
-            <h3 style={styles.statValue}>R$ 1.2M</h3>
-          </div>
-          <div style={{...styles.statTrend, color: '#10B981'}}>
-            +8.4% <TrendingUp size={12} />
-          </div>
-        </div>
-
-        <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#0061FF'}}>
-            <CheckCircle size={20} color="#FFFFFF" />
-          </div>
-          <div style={styles.statContent}>
-            <p style={styles.statLabel}>Taxa de Sucesso</p>
-            <h3 style={styles.statValue}>99.2%</h3>
-          </div>
-        </div>
-
-        <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
-            <Clock size={20} color="#0061FF" />
-          </div>
-          <div style={styles.statContent}>
-            <p style={styles.statLabel}>Pendentes (HOJE)</p>
-            <h3 style={styles.statValue}>42</h3>
-          </div>
-          <div style={{...styles.statTrend, color: '#F59E0B'}}>
-            AGUARDANDO
-          </div>
-        </div>
-
-        <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#0052D9'}}>
-            <ShieldCheck size={20} color="#FFFFFF" />
-          </div>
-          <div style={styles.statContent}>
-            <p style={styles.statLabel}>Chargebacks / Disputas</p>
-            <h3 style={styles.statValue}>0</h3>
-          </div>
-          <div style={{...styles.statTrend, color: '#10B981'}}>
-            SEGURO
-          </div>
-        </div>
+        <HubMetricCard
+          label="Total Conciliado"
+          icon={DollarSign}
+          iconVariant="soft"
+          accent="#0061FF"
+          topRight={
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: 14,
+                fontWeight: 800,
+                color: '#10B981',
+              }}
+            >
+              +8.4% <TrendingUp size={14} />
+            </span>
+          }
+          value="R$ 1.2M"
+        />
+        <HubMetricCard
+          label="Taxa de Sucesso"
+          icon={CheckCircle}
+          iconVariant="solid"
+          accent="#0061FF"
+          value="99.2%"
+        />
+        <HubMetricCard
+          label="Pendentes (HOJE)"
+          icon={Clock}
+          iconVariant="soft"
+          accent="#0061FF"
+          iconSize={20}
+          topRight={
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#F59E0B' }}>AGUARDANDO</span>
+          }
+          value="42"
+        />
+        <HubMetricCard
+          label="Chargebacks / Disputas"
+          icon={ShieldCheck}
+          iconVariant="solid"
+          accent="#0052D9"
+          topRight={
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#10B981' }}>SEGURO</span>
+          }
+          value="0"
+        />
       </div>
 
       <div style={styles.tableCard}>
@@ -296,26 +298,58 @@ const MasterFinanceiro: React.FC = () => {
 };
 
 const styles: Record<string, any> = {
-  container: { padding: '40px', backgroundColor: 'transparent' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
+  container: { padding: '28px 32px 36px', backgroundColor: 'transparent' },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '20px',
+    marginBottom: '0',
+    paddingBottom: '22px',
+    borderBottom: '1px solid var(--border)',
+  },
   bread: { fontSize: '11px', fontWeight: '800', color: 'var(--accent)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' },
-  title: { fontSize: '32px', fontWeight: '700', color: 'var(--secondary)', margin: 0, letterSpacing: '-0.5px' },
-  subtitle: { color: 'var(--text-secondary)', fontSize: '16px', fontWeight: '500', marginTop: '6px' },
-  headerActions: { display: 'flex', gap: '16px' },
+  title: { fontSize: '20px', fontWeight: '800', color: 'var(--secondary)', margin: 0, letterSpacing: '-0.35px' },
+  subtitle: { color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '500', marginTop: '6px' },
+  headerActions: { display: 'flex', gap: '12px', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' },
   syncBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--secondary)', fontWeight: '700', fontSize: '14px', cursor: 'pointer' },
   primaryBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },
 
-  tabsContainer: { display: 'flex', gap: '8px', marginBottom: '32px', backgroundColor: 'var(--bg-secondary)', padding: '6px', borderRadius: '20px', width: 'fit-content' },
-  tabBtn: { padding: '10px 24px', borderRadius: '16px', fontSize: '14px', fontWeight: '700', color: 'var(--text-secondary)', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' },
-  tabActive: { backgroundColor: 'white', color: 'var(--accent)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' },
+  tabsContainer: {
+    display: 'flex',
+    gap: '4px',
+    marginTop: '20px',
+    marginBottom: '28px',
+    backgroundColor: 'transparent',
+    padding: 0,
+    borderRadius: 0,
+    width: '100%',
+    borderBottom: '1px solid var(--border)',
+  },
+  tabBtn: {
+    padding: '12px 18px',
+    borderRadius: 0,
+    fontSize: '13px',
+    fontWeight: '700',
+    color: 'var(--text-secondary)',
+    border: 'none',
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    transition: 'color 0.15s, border-color 0.15s',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    borderBottom: '2px solid transparent',
+    marginBottom: '-1px',
+  },
+  tabActive: {
+    backgroundColor: 'transparent',
+    color: 'var(--accent)',
+    boxShadow: 'none',
+    borderBottomColor: 'var(--accent)',
+  },
 
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' },
-  statCard: { backgroundColor: 'white', padding: '24px', borderRadius: '32px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden' },
-  statIconBox: { width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statContent: { flex: 1 },
-  statLabel: { fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' },
-  statValue: { fontSize: '24px', fontWeight: '800', color: 'var(--secondary)', margin: 0 },
-  statTrend: { fontSize: '10px', fontWeight: '800', padding: '4px 10px', borderRadius: '8px', backgroundColor: 'var(--bg-secondary)' },
+  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '28px' },
 
   tableCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
   tableHeader: { padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-secondary)' },

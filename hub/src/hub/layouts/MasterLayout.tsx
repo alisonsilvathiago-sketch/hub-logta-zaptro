@@ -3,11 +3,14 @@ import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Header from '../components/Header';
 import MasterSidebar from '../components/MasterSidebar';
 import SpotlightSearch from '../components/SpotlightSearch';
-import SyncIndicator from '../components/SyncIndicator';
 import GlobalActivityTicker from '../components/GlobalActivityTicker';
 import { supabase } from '@core/lib/supabase';
 import { AlertCircle, WifiOff } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
+import {
+  MASTER_ROUTE_TOKEN_PARAM,
+  getExpectedMasterRouteToken,
+} from '@core/lib/masterRouteToken';
 
 const MasterLayout: React.FC = () => {
   const { user, profile, isLoading, signOut } = useAuth();
@@ -16,6 +19,7 @@ const MasterLayout: React.FC = () => {
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Monitoramento Inteligente de Conexão - TOP LEVEL
   useEffect(() => {
@@ -52,6 +56,38 @@ const MasterLayout: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  /** Garante ?token=... único por página, preservando demais query params. */
+  useEffect(() => {
+    if (!user || !profile) return;
+    const isMasterUser =
+      profile.role === 'MASTER' || profile.role === 'MASTER_ADMIN';
+    if (!isMasterUser) return;
+
+    const path = location.pathname;
+    if (!path.startsWith('/master')) return;
+
+    const expected = getExpectedMasterRouteToken(path);
+    const params = new URLSearchParams(location.search);
+    if (params.get(MASTER_ROUTE_TOKEN_PARAM) === expected) return;
+
+    params.set(MASTER_ROUTE_TOKEN_PARAM, expected);
+    navigate(
+      {
+        pathname: location.pathname,
+        search: params.toString(),
+        hash: location.hash,
+      },
+      { replace: true }
+    );
+  }, [
+    user,
+    profile,
+    location.pathname,
+    location.search,
+    location.hash,
+    navigate,
+  ]);
 
   if (isLoading) {
     return (
@@ -133,6 +169,9 @@ const MasterLayout: React.FC = () => {
     );
   }
 
+  const isMasterHome = location.pathname === '/master' || location.pathname === '/master/';
+  const isFullWidthPage = isMasterHome || location.pathname.includes('/hubchat');
+
   return (
     <div style={{ 
       display: 'flex', 
@@ -170,10 +209,14 @@ const MasterLayout: React.FC = () => {
           --text-title: #111827;
           --text-subtitle: #6B7280;
           --text-body: #374151;
-          --border: #f1f5f9;
+          --text-primary: #0F172A;
+          --text-secondary: #64748B;
+          --border: #E2E8F0;
           --accent: #0061FF;
+          --accent-light: #F0F7FF;
           --bg-overlay: rgba(99, 102, 241, 0.05);
-          --secondary: #0061FF;
+          --bg-secondary: #F1F5F9;
+          --secondary: #0F172A;
         }
 
         * {
@@ -225,7 +268,7 @@ const MasterLayout: React.FC = () => {
 
         .text-subtitle {
           color: var(--text-subtitle) !important;
-          font-size: 14px !important;
+          font-size: 13px !important;
           font-weight: 400 !important;
           margin-top: 0px !important;
           line-height: 1.5 !important;
@@ -294,21 +337,28 @@ const MasterLayout: React.FC = () => {
         
         <main style={{ 
           flex: 1, 
-          overflowY: location.pathname.includes('/hubchat') ? 'hidden' : 'auto',
+          minHeight: 0,
+          overflowY: isFullWidthPage ? 'hidden' : 'auto',
           backgroundColor: '#F8FAFC',
-          padding: location.pathname.includes('/hubchat') ? '0' : (isMobile ? '20px' : '40px'),
+          padding: isMasterHome ? '0' : isFullWidthPage ? '0 24px' : (isMobile ? '20px' : '40px'),
           backgroundImage: 'radial-gradient(circle at 50% 0%, rgba(217, 255, 0, 0.03) 0%, transparent 50%)',
           display: 'flex',
           flexDirection: 'column'
         }}>
           {/* CENTERED CONTENT WRAPPER */}
           <div style={{
-            maxWidth: location.pathname.includes('/hubchat') ? '100%' : '1400px',
-            margin: location.pathname.includes('/hubchat') ? '0' : '0 auto',
+            maxWidth: isFullWidthPage ? '100%' : '1400px',
+            margin: '0 auto',
             width: '100%',
-            height: location.pathname.includes('/hubchat') ? '100%' : 'auto',
+            flex: isFullWidthPage ? 1 : undefined,
+            minHeight: isFullWidthPage ? 0 : undefined,
+            height: isFullWidthPage ? '665px' : 'auto',
             padding: '0',
-            position: 'relative'
+            position: 'relative',
+            display: isFullWidthPage ? 'flex' : undefined,
+            flexDirection: isFullWidthPage ? 'column' : undefined,
+            gap: isFullWidthPage ? 0 : undefined,
+            boxSizing: 'border-box'
           }}>
             <Outlet />
           </div>
@@ -322,10 +372,10 @@ const MasterLayout: React.FC = () => {
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <div 
-            style={{ width: '280px', height: '100%', backgroundColor: '#FFFFFF', boxShadow: '10px 0 30px rgba(0,0,0,0.1)' }}
+            style={{ width: '280px', height: '100%', backgroundColor: '#FFFFFF', boxShadow: '10px 0 32px rgba(15, 23, 42, 0.08)' }}
             onClick={e => e.stopPropagation()}
           >
-            <MasterSidebar />
+            <MasterSidebar variant="drawer" />
           </div>
         </div>
       )}

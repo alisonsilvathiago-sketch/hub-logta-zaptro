@@ -9,7 +9,10 @@
     "install:logdock": "npm ci --prefix apps/logdock",
     "build:logdock": "npm run build --prefix apps/logdock",
     "build": "npm run install:hub && npm run build:hub",
-    "dev:hub": "cd hub && npm run dev"
+    "dev:hub": "cd hub && npm run dev",
+    "dev:zaptro": "npm run dev --prefix apps/zaptro",
+    "dev:logdock": "npm run dev --prefix apps/logdock",
+    "dev:logta-saas": "npm run dev --prefix \"apps/logta Saas\""
   },
   "devDependencies": {
     "vite": "^8.0.10"

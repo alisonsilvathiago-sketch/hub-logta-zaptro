@@ -1,14 +1,35 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   Cpu, Server, Shield, Database, BarChart3, Settings2, 
   RefreshCw, Plus, Key, Terminal, Lock, HelpCircle, 
-  Sliders, Layers, Radio, AlertCircle, CheckCircle
+  Sliders, Layers, Radio, AlertCircle, CheckCircle, Coins,
+  GraduationCap,
 } from 'lucide-react';
 import { SYSTEM_PERSONALITIES, SHARED_MEMORY_VAULT, GATEWAY_TELEMETRY, runDiagnostics } from '../../../core/lib/hubAiOrchestrator';
+import { IaGatewayTrainingTab, IaGatewayUsageTab } from './IaGatewayCompanyPanels';
 
 type UserRole = 'MASTER_ADMIN' | 'ADMIN' | 'USER';
 
+type MainGatewayTab = 'painel' | 'uso' | 'treino';
+
 const IaGatewayCenter: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab');
+  const mainTab: MainGatewayTab = rawTab === 'uso' || rawTab === 'treino' ? rawTab : 'painel';
+
+  const setMainTab = (t: MainGatewayTab) => {
+    setSearchParams(
+      (prev) => {
+        const n = new URLSearchParams(prev);
+        if (t === 'painel') n.delete('tab');
+        else n.set('tab', t);
+        return n;
+      },
+      { replace: true }
+    );
+  };
+
   // 🔐 RBAC State (Simulation for the user's role control)
   const [currentRole, setCurrentRole] = useState<UserRole>('MASTER_ADMIN');
   const [isAuthorized, setIsAuthorized] = useState(true);
@@ -81,7 +102,7 @@ const IaGatewayCenter: React.FC = () => {
           <Lock size={40} />
         </div>
         <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#0F172A', margin: 0 }}>Acesso Restrito - AI Gateway</h2>
-        <p style={{ color: '#64748B', maxWidth: '460px', fontSize: '15px', marginTop: '8px', lineHeight: '1.5' }}>
+        <p style={{ color: '#64748B', maxWidth: '460px', fontSize: '13px', marginTop: '8px', lineHeight: '1.5' }}>
           Apenas usuários com credencial <strong>MASTER_ADMIN</strong> possuem autorização para alterar parâmetros de infraestrutura, roteamento inteligente e chaves de segurança da IA.
         </p>
         <div style={{ display: 'flex', gap: '12px', marginTop: '24px', alignItems: 'center' }}>
@@ -104,28 +125,132 @@ const IaGatewayCenter: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       
       {/* HEADER SECTION */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-1px' }}>AI Gateway Center</h1>
-            <span style={{ background: '#EFF6FF', color: '#0061FF', fontSize: '11px', fontWeight: 800, padding: '4px 10px', borderRadius: '20px', textTransform: 'uppercase' }}>MASTER ONLY</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-1px' }}>AI Gateway Center</h1>
+              <span style={{ background: '#EFF6FF', color: '#0061FF', fontSize: '11px', fontWeight: 800, padding: '4px 10px', borderRadius: '20px', textTransform: 'uppercase' }}>MASTER ONLY</span>
+            </div>
+            <p style={{ color: '#64748B', fontSize: '13px', marginTop: '4px' }}>Gerenciamento avançado de servidores, providers de IA, controle de multiagentes e chaves de criptografia.</p>
           </div>
-          <p style={{ color: '#64748B', fontSize: '16px', marginTop: '4px' }}>Gerenciamento avançado de servidores, providers de IA, controle de multiagentes e chaves de criptografia.</p>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', background: '#FFFFFF', padding: '8px 16px', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>Simular Permissão:</span>
+            <select 
+              value={currentRole} 
+              onChange={(e) => setCurrentRole(e.target.value as UserRole)}
+              style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#FFF', fontWeight: 700, fontSize: '12px', color: '#0F172A', outline: 'none' }}
+            >
+              <option value="MASTER_ADMIN">MASTER_ADMIN</option>
+              <option value="ADMIN">ADMIN</option>
+              <option value="USER">USER</option>
+            </select>
+          </div>
         </div>
-        
-        {/* Role Simulator Quick Widget */}
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: '#FFFFFF', padding: '8px 16px', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
-          <span style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>Simular Permissão:</span>
-          <select 
-            value={currentRole} 
-            onChange={(e) => setCurrentRole(e.target.value as UserRole)}
-            style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#FFF', fontWeight: 700, fontSize: '12px', color: '#0F172A', outline: 'none' }}
+
+        <nav
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '8px',
+            alignItems: 'center',
+            paddingTop: '16px',
+            borderTop: '1px solid #E2E8F0',
+          }}
+          aria-label="Seções do AI Gateway"
+        >
+          {(
+            [
+              { id: 'painel' as const, label: 'Gateway & infra', icon: Layers },
+              { id: 'uso' as const, label: 'Uso por cliente', icon: BarChart3 },
+              { id: 'treino' as const, label: 'Treino da IA', icon: GraduationCap },
+            ] as const
+          ).map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setMainTab(id)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 16px',
+                borderRadius: '12px',
+                border: mainTab === id ? '2px solid #0061FF' : '1px solid #E2E8F0',
+                background: mainTab === id ? '#EFF6FF' : '#FFF',
+                color: mainTab === id ? '#0061FF' : '#64748B',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              <Icon size={16} strokeWidth={2} /> {label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {mainTab === 'uso' && <IaGatewayUsageTab />}
+      {mainTab === 'treino' && <IaGatewayTrainingTab />}
+
+      {mainTab === 'painel' && (
+      <>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+          padding: '16px 20px',
+          borderRadius: '16px',
+          border: '1px solid #E2E8F0',
+          background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
           >
-            <option value="MASTER_ADMIN">MASTER_ADMIN</option>
-            <option value="ADMIN">ADMIN</option>
-            <option value="USER">USER</option>
-          </select>
+            <Coins size={20} color="#0061FF" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#0F172A' }}>Créditos IA por cliente</p>
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748B', lineHeight: 1.4 }}>
+              Saldos e ajustes ficam no módulo financeiro, aba Créditos IA, para manter billing e uso alinhados.
+            </p>
+          </div>
         </div>
+        <Link
+          to="/master/billing?tab=creditos-ia"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            borderRadius: '12px',
+            background: '#0061FF',
+            color: '#FFFFFF',
+            fontSize: '12px',
+            fontWeight: 800,
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          Abrir Créditos IA no Financeiro
+        </Link>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
@@ -311,48 +436,57 @@ const IaGatewayCenter: React.FC = () => {
 
       </div>
 
-      {/* SECTION 6: GATEWAY PARAMETERS & TUNNELS */}
-      <div style={{ background: '#FFFFFF', padding: '32px', borderRadius: '24px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <Layers size={20} color="#0061FF" />
-          <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0 }}>Parâmetros do Gateway de IA</h3>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-          <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #F1F5F9' }}>
-            <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>CORS Proxy Tunnel</div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginTop: '4px' }}>Habilitado (/api/ai)</div>
-          </div>
-          <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #F1F5F9' }}>
-            <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>Cache de Contingência</div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginTop: '4px' }}>Ativo (Redundância Local)</div>
-          </div>
-          <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #F1F5F9' }}>
-            <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>Timeout Mínimo</div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginTop: '4px' }}>12,000ms</div>
-          </div>
-          <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #F1F5F9' }}>
-            <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>Rate Limit Máximo</div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginTop: '4px' }}>{rateLimit} reqs / min</div>
-          </div>
-        </div>
-      </div>
-
-      {/* SECTION 7: MULTIAGENT SPECIFICATIONS */}
-      <div style={{ background: '#FFFFFF', padding: '32px', borderRadius: '24px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <Cpu size={20} color="#0061FF" />
-          <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0 }}>Especificações dos Multiagentes</h3>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-          {Object.values(SYSTEM_PERSONALITIES).map(p => (
-            <div key={p.id} style={{ padding: '16px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: p.color }}>●</span>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A' }}>{p.agentName}</span>
-              </div>
-              <p style={{ fontSize: '11px', color: '#64748B', margin: 0, lineHeight: '1.4' }}>{p.systemPrompt.slice(0, 95)}...</p>
+      {/* SECTION 6–7: Parâmetros do gateway + multiagentes (mesma seção, 2 colunas) */}
+      <div style={{ background: '#FFFFFF', padding: '32px', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '28px',
+            alignItems: 'start',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <Layers size={20} color="#0061FF" />
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0 }}>Parâmetros do Gateway de IA</h3>
             </div>
-          ))}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '16px' }}>
+              <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #F1F5F9' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>CORS Proxy Tunnel</div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginTop: '4px' }}>Habilitado (/api/ai)</div>
+              </div>
+              <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #F1F5F9' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>Cache de Contingência</div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginTop: '4px' }}>Ativo (Redundância Local)</div>
+              </div>
+              <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #F1F5F9' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>Timeout Mínimo</div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginTop: '4px' }}>12,000ms</div>
+              </div>
+              <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #F1F5F9' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>Rate Limit Máximo</div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginTop: '4px' }}>{rateLimit} reqs / min</div>
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <Cpu size={20} color="#0061FF" />
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: 0 }}>Especificações dos Multiagentes</h3>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+              {Object.values(SYSTEM_PERSONALITIES).map(p => (
+                <div key={p.id} style={{ padding: '16px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: p.color }}>●</span>
+                    <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A' }}>{p.agentName}</span>
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#64748B', margin: 0, lineHeight: '1.4' }}>{p.systemPrompt.slice(0, 95)}...</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -379,6 +513,9 @@ const IaGatewayCenter: React.FC = () => {
           </div>
         </div>
       </div>
+
+      </>
+      )}
 
     </div>
   );

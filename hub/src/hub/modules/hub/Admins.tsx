@@ -21,7 +21,7 @@ interface UserProfile {
   company_name?: string;
 }
 
-const UserManagement: React.FC = () => {
+const UserManagement: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -126,7 +126,8 @@ const UserManagement: React.FC = () => {
   });
 
   return (
-    <div style={styles.container} className="animate-fade-in">
+    <div style={styles.container} className={embedded ? undefined : 'animate-fade-in'}>
+      {!embedded && (
       <header style={styles.header}>
         <div>
           <h1 style={styles.title}>Gestão Unificada de Usuários</h1>
@@ -138,6 +139,7 @@ const UserManagement: React.FC = () => {
           </button>
         </div>
       </header>
+      )}
 
       <div style={styles.statsRow}>
         <div style={styles.statMini}>
@@ -293,7 +295,7 @@ const styles: Record<string, any> = {
   container: { padding: '0', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
   title: { fontSize: '28px', fontWeight: '500', color: 'var(--primary)', letterSpacing: '0.4px' },
-  subtitle: { color: 'var(--text-muted)', fontSize: '15px', fontWeight: '400', letterSpacing: '0.2px' },
+  subtitle: { color: 'var(--text-muted)', fontSize: '13px', fontWeight: '400', letterSpacing: '0.2px' },
   headerActions: { display: 'flex', gap: '12px' },
   refreshBtn: { width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' },
 

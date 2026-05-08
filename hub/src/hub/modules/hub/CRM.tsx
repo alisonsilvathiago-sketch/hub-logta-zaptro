@@ -17,6 +17,7 @@ import {
 import { supabase } from '@core/lib/supabase';
 import LogtaModal from '@shared/components/Modal';
 import ShortcutTooltip from '@shared/components/ShortcutTooltip';
+import { HubMetricCard, HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
 import Button from '@shared/components/Button';
 import Pagination from '@shared/components/Pagination';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
@@ -186,58 +187,58 @@ const MasterCRM: React.FC = () => {
         </div>
       </header>
 
-      <div style={styles.statsGrid}>
-        <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
-            <Target size={20} color="#0061FF" />
-          </div>
-          <div style={styles.statContent}>
-            <p style={styles.statLabel}>Pipeline Total</p>
-            <h3 style={styles.statValue}>R$ {(leads.reduce((acc, curr) => acc + (Number(curr.potential_value) || 0), 0) / 1000).toFixed(1)}k</h3>
-          </div>
-          <div style={{...styles.statTrend, color: '#10B981'}}>
-            +12% <TrendingUp size={12} />
-          </div>
-        </div>
-
-        <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#0061FF'}}>
-            <CheckCircle size={20} color="#FFFFFF" />
-          </div>
-          <div style={styles.statContent}>
-            <p style={styles.statLabel}>Taxa de Conversão</p>
-            <h3 style={styles.statValue}>18.4%</h3>
-          </div>
-          <div style={{...styles.statTrend, color: '#64748B'}}>
-            Média do trimestre
-          </div>
-        </div>
-
-        <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#0061FF15'}}>
-            <Zap size={20} color="#0061FF" />
-          </div>
-          <div style={styles.statContent}>
-            <p style={styles.statLabel}>Leads em Risco</p>
-            <h3 style={styles.statValue}>12</h3>
-          </div>
-          <div style={{...styles.statTrend, color: '#64748B'}}>
-            Sem contato há 7+ dias
-          </div>
-        </div>
-
-        <div style={styles.statCard}>
-          <div style={{...styles.statIconBox, backgroundColor: '#0052D9'}}>
-            <Star size={20} color="#FFFFFF" />
-          </div>
-          <div style={styles.statContent}>
-            <p style={styles.statLabel}>Ticket Médio SaaS</p>
-            <h3 style={styles.statValue}>R$ 1.450</h3>
-          </div>
-          <div style={{...styles.statTrend, color: '#64748B'}}>
-            Mix de planos
-          </div>
-        </div>
+      <div style={HUB_METRIC_GRID_STYLE}>
+        <HubMetricCard
+          label="Pipeline Total"
+          icon={Target}
+          iconVariant="soft"
+          accent="#0061FF"
+          topRight={
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: 14,
+                fontWeight: 800,
+                color: '#10B981',
+              }}
+            >
+              +12% <ArrowUpRight size={12} />
+            </span>
+          }
+          value={`R$ ${(leads.reduce((acc, curr) => acc + (Number(curr.potential_value) || 0), 0) / 1000).toFixed(1)}k`}
+        />
+        <HubMetricCard
+          label="Taxa de Conversão"
+          icon={CheckCircle}
+          iconVariant="solid"
+          accent="#0061FF"
+          topRight={
+            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-secondary)' }}>Média</span>
+          }
+          value="18.4%"
+        />
+        <HubMetricCard
+          label="Leads em Risco"
+          icon={Zap}
+          iconVariant="soft"
+          accent="#0061FF"
+          topRight={
+            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-secondary)' }}>Atenção</span>
+          }
+          value="12"
+        />
+        <HubMetricCard
+          label="Ticket Médio"
+          icon={Star}
+          iconVariant="solid"
+          accent="#0061FF"
+          topRight={
+            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-secondary)' }}>SaaS</span>
+          }
+          value="R$ 1.450"
+        />
       </div>
 
           {viewMode === 'kanban' ? (
@@ -496,11 +497,11 @@ const MasterCRM: React.FC = () => {
 };
 
 const styles = {
-  container: { padding: '40px', backgroundColor: 'transparent', minHeight: '100vh' },
+  container: { padding: '0', backgroundColor: 'transparent', minHeight: '100vh' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '48px' },
   bread: { fontSize: '10px', fontWeight: '700', color: '#0061FF', marginBottom: '8px', letterSpacing: '1px', textTransform: 'uppercase' as const },
   title: { fontSize: '26px', fontWeight: '600', color: '#111827', margin: 0, letterSpacing: '-0.5px' },
-  subtitle: { color: '#6B7280', fontSize: '14px', fontWeight: '400' },
+  subtitle: { color: '#6B7280', fontSize: '13px', fontWeight: '400' },
   headerActions: { display: 'flex', gap: '20px', alignItems: 'center' },
   addBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 28px', backgroundColor: '#111827', color: '#FFFFFF', border: 'none', borderRadius: '16px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)', transition: 'all 0.2s', letterSpacing: '0.4px' },
   

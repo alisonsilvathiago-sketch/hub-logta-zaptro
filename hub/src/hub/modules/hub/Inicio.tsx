@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Sparkles, Send, Mic, Plus, ArrowRight, Bot, 
-  TrendingUp, Truck, CreditCard, MessageCircle, RefreshCw
+  TrendingUp, Truck, CreditCard, MessageCircle, RefreshCw,
+  Compass, Globe, Image, Folder, MoreHorizontal
 } from 'lucide-react';
 import { dispatchToAiGateway, SYSTEM_PERSONALITIES, processMultimodalFile } from '../../../core/lib/hubAiOrchestrator';
 
@@ -15,17 +16,12 @@ interface Message {
 const HubInicio: React.FC = () => {
   const navigate = useNavigate();
   const [activeSystem, setActiveSystem] = useState<'master' | 'crm' | 'logistica' | 'financeiro'>('master');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      sender: 'bot',
-      text: 'Alison,\nidentifiquei que o ecossistema está operando com 99.99% de estabilidade global. Há 124 empresas ativas em produção.\n\nDeseja realizar uma auditoria de faturamento?\nAbrir financeiro:\n#/master/billing',
-      agentName: 'HUBA Inteligência Central'
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [showPlusMenu, setShowPlusMenu] = useState(false);
 
   // Send Prompt to Gateway Orquestrador
   const handleSend = async (prompt: string) => {
@@ -98,233 +94,383 @@ const HubInicio: React.FC = () => {
     }
   };
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, gap: 0, height: 0, width: '100%' }}>
       
-      {/* HEADER WITH ADMINISTRATIVE REDIRECT */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFFFFF', padding: '24px', borderRadius: '24px', border: '1px solid #E2E8F0', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h1 style={{ fontSize: '30px', fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-1px' }}>HUBA Inteligência Central</h1>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981' }} className="pulse-sparkle" />
-          </div>
-          <p style={{ color: '#64748B', fontSize: '15px', marginTop: '4px', margin: 0 }}>Copiloto conversacional oficial e cérebro central de todo o ecossistema SaaS.</p>
-        </div>
-        
-        <button 
-          onClick={() => navigate('/master/settings?tab=ia-gateway')}
-          style={{
-            padding: '12px 24px',
-            borderRadius: '14px',
-            border: 'none',
-            background: 'linear-gradient(135deg, #0061FF 0%, #0044FF 100%)',
-            color: '#FFFFFF',
-            fontWeight: 700,
-            fontSize: '13px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 8px 20px rgba(0, 97, 255, 0.25)',
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-          AI Gateway Center <ArrowRight size={14} />
-        </button>
-      </div>
-
       {/* CONVERSATIONAL CHAT CONTAINER */}
       <div style={{
         background: 'linear-gradient(180deg, #020617 0%, #0F172A 100%)',
         borderRadius: '32px',
-        padding: '40px',
+        padding: '0',
+        marginLeft: '30px',
+        marginRight: '30px',
+        marginTop: '20px',
+        marginBottom: '20px',
+        boxSizing: 'border-box',
         boxShadow: '0 25px 50px -12px rgba(0, 97, 255, 0.15)',
         color: '#FFFFFF',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        gap: 0,
         position: 'relative',
-        overflow: 'hidden',
-        minHeight: '480px',
-        justifyContent: 'space-between'
+        overflow: 'visible',
+        flex: 1,
+        height: 0,
+        minHeight: 0,
+        justifyContent: messages.length === 0 ? 'center' : 'space-between'
       }}>
         {/* Sleek Starry Background Pattern */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1px, transparent 0)', backgroundSize: '32px 32px', opacity: 0.6, pointerEvents: 'none' }} />
 
-        {/* Top Floating Agent Picker */}
-        <div style={{ width: '100%', maxWidth: '720px', display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '16px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', zIndex: 1, scrollbarWidth: 'none' }}>
-          {Object.values(SYSTEM_PERSONALITIES).filter(p => ['master', 'crm', 'logistica', 'financeiro'].includes(p.id)).map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setActiveSystem(p.id as any)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 18px',
-                borderRadius: '24px',
-                border: activeSystem === p.id ? '2px solid #0061FF' : '1px solid rgba(255,255,255,0.08)',
-                background: activeSystem === p.id ? '#0061FF' : 'rgba(255, 255, 255, 0.04)',
-                color: '#FFF',
-                fontSize: '12px',
-                fontWeight: 800,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s'
-              }}
-            >
-              {getSystemIcon(p.id)} {p.name}
-            </button>
-          ))}
-        </div>
+        {/* Top Header Title (shown when messages exist) */}
+        {messages.length > 0 && (
+          <div style={{ width: '100%', maxWidth: '720px', textAlign: 'center', paddingBottom: '16px', marginTop: 0, borderBottom: '1px solid rgba(255, 255, 255, 0.08)', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <p style={{ fontSize: '13px', color: '#94A3B8', margin: 0, fontWeight: 500 }}>
+              Inteligência Central do Ecossistema Logta, Zaptro e LogDock
+            </p>
+          </div>
+        )}
+
+        {/* Centralized Welcome Title (shown when no messages exist) */}
+        {messages.length === 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', zIndex: 1, textAlign: 'center', marginBottom: '28px', marginTop: 0, width: '100%', maxWidth: 'min(1100px, 100%)', boxSizing: 'border-box', flexShrink: 0, fontSize: '22px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 16px', background: 'rgba(0, 97, 255, 0.15)', borderRadius: '20px', color: '#0061FF', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>
+              <Bot size={13} /> huba inteligência central
+            </div>
+            <h2 style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif', fontSize: 'clamp(3rem, 10vw, 72px)', fontWeight: 950, boxSizing: 'border-box', lineHeight: 1.05, letterSpacing: '-0.03em', backgroundImage: 'linear-gradient(90deg, rgb(255, 255, 255) 0%, rgb(148, 163, 184) 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', color: 'transparent', WebkitTextFillColor: 'transparent', margin: '8px 0px 0px', maxWidth: 'min(95vw, 1100px)', width: '100%' }}>Pergunte à HUBA</h2>
+            <p style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif', fontSize: '13px', color: '#94A3B8', margin: '14px 0 0 0', fontWeight: 500, lineHeight: '1.4', maxWidth: '580px' }}>
+              A inteligência que unifica o ecossistema Logta, Zaptro e LogDock.
+            </p>
+          </div>
+        )}
 
         {/* Conversation Feed */}
-        <div style={{
-          width: '100%',
-          maxWidth: '720px',
-          height: '240px',
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-          padding: '20px 0',
-          scrollbarWidth: 'none',
-          zIndex: 1
-        }}>
-          {messages.map((msg, i) => (
-            <div 
-              key={i} 
-              style={{
-                alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                maxWidth: '85%',
-                padding: '14px 20px',
-                borderRadius: msg.sender === 'user' ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
-                backgroundColor: msg.sender === 'user' ? '#0061FF' : 'rgba(255, 255, 255, 0.06)',
-                border: msg.sender === 'user' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
-                fontSize: '14px',
-                lineHeight: '1.6',
-                color: '#FFF',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.15)'
-              }}
-            >
-              {msg.agentName && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#94A3B8', fontWeight: 800, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  <Bot size={11} color="#0061FF" /> {msg.agentName}
-                </div>
-              )}
-              {msg.text}
-            </div>
-          ))}
-          {isTyping && (
-            <div style={{ alignSelf: 'flex-start', background: 'rgba(255,255,255,0.06)', padding: '12px 18px', borderRadius: '18px', display: 'flex', gap: '5px', alignItems: 'center' }}>
-              <div style={{ width: '6px', height: '6px', background: '#0061FF', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out' }} />
-              <div style={{ width: '6px', height: '6px', background: '#0061FF', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out 0.2s' }} />
-              <div style={{ width: '6px', height: '6px', background: '#0061FF', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out 0.4s' }} />
-            </div>
-          )}
-        </div>
+        {messages.length > 0 && (
+          <div style={{
+            width: '100%',
+            maxWidth: '720px',
+            flex: 1,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            padding: '20px 0',
+            scrollbarWidth: 'none',
+            zIndex: 1,
+            marginBottom: '20px'
+          }}>
+            {messages.map((msg, i) => (
+              <div 
+                key={i} 
+                style={{
+                  alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                  maxWidth: '85%',
+                  padding: '14px 20px',
+                  borderRadius: msg.sender === 'user' ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
+                  backgroundColor: msg.sender === 'user' ? '#0061FF' : 'rgba(255, 255, 255, 0.06)',
+                  border: msg.sender === 'user' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+                  fontSize: '14px',
+                  lineHeight: '1.6',
+                  color: '#FFF',
+                  boxShadow: '0 8px 16px rgba(0,0,0,0.15)'
+                }}
+              >
+                {msg.agentName && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#94A3B8', fontWeight: 800, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <Bot size={11} color="#0061FF" /> {msg.agentName}
+                  </div>
+                )}
+                {msg.text}
+              </div>
+            ))}
+            {isTyping && (
+              <div style={{ alignSelf: 'flex-start', background: 'rgba(255,255,255,0.06)', padding: '12px 18px', borderRadius: '18px', display: 'flex', gap: '5px', alignItems: 'center' }}>
+                <div style={{ width: '6px', height: '6px', background: '#0061FF', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out' }} />
+                <div style={{ width: '6px', height: '6px', background: '#0061FF', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out 0.2s' }} />
+                <div style={{ width: '6px', height: '6px', background: '#0061FF', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out 0.4s' }} />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Input Bar */}
         <div style={{
           width: '100%',
           maxWidth: '720px',
-          background: '#FFFFFF',
+          background: isRecording ? 'transparent' : '#FFFFFF',
           borderRadius: '24px',
-          padding: '16px 24px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+          padding: isRecording ? '0' : '16px 24px',
+          boxShadow: isRecording ? 'none' : '0 20px 40px rgba(0,0,0,0.4)',
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          zIndex: 1
+          border: isRecording ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+          zIndex: 1,
+          position: 'relative',
+          marginBottom: '0'
         }}>
-          {selectedFile && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#F1F5F9', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, color: '#0F172A', width: 'fit-content' }}>
-              📎 {selectedFile} 
-              <button onClick={() => setSelectedFile(null)} style={{ border: 'none', background: 'transparent', color: '#EF4444', fontWeight: 800, cursor: 'pointer', padding: '0 2px' }}>×</button>
+          {/* Plus popover menu matching second mockup */}
+          {showPlusMenu && (
+            <div style={{
+              position: 'absolute',
+              bottom: '90px',
+              left: '0px',
+              width: '260px',
+              background: '#22252A',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              padding: '8px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              zIndex: 10
+            }}>
+              <div 
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#FFF', transition: 'background 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                onClick={() => {
+                  setShowPlusMenu(false);
+                  document.getElementById('huba-file-upload')?.click();
+                }}
+              >
+                <Plus size={15} color="#94A3B8" />
+                <span>Adicionar fotos e arquivos</span>
+              </div>
+              <div 
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#FFF', transition: 'background 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                onClick={() => {
+                  setShowPlusMenu(false);
+                  setInputValue('Criar imagem de: ');
+                }}
+              >
+                <Image size={15} color="#94A3B8" />
+                <span>Criar imagem</span>
+              </div>
+              <div 
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#FFF', transition: 'background 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                onClick={() => {
+                  setShowPlusMenu(false);
+                  setInputValue('[Pense Bem]: ');
+                }}
+              >
+                <Sparkles size={15} color="#94A3B8" />
+                <span>Pense bem</span>
+              </div>
+              <div 
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#FFF', transition: 'background 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                onClick={() => {
+                  setShowPlusMenu(false);
+                  setInputValue('Pesquisa aprofundada sobre: ');
+                }}
+              >
+                <Compass size={15} color="#94A3B8" />
+                <span>Pesquisa aprofundada</span>
+              </div>
+              <div 
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#FFF', transition: 'background 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                onClick={() => {
+                  setShowPlusMenu(false);
+                  setInputValue('Buscar na web sobre: ');
+                }}
+              >
+                <Globe size={15} color="#94A3B8" />
+                <span>Busca na web</span>
+              </div>
+              <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
+              <div 
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#FFF', transition: 'background 0.2s', justifyContent: 'space-between' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <MoreHorizontal size={15} color="#94A3B8" />
+                  <span>Mais</span>
+                </div>
+                <span style={{ fontSize: '10px', color: '#64748B' }}>▶</span>
+              </div>
+              <div 
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#FFF', transition: 'background 0.2s', justifyContent: 'space-between' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Folder size={15} color="#94A3B8" />
+                  <span>Projetos</span>
+                </div>
+                <span style={{ fontSize: '10px', color: '#64748B' }}>▶</span>
+              </div>
             </div>
           )}
-          {isRecording && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#FEF2F2', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, color: '#EF4444', width: 'fit-content' }}>
-              🎤 Gravando áudio com Whisper... 
-              <button onClick={() => setIsRecording(false)} style={{ border: 'none', background: 'transparent', color: '#64748B', fontWeight: 800, cursor: 'pointer', padding: '0 2px' }}>Parar</button>
+
+          {isRecording ? (
+            /* Dictation voice widget state matching third mockup */
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', width: '100%' }}>
+              <span style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>No que você está trabalhando?</span>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '16px', 
+                width: '100%', 
+                background: '#22252A', 
+                padding: '12px 24px', 
+                borderRadius: '30px', 
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.4)'
+              }}>
+                <button 
+                  onClick={() => {}}
+                  style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)' }}
+                >
+                  <Plus size={16} />
+                </button>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '2px', position: 'relative' }}>
+                  <div style={{ width: '100%', borderTop: '1px dashed rgba(255,255,255,0.15)', position: 'absolute' }} />
+                  {/* Wave effect representation on right */}
+                  <div style={{ display: 'flex', gap: '3px', alignItems: 'center', marginLeft: 'auto', marginRight: '24px', zIndex: 1 }}>
+                    <div style={{ width: '3px', height: '8px', background: '#FFF', borderRadius: '2px', animation: 'voiceWave 0.6s infinite ease-in-out' }} />
+                    <div style={{ width: '3px', height: '14px', background: '#FFF', borderRadius: '2px', animation: 'voiceWave 0.6s infinite ease-in-out 0.1s' }} />
+                    <div style={{ width: '3px', height: '22px', background: '#FFF', borderRadius: '2px', animation: 'voiceWave 0.6s infinite ease-in-out 0.2s' }} />
+                    <div style={{ width: '3px', height: '12px', background: '#FFF', borderRadius: '2px', animation: 'voiceWave 0.6s infinite ease-in-out 0.3s' }} />
+                    <div style={{ width: '3px', height: '6px', background: '#FFF', borderRadius: '2px', animation: 'voiceWave 0.6s infinite ease-in-out 0.4s' }} />
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsRecording(false)}
+                  style={{ border: 'none', background: 'transparent', color: '#FFF', fontSize: '20px', cursor: 'pointer', padding: '0 8px', opacity: 0.8 }}
+                >
+                  ×
+                </button>
+                <button 
+                  onClick={() => {
+                    setIsRecording(false);
+                    handleSend("gravação_operacional.wav");
+                  }}
+                  style={{ 
+                    width: '36px', 
+                    height: '36px', 
+                    borderRadius: '50%', 
+                    background: '#0061FF', 
+                    border: 'none', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    cursor: 'pointer',
+                    color: '#FFF',
+                    boxShadow: '0 4px 10px rgba(0, 97, 255, 0.3)'
+                  }}
+                >
+                  ✓
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', fontWeight: 600, background: 'rgba(255,255,255,0.04)', padding: '6px 12px', borderRadius: '8px' }}>
+                Ditar <span style={{ opacity: 0.6, fontSize: '9px', fontWeight: 800 }}>^ ⇧ D</span>
+              </div>
             </div>
+          ) : (
+            <>
+              {selectedFile && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#F1F5F9', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, color: '#0F172A', width: 'fit-content' }}>
+                  📎 {selectedFile} 
+                  <button onClick={() => setSelectedFile(null)} style={{ border: 'none', background: 'transparent', color: '#EF4444', fontWeight: 800, cursor: 'pointer', padding: '0 2px' }}>×</button>
+                </div>
+              )}
+              <textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend(inputValue);
+                  }
+                }}
+                placeholder={`Pergunte algo para a ${SYSTEM_PERSONALITIES[activeSystem]?.agentName || 'Huba'}...`}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  resize: 'none',
+                  fontSize: '15px',
+                  fontWeight: 500,
+                  color: '#0F172A',
+                  height: '42px',
+                  fontFamily: 'inherit'
+                }}
+              />
+
+              <input 
+                type="file" 
+                id="huba-file-upload" 
+                style={{ display: 'none' }} 
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setSelectedFile(file.name);
+                }}
+              />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '12px' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    onClick={() => setShowPlusMenu(prev => !prev)}
+                    style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748B' }}
+                  >
+                    <Plus size={15} />
+                  </button>
+                  <button 
+                    onClick={() => setIsRecording(prev => !prev)}
+                    style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748B' }}
+                  >
+                    <Mic size={15} />
+                  </button>
+                </div>
+                
+                <button 
+                  onClick={() => handleSend(inputValue)}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: '#0061FF',
+                    color: '#FFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 10px rgba(0, 97, 255, 0.3)',
+                    transition: 'transform 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  <Send size={15} />
+                </button>
+              </div>
+            </>
           )}
-          <textarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend(inputValue);
-              }
-            }}
-            placeholder={`Pergunte algo para a ${SYSTEM_PERSONALITIES[activeSystem]?.agentName || 'Huba'}...`}
-            style={{
-              width: '100%',
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              resize: 'none',
-              fontSize: '15px',
-              fontWeight: 500,
-              color: '#0F172A',
-              height: '42px',
-              fontFamily: 'inherit'
-            }}
-          />
-
-          <input 
-            type="file" 
-            id="huba-file-upload" 
-            style={{ display: 'none' }} 
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) setSelectedFile(file.name);
-            }}
-          />
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '12px' }}>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button 
-                onClick={() => document.getElementById('huba-file-upload')?.click()}
-                style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748B' }}
-              >
-                <Plus size={15} />
-              </button>
-              <button 
-                onClick={() => setIsRecording(prev => !prev)}
-                style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: isRecording ? '#FEF2F2' : '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: isRecording ? '#EF4444' : '#64748B' }}
-              >
-                <Mic size={15} />
-              </button>
-            </div>
-            
-            <button 
-              onClick={() => handleSend(inputValue)}
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                border: 'none',
-                background: '#0061FF',
-                color: '#FFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 4px 10px rgba(0, 97, 255, 0.3)',
-                transition: 'transform 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            >
-              <Send size={15} />
-            </button>
-          </div>
         </div>
       </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-6px); }
+        }
+        @keyframes voiceWave {
+          0%, 100% { transform: scaleY(1); }
+          50% { transform: scaleY(2.2); }
+        }
+      `}} />
 
     </div>
   );

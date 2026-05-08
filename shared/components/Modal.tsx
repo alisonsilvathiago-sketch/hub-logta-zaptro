@@ -17,7 +17,6 @@ interface ModalProps {
   hideTitle?: boolean;
   maxWidth?: string;
   darkMode?: boolean;
-  darkMode?: boolean;
   primaryAction?: {
     label: string;
     onClick: () => void;
@@ -91,6 +90,7 @@ const Modal: React.FC<ModalProps> = ({
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
+          justifyContent: 'flex-start',
           maxHeight: '92vh',
           border: darkMode ? '1px solid #333' : '1px solid var(--border)'
         }}
@@ -126,7 +126,7 @@ const Modal: React.FC<ModalProps> = ({
             <div style={{ flex: 1 }}>
               {!hideTitle && (
                 <h2 style={{ 
-                  fontSize: '22px', 
+                  fontSize: '26px', 
                   fontWeight: '700', 
                   color: darkMode ? '#FFF' : '#1E1B4B', 
                   margin: 0, 
@@ -136,7 +136,7 @@ const Modal: React.FC<ModalProps> = ({
                 </h2>
               )}
               {subtitle && (
-                <p style={{ color: '#64748B', fontSize: '14px', margin: '4px 0 0', fontWeight: '500', letterSpacing: '0.2px' }}>
+                <p style={{ color: '#64748B', fontSize: '11px', margin: '4px 0 0', fontWeight: '500', letterSpacing: '0.2px' }}>
                   {subtitle}
                 </p>
               )}
@@ -179,12 +179,12 @@ const Modal: React.FC<ModalProps> = ({
         {(primaryAction || secondaryAction) && (
           <div style={{
             padding: '24px 32px 32px',
-            background: 'var(--bg-overlay)',
+            background: 'rgba(230, 230, 230, 0.19)',
             display: 'flex',
             gap: '12px',
             justifyContent: 'flex-end',
             flexShrink: 0,
-            borderTop: '1px solid var(--border)'
+            borderTop: '1px solid rgba(245, 245, 245, 1)'
           }}>
             {secondaryAction && (
               <Button 

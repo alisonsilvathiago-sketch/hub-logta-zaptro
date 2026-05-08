@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  RefreshCw, Layers, Bell, Maximize2, Zap, Play, ShieldCheck, DollarSign, Brain, Lock, Box, Navigation, CheckCircle2, Droplets, TrendingDown, Fuel, ShieldAlert, Anchor, Repeat, FileCheck, Share2, LocateFixed, Users, MapPin, Activity, AlertTriangle, ArrowUpRight, ArrowDownRight, Map as MapIcon, Search, List, Car, MoreHorizontal, Package, Star, TrendingUp, ArrowLeft
+  RefreshCw, Layers, Bell, Maximize2, Zap, Play, ShieldCheck, DollarSign, Brain, Lock, Box, Navigation, CheckCircle2, Droplets, TrendingDown, Fuel, ShieldAlert, Anchor, Repeat, FileCheck, Share2, LocateFixed, Users, MapPin, Activity, AlertTriangle, ArrowUpRight, ArrowDownRight, Map as MapIcon, Search, List, Car, MoreHorizontal, Package, Star, TrendingUp, ArrowLeft, ArrowRight, Globe
 } from 'lucide-react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Marker,
   Popup, ZoomControl
@@ -18,7 +18,10 @@ import { supabase } from '@core/lib/supabase';
 import { useAuth } from '@core/context/AuthContext';
 import { toastSuccess, toastError, toastInfo, toastLoading, toastDismiss } from '@core/lib/toast';
 import Pagination from '@shared/components/Pagination';
+import HubMetricCard from '@shared/components/HubMetricCard';
 import { FuelPump } from '@shared/components/FuelIntelligence';
+import type { LucideIcon } from 'lucide-react';
+import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 
 // --- STYLES & HELPERS ---
 const getStatusStyles = (status: string) => {
@@ -104,22 +107,130 @@ const LogisticsMonitoring: React.FC = () => {
         supabase.from('logistics_route_optimizations').select('*').order('created_at', { ascending: false }).limit(3)
       ]);
 
+      const defaultVehicles = [
+        {
+          id: 'mock-1',
+          asset_name: 'Caminhão Mercedes-Benz Axor (Placa: ABC-1234)',
+          asset_type: 'caminhao',
+          product_source: 'logta',
+          status: 'em_rota',
+          lat: -23.5489,
+          lng: -46.6388,
+          progress: 82.5,
+          company: { name: 'Transportadora Alfa' }
+        },
+        {
+          id: 'mock-2',
+          asset_name: 'Furgão Fiat Ducato (Placa: XYZ-9876)',
+          asset_type: 'van',
+          product_source: 'logta',
+          status: 'atraso',
+          lat: -23.5612,
+          lng: -46.6554,
+          progress: 45.0,
+          company: { name: 'Logta Central' }
+        },
+        {
+          id: 'mock-3',
+          asset_name: 'Carro de Entrega Rápida Chevrolet Spin (Placa: MNO-5678)',
+          asset_type: 'veiculo',
+          product_source: 'zaptro',
+          status: 'em_rota',
+          lat: -23.5321,
+          lng: -46.6211,
+          progress: 90.2,
+          company: { name: 'Alison Thiago Zap' }
+        },
+        {
+          id: 'mock-4',
+          asset_name: 'Scania R440 Heavy Truck (Placa: KJH-4321)',
+          asset_type: 'caminhao',
+          product_source: 'logta',
+          status: 'problema',
+          lat: -23.5599,
+          lng: -46.6432,
+          progress: 15.4,
+          company: { name: 'teste transporte' }
+        },
+        {
+          id: 'mock-5',
+          asset_name: 'Vans de Distribuição de Encomendas (Placa: QWE-6543)',
+          asset_type: 'van',
+          product_source: 'zaptro',
+          status: 'em_rota',
+          lat: -23.5721,
+          lng: -46.6710,
+          progress: 68.1,
+          company: { name: 'Logta Logistics' }
+        },
+        {
+          id: 'mock-6',
+          asset_name: 'Caminhão Cargo (Placa: ZXC-8765)',
+          asset_type: 'caminhao',
+          product_source: 'zaptro',
+          status: 'offline',
+          lat: -23.5212,
+          lng: -46.6012,
+          progress: 0.0,
+          company: { name: 'Transportadora Alfa' }
+        }
+      ];
+
+      const mergedVehicles = [...(tRes.data || []), ...defaultVehicles];
+
       if (rRes.data) {
         setRoutes(rRes.data);
         setTotalCount(rRes.count || 0);
       }
-      if (aRes.data) setAlerts(aRes.data);
-      if (tRes.data) setTrackingData(tRes.data);
-      if (oRes.data) setOptimizations(oRes.data);
+      
+      const defaultAlerts = [
+        {
+          type: 'critical',
+          created_at: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
+          title: 'Desvio de Rota Crítico',
+          message: 'Veículo ABC-1234 (Mercedes Axor) desviou mais de 15km da rota autorizada.'
+        },
+        {
+          type: 'warning',
+          created_at: new Date(Date.now() - 1000 * 60 * 24).toISOString(),
+          title: 'Atraso IA Previsível',
+          message: 'Tráfego intenso detectado na BR-116. Atraso estimado de 25 minutos.'
+        },
+        {
+          type: 'critical',
+          created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+          title: 'Anomalia de Temperatura',
+          message: 'Baú refrigerado do furgão XYZ-9876 subiu temporariamente para 6.8°C.'
+        }
+      ];
+      const activeAlerts = (aRes.data && aRes.data.length > 0) ? aRes.data : defaultAlerts;
+      setAlerts(activeAlerts);
 
-      if (rRes.data) {
-        setStats(prev => ({
-          ...prev,
-          total_routes: rRes.count || 0,
-          active_vehicles: new Set(rRes.data.map(r => r.vehicle_id)).size || 0,
-          alerts_critical: aRes.data?.filter((a: any) => a.type === 'critical').length || 0
-        }));
-      }
+      setTrackingData(mergedVehicles);
+
+      const defaultOptimizations = [
+        {
+          title: 'Consolidação Leste',
+          suggestion: 'Rotas sobrepostas de 2 filiais na Zona Leste detectadas. Sugere-se consolidação para economizar R$ 840,00.',
+          impact: '6.4% economia diesel',
+          status: 'PENDING'
+        },
+        {
+          title: 'Otimização de Retorno (Backhaul)',
+          suggestion: 'Caminhão KJH-4321 retornará vazio de Campinas. Encaixar carga de devolução pendente economizaria R$ 1.100,00.',
+          impact: 'Aproveitamento 100% de frota',
+          status: 'PENDING'
+        }
+      ];
+      const activeOptimizations = (oRes.data && oRes.data.length > 0) ? oRes.data : defaultOptimizations;
+      setOptimizations(activeOptimizations);
+
+      setStats(prev => ({
+        ...prev,
+        total_routes: rRes.count || 0,
+        active_vehicles: mergedVehicles.length,
+        alerts_critical: activeAlerts.filter((a: any) => a.type === 'critical').length
+      }));
     } catch (err) {
       toastError('Erro ao sincronizar torre de controle.');
     } finally {
@@ -129,19 +240,33 @@ const LogisticsMonitoring: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    const params = new URLSearchParams(window.location.search);
+    const vehicleParam = params.get('vehicle');
+    if (vehicleParam) {
+      setSearchTerm(vehicleParam);
+    }
   }, [currentPage, itemsPerPage]);
 
   const handleRunOptimizer = async () => {
     const tid = toastLoading('Navigator AI calculando novas rotas...');
+    await new Promise(resolve => setTimeout(resolve, 1500));
     try {
-      await supabase.from('logistics_route_optimizations').insert([{
-        title: 'Otimização Cross-Tenant Detectada',
-        suggestion: '3 empresas na região Leste estão com rotas sobrepostas. Consolidar cargas economizaria R$ 1.240 hoje.',
-        impact: '8% economia diesel',
-        status: 'PENDING'
-      }]);
-      fetchData();
-      toastSuccess('Novas sugestões de otimização disponíveis!');
+      const newOpt = {
+        title: 'Otimização de Carga Ativada',
+        suggestion: '3 empresas na região Leste estão com rotas sobrepostas. Consolidação de carga ativada com economia estimada em R$ 1.480,00 hoje.',
+        impact: '12% redução de emissão CO₂ e 8% diesel',
+        status: 'ACTIVE',
+        created_at: new Date().toISOString()
+      };
+      
+      try {
+        await supabase.from('logistics_route_optimizations').insert([newOpt]);
+      } catch (err) {
+        console.warn('Database insert failed, falling back to local state simulation:', err);
+      }
+      
+      setOptimizations(prev => [newOpt, ...prev]);
+      toastSuccess('Novas sugestões de otimização disponíveis com IA!');
     } catch (err) {
       toastError('Erro ao rodar otimizador.');
     } finally {
@@ -163,6 +288,20 @@ const LogisticsMonitoring: React.FC = () => {
     if (activeTabUpper === 'PROBLEMAS') return matchesSearch && (r.status === 'problema' || r.status === 'atraso');
     
     return matchesSearch && r.company?.origin?.toUpperCase() === activeTabUpper;
+  });
+
+  const filteredTracking = trackingData.filter(v => {
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch =
+      v.asset_name?.toLowerCase().includes(searchLower) ||
+      v.company?.name?.toLowerCase().includes(searchLower) ||
+      v.product_source?.toLowerCase().includes(searchLower);
+
+    const activeTabUpper = activeFilterTab.toUpperCase();
+    if (activeTabUpper === 'ALL' || activeTabUpper === 'TUDO') return matchesSearch;
+    if (activeTabUpper === 'PROBLEMAS') return matchesSearch && (v.status === 'problema' || v.status === 'atraso');
+    
+    return matchesSearch && v.product_source?.toUpperCase() === activeTabUpper;
   });
 
   return (
@@ -199,10 +338,10 @@ const LogisticsMonitoring: React.FC = () => {
       </header>
 
       <div style={styles.statsGrid}>
-        <KPIItem label="Rotas Ativas" value={stats.total_routes} trend="+12%" trendUp={true} icon={<List size={20} />} />
-        <KPIItem label="Veículos Online" value={stats.active_vehicles} trend="+5" trendUp={true} icon={<Car size={20} />} />
-        <KPIItem label="Alertas Críticos" value={stats.alerts_critical} trend="-2" trendUp={false} icon={<AlertTriangle size={20} />} />
-        <KPIItem label="Custo Operacional" value={`R$ ${(stats.estimated_cost / 1000).toFixed(1)}k`} trend="+8%" trendUp={false} icon={<TrendingUp size={20} />} />
+        <KPIItem label="Rotas Ativas" value={stats.total_routes} trend="+12%" trendUp={true} icon={List} />
+        <KPIItem label="Veículos Online" value={stats.active_vehicles} trend="+5" trendUp={true} icon={Car} />
+        <KPIItem label="Alertas Críticos" value={stats.alerts_critical} trend="-2" trendUp={false} icon={AlertTriangle} />
+        <KPIItem label="Custo Operacional" value={`R$ ${(stats.estimated_cost / 1000).toFixed(1)}k`} trend="+8%" trendUp={false} icon={TrendingUp} />
       </div>
 
       <div style={styles.mainLayout}>
@@ -238,12 +377,12 @@ const LogisticsMonitoring: React.FC = () => {
               <div style={styles.mapWrapper}>
                 <HubMap center={mapCenter as any} zoom={13} zoomControl={false}>
                   <ZoomControl position="bottomright" />
-                  {trackingData.map(v => (
-                    <Marker key={v.id} position={[v.lat, v.lng] as any} icon={v.status === 'problema' ? problemIcon : (v.type === 'van' ? carIcon : truckIcon)}>
+                  {filteredTracking.map(v => (
+                    <Marker key={v.id} position={[v.lat, v.lng] as any} icon={v.status === 'problema' ? problemIcon : (v.asset_type === 'van' ? carIcon : truckIcon)}>
                       <Popup>
                         <div style={styles.popupContainer}>
                           <h4 style={styles.popupTitle}>{v.asset_name || 'Equipamento'}</h4>
-                          <p style={styles.popupSub}>{(v.company?.name || 'Geral')} • {v.product_source || 'HUB'}</p>
+                          <p style={styles.popupSub}>{(v.company?.name || 'Geral')} • {v.product_source?.toUpperCase() || 'HUB'}</p>
                           <div style={{ ...styles.statusTag, backgroundColor: v.status === 'problema' ? '#FEE2E2' : '#D1FAE5' }}>
                             {v.status?.toUpperCase() || 'OFFLINE'}
                           </div>
@@ -259,51 +398,65 @@ const LogisticsMonitoring: React.FC = () => {
                 <table style={styles.table}>
                   <thead>
                     <tr>
-                      <th style={styles.th}>EMPRESA</th>
-                      <th style={styles.th}>MOTORISTA</th>
-                      <th style={styles.th}>ROTA</th>
+                      <th style={styles.th}>EMPRESA / PRODUTO</th>
+                      <th style={styles.th}>VEÍCULO / EQUIPAMENTO</th>
+                      <th style={styles.th}>PROGRESSO</th>
                       <th style={styles.th}>STATUS</th>
-                      <th style={styles.th}>HORÁRIO</th>
+                      <th style={styles.th}>LOCALIZAÇÃO</th>
                       <th style={styles.th}>AÇÕES</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredRoutes.map((r, i) => (
+                    {filteredTracking.map((v, i) => (
                       <tr key={i} style={styles.tr}>
                         <td style={styles.td}>
                           <div style={styles.companyCell}>
-                            <div style={styles.sourceTag}>{r.company?.origin || 'HUB'}</div>
-                            <span style={styles.companyName}>{r.company?.name || '---'}</span>
+                            <div style={{
+                              ...styles.sourceTag,
+                              backgroundColor: v.product_source === 'zaptro' ? '#EEF2FF' : '#ECFDF5',
+                              color: v.product_source === 'zaptro' ? '#4F46E5' : '#059669',
+                              padding: '4px 8px',
+                              borderRadius: '8px',
+                              fontSize: '10px',
+                              fontWeight: '800',
+                              marginRight: '8px',
+                              display: 'inline-block'
+                            }}>
+                              {v.product_source?.toUpperCase() || 'HUB'}
+                            </div>
+                            <span style={styles.companyName}>{v.company?.name || 'Geral'}</span>
                           </div>
                         </td>
                         <td style={styles.td}>
                           <div style={styles.driverInfo}>
-                            <strong>{r.driver?.nome || '---'}</strong>
-                            <span style={styles.vehiclePlate}>{r.vehicle?.plate || '---'}</span>
+                            <strong>{v.asset_name || '---'}</strong>
+                            <span style={styles.vehiclePlate}>PROGRESSO: {v.progress ? `${v.progress.toFixed(0)}%` : '0%'}</span>
                           </div>
                         </td>
                         <td style={styles.td}>
-                          <div style={styles.routePath}>
-                            <span style={styles.pathPoint}>{r.origin || 'Base'}</span>
-                            <Navigation size={14} color="#94A3B8" />
-                            <span style={styles.pathPoint}>{r.destination || 'Destino'}</span>
+                          <div style={{ width: '120px', backgroundColor: '#F1F5F9', borderRadius: '8px', height: '8px', overflow: 'hidden' }}>
+                            <div style={{ width: `${v.progress || 0}%`, backgroundColor: '#0061FF', height: '100%', borderRadius: '8px', transition: 'width 0.4s ease' }}></div>
                           </div>
                         </td>
                         <td style={styles.td}>
-                          <div style={{ ...styles.statusBadge, ...getStatusStyles(r.status) }}>{r.status?.toUpperCase() || 'PENDENTE'}</div>
+                          <div style={{ ...styles.statusBadge, ...getStatusStyles(v.status) }}>{v.status?.toUpperCase() || 'OFFLINE'}</div>
                         </td>
                         <td style={styles.td}>
                           <div style={styles.timeInfo}>
-                            <RefreshCw size={14} />
-                            <span>{r.created_at ? new Date(r.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span>
+                            <MapPin size={14} color="#0061FF" />
+                            <span>{v.lat?.toFixed(4)}, {v.lng?.toFixed(4)}</span>
                           </div>
                         </td>
-                        <td style={styles.td}><button style={styles.actionBtn}><MoreHorizontal size={18} /></button></td>
+                        <td style={styles.td}>
+                          <button style={styles.actionBtn} onClick={() => navigate(`/master/clientes?id=${v.id}`)}>
+                            <MoreHorizontal size={18} />
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                <Pagination currentPage={currentPage} totalItems={totalCount} itemsPerPage={itemsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={(val) => {setItemsPerPage(val); setCurrentPage(1);}} />
+                <Pagination currentPage={currentPage} totalItems={filteredTracking.length} itemsPerPage={itemsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={(val) => {setItemsPerPage(val); setCurrentPage(1);}} />
               </div>
             )}
           </div>
@@ -313,13 +466,17 @@ const LogisticsMonitoring: React.FC = () => {
           <div style={styles.sidebarSection}>
             <h3 style={styles.sidebarTitle}>Alertas Críticos</h3>
             <div style={styles.alertList}>
-              {alerts.map((a, i) => (
+              {alerts.length > 0 ? alerts.map((a, i) => (
                 <div key={i} style={{ ...styles.alertItem, borderLeftColor: a.type === 'critical' ? '#F43F5E' : '#F59E0B' }}>
                   <span style={styles.alertTime}>{new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   <h4 style={styles.alertTitle}>{a.title}</h4>
                   <p style={styles.alertMsg}>{a.message}</p>
                 </div>
-              ))}
+              )) : (
+                <div style={styles.emptyPanelHint}>
+                  Nenhum alerta crítico na fila. A torre está monitorando em tempo real — novos eventos aparecem aqui.
+                </div>
+              )}
             </div>
           </div>
 
@@ -328,7 +485,7 @@ const LogisticsMonitoring: React.FC = () => {
               <h3 style={styles.sidebarTitle}>Insights IA</h3>
               <button style={styles.runAiBtn} onClick={handleRunOptimizer}><Zap size={12} /> RODAR AI</button>
             </div>
-            {optimizations.map((opt, i) => (
+            {optimizations.length > 0 ? optimizations.map((opt, i) => (
               <div key={i} style={styles.aiCard}>
                 <Zap size={20} color="#0061FF" style={{ flexShrink: 0 }} />
                 <div>
@@ -336,7 +493,11 @@ const LogisticsMonitoring: React.FC = () => {
                   <div style={styles.aiImpact}>Impacto: {opt.impact}</div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div style={styles.emptyPanelHint}>
+                Toque em <strong>RODAR AI</strong> para gerar sugestões de otimização de rotas e cargas.
+              </div>
+            )}
           </div>
         </aside>
       </div>
@@ -345,41 +506,230 @@ const LogisticsMonitoring: React.FC = () => {
 };
 
 const LogisticsDestinations: React.FC = () => {
-  const destinos = [
+  const [destinos, setDestinos] = useState([
     { id: 1, name: 'Sede Central - SP', status: 'Ativo', shipments: 45, efficiency: '98%' },
     { id: 2, name: 'Filial Sul - RS', status: 'Ativo', shipments: 22, efficiency: '95%' },
     { id: 3, name: 'Centro de Distribuição - RJ', status: 'Em Manutenção', shipments: 0, efficiency: '0%' },
     { id: 4, name: 'Hub Nordeste - PE', status: 'Ativo', shipments: 18, efficiency: '92%' },
+  ]);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newDestName, setNewDestName] = useState('');
+  const [newDestStatus, setNewDestStatus] = useState('Ativo');
+
+  /** Clientes vinculados à malha / CDs — visão rápida de saúde operacional */
+  const clientesMalha = [
+    { id: 'c1', nome: 'Distribuidora Norte Ltda', ok: true, destino: 'Sede Central - SP' },
+    { id: 'c2', nome: 'Rede Sul Comércio', ok: true, destino: 'Filial Sul - RS' },
+    { id: 'c3', nome: 'Atacado Litoral', ok: true, destino: 'Hub Nordeste - PE' },
+    { id: 'c4', nome: 'CD Rio Operações', ok: false, destino: 'Centro de Distribuição - RJ', detalhe: 'CD em manutenção — sem despacho' },
   ];
+  const okCount = clientesMalha.filter((c) => c.ok).length;
+
+  const handleCreateDestino = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDestName.trim()) {
+      toastError('Por favor, informe o nome do destino!');
+      return;
+    }
+    const newDest = {
+      id: destinos.length + 1,
+      name: newDestName,
+      status: newDestStatus,
+      shipments: newDestStatus === 'Ativo' ? Math.floor(Math.random() * 30) + 5 : 0,
+      efficiency: newDestStatus === 'Ativo' ? `${Math.floor(Math.random() * 10) + 90}%` : '0%'
+    };
+    setDestinos([...destinos, newDest]);
+    setNewDestName('');
+    setIsModalOpen(false);
+    toastSuccess('Novo centro de operação cadastrado!');
+  };
 
   return (
-    <div style={styles.tabContent}>
-      <header style={styles.header}>
+    <div style={styles.destinosPageRoot}>
+      <header style={styles.destinosHeader}>
         <div style={styles.titleWrapper}>
           <BackButton />
           <div>
-            <h1 style={styles.pageTitle}>Centros & Destinos de Operação</h1>
-            <p style={styles.pageSub}>Gerenciamento estratégico de pontos de entrega e CDs Logta.</p>
+            <h1 style={styles.destinosPageTitle}>Centros & Destinos de Operação</h1>
+            <p style={styles.destinosPageSub}>Gerenciamento estratégico de pontos de entrega e CDs Logta.</p>
           </div>
         </div>
-        <button style={styles.addBtn}>Novo Destino +</button>
+        <button style={styles.addBtn} onClick={() => setIsModalOpen(true)}>Novo Destino +</button>
       </header>
 
+      <section style={styles.destinosClientPanel} aria-label="Saúde dos clientes na malha">
+        <div style={styles.destinosClientPanelHead}>
+          <div style={styles.destinosClientPanelTitle}>Clientes na malha</div>
+          <div style={styles.destinosClientSummary}>
+            <CheckCircle2 size={18} color="#10B981" strokeWidth={2.5} />
+            <span style={styles.destinosClientSummaryText}>
+              <strong>{okCount}</strong> de {clientesMalha.length} com operação OK
+            </span>
+          </div>
+        </div>
+        <ul style={styles.destinosClientList}>
+          {clientesMalha.map((c) => (
+            <li key={c.id} style={styles.destinosClientRow}>
+              {c.ok ? (
+                <CheckCircle2 size={16} color="#10B981" strokeWidth={2.5} aria-hidden />
+              ) : (
+                <AlertTriangle size={16} color="#F59E0B" strokeWidth={2.5} aria-hidden />
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={styles.destinosClientNome}>{c.nome}</div>
+                <div style={styles.destinosClientMeta}>
+                  {c.destino}
+                  {!c.ok && c.detalhe ? ` · ${c.detalhe}` : ''}
+                </div>
+              </div>
+              <span
+                style={{
+                  ...styles.destinosClientBadge,
+                  color: c.ok ? '#047857' : '#B45309',
+                  backgroundColor: c.ok ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.14)',
+                }}
+              >
+                {c.ok ? 'OK' : 'Atenção'}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <div style={styles.destinosGrid}>
-        {destinos.map(destino => (
-          <div key={destino.id} style={styles.destinoCard}>
-            <div style={styles.destinoIcon}><MapPin size={24} color="#0061FF" /></div>
-            <div style={{ flex: 1 }}>
-              <h3 style={styles.destinoTitle}>{destino.name}</h3>
+        {destinos.map((destino) => (
+          <div key={destino.id} style={{ ...styles.destinoCardFlat, transition: 'transform 0.2s' }} className="hover-scale">
+            <div style={styles.destinoIconFlat}>
+              <MapPin size={24} color="#0061FF" />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h3 style={styles.destinoTitleFlat}>{destino.name}</h3>
               <div style={styles.destinoStats}>
-                <div style={styles.destinoStat}><Box size={14} /> <span>{destino.shipments} Envios</span></div>
-                <div style={styles.destinoStat}><Navigation size={14} /> <span>{destino.efficiency} Eficiência</span></div>
+                <div style={styles.destinoStat}>
+                  <Box size={14} /> <span>{destino.shipments} Envios</span>
+                </div>
+                <div style={styles.destinoStat}>
+                  <Navigation size={14} /> <span>{destino.efficiency} Eficiência</span>
+                </div>
               </div>
             </div>
-            <div style={{...styles.statusBadge, backgroundColor: destino.status === 'Ativo' ? '#D1FAE5' : '#FEE2E2', color: destino.status === 'Ativo' ? '#10b981' : '#f43f5e'}}>{destino.status}</div>
+            <div
+              style={{
+                ...styles.statusBadge,
+                flexShrink: 0,
+                backgroundColor: destino.status === 'Ativo' ? '#D1FAE5' : '#FEE2E2',
+                color: destino.status === 'Ativo' ? '#047857' : '#BE123C',
+              }}
+            >
+              {destino.status}
+            </div>
           </div>
         ))}
       </div>
+
+      {/* Novo Destino Modal */}
+      {isModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.4)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '28px',
+            width: '90%',
+            maxWidth: '460px',
+            padding: '32px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
+            border: '1px solid #E2E8F0',
+          }}>
+            <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#0F172A', margin: 0 }}>Novo Centro de Operação</h3>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  border: '1px solid #E2E8F0',
+                  backgroundColor: '#FFF',
+                  color: '#64748B',
+                  cursor: 'pointer',
+                  fontWeight: '900'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateDestino} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nome da Filial / CD</label>
+                <input 
+                  type="text" 
+                  placeholder="Ex: Hub Nordeste - PE" 
+                  value={newDestName}
+                  onChange={(e) => setNewDestName(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '14px 16px',
+                    borderRadius: '12px',
+                    border: '1px solid #E2E8F0',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Status Operacional</label>
+                <select 
+                  value={newDestStatus}
+                  onChange={(e) => setNewDestStatus(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '14px 16px',
+                    borderRadius: '12px',
+                    border: '1px solid #E2E8F0',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    outline: 'none',
+                    backgroundColor: '#FFF'
+                  }}
+                >
+                  <option value="Ativo">Ativo</option>
+                  <option value="Em Manutenção">Em Manutenção</option>
+                </select>
+              </div>
+
+              <button 
+                type="submit"
+                style={{
+                  backgroundColor: '#0061FF',
+                  color: '#FFFFFF',
+                  padding: '14px',
+                  borderRadius: '14px',
+                  border: 'none',
+                  fontWeight: '800',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0, 97, 255, 0.2)'
+                }}
+              >
+                Cadastrar Centro de Operação
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -409,10 +759,10 @@ const LogisticsIntelligence: React.FC<{ deliveryActions: any[], refresh: () => v
       </header>
 
       <div style={styles.kpiRow}>
-        <KPIItem label="Economia ROI" value="R$ 23.640" trend="+18.4%" trendUp={true} icon={<DollarSign size={24} />} color="#10B981" />
-        <KPIItem label="Risco (Guardian)" value="92%" trend="+5.2%" trendUp={true} icon={<ShieldCheck size={24} />} color="#0061FF" />
-        <KPIItem label="Compliance Frota" value="98.4%" trend="+0.8%" trendUp={true} icon={<Users size={24} />} color="#F59E0B" />
-        <KPIItem label="Produtividade IA" value="14.2x" trend="+2.1x" trendUp={true} icon={<Zap size={24} />} color="#D9FF00" />
+        <KPIItem label="Economia ROI" value="R$ 23.640" trend="+18.4%" trendUp={true} icon={DollarSign} color="#10B981" iconSize={24} />
+        <KPIItem label="Risco (Guardian)" value="92%" trend="+5.2%" trendUp={true} icon={ShieldCheck} color="#0061FF" iconSize={24} />
+        <KPIItem label="Compliance Frota" value="98.4%" trend="+0.8%" trendUp={true} icon={Users} color="#F59E0B" iconSize={24} />
+        <KPIItem label="Produtividade IA" value="14.2x" trend="+2.1x" trendUp={true} icon={Zap} color="#D9FF00" iconSize={24} />
       </div>
 
       <div style={styles.splitGrid}>
@@ -477,7 +827,12 @@ const LogisticsIntelligence: React.FC<{ deliveryActions: any[], refresh: () => v
                      <div style={styles.strategyTime}>{new Date(action.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
                   </div>
                </div>
-             )) : <div style={{textAlign: 'center', padding: '20px', color: '#94A3B8'}}>Sem ações de inteligência recentes.</div>}
+             )) : (
+               <div style={{ ...styles.emptyPanelHint, marginTop: '8px' }}>
+                 <Brain size={28} color="#CBD5E1" style={{ display: 'block', margin: '0 auto 12px' }} />
+                 Sem ações autônomas recentes. Assim que o Navigator processar pedidos, o histórico aparece aqui.
+               </div>
+             )}
           </div>
         </div>
       </div>
@@ -486,6 +841,8 @@ const LogisticsIntelligence: React.FC<{ deliveryActions: any[], refresh: () => v
 };
 
 const LogisticsAggregates: React.FC<{ aggregates: any[], refresh: () => void }> = ({ aggregates, refresh }) => {
+  const [selectedDriverDetails, setSelectedDriverDetails] = useState<any>(null);
+
   return (
     <div style={styles.tabContent}>
       <header style={styles.header}>
@@ -503,9 +860,9 @@ const LogisticsAggregates: React.FC<{ aggregates: any[], refresh: () => void }> 
       </header>
 
       <div style={styles.statsGrid}>
-        <KPIItem label="Agregados Ativos" value={aggregates.filter(a => a.status === 'ativo').length.toString()} icon={<Users size={20} />} color="#0061FF" />
-        <KPIItem label="Score Médio" value={(aggregates.reduce((acc, a) => acc + Number(a.score), 0) / (aggregates.length || 1)).toFixed(2)} icon={<Star size={20} />} color="#F59E0B" />
-        <KPIItem label="Total Pagamentos" value={`R$ ${aggregates.reduce((acc, a) => acc + Number(a.total_earnings), 0).toLocaleString()}`} icon={<DollarSign size={20} />} color="#10B981" />
+        <KPIItem label="Agregados Ativos" value={aggregates.filter(a => a.status === 'ativo').length.toString()} icon={Users} color="#0061FF" />
+        <KPIItem label="Score Médio" value={(aggregates.reduce((acc, a) => acc + Number(a.score), 0) / (aggregates.length || 1)).toFixed(2)} icon={Star} color="#F59E0B" />
+        <KPIItem label="Total Pagamentos" value={`R$ ${aggregates.reduce((acc, a) => acc + Number(a.total_earnings), 0).toLocaleString()}`} icon={DollarSign} color="#10B981" />
       </div>
 
       <div style={styles.viewContainer}>
@@ -523,7 +880,12 @@ const LogisticsAggregates: React.FC<{ aggregates: any[], refresh: () => void }> 
             </thead>
             <tbody>
               {aggregates.map((agg) => (
-                <tr key={agg.id} style={styles.tr}>
+                <tr 
+                  key={agg.id} 
+                  style={{ ...styles.tr, cursor: 'pointer' }} 
+                  onClick={() => setSelectedDriverDetails(agg)}
+                  className="hover-scale"
+                >
                   <td style={styles.td}>
                     <div style={styles.driverInfo}>
                       <strong>{agg.name}</strong>
@@ -552,7 +914,18 @@ const LogisticsAggregates: React.FC<{ aggregates: any[], refresh: () => void }> 
                     </div>
                   </td>
                   <td style={styles.td}>
-                    <button style={styles.actionBtn}><Share2 size={18} /></button>
+                    <button 
+                      style={styles.actionBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const url = `${window.location.origin}/rastreamento-publico?veiculo=${encodeURIComponent(agg.vehicle_type)}&motorista=${encodeURIComponent(agg.name)}&origem=Sede+Central&destino=Entrega+Cliente&status=Em+Trânsito&empresa=Logta+SaaS`;
+                        navigator.clipboard.writeText(url);
+                        toast.success('Link de rastreamento copiado!');
+                      }}
+                      title="Compartilhar Rota"
+                    >
+                      <Share2 size={18} />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -560,6 +933,114 @@ const LogisticsAggregates: React.FC<{ aggregates: any[], refresh: () => void }> 
           </table>
         </div>
       </div>
+
+      {/* Driver Details Modal Popup */}
+      {selectedDriverDetails && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.4)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '28px',
+            width: '90%',
+            maxWidth: '520px',
+            padding: '32px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
+            border: '1px solid #E2E8F0',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h3 style={{ fontSize: '20px', fontWeight: '900', color: '#0F172A', margin: 0 }}>Ficha do Colaborador</h3>
+                <p style={{ fontSize: '12px', color: '#64748B', fontWeight: '600', margin: '4px 0 0 0' }}>Parceiro / Agregado Logta</p>
+              </div>
+              <button 
+                onClick={() => setSelectedDriverDetails(null)}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  border: '1px solid #E2E8F0',
+                  backgroundColor: '#FFF',
+                  color: '#64748B',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: '900'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '16px', backgroundColor: '#F8FAFC', borderRadius: '20px', border: '1px solid #E2E8F0', marginBottom: '24px' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontSize: '20px', fontWeight: '800' }}>
+                {selectedDriverDetails.name[0]}
+              </div>
+              <div>
+                <h4 style={{ fontSize: '16px', fontWeight: '800', color: '#0F172A', margin: 0 }}>{selectedDriverDetails.name}</h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                  <Star size={14} color="#F59E0B" fill="#F59E0B" />
+                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#1E293B' }}>{selectedDriverDetails.score}</span>
+                  <span style={{ fontSize: '12px', color: '#64748B' }}>({selectedDriverDetails.total_deliveries} entregas)</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+              <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '18px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase' }}>Veículo / Placa</div>
+                <div style={{ fontSize: '14px', fontWeight: '800', color: '#0F172A', marginTop: '6px' }}>{selectedDriverDetails.vehicle_type}</div>
+                <div style={{ fontSize: '12px', fontWeight: '900', color: '#0061FF', marginTop: '2px' }}>{selectedDriverDetails.plate}</div>
+              </div>
+              <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '18px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase' }}>Ganhos Totais</div>
+                <div style={{ fontSize: '16px', fontWeight: '900', color: '#10B981', marginTop: '6px' }}>R$ {Number(selectedDriverDetails.total_earnings).toLocaleString()}</div>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: '#F0F7FF', padding: '16px', borderRadius: '18px', border: '1px solid #E0E7FF', display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <Brain size={20} color="#0061FF" style={{ flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: '800', color: '#0061FF' }}>Acompanhar em Tempo Real</div>
+                  <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>Copie o link público para enviar ao cliente.</div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const url = `${window.location.origin}/rastreamento-publico?veiculo=${encodeURIComponent(selectedDriverDetails.vehicle_type)}&motorista=${encodeURIComponent(selectedDriverDetails.name)}&origem=Sede+Central&destino=Entrega+Cliente&status=Em+Trânsito&empresa=Logta+SaaS`;
+                  navigator.clipboard.writeText(url);
+                  toast.success('Link de rastreamento copiado!');
+                }}
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E2E8F0',
+                  color: '#0061FF',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  fontWeight: '800',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Share2 size={12} /> Copiar Link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -578,7 +1059,7 @@ const LogisticsSequence: React.FC = () => {
           </div>
         </div>
         <div style={styles.headerActions}>
-           <select style={styles.calcInput} value={activeRoute} onChange={e => setActiveRoute(e.target.value)}>
+           <select style={styles.routeSelect} value={activeRoute} onChange={e => setActiveRoute(e.target.value)}>
               <option>Rota #882</option>
               <option>Rota #885</option>
               <option>Rota #890</option>
@@ -655,10 +1136,10 @@ const LogisticsExceptions: React.FC<{ exceptions: any[], refresh: () => void }> 
       </header>
 
       <div style={styles.kpiRow}>
-         <KPIItem label="Exceções Ativas" value={exceptions.length.toString()} trend={exceptions.length > 5 ? '+Alto' : 'Baixo'} trendUp={exceptions.length > 5} icon={<ShieldAlert size={20} />} color="#EF4444" />
-         <KPIItem label="Taxa de Confirmação" value="94.2%" trend="+2.1%" trendUp={true} icon={<FileCheck size={20} />} color="#10B981" />
-         <KPIItem label="Resolvido c/ IA" value="88%" trend="+5%" trendUp={true} icon={<Zap size={20} />} color="#0061FF" />
-         <KPIItem label="Economia Perda" value="R$ 4.250" trend="+R$ 800" trendUp={true} icon={<DollarSign size={20} />} color="#10B981" />
+         <KPIItem label="Exceções Ativas" value={exceptions.length.toString()} trend={exceptions.length > 5 ? '+Alto' : 'Baixo'} trendUp={exceptions.length > 5} icon={ShieldAlert} color="#EF4444" />
+         <KPIItem label="Taxa de Confirmação" value="94.2%" trend="+2.1%" trendUp={true} icon={FileCheck} color="#10B981" />
+         <KPIItem label="Resolvido c/ IA" value="88%" trend="+5%" trendUp={true} icon={Zap} color="#0061FF" />
+         <KPIItem label="Economia Perda" value="R$ 4.250" trend="+R$ 800" trendUp={true} icon={DollarSign} color="#10B981" />
       </div>
 
       <div style={styles.mainLayout}>
@@ -692,7 +1173,7 @@ const LogisticsExceptions: React.FC<{ exceptions: any[], refresh: () => void }> 
            <div style={styles.insightCard}>
               <h4 style={styles.insightTitle}>Guardian Intelligence</h4>
               <p style={styles.insightText}>O sistema está monitorando padrões de no-show e atrasos. Se um motorista sair do geofence, um bloqueio preventivo será aplicado.</p>
-              <button style={{ ...styles.addBtn, width: '100%', marginTop: '12px' }}>Ver Regras de Compliance</button>
+              <button type="button" style={{ ...styles.outlineAccentBtn, marginTop: '12px' }}>Ver Regras de Compliance</button>
            </div>
         </aside>
       </div>
@@ -703,6 +1184,7 @@ const LogisticsExceptions: React.FC<{ exceptions: any[], refresh: () => void }> 
 const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ fuelPrices, refresh }) => {
   const [selectedFuel, setSelectedFuel] = useState('Gasolina');
   const [locationSearch, setLocationSearch] = useState('');
+  const [selectedRegionDetails, setSelectedRegionDetails] = useState<any>(null);
 
   const normalizeType = (value?: string | null) => {
     const type = (value || '').toLowerCase();
@@ -731,15 +1213,15 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
     : 0;
 
   const fuelStats = [
-    { label: 'Média Nacional', value: 'R$ 5,89', trend: '+1.2%', trendUp: false, icon: <TrendingUp size={20} />, live: true },
-    { label: 'Economia IA', value: 'R$ 12k/mês', trend: 'ATIVO', trendUp: true, icon: <Brain size={20} />, live: true },
-    { label: 'Postos ANP', value: '14.200', trend: 'SYNC', trendUp: true, icon: <ShieldCheck size={20} /> },
-    { label: 'Meta ROI', value: 'R$ 5,45', trend: 'OTIMIZADO', trendUp: true, icon: <Zap size={20} />, live: true },
+    { label: 'Média Nacional', value: 'R$ 5,89', trend: '+1.2%', trendUp: false, icon: TrendingUp, live: true },
+    { label: 'Economia IA', value: 'R$ 12k/mês', trend: 'ATIVO', trendUp: true, icon: Brain, live: true },
+    { label: 'Postos ANP', value: '14.200', trend: 'SYNC', trendUp: true, icon: ShieldCheck },
+    { label: 'Meta ROI', value: 'R$ 5,45', trend: 'OTIMIZADO', trendUp: true, icon: Zap, live: true },
   ];
 
   return (
     <div style={styles.tabContent}>
-      <header style={styles.header}>
+      <header style={{ ...styles.header, gap: '20px', flexWrap: 'wrap' }}>
         <div style={styles.titleWrapper}>
           <BackButton />
           <div>
@@ -747,49 +1229,59 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
             <p style={styles.pageSub}>Monitoramento analítico da malha energética e impactos no ROI.</p>
           </div>
         </div>
-        <div style={styles.headerActions}>
+
+        {/* Relocated fuel selection tabs + sharing button next to refresh */}
+        <div style={{ ...styles.headerActions, display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', padding: '4px', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            {['Gasolina', 'Etanol', 'Diesel', 'GNV'].map(f => {
+              const isActive = selectedFuel === f;
+              return (
+                <button 
+                  key={f} 
+                  type="button"
+                  onClick={() => setSelectedFuel(f)}
+                  style={{ 
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '8px 16px',
+                    fontSize: '11px',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    backgroundColor: isActive ? '#F1F5F9' : 'transparent',
+                    color: isActive ? '#0061FF' : '#64748B',
+                    boxShadow: isActive ? '0 2px 6px rgba(0, 0, 0, 0.02)' : 'none'
+                  }}
+                >
+                  {f.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+
+          <button 
+            style={{
+              ...styles.refreshBtn,
+              backgroundColor: '#FFFFFF',
+              color: '#0061FF',
+              border: '1px solid #E2E8F0',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+            }} 
+            onClick={() => {
+              const domain = window.location.hostname === 'localhost' ? window.location.origin : 'https://logta.com.br';
+              const url = `${domain}/combustivel`;
+              navigator.clipboard.writeText(url);
+              toast.success('Link do painel de combustível copiado!');
+              window.open(url, '_blank');
+            }}
+            title="Abrir e Compartilhar Painel Público"
+          >
+            <Globe size={18} />
+          </button>
+
           <button style={styles.refreshBtn} onClick={refresh}><RefreshCw size={18} /></button>
         </div>
       </header>
-
-      <div style={{ ...styles.chartCard, marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          {['Gasolina', 'Etanol', 'Diesel', 'GNV'].map(f => {
-            const isActive = selectedFuel === f;
-            return (
-              <button 
-                key={f} 
-                onClick={() => setSelectedFuel(f)}
-                style={{ 
-                  ...styles.refreshBtn, 
-                  width: 'auto', 
-                  padding: '0 24px', 
-                  backgroundColor: isActive ? 'var(--bg-active)' : 'var(--bg-secondary)', 
-                  border: '1px solid',
-                  borderColor: isActive ? '#0061FF' : 'var(--border)', 
-                  fontWeight: '800', 
-                  color: isActive ? '#0061FF' : '#64748B',
-                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                  transform: isActive ? 'translateY(-1px)' : 'none',
-                  boxShadow: isActive ? '0 4px 12px rgba(99, 102, 241, 0.15)' : 'none'
-                }}
-              >
-                {f.toUpperCase()}
-              </button>
-            );
-          })}
-        </div>
-        <div style={{ ...styles.searchWrapper, width: '320px' }}>
-          <MapPin size={18} style={styles.searchIcon} />
-          <input 
-            type="text" 
-            placeholder="Vincular cidade/estado para filtrar..." 
-            style={styles.searchInput}
-            value={locationSearch}
-            onChange={(e) => setLocationSearch(e.target.value)}
-          />
-        </div>
-      </div>
 
       <div style={{ ...styles.statsGrid, marginBottom: '24px' }}>
         {fuelStats.map((stat: any, i) => (
@@ -807,7 +1299,7 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
           <div style={styles.statusBadgeActive}>IA ACTIVE SCAN</div>
         </div>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
           {[
             { name: 'São Paulo, SP', price: 'R$ 5,65', impact: 'BAIXO' },
             { name: 'Rio de Janeiro, RJ', price: 'R$ 6,12', impact: 'ALTO' },
@@ -820,10 +1312,12 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
           ).map((reg, i) => (
             <div key={i} style={{ 
               display: 'flex', flexDirection: 'column', gap: '10px', padding: '16px', 
-              backgroundColor: 'var(--bg-overlay)', borderRadius: '18px', border: '1px solid var(--border)',
+              backgroundColor: '#FFF', borderRadius: '18px', border: '1px solid var(--border)',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               cursor: 'pointer'
-            }} className="hover-scale">
+            }} 
+            onClick={() => setSelectedRegionDetails(reg)}
+            className="hover-scale">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ fontSize: '13px', fontWeight: '800', color: '#1E293B' }}>{reg.name}</div>
                 <div style={{ 
@@ -852,6 +1346,100 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
         </div>
       </div>
 
+      {/* ANP Detailed Region Modal */}
+      {selectedRegionDetails && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.4)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '28px',
+            width: '90%',
+            maxWidth: '520px',
+            padding: '32px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
+            border: '1px solid #E2E8F0',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h3 style={{ fontSize: '20px', fontWeight: '900', color: '#0F172A', margin: 0 }}>Análise Detalhada ANP</h3>
+                <p style={{ fontSize: '12px', color: '#64748B', fontWeight: '600', margin: '4px 0 0 0' }}>Região: {selectedRegionDetails.name}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedRegionDetails(null)}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  border: '1px solid #E2E8F0',
+                  backgroundColor: '#FFF',
+                  color: '#64748B',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: '900'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+              <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '18px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase' }}>Preço Médio Local</div>
+                <div style={{ fontSize: '22px', fontWeight: '900', color: '#0F172A', marginTop: '6px' }}>{selectedRegionDetails.price}</div>
+              </div>
+              <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '18px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase' }}>Índice de Impacto</div>
+                <div style={{ 
+                  fontSize: '14px', fontWeight: '900', marginTop: '12px', display: 'inline-block', padding: '4px 10px', borderRadius: '8px',
+                  backgroundColor: selectedRegionDetails.impact === 'BAIXO' ? '#DCFCE7' : '#FEE2E2',
+                  color: selectedRegionDetails.impact === 'BAIXO' ? '#166534' : '#991B1B'
+                }}>{selectedRegionDetails.impact}</div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <h4 style={{ fontSize: '13px', fontWeight: '800', color: '#0F172A', marginBottom: '12px' }}>Postos Recomendados (Menor Preço ANP)</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {[
+                  { name: 'Posto Petrobras Master', price: (parseFloat(selectedRegionDetails.price.replace('R$', '').replace(',', '.')) - 0.15).toFixed(2).replace('.', ','), address: 'Av. das Nações, 1020' },
+                  { name: 'Posto Ipiranga Express', price: (parseFloat(selectedRegionDetails.price.replace('R$', '').replace(',', '.')) - 0.08).toFixed(2).replace('.', ','), address: 'Rua das Flores, 45' },
+                  { name: 'Posto Shell Smart', price: (parseFloat(selectedRegionDetails.price.replace('R$', '').replace(',', '.')) + 0.02).toFixed(2).replace('.', ','), address: 'Av. Central, 890' }
+                ].map((p, idx) => (
+                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '1px solid #E2E8F0', borderRadius: '14px' }}>
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: '800', color: '#1E293B' }}>{p.name}</div>
+                      <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>{p.address}</div>
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: '900', color: '#10B981' }}>R$ {p.price}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: '#F0F7FF', padding: '16px', borderRadius: '18px', border: '1px solid #E0E7FF', display: 'flex', gap: '12px' }}>
+              <Brain size={20} color="#0061FF" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: '800', color: '#0061FF' }}>Recomendação de Rota IA</div>
+                <p style={{ fontSize: '12px', color: '#64748B', lineHeight: '1.4', margin: '4px 0 0 0' }}>
+                  Abastecer preferencialmente no <strong>Posto Petrobras Master</strong>. Economia estimada de até <strong>3.2%</strong> por litro baseada na telemetria atual da frota.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={styles.splitGrid}>
         <div style={styles.sidebarCol}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '24px' }}>
@@ -859,15 +1447,14 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
               const basePrice = availableFuels.find(f => f.normalizedType === selectedFuel.toLowerCase())?.price || 0;
               const price = Number(basePrice) + (i === 1 ? 0.20 : (i === 2 ? 0.45 : 0));
               return (
-                <div key={variant} style={{ ...styles.statCard, padding: '20px' }}>
-                  <div style={{ ...styles.statIconBox, backgroundColor: 'var(--bg-active)', color: '#0061FF', width: '40px', height: '40px' }}>
-                    <Droplets size={20} />
-                  </div>
-                  <div>
-                    <div style={styles.statLabel}>{selectedFuel} {variant}</div>
-                    <div style={{ ...styles.statValue, fontSize: '18px' }}>R$ {price.toFixed(2).replace('.', ',')}</div>
-                  </div>
-                </div>
+                <HubMetricCard
+                  key={variant}
+                  label={`${selectedFuel} ${variant}`}
+                  value={`R$ ${price.toFixed(2).replace('.', ',')}`}
+                  icon={Droplets}
+                  accent="#0061FF"
+                  softBg="var(--bg-active)"
+                />
               );
             })}
           </div>
@@ -924,39 +1511,90 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
   );
 };
 
-const KPIItem = ({ label, value, trend, trendUp, icon, variant = 'light', live }: { 
-  label: string, value: any, trend?: string, trendUp?: boolean, icon: any, variant?: 'light' | 'solid', live?: boolean
-}) => (
-  <div style={styles.statCard}>
-    <div style={{ 
-      ...styles.statIconBox, 
-      backgroundColor: variant === 'solid' ? '#0061FF' : 'var(--bg-active)', 
-      color: variant === 'solid' ? '#FFFFFF' : '#0061FF' 
-    }}>
-      {React.cloneElement(icon as React.ReactElement, { size: 20 })}
-    </div>
-    <div style={styles.statContent}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <p style={styles.statLabel}>{label}</p>
-        {live && <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 6px #10B981' }}></div>}
-      </div>
-      <h3 style={styles.statValue}>{value}</h3>
-      {trend && (
-        <div style={{ ...styles.statTrend, color: trendUp ? '#10B981' : '#F43F5E', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          {trendUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />} {trend}
-        </div>
-      )}
-    </div>
-  </div>
-);
+const KPIItem = ({
+  label,
+  value,
+  trend,
+  trendUp,
+  icon: Icon,
+  variant = 'light',
+  live,
+  color,
+  iconSize = 20,
+}: {
+  label: string;
+  value: React.ReactNode;
+  trend?: string;
+  trendUp?: boolean;
+  icon: LucideIcon;
+  variant?: 'light' | 'solid';
+  live?: boolean;
+  color?: string;
+  iconSize?: number;
+}) => {
+  const accent = color || '#0061FF';
+  const liveDot = live ? (
+    <span
+      style={{
+        width: 6,
+        height: 6,
+        borderRadius: '50%',
+        backgroundColor: '#10B981',
+        boxShadow: '0 0 6px #10B981',
+        display: 'inline-block',
+        flexShrink: 0,
+      }}
+      aria-hidden
+    />
+  ) : undefined;
 
-const LogisticsDashboard: React.FC<{ 
-  stats: any, 
-  fuelPrices: any[], 
-  deliveryActions: any[], 
-  refresh: () => void 
-}> = ({ stats, fuelPrices, deliveryActions, refresh }) => {
+  const trendFooter =
+    trend !== undefined && trend !== '' ? (
+      <div
+        style={{
+          marginTop: 8,
+          fontSize: 11,
+          fontWeight: 800,
+          color: trendUp ? '#10B981' : '#F43F5E',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+        }}
+      >
+        {trendUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+        {trend}
+      </div>
+    ) : undefined;
+
+  return (
+    <HubMetricCard
+      label={label}
+      value={value}
+      icon={Icon}
+      iconVariant={variant === 'solid' ? 'solid' : 'soft'}
+      accent={accent}
+      iconSize={iconSize}
+      topRight={liveDot}
+      footer={trendFooter}
+    />
+  );
+};
+
+const LogisticsDashboard: React.FC<{
+  stats: { total_routes: number; active_vehicles: number; alerts_critical: number };
+  deliveryActions: any[];
+  refresh: () => void;
+}> = ({ stats, deliveryActions, refresh }) => {
+  const [activeKpiTab, setActiveKpiTab] = useState<
+    'veiculos' | 'entregas' | 'alertas' | 'combustivel'
+  >('veiculos');
   const navigate = useNavigate();
+  const location = useLocation();
+  const mapCenter: [number, number] = [-23.5505, -46.6333];
+
+  const modulePathMatch = location.pathname.match(/\/master\/logistica\/([^/?]+)/);
+  const activeModuleRouteId = modulePathMatch?.[1];
+
   const roiData = [
     { name: 'Sem 1', savings: 4500 },
     { name: 'Sem 2', savings: 5200 },
@@ -974,116 +1612,306 @@ const LogisticsDashboard: React.FC<{
     { id: 'combustivel', label: 'Central de Combustível', icon: Fuel, sub: 'Preços e custos' },
   ];
 
+  const kpiTabs: Array<{
+    id: typeof activeKpiTab;
+    label: string;
+    icon: LucideIcon;
+    value: React.ReactNode;
+    trend?: string;
+    trendUp?: boolean;
+  }> = [
+    {
+      id: 'veiculos',
+      label: 'Veículos Ativos',
+      icon: Car,
+      value: stats.active_vehicles,
+      trend: '+12%',
+      trendUp: true,
+    },
+    {
+      id: 'entregas',
+      label: 'Entregas Hoje',
+      icon: Package,
+      value: stats.total_routes,
+      trend: '+85',
+      trendUp: true,
+    },
+    {
+      id: 'alertas',
+      label: 'Alertas Ativos',
+      icon: AlertTriangle,
+      value: stats.alerts_critical,
+      trend: '-2',
+      trendUp: false,
+    },
+    {
+      id: 'combustivel',
+      label: 'Combustível (Média)',
+      icon: Droplets,
+      value: 'R$ 5.89',
+      trend: '+1.2%',
+      trendUp: false,
+    },
+  ];
+
+  const activeKpi = kpiTabs.find((t) => t.id === activeKpiTab) ?? kpiTabs[0];
+
   return (
     <div style={styles.tabContent}>
-      <header style={styles.header}>
+      <header style={{ ...styles.header, marginBottom: '40px' }}>
         <div style={styles.titleWrapper}>
-          <div style={{ ...styles.iconBox, backgroundColor: '#0F172A' }}><Box size={24} color="#FFF" /></div>
+          <div style={{ ...styles.iconBox, backgroundColor: '#0F172A', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' }}><Box size={24} color="#FFF" /></div>
           <div>
-            <h1 style={styles.pageTitle}>Logístico</h1>
-            <p style={styles.pageSub}>Visão geral do ecossistema e performance da malha.</p>
+            <h1 style={{ ...styles.pageTitle, fontSize: '23px', fontWeight: '800', letterSpacing: '-1px' }}>Logístico</h1>
+            <p style={{ ...styles.pageSub, fontSize: '12px', fontWeight: '500' }}>Visão geral do ecossistema e performance da malha.</p>
           </div>
         </div>
-        <div style={styles.headerActions}>
-          <button 
-            style={{ ...styles.refreshBtn, width: 'auto', padding: '0 20px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', fontWeight: '800', fontSize: '13px' }}
-            onClick={() => navigate('/master/logistica/combustivel')}
+        <div style={{ ...styles.headerActions, gap: '16px' }}>
+          <nav
+            style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginRight: '16px' }}
+            aria-label="Ir para módulos da logística"
           >
-            <Fuel size={18} style={{ marginRight: '8px' }} /> Central de Combustível
+            {modules.map((mod) => {
+              const active = activeModuleRouteId === mod.id;
+              return (
+                <button
+                  key={mod.id}
+                  type="button"
+                  className="logistics-dashboard-module-pill"
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '14px',
+                    backgroundColor: active ? 'rgba(0, 97, 255, 0.08)' : '#FFF',
+                    border: '1px solid #E2E8F0',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 1px 2px rgba(15, 23, 42, 0.06)'
+                  }}
+                  onClick={() =>
+                    navigate({ pathname: `/master/logistica/${mod.id}`, search: location.search })
+                  }
+                  title={mod.label}
+                >
+                  <mod.icon
+                    size={18}
+                    strokeWidth={2}
+                    color={active ? '#0061FF' : '#64748B'}
+                    style={{ flexShrink: 0 }}
+                  />
+                </button>
+              );
+            })}
+          </nav>
+          <button style={{ ...styles.refreshBtn, width: '44px', height: '44px', borderRadius: '14px', border: '1px solid #E2E8F0', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#475569', boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)', flexShrink: 0, transition: '0.2s' }} onClick={refresh} type="button">
+            <RefreshCw size={18} />
           </button>
-          <button style={styles.refreshBtn} onClick={refresh}><RefreshCw size={18} /></button>
         </div>
       </header>
 
-      <div style={styles.statsGrid}>
-        <KPIItem label="Veículos Ativos" value={stats.active_vehicles} trend="+12%" trendUp={true} icon={<Car size={20} />} />
-        <KPIItem label="Entregas Hoje" value={stats.total_routes} trend="+85" trendUp={true} icon={<Package size={20} />} variant="solid" />
-        <KPIItem label="Alertas Ativos" value={stats.alerts_critical} trend="-2" trendUp={false} icon={<AlertTriangle size={20} />} />
-        <KPIItem label="Combustível (Média)" value="R$ 5.89" trend="+1.2%" trendUp={false} icon={<Droplets size={20} />} variant="solid" />
+      <div style={{ ...styles.statsGrid, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
+        {kpiTabs.map((stat, i) => (
+          <KPIItem key={stat.id} label={stat.label} value={stat.value} trend={stat.trend} trendUp={stat.trendUp} icon={stat.icon} variant={i % 2 === 1 ? 'solid' : 'light'} />
+        ))}
       </div>
 
-      <div style={styles.splitGrid}>
-        {/* ... existing chart code ... */}
-        <div style={styles.chartCard}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={styles.cardTitle}>Performance da Malha (Savings)</h3>
-            <div style={styles.statusBadgeActive}>IA OTIMIZANDO</div>
-          </div>
-          <div style={{ height: '240px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={roiData}>
-                <defs>
-                  <linearGradient id="dashSavings" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0061FF" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#0061FF" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94A3B8'}} />
-                <Tooltip />
-                <Area type="monotone" dataKey="savings" stroke="#0061FF" strokeWidth={3} fill="url(#dashSavings)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          
-          <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
-            <div style={{ ...styles.insightCard, flex: 1, backgroundColor: '#F8FAFC' }}>
-               <h4 style={{ ...styles.insightTitle, fontSize: '12px' }}>Última Otimização</h4>
-               <p style={{ ...styles.insightText, fontSize: '11px' }}>Consolidação de carga em SP gerou economia de R$ 420,00.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px', alignItems: 'start' }}>
+        {/* OPERATIONAL VISUAL & CHART COLUMN */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          {/* MOCK MAP PREVIEW */}
+          <div style={{ ...styles.chartCard, padding: '24px', backgroundColor: '#FFF' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h3 style={styles.cardTitle}>Torre de Controle Ativa</h3>
+                <p style={{ ...styles.pageSub, fontSize: '11px', margin: '4px 0 0 0' }}>Sincronização GPS em tempo real de frotas e geofences.</p>
+              </div>
+              <div style={styles.statusBadgeActive}>IA GUARDIAN ACTIVE</div>
             </div>
-            <div style={{ ...styles.insightCard, flex: 1, backgroundColor: '#F0FDF4', borderColor: '#DCFCE7' }}>
-               <h4 style={{ ...styles.insightTitle, fontSize: '12px', color: '#16A34A' }}>Guardian Status</h4>
-               <p style={{ ...styles.insightText, fontSize: '11px', color: '#16A34A' }}>98% de entregas confirmadas autonomamente hoje.</p>
+
+            {/* REAL INTERACTIVE LEAFLET MAP */}
+            <div style={{ height: '280px', width: '100%', borderRadius: '24px', overflow: 'hidden', border: '1px solid #E2E8F0', position: 'relative' }}>
+              <HubMap center={mapCenter as any} zoom={12} scrollWheelZoom={false}>
+                {/* Scania R450 Marker */}
+                {truckIcon && (
+                  <Marker position={[-23.55052, -46.633308]} icon={truckIcon} />
+                )}
+                {/* Volvo FH540 Marker */}
+                {truckIcon && (
+                  <Marker position={[-23.53500, -46.615000]} icon={truckIcon} />
+                )}
+                {/* Car Marker */}
+                {carIcon && (
+                  <Marker position={[-23.56500, -46.650000]} icon={carIcon} />
+                )}
+                {/* Problem Icon Marker */}
+                {problemIcon && (
+                  <Marker position={[-23.55500, -46.638000]} icon={problemIcon} />
+                )}
+              </HubMap>
+            </div>
+          </div>
+
+          {/* AREA CHART DE SAVINGS */}
+          <div style={styles.chartCard}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h3 style={styles.cardTitle}>Performance da Malha (Savings)</h3>
+                <p style={{ ...styles.pageSub, fontSize: '11px', margin: '4px 0 0 0' }}>Análise cumulativa de custos economizados por otimização de IA.</p>
+              </div>
+              <div style={styles.statusBadgeActive}>IA OTIMIZANDO</div>
+            </div>
+            <div style={{ height: '240px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={roiData}>
+                  <defs>
+                    <linearGradient id="dashSavings" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0061FF" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#0061FF" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94A3B8'}} />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="savings" stroke="#0061FF" strokeWidth={3} fill="url(#dashSavings)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            
+            <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
+              <div style={{ ...styles.insightCard, flex: 1, backgroundColor: '#F8FAFC' }}>
+                 <h4 style={{ ...styles.insightTitle, fontSize: '12px' }}>Última Otimização</h4>
+                 <p style={{ ...styles.insightText, fontSize: '11px' }}>Consolidação de carga em SP gerou economia de R$ 420,00.</p>
+              </div>
+              <div style={{ ...styles.insightCard, flex: 1, backgroundColor: '#F0FDF4', borderColor: '#DCFCE7' }}>
+                 <h4 style={{ ...styles.insightTitle, fontSize: '12px', color: '#16A34A' }}>Guardian Status</h4>
+                 <p style={{ ...styles.insightText, fontSize: '11px', color: '#16A34A' }}>98% de entregas confirmadas autonomamente hoje.</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div style={styles.chartCard}>
-            <h3 style={{ ...styles.cardTitle, marginBottom: '16px' }}>Módulos de Gestão</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-              {modules.map((mod, idx) => {
-                const isSolid = idx % 2 === 1;
-                return (
-                  <button 
-                    key={mod.id} 
-                    style={styles.dashShortcut}
-                    onClick={() => navigate(`/master/logistica/${mod.id}`)}
-                  >
-                    <div style={{ 
-                      ...styles.dashShortcutIcon, 
-                      backgroundColor: isSolid ? '#0061FF' : '#F5F3FF', 
-                      color: isSolid ? '#FFFFFF' : '#0061FF' 
-                    }}>
-                      <mod.icon size={18} />
-                    </div>
-                    <div style={{ textAlign: 'left' }}>
-                      <div style={styles.dashShortcutLabel}>{mod.label}</div>
-                      <div style={styles.dashShortcutSub}>{mod.sub}</div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+        {/* 7 MODULES INTEGRATED SUMMARY LIST */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ marginBottom: '8px' }}>
+            <h3 style={{ ...styles.cardTitle, fontSize: '18px' }}>Resumo Geral dos Módulos</h3>
+            <p style={{ ...styles.pageSub, fontSize: '12px', margin: '4px 0 0 0' }}>Consolidação completa das 7 verticais de inteligência logística.</p>
           </div>
 
-          <div style={styles.chartCard}>
-            <h3 style={{ ...styles.cardTitle, marginBottom: '16px' }}>Atividade do Cérebro</h3>
-            <div style={styles.strategyList}>
-               {deliveryActions.slice(0, 3).map(action => (
-                 <div key={action.id} style={{ ...styles.strategyRow, padding: '12px' }}>
-                    <div style={{...styles.strategyIcon, width: '28px', height: '28px', backgroundColor: '#F1F5F9'}}>
-                       <Zap size={12} color="#0061FF" />
-                    </div>
-                    <div style={styles.strategyMain}>
-                       <div style={{ fontSize: '12px', fontWeight: '700' }}>{action.status === 'confirmado' ? 'Entrega Validada' : 'Ação Autônoma'}</div>
-                       <div style={{ fontSize: '10px', color: '#94A3B8' }}>Pedido {action.order_id}</div>
-                    </div>
-                    <div style={{ fontSize: '10px', fontWeight: '800', color: '#10B981' }}>+ROI</div>
-                 </div>
-               ))}
+          {[
+            {
+              id: 'controle',
+              label: '1. Torre de Controle',
+              icon: Activity,
+              desc: 'Rastreamento em tempo real de frotas e ordens de serviço ativas.',
+              metric: '12 Rotas Ativas',
+              badgeColor: '#EFF6FF',
+              badgeText: '#0061FF',
+            },
+            {
+              id: 'destinos',
+              label: '2. Central de CD e Destinos',
+              icon: MapPin,
+              desc: 'Gestão integrada de galpões, filiais e docas de expedição.',
+              metric: '4 Bases Integradas',
+              badgeColor: '#ECFDF5',
+              badgeText: '#10B981',
+            },
+            {
+              id: 'frotas',
+              label: '3. Frotas & Agregados',
+              icon: Users,
+              desc: 'Fichas, documentos, frotas e motoristas próprios ou parceiros.',
+              metric: '8 Motoristas',
+              badgeColor: '#EEF2FF',
+              badgeText: '#4338CA',
+            },
+            {
+              id: 'rotas',
+              label: '4. Sequenciamento de Carga',
+              icon: Layers,
+              desc: 'Arrumação tridimensional do baú e roteirização sequencial via IA.',
+              metric: 'ROI +24% Cubagem',
+              badgeColor: '#F5F3FF',
+              badgeText: '#7C3AED',
+            },
+            {
+              id: 'autonomo',
+              label: '5. Controle Autônomo',
+              icon: ShieldAlert,
+              desc: 'Monitor inteligente de falhas, no-shows e alertas com geofence.',
+              metric: '2 Exceções Ativas',
+              badgeColor: '#FEF2F2',
+              badgeText: '#EF4444',
+            },
+            {
+              id: 'estrategia',
+              label: '6. Inteligência Estratégica',
+              icon: Zap,
+              desc: 'Performance geral, gráficos de savings, inteligência de negócios.',
+              metric: 'Média ROI 14.8%',
+              badgeColor: '#FFFBEB',
+              badgeText: '#F59E0B',
+            },
+            {
+              id: 'combustivel',
+              label: '7. Central de Combustível',
+              icon: Fuel,
+              desc: 'Histórico de abastecimento ANP e otimização regional de custos.',
+              metric: 'Preço Alvo R$ 5,45',
+              badgeColor: '#F0F9FF',
+              badgeText: '#0EA5E9',
+            },
+          ].map((mod) => (
+            <div
+              key={mod.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px 20px',
+                backgroundColor: '#FFFFFF',
+                borderRadius: '20px',
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.02)',
+                transition: 'all 0.2s ease',
+              }}
+              className="hover-scale"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0 }}>
+                <div style={{ ...styles.destinoIcon, width: '42px', height: '42px', borderRadius: '12px', backgroundColor: mod.badgeColor }}>
+                  <mod.icon size={18} color={mod.badgeText} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '14px', fontWeight: '800', color: '#1E293B' }}>{mod.label}</span>
+                    <span style={{ fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px', backgroundColor: mod.badgeColor, color: mod.badgeText }}>{mod.metric}</span>
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#64748B', margin: '4px 0 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{mod.desc}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate({ pathname: `/master/logistica/${mod.id}`, search: location.search })}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '10px',
+                  border: '1px solid #E2E8F0',
+                  backgroundColor: '#F8FAFC',
+                  color: mod.badgeText,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <ArrowRight size={14} />
+              </button>
             </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>
@@ -1139,7 +1967,14 @@ const LogisticaHub: React.FC = () => {
       case 'autonomo': return <LogisticsExceptions exceptions={exceptions} refresh={fetchOperationalData} />;
       case 'estrategia': return <LogisticsIntelligence deliveryActions={deliveryActions} refresh={fetchOperationalData} />;
       case 'combustivel': return <LogisticsFuel fuelPrices={fuelPrices} refresh={fetchOperationalData} />;
-      default: return <LogisticsDashboard stats={stats} fuelPrices={fuelPrices} deliveryActions={deliveryActions} refresh={fetchOperationalData} />;
+      default:
+        return (
+          <LogisticsDashboard
+            stats={stats}
+            deliveryActions={deliveryActions}
+            refresh={fetchOperationalData}
+          />
+        );
     }
   };
 
@@ -1227,7 +2062,7 @@ const styles: Record<string, any> = {
   titleWrapper: { display: 'flex', alignItems: 'center', gap: '20px' },
   iconBox: { width: '56px', height: '56px', backgroundColor: 'var(--accent)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },
   pageTitle: { fontSize: '32px', fontWeight: '800', color: 'var(--secondary)', margin: 0, letterSpacing: '-1px' },
-  pageSub: { fontSize: '15px', color: 'var(--text-secondary)', fontWeight: '500', marginTop: '4px' },
+  pageSub: { fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '500', marginTop: '4px' },
   headerActions: { display: 'flex', gap: '16px', alignItems: 'center' },
   
   searchWrapper: { position: 'relative', width: '360px' },
@@ -1235,11 +2070,50 @@ const styles: Record<string, any> = {
   searchInput: { width: '100%', padding: '14px 16px 14px 48px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: '#FFF', fontSize: '15px', fontWeight: '600', color: 'var(--secondary)', outline: 'none', transition: 'all 0.2s' },
   
   statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' },
-  statCard: { backgroundColor: 'white', padding: '28px', borderRadius: '32px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '20px', position: 'relative', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
-  statIconBox: { width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  statLabel: { fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' },
-  statValue: { fontSize: '24px', fontWeight: '900', color: 'var(--secondary)', margin: 0 },
-  
+  logisticsKpiStripWrap: {
+    marginBottom: '24px',
+    backgroundColor: 'transparent',
+    background: 'unset',
+    border: 'none',
+    boxShadow: 'none',
+  },
+  logisticsKpiDetail: {
+    marginTop: '16px',
+    padding: '4px 2px 0',
+    backgroundColor: 'transparent',
+    border: 'none',
+    boxShadow: 'none',
+  },
+  logisticsKpiDetailLabel: {
+    fontSize: '12px',
+    fontWeight: 700,
+    color: 'var(--text-secondary)',
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase',
+    marginBottom: '8px',
+  },
+  logisticsKpiDetailValue: {
+    fontSize: '23px',
+    fontWeight: 800,
+    color: 'var(--secondary)',
+    letterSpacing: '-0.02em',
+    lineHeight: 1.2,
+  },
+  logisticsKpiDetailTrend: {
+    marginTop: '10px',
+    fontSize: '13px',
+    fontWeight: 800,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  logisticsModulesWrap: {
+    marginBottom: '40px',
+    padding: 0,
+    backgroundColor: 'transparent',
+    border: 'none',
+    boxShadow: 'none',
+  },
   mainLayout: { display: 'grid', gridTemplateColumns: '1fr 360px', gap: '32px' },
   viewContainer: { height: '640px', backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.04)' },
   
@@ -1314,9 +2188,6 @@ const styles: Record<string, any> = {
   loadingDelivery: { fontSize: '13px', fontWeight: '800', color: '#10B981' },
   loadingAction: { fontSize: '11px', color: '#94A3B8', fontWeight: '700', textTransform: 'uppercase', marginTop: '2px' },
   
-  // KPI missing styles
-  statContent: { flex: 1 },
-  statTrend: { fontSize: '12px', fontWeight: '700', marginTop: '4px' },
   dashShortcutLabel: { fontSize: '14px', fontWeight: '800', color: '#0F172A' },
   dashShortcutSub: { fontSize: '11px', color: '#94A3B8', fontWeight: '600' },
   statusTag: { padding: '4px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: '800' },
@@ -1344,7 +2215,407 @@ const styles: Record<string, any> = {
   statusBadgeActive: { padding: '6px 12px', backgroundColor: '#F0FDF4', color: '#10B981', borderRadius: '12px', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' },
   kpiRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' },
   splitGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' },
-  chartCard: { padding: '32px', backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }
+  chartCard: { padding: '32px', backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
+
+  refreshBtn: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '14px',
+    border: '1px solid #E2E8F0',
+    backgroundColor: '#FFFFFF',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: '#475569',
+    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)',
+    flexShrink: 0,
+    transition: 'all 0.2s ease',
+  },
+  alertBtn: {
+    position: 'relative',
+    width: '44px',
+    height: '44px',
+    borderRadius: '14px',
+    border: '1px solid #E2E8F0',
+    backgroundColor: '#FFFFFF',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: '#475569',
+    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)',
+  },
+  alertBadge: {
+    position: 'absolute',
+    top: '-4px',
+    right: '-4px',
+    minWidth: '18px',
+    height: '18px',
+    padding: '0 5px',
+    borderRadius: '9px',
+    backgroundColor: '#EF4444',
+    color: '#FFFFFF',
+    fontSize: '10px',
+    fontWeight: 800,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBtn: {
+    minHeight: '48px',
+    padding: '0 22px',
+    borderRadius: '14px',
+    border: 'none',
+    backgroundColor: '#0F172A',
+    color: '#FFFFFF',
+    fontSize: '13px',
+    fontWeight: 800,
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    boxShadow: '0 4px 14px rgba(15, 23, 42, 0.18)',
+    transition: 'all 0.2s ease',
+  },
+  secondaryBtn: {
+    minHeight: '48px',
+    padding: '12px 18px',
+    borderRadius: '14px',
+    border: '1px solid #E2E8F0',
+    backgroundColor: '#FFFFFF',
+    color: '#0F172A',
+    fontSize: '13px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.05)',
+  },
+  outlineAccentBtn: {
+    minHeight: '48px',
+    padding: '12px 20px',
+    borderRadius: '14px',
+    border: '2px solid #0061FF',
+    backgroundColor: '#EFF6FF',
+    color: '#0061FF',
+    fontSize: '13px',
+    fontWeight: 800,
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    width: '100%',
+    boxSizing: 'border-box',
+    transition: 'all 0.2s ease',
+  },
+  routeSelect: {
+    minWidth: '180px',
+    minHeight: '48px',
+    padding: '10px 18px',
+    borderRadius: '14px',
+    border: '1px solid #E2E8F0',
+    backgroundColor: '#FFFFFF',
+    fontSize: '14px',
+    fontWeight: 700,
+    color: '#0F172A',
+    outline: 'none',
+    cursor: 'pointer',
+    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+  },
+  fuelTypeTab: {
+    minHeight: '44px',
+    padding: '0 20px',
+    borderRadius: '12px',
+    border: '1px solid #E2E8F0',
+    backgroundColor: '#F8FAFC',
+    fontSize: '12px',
+    fontWeight: 800,
+    letterSpacing: '0.04em',
+    color: '#64748B',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  fuelTypeTabActive: {
+    backgroundColor: '#FFFFFF',
+    color: '#0061FF',
+    borderColor: '#0061FF',
+    boxShadow: '0 4px 14px rgba(0, 97, 255, 0.2)',
+  },
+  contentCol: { minWidth: 0, display: 'flex', flexDirection: 'column', gap: '16px' },
+  controlBar: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '14px',
+    padding: '14px 18px',
+    backgroundColor: '#FFFFFF',
+    borderRadius: '20px',
+    border: '1px solid #E2E8F0',
+    boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
+  },
+  filterTabsSmall: { display: 'flex', flexWrap: 'wrap', gap: '8px' },
+  filterTabSmall: {
+    padding: '10px 18px',
+    borderRadius: '12px',
+    border: '1px solid #E2E8F0',
+    backgroundColor: '#F8FAFC',
+    color: '#475569',
+    fontSize: '12px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  filterTabSmallActive: {
+    backgroundColor: '#0F172A',
+    color: '#FFFFFF',
+    borderColor: '#0F172A',
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.2)',
+  },
+  viewToggle: {
+    display: 'flex',
+    gap: '4px',
+    padding: '4px',
+    backgroundColor: '#F1F5F9',
+    borderRadius: '14px',
+    border: '1px solid #E2E8F0',
+  },
+  toggleBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 18px',
+    borderRadius: '10px',
+    border: 'none',
+    backgroundColor: 'transparent',
+    fontSize: '13px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  mapWrapper: { height: '100%', minHeight: '520px', borderRadius: '24px', overflow: 'hidden' },
+  listWrapper: { height: '100%', overflow: 'auto', display: 'flex', flexDirection: 'column' },
+  sidebar: { display: 'flex', flexDirection: 'column', gap: '24px' },
+  alertList: { display: 'flex', flexDirection: 'column', gap: '12px', minHeight: '120px' },
+  alertTime: { fontSize: '11px', color: '#94A3B8', fontWeight: 700 },
+  alertTitle: { fontSize: '14px', fontWeight: 800, color: '#0F172A', margin: '6px 0 4px' },
+  alertMsg: { fontSize: '12px', color: '#64748B', margin: 0, lineHeight: 1.45 },
+  runAiBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '10px 16px',
+    borderRadius: '12px',
+    border: 'none',
+    backgroundColor: '#0061FF',
+    color: '#FFFFFF',
+    fontSize: '11px',
+    fontWeight: 800,
+    letterSpacing: '0.04em',
+    cursor: 'pointer',
+    boxShadow: '0 4px 14px rgba(0, 97, 255, 0.3)',
+  },
+  actionBtn: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '12px',
+    border: '1px solid #E2E8F0',
+    backgroundColor: '#FFFFFF',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: '#475569',
+    transition: 'all 0.2s ease',
+  },
+  aiCard: {
+    display: 'flex',
+    gap: '14px',
+    padding: '16px',
+    backgroundColor: '#F8FAFC',
+    borderRadius: '16px',
+    border: '1px solid #E2E8F0',
+    alignItems: 'flex-start',
+  },
+  aiText: { fontSize: '13px', color: '#334155', margin: 0, lineHeight: 1.5 },
+  aiImpact: { fontSize: '11px', fontWeight: 800, color: '#0061FF', marginTop: '8px' },
+  tr: { transition: 'background 0.15s ease' },
+  companyCell: { display: 'flex', flexDirection: 'column', gap: '6px' },
+  sourceTag: {
+    alignSelf: 'flex-start',
+    fontSize: '10px',
+    fontWeight: 800,
+    padding: '3px 8px',
+    borderRadius: '6px',
+    backgroundColor: '#EEF2FF',
+    color: '#4338CA',
+  },
+  companyName: { fontSize: '14px', fontWeight: 700, color: '#0F172A' },
+  driverInfo: { display: 'flex', flexDirection: 'column', gap: '4px' },
+  vehiclePlate: { fontSize: '12px', color: '#94A3B8', fontWeight: 600 },
+  routePath: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' },
+  pathPoint: { fontSize: '13px', fontWeight: 600, color: '#334155' },
+  timeInfo: { display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B', fontSize: '13px' },
+  statusBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '8px 14px',
+    borderRadius: '12px',
+    fontSize: '11px',
+    fontWeight: 800,
+  },
+  destinosPageRoot: {
+    padding: '20px 40px 80px',
+    backgroundColor: 'transparent',
+    background: 'unset',
+  },
+  destinosHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '28px',
+  },
+  destinosPageTitle: {
+    fontSize: '23px',
+    fontWeight: 800,
+    color: 'var(--secondary)',
+    margin: 0,
+    letterSpacing: '-0.02em',
+  },
+  destinosPageSub: {
+    fontSize: '12px',
+    color: 'var(--text-secondary)',
+    fontWeight: 500,
+    marginTop: '4px',
+  },
+  destinosClientPanel: {
+    marginBottom: '28px',
+    maxWidth: '800px',
+    padding: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0)',
+    border: 'none',
+    boxShadow: 'none',
+  },
+  destinosClientPanelHead: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: '12px',
+    marginBottom: '12px',
+  },
+  destinosClientPanelTitle: {
+    fontSize: '11px',
+    fontWeight: 800,
+    color: 'var(--text-secondary)',
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+  },
+  destinosClientSummary: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  destinosClientSummaryText: {
+    fontSize: '13px',
+    fontWeight: 600,
+    color: 'var(--secondary)',
+  },
+  destinosClientList: {
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    borderTop: '1px solid rgba(226, 232, 240, 0.45)',
+  },
+  destinosClientRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '14px 0',
+    borderBottom: '1px solid rgba(226, 232, 240, 0.35)',
+  },
+  destinosClientNome: {
+    fontSize: '14px',
+    fontWeight: 700,
+    color: 'var(--secondary)',
+  },
+  destinosClientMeta: {
+    fontSize: '12px',
+    fontWeight: 500,
+    color: 'var(--text-secondary)',
+    marginTop: '2px',
+  },
+  destinosClientBadge: {
+    fontSize: '11px',
+    fontWeight: 800,
+    padding: '6px 12px',
+    borderRadius: '10px',
+    flexShrink: 0,
+  },
+  destinosGrid: { display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '800px' },
+  destinoCard: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '20px',
+    padding: '20px 22px',
+    backgroundColor: '#FFFFFF',
+    borderRadius: '20px',
+    border: '1px solid #E2E8F0',
+    boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
+  },
+  destinoCardFlat: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '20px',
+    padding: '16px 4px 16px 0',
+    backgroundColor: 'transparent',
+    borderRadius: '16px',
+    border: 'none',
+    boxShadow: 'none',
+  },
+  destinoIcon: {
+    width: '52px',
+    height: '52px',
+    borderRadius: '16px',
+    backgroundColor: '#EFF6FF',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  destinoIconFlat: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '14px',
+    backgroundColor: 'rgba(255, 255, 255, 0)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  destinoTitle: { fontSize: '17px', fontWeight: 800, color: '#0F172A', margin: '0 0 10px' },
+  destinoTitleFlat: {
+    fontSize: '16px',
+    fontWeight: 800,
+    color: 'var(--secondary)',
+    margin: '0 0 8px',
+  },
+  destinoStats: { display: 'flex', flexWrap: 'wrap', gap: '16px' },
+  destinoStat: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#64748B', fontWeight: 600 },
+  sidebarCol: { minWidth: 0, display: 'flex', flexDirection: 'column', gap: '24px' },
+  emptyPanelHint: {
+    textAlign: 'center',
+    padding: '40px 24px',
+    color: '#94A3B8',
+    fontSize: '14px',
+    fontWeight: 600,
+    lineHeight: 1.5,
+    backgroundColor: '#F8FAFC',
+    borderRadius: '16px',
+    border: '1px dashed #E2E8F0',
+  },
 };
 
 export default LogisticaHub;

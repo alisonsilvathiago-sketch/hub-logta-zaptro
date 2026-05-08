@@ -80,6 +80,28 @@ const HubChat: React.FC = () => {
     }
   }, [filteredMessages, selectedChannel, isTyping]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const clientId = params.get('clientId');
+    const clientName = params.get('clientName');
+    
+    if (clientId && clientName) {
+      setSelectedChannel({ id: clientId, name: clientName, type: 'dm', department: 'comercial' });
+      setActiveView('chats');
+      
+      setMessages(prev => {
+        if (!prev.some(m => m.contextId === clientId)) {
+          return [
+            ...prev,
+            { id: `sys-greet-${clientId}`, sender: clientName, contextId: clientId, text: `Olá, acabei de acessar a plataforma! Vi seu contato aqui no Hub.`, time: new Date(Date.now() - 30000) },
+            { id: `sys-greet-agent-${clientId}`, sender: 'Alison Thiago', contextId: clientId, text: `Olá! Estou à disposição aqui no HubChat para tirar qualquer dúvida sobre a sua conta.`, time: new Date() }
+          ];
+        }
+        return prev;
+      });
+    }
+  }, []);
+
   const simulateAIResponse = (userText: string) => {
     setIsTyping(true);
     setTimeout(() => {

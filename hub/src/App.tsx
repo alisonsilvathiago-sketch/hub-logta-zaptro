@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster, toast } from 'sonner';
 import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
 import HubLogin from './hub/pages/Login';
@@ -11,10 +11,8 @@ import Inicio from './hub/modules/hub/Inicio';
 import CompanyManagement from './hub/modules/hub/Companies';
 import CompanyProfile from './hub/modules/hub/CompanyProfile';
 import BillingManagement from './hub/modules/hub/Billing';
-import SuperAdminManagement from './hub/modules/hub/Admins';
 import Settings from './hub/modules/hub/GlobalSettings';
 import AccountSettings from './hub/modules/core/Profile';
-import TeamHub from './hub/modules/hub/TeamHub';
 import Infrastructure from './hub/modules/hub/Infrastructure';
 import CRM from './hub/modules/hub/CRM';
 import Agenda from './hub/modules/hub/Agenda';
@@ -25,14 +23,15 @@ import TeamMemberDetail from './hub/modules/core/MemberDetail';
 import PublicCheckout from './hub/pages/PublicCheckout';
 import PaymentCheckout from './hub/pages/PaymentCheckout';
 import ClientBackup from './hub/pages/ClientBackup';
-import HubPlans from './hub/pages/HubPlans';
 import HubNotifications from './hub/pages/HubNotifications';
 import HubChat from './hub/modules/hub/Chat';
 import LogisticaHub from './hub/modules/hub/Logistica';
 import Workflows from './hub/modules/hub/Workflows';
+import IntegrationsPage from './hub/modules/hub/IntegrationsPage';
 import IaGatewayCenter from './hub/modules/hub/IaGateway';
 import PublicFuelDashboard from './hub/pages/PublicFuelDashboard';
 import AnalyticalFuelDashboard from './hub/pages/AnalyticalFuelDashboard';
+import PublicRouteTracking from './hub/pages/PublicRouteTracking';
 import ErrorBoundary from '@shared/components/ErrorBoundary';
 import { KeyboardProvider } from './core/context/KeyboardContext';
 import CommandPalette from '@shared/components/CommandPalette';
@@ -43,6 +42,41 @@ import LogDockLayout from './hub/layouts/LogDockLayout';
 import GlobalLoader from '@shared/components/GlobalLoader';
 
 import { runMasterAuditSync } from './core/lib/masterIntelligence';
+
+/** /master/team e /master/team/* → Equipe Master ou Empresas (Módulos/Métricas), preservando query. */
+function RedirectMasterTeamToSettings() {
+  const { pathname, search, hash } = useLocation();
+  const params = new URLSearchParams(search);
+  const suffix = pathname.replace(/^.*\/master\/team\/?/, '').replace(/^\/+/, '');
+  if (suffix === 'sistemas') {
+    params.delete('tab');
+    const qs = params.toString();
+    return <Navigate to={`/master/companies/modulos-sync${qs ? `?${qs}` : ''}`} replace />;
+  }
+  if (suffix === 'performance') {
+    params.delete('tab');
+    const qs = params.toString();
+    return <Navigate to={`/master/companies/metricas-score${qs ? `?${qs}` : ''}`} replace />;
+  }
+  if (suffix === 'usuarios-hub') params.set('tab', 'usuarios-hub');
+  else if (suffix === 'membros') params.delete('tab');
+  const qs = params.toString();
+  return (
+    <Navigate
+      to={{ pathname: '/master/settings/equipe', search: qs || undefined, hash }}
+      replace
+    />
+  );
+}
+
+/** `/master/admins` e `/master/companies/usuarios-hub` → Configurações › Equipe › aba Usuários Hub (preserva query). */
+function NavigateToSettingsEquipeUsuariosHub() {
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  params.set('tab', 'usuarios-hub');
+  const qs = params.toString();
+  return <Navigate to={`/master/settings/equipe${qs ? `?${qs}` : '?tab=usuarios-hub'}`} replace />;
+}
 
 const App: React.FC = () => {
   React.useEffect(() => {
@@ -124,6 +158,8 @@ const App: React.FC = () => {
           <Route path="/pagar/:id" element={<PaymentCheckout />} />
           <Route path="/combustivel" element={<PublicFuelDashboard />} />
           <Route path="/fuel" element={<AnalyticalFuelDashboard />} />
+          <Route path="/rastreamento-publico" element={<PublicRouteTracking />} />
+          <Route path="/rastreamento-publico/:id" element={<PublicRouteTracking />} />
           
           {/* Rota Expandida LogDock (Focada) */}
           <Route path="/logdock" element={
@@ -152,6 +188,9 @@ const App: React.FC = () => {
             {/* Clients & Companies Unified */}
             <Route path="clientes" element={<ClientsList />} />
             <Route path="clientes/:id" element={<CustomerDetail />} />
+            <Route path="companies/modulos-sync" element={<CompanyManagement />} />
+            <Route path="companies/metricas-score" element={<CompanyManagement />} />
+            <Route path="companies/usuarios-hub" element={<NavigateToSettingsEquipeUsuariosHub />} />
             <Route path="companies" element={<CompanyManagement />} />
             <Route path="companies/:id" element={<CompanyProfile />} />
 
@@ -161,8 +200,8 @@ const App: React.FC = () => {
 
             {/* Security & Infrastructure Unified */}
             <Route path="infrastructure/*" element={<Infrastructure />} />
-            <Route path="backup" element={<Navigate to="/master/infrastructure?tab=backup" replace />} />
-            <Route path="security" element={<Navigate to="/master/infrastructure?tab=security" replace />} />
+            <Route path="backup" element={<Navigate to="/master/infrastructure/storage" replace />} />
+            <Route path="security" element={<Navigate to="/master/infrastructure/security" replace />} />
 
             {/* Logistics Unified */}
             <Route path="logistica" element={<LogisticaHub />} />
@@ -174,20 +213,26 @@ const App: React.FC = () => {
             <Route path="intelligence" element={<Navigate to="/master/logistica/estrategia" replace />} />
 
             {/* Support & Admin */}
-            <Route path="admins" element={<SuperAdminManagement />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="admins" element={<NavigateToSettingsEquipeUsuariosHub />} />
+            <Route path="settings/ia-gateway" element={<Navigate to="/master/ia-gateway" replace />} />
+            <Route path="settings/interacoes" element={<Navigate to="/master/integracoes" replace />} />
+            <Route path="settings/notificacoes" element={<Navigate to="/master/notifications" replace />} />
+            <Route path="settings/*" element={<Settings />} />
             <Route path="account" element={<AccountSettings />} />
-            <Route path="team" element={<TeamHub />} />
-            <Route path="staff" element={<Navigate to="/master/team" replace />} />
-            <Route path="analytics" element={<Navigate to="/master/team?tab=performance" replace />} />
-            <Route path="team/:id" element={<TeamMemberDetail />} />
-            <Route path="plans" element={<HubPlans />} />
+            <Route path="team/colaborador/:id" element={<TeamMemberDetail />} />
+            <Route path="team/*" element={<RedirectMasterTeamToSettings />} />
+            <Route path="staff" element={<Navigate to="/master/settings/equipe" replace />} />
+            <Route path="analytics" element={<Navigate to="/master/companies/metricas-score" replace />} />
+            <Route path="plans" element={<Navigate to="/master/billing/planos" replace />} />
             <Route path="notifications" element={<HubNotifications />} />
+            <Route path="ia-gateway" element={<IaGatewayCenter />} />
             <Route path="automacoes" element={<Workflows />} />
-            <Route path="automacoes/ia-gateway" element={<IaGatewayCenter />} />
+            <Route path="automacoes/ia-gateway" element={<Navigate to="/master/ia-gateway" replace />} />
             <Route path="logdock" element={<HubLogDock />} />
-            <Route path="integracoes" element={<Navigate to="/master/automacoes?tab=integracoes" replace />} />
+            <Route path="integracoes" element={<IntegrationsPage />} />
+            <Route path="integracoes/:tab" element={<IntegrationsPage />} />
             <Route path="profile" element={<AccountSettings />} />
+            <Route path="configuracoes/perfil" element={<Navigate to="/master/account" replace />} />
           </Route>
 
           <Route path="/dashboard" element={<Navigate to="/master" replace />} />

@@ -334,18 +334,10 @@ const DashboardMonochromeMap: React.FC<DashboardMonochromeMapProps> = ({ isDark,
     );
   }
 
-  const tile =
-    isDark
-      ? {
-          url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-        }
-      : {
-          url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-        };
+  const tile = {
+    url: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+    attribution: '&copy; Google Maps',
+  };
 
   const routeCount = prepared.length;
   const labelTop =
