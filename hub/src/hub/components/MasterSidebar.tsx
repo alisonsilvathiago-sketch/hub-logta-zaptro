@@ -78,6 +78,7 @@ const menuBlocks: MenuBlock[] = [
       { label: 'Integrações', icon: Plug, path: '/master/integracoes' },
       { label: 'Biblioteca', icon: Library, path: '/master/biblioteca' },
       { label: 'LogDock', icon: Anchor, path: '/master/logdock' },
+      { label: 'LogDock Admin', icon: HardDrive, path: '/master/logdock-admin' },
     ],
   },
 
