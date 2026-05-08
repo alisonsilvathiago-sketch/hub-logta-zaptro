@@ -12,10 +12,10 @@ import Button from '@shared/components/Button';
 import { toastSuccess } from '@core/lib/toast';
 
 const MOCK_CLIENTS = [
-  { id: 1, name: 'Transportadora Falcão', used: 12.5, total: 15, plan: 'Start', status: 'active', files: 1420 },
-  { id: 2, name: 'Logística Express XPTO', used: 48.2, total: 50, plan: 'Pro', status: 'warning', files: 8900 },
-  { id: 3, name: 'Cargas Rápidas BR', used: 8.1, total: 15, plan: 'Start', status: 'active', files: 310 },
-  { id: 4, name: 'Transcontinental S.A.', used: 110.5, total: 150, plan: 'Enterprise', status: 'active', files: 45000 },
+  { id: 1, name: 'Transportadora Falcão', used: 12.5, total: 15, plan: 'Start', status: 'active', files: 1420, zaptro: true, logta: true, logdock: true, ia: false, backup: true },
+  { id: 2, name: 'Logística Express XPTO', used: 48.2, total: 50, plan: 'Pro', status: 'warning', files: 8900, zaptro: true, logta: true, logdock: true, ia: true, backup: true },
+  { id: 3, name: 'Cargas Rápidas BR', used: 8.1, total: 15, plan: 'Start', status: 'active', files: 310, zaptro: true, logta: false, logdock: true, ia: false, backup: false },
+  { id: 4, name: 'Transcontinental S.A.', used: 110.5, total: 150, plan: 'Enterprise', status: 'active', files: 45000, zaptro: true, logta: true, logdock: true, ia: true, backup: true },
 ];
 
 const MOCK_UPLOADS = [
@@ -71,9 +71,7 @@ const LogDockAdmin: React.FC = () => {
         <div style={styles.headerTitle}>
           <Database size={32} color="#0061FF" />
           <div>
-            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '900', color: '#0F172A', letterSpacing: '-0.5px' }}>
-              LogDock Control Center
-            </h1>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '900', color: '#0F172A', letterSpacing: '-0.5px' }}>LogDock</h1>
             <p style={{ margin: 0, fontSize: '14px', color: '#64748B', fontWeight: '600' }}>
               Painel Master de Administração do Drive Central
             </p>
@@ -155,14 +153,9 @@ const LogDockAdmin: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    { name: 'Transportadora Falcão', zaptro: true, logta: true, logdock: true, ia: false, backup: true },
-                    { name: 'Logística Express XPTO', zaptro: true, logta: true, logdock: true, ia: true, backup: true },
-                    { name: 'Cargas Rápidas BR', zaptro: true, logta: false, logdock: true, ia: false, backup: false },
-                    { name: 'Transcontinental S.A.', zaptro: true, logta: true, logdock: true, ia: true, backup: true },
-                  ].map((c, i) => (
-                    <tr key={i} style={styles.tr}>
-                      <td style={styles.td}><span style={styles.clientName}>{c.name}</span></td>
+                  {MOCK_CLIENTS.map((c, i) => (
+                    <tr key={i} style={{ ...styles.tr, cursor: 'pointer' }} onClick={() => navigate(`/master/logdock-admin/${c.id}`)}>
+                      <td style={styles.td}><span style={{ ...styles.clientName, color: '#0061FF', textDecoration: 'underline dotted' }}>{c.name}</span></td>
                       {[c.zaptro, c.logta, c.logdock, c.ia, c.backup].map((active, j) => (
                         <td key={j} style={styles.td}>
                           <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '800', backgroundColor: active ? '#F0FDF4' : '#F8FAFC', color: active ? '#10B981' : '#CBD5E1' }}>

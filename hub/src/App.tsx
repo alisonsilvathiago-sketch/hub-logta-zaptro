@@ -43,6 +43,8 @@ import GlobalLoader from '@shared/components/GlobalLoader';
 import MasterKnowledge from './hub/modules/hub/Knowledge';
 import LogDockAdmin from './hub/modules/hub/LogDockAdmin';
 import LogDockClientProfile from './hub/modules/hub/LogDockClientProfile';
+import ZaptroAdmin from './hub/modules/hub/ZaptroAdmin';
+import LogtaAdmin from './hub/modules/hub/LogtaAdmin';
 
 import { runMasterAuditSync } from './core/lib/masterIntelligence';
 
@@ -234,6 +236,8 @@ const App: React.FC = () => {
             <Route path="logdock" element={<HubLogDock />} />
             <Route path="logdock-admin" element={<LogDockAdmin />} />
             <Route path="logdock-admin/:id" element={<LogDockClientProfile />} />
+            <Route path="zaptro-admin" element={<ZaptroAdmin />} />
+            <Route path="logta-admin" element={<LogtaAdmin />} />
             <Route path="integracoes" element={<IntegrationsPage />} />
             <Route path="integracoes/:tab" element={<IntegrationsPage />} />
             <Route path="biblioteca" element={<MasterKnowledge />} />

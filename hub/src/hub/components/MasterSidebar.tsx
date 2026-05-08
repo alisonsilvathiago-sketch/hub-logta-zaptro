@@ -18,6 +18,8 @@ import {
   Activity,
   Anchor,
   Library,
+  MessageSquare,
+  PackageSearch,
 } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
 
@@ -71,14 +73,11 @@ const menuBlocks: MenuBlock[] = [
   },
   {
     type: 'section',
-    title: 'Automação & plataforma',
+    title: 'Produtos',
     items: [
-      { label: 'Automações', icon: Workflow, path: '/master/automacoes' },
-      { label: 'Gateway IA', icon: Cpu, path: '/master/ia-gateway' },
-      { label: 'Integrações', icon: Plug, path: '/master/integracoes' },
-      { label: 'Biblioteca', icon: Library, path: '/master/biblioteca' },
-      { label: 'LogDock', icon: Anchor, path: '/master/logdock' },
-      { label: 'LogDock Admin', icon: HardDrive, path: '/master/logdock-admin' },
+      { label: 'LogDock', icon: HardDrive, path: '/master/logdock-admin' },
+      { label: 'Zaptro', icon: MessageSquare, path: '/master/zaptro-admin' },
+      { label: 'Logta', icon: PackageSearch, path: '/master/logta-admin' },
     ],
   },
 
