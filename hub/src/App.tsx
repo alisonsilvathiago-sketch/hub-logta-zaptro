@@ -42,6 +42,7 @@ import LogDockLayout from './hub/layouts/LogDockLayout';
 import GlobalLoader from '@shared/components/GlobalLoader';
 import MasterKnowledge from './hub/modules/hub/Knowledge';
 import LogDockAdmin from './hub/modules/hub/LogDockAdmin';
+import LogDockClientProfile from './hub/modules/hub/LogDockClientProfile';
 
 import { runMasterAuditSync } from './core/lib/masterIntelligence';
 
@@ -232,6 +233,7 @@ const App: React.FC = () => {
             <Route path="automacoes/ia-gateway" element={<Navigate to="/master/ia-gateway" replace />} />
             <Route path="logdock" element={<HubLogDock />} />
             <Route path="logdock-admin" element={<LogDockAdmin />} />
+            <Route path="logdock-admin/:id" element={<LogDockClientProfile />} />
             <Route path="integracoes" element={<IntegrationsPage />} />
             <Route path="integracoes/:tab" element={<IntegrationsPage />} />
             <Route path="biblioteca" element={<MasterKnowledge />} />

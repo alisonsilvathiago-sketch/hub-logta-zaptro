@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Database, HardDrive, Users, Shield, TrendingUp, 
   Activity, Search,
@@ -25,6 +26,7 @@ const MOCK_UPLOADS = [
 ];
 
 const LogDockAdmin: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'clientes' | 'uploads' | 'seguranca' | 'backups'>('dashboard');
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
@@ -256,9 +258,13 @@ const LogDockAdmin: React.FC = () => {
                   {MOCK_CLIENTS.map(client => {
                     const pct = (client.used / client.total) * 100;
                     return (
-                      <tr key={client.id} style={styles.tr}>
+                      <tr
+                        key={client.id}
+                        style={{ ...styles.tr, cursor: 'pointer' }}
+                        onClick={() => navigate(`/master/logdock-admin/${client.id}`)}
+                      >
                         <td style={styles.td}>
-                          <span style={styles.clientName}>{client.name}</span>
+                          <span style={{ ...styles.clientName, color: '#0061FF', textDecoration: 'underline dotted' }}>{client.name}</span>
                         </td>
                         <td style={styles.td}>
                           <span style={styles.badge}>{client.plan}</span>
