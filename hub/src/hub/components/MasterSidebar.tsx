@@ -122,17 +122,6 @@ const MasterSidebar: React.FC<{ variant?: 'rail' | 'drawer' }> = ({ variant = 'r
           if (block.type === 'section') {
             return (
               <div key={`s-${idx}`} style={styles.navSection}>
-                <div
-                  style={{
-                    ...styles.sectionTitle,
-                    opacity: expanded ? 1 : 0,
-                    height: expanded ? 'auto' : 0,
-                    marginBottom: expanded ? 6 : 0,
-                    overflow: 'hidden',
-                  }}
-                >
-                  {block.title}
-                </div>
                 <div style={styles.groupItems}>
                   {block.items.map((item, i) => (
                     <MenuLink key={i} item={item} expanded={expanded} location={location} platform={platform} />
