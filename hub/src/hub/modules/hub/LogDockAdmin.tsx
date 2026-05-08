@@ -30,6 +30,7 @@ const LogDockAdmin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'clientes' | 'uploads' | 'seguranca' | 'backups'>('dashboard');
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
+  const [filterProduct, setFilterProduct] = useState('Todos');
   const [isBillingOpen, setIsBillingOpen] = useState(false);
   const [isRestoreOpen, setIsRestoreOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<any>(null);
@@ -132,14 +133,29 @@ const LogDockAdmin: React.FC = () => {
             <div style={styles.card}>
               <h3 style={styles.cardTitle}>Uso por Produto — Clientes Ativos</h3>
               <div style={{ display: 'flex', gap: '12px', marginBottom: '28px', flexWrap: 'wrap' }}>
-                {['Todos', 'Zaptro', 'Logta', 'LogDock', 'IA Créditos', 'Backups'].map(prod => (
-                  <button
-                    key={prod}
-                    style={{ padding: '8px 18px', borderRadius: '999px', border: '2px solid', borderColor: prod === 'Todos' ? '#0061FF' : '#E2E8F0', backgroundColor: prod === 'Todos' ? '#EFF6FF' : 'white', color: prod === 'Todos' ? '#0061FF' : '#64748B', fontSize: '13px', fontWeight: '800', cursor: 'pointer' }}
-                  >
-                    {prod}
-                  </button>
-                ))}
+                {['Todos', 'Zaptro', 'Logta', 'LogDock', 'IA Créditos', 'Backups'].map(prod => {
+                  const isActive = filterProduct === prod;
+                  return (
+                    <button 
+                      key={prod} 
+                      onClick={() => setFilterProduct(prod)}
+                      style={{ 
+                        padding: '8px 18px', 
+                        borderRadius: '999px', 
+                        border: '2px solid', 
+                        borderColor: isActive ? '#0061FF' : '#E2E8F0', 
+                        backgroundColor: isActive ? '#EFF6FF' : 'white', 
+                        color: isActive ? '#0061FF' : '#64748B', 
+                        fontSize: '13px', 
+                        fontWeight: '800', 
+                        cursor: 'pointer',
+                        transition: '0.2s'
+                      }}
+                    >
+                      {prod}
+                    </button>
+                  );
+                })}
               </div>
               <table style={styles.table}>
                 <thead>
@@ -153,7 +169,17 @@ const LogDockAdmin: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {MOCK_CLIENTS.map((c, i) => (
+                  {MOCK_CLIENTS
+                    .filter(c => {
+                      if (filterProduct === 'Todos') return true;
+                      if (filterProduct === 'Zaptro') return c.zaptro;
+                      if (filterProduct === 'Logta') return c.logta;
+                      if (filterProduct === 'LogDock') return c.logdock;
+                      if (filterProduct === 'IA Créditos') return c.ia;
+                      if (filterProduct === 'Backups') return c.backup;
+                      return true;
+                    })
+                    .map((c, i) => (
                     <tr key={i} style={{ ...styles.tr, cursor: 'pointer' }} onClick={() => navigate(`/master/logdock-admin/${c.id}`)}>
                       <td style={styles.td}><span style={{ ...styles.clientName, color: '#0061FF', textDecoration: 'underline dotted' }}>{c.name}</span></td>
                       {[c.zaptro, c.logta, c.logdock, c.ia, c.backup].map((active, j) => (
