@@ -20,6 +20,8 @@ import {
   Library,
   MessageSquare,
   PackageSearch,
+  Coins,
+  Database,
 } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
 
@@ -78,6 +80,8 @@ const menuBlocks: MenuBlock[] = [
       { label: 'LogDock', icon: HardDrive, path: '/master/logdock-admin' },
       { label: 'Zaptro', icon: MessageSquare, path: '/master/zaptro-admin' },
       { label: 'Logta', icon: PackageSearch, path: '/master/logta-admin' },
+      { label: 'Créditos', icon: Coins, path: '/master/credits-admin' },
+      { label: 'Backups', icon: Database, path: '/master/backups-admin' },
     ],
   },
 

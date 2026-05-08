@@ -47,6 +47,8 @@ import ZaptroAdmin from './hub/modules/hub/ZaptroAdmin';
 import ZaptroClientProfile from './hub/modules/hub/ZaptroClientProfile';
 import LogtaAdmin from './hub/modules/hub/LogtaAdmin';
 import LogtaClientProfile from './hub/modules/hub/LogtaClientProfile';
+import CreditsAdmin from './hub/modules/hub/CreditsAdmin';
+import BackupsAdmin from './hub/modules/hub/BackupsAdmin';
 
 import { runMasterAuditSync } from './core/lib/masterIntelligence';
 
@@ -242,6 +244,8 @@ const App: React.FC = () => {
             <Route path="zaptro-admin/:id" element={<ZaptroClientProfile />} />
             <Route path="logta-admin" element={<LogtaAdmin />} />
             <Route path="logta-admin/:id" element={<LogtaClientProfile />} />
+            <Route path="credits-admin" element={<CreditsAdmin />} />
+            <Route path="backups-admin" element={<BackupsAdmin />} />
             <Route path="integracoes" element={<IntegrationsPage />} />
             <Route path="integracoes/:tab" element={<IntegrationsPage />} />
             <Route path="biblioteca" element={<MasterKnowledge />} />
