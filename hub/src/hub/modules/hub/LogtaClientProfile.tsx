@@ -231,13 +231,13 @@ const LogtaClientProfile: React.FC = () => {
               <div style={s.card}>
                 <h3 style={s.cardTitle}>Monitoramento em Tempo Real</h3>
                 <div style={s.mapPlaceholder}>
-                  <MapIcon size={48} color="#CBD5E1" />
-                  <p style={{ color: '#94A3B8', fontWeight: '700', marginTop: '12px' }}>Mapa de Rotas Ativas</p>
-                  <div style={s.mapOverlay}>
-                    <div style={{ ...s.mapDot, top: '20%', left: '30%' }} />
-                    <div style={{ ...s.mapDot, top: '50%', left: '70%', backgroundColor: '#0061FF' }} />
-                    <div style={{ ...s.mapDot, top: '80%', left: '40%' }} />
+                  <div style={{ position: 'absolute', inset: 0 }}>
+                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'rgb(16, 185, 129)', position: 'absolute', boxShadow: 'rgba(16, 185, 129, 0.2) 0px 0px 0px 4px', top: '20%', left: '30%' }} />
+                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'rgb(0, 97, 255)', position: 'absolute', boxShadow: 'rgba(0, 97, 255, 0.2) 0px 0px 0px 4px', top: '50%', left: '70%' }} />
+                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'rgb(16, 185, 129)', position: 'absolute', boxShadow: 'rgba(16, 185, 129, 0.2) 0px 0px 0px 4px', top: '80%', left: '40%' }} />
                   </div>
+                  <MapIcon size={48} color="#CBD5E1" />
+                  <p style={{ color: '#94A3B8', fontWeight: '700', marginTop: '12px', position: 'relative' }}>Mapa de Rotas Ativas</p>
                 </div>
               </div>
 

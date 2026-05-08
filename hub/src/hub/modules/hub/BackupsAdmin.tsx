@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Database, Activity, Search, Clock, AlertTriangle, CheckCircle2,
   Lock, HardDrive, Shield, CloudDownload, RefreshCw, Archive
@@ -14,6 +15,7 @@ const MOCK_CLIENTS = [
 ];
 
 const BackupsAdmin: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'politicas' | 'logs'>('dashboard');
 
   return (
@@ -59,7 +61,7 @@ const BackupsAdmin: React.FC = () => {
                 <thead><tr><th style={s.th}>Cliente</th><th style={s.th}>Espaço</th><th style={s.th}>Frequência</th><th style={s.th}>Último Backup</th><th style={s.th}>Status</th></tr></thead>
                 <tbody>
                   {MOCK_CLIENTS.map(c => (
-                    <tr key={c.id} style={s.tr}>
+                    <tr key={c.id} style={{ ...s.tr, cursor: 'pointer' }} onClick={() => navigate(`/master/backups-admin/${c.id}`)}>
                       <td style={s.td}><span style={s.clientName}>{c.name}</span></td>
                       <td style={s.td}><span style={s.stat}>{c.size}</span></td>
                       <td style={s.td}><span style={s.stat}>{c.frequency}</span></td>

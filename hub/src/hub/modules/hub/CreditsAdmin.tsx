@@ -62,7 +62,7 @@ const CreditsAdmin: React.FC = () => {
                 <thead><tr><th style={s.th}>Cliente</th><th style={s.th}>Saldo Atual</th><th style={s.th}>Uso IA</th><th style={s.th}>Uso Evolution</th><th style={s.th}>Status</th></tr></thead>
                 <tbody>
                   {MOCK_CLIENTS.map(c => (
-                    <tr key={c.id} style={s.tr}>
+                    <tr key={c.id} style={{ ...s.tr, cursor: 'pointer' }} onClick={() => navigate(`/master/credits-admin/${c.id}`)}>
                       <td style={s.td}><span style={s.clientName}>{c.name}</span></td>
                       <td style={s.td}><span style={s.stat}>R$ {c.balance.toLocaleString()}</span></td>
                       <td style={s.td}><span style={s.stat}>{c.ia_usage.toLocaleString()} reqs</span></td>
