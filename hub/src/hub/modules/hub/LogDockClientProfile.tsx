@@ -300,7 +300,7 @@ const LogDockClientProfile: React.FC = () => {
 
 const styles: Record<string, React.CSSProperties> = {
   container: { flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#F8FAFC', minHeight: '100vh', overflowY: 'auto' },
-  header: { padding: '32px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFF', borderBottom: '1px solid #E2E8F0' },
+  header: { padding: '40px 40px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '16px' },
   backBtn: { width: '44px', height: '44px', borderRadius: '14px', border: '2px solid #E2E8F0', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#475569' },
   avatar: { width: '52px', height: '52px', borderRadius: '16px', backgroundColor: '#0061FF', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: '900' },
@@ -312,7 +312,7 @@ const styles: Record<string, React.CSSProperties> = {
   saveBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid #0061FF', backgroundColor: '#0061FF', color: 'white', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
   editInput: { fontSize: '22px', fontWeight: '900', color: '#0F172A', border: '2px solid #0061FF', borderRadius: '12px', padding: '8px 16px', outline: 'none' },
   content: { padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px' },
-  tabs: { display: 'flex', gap: '8px', backgroundColor: '#FFFFFF', padding: '8px', borderRadius: '24px', width: 'fit-content', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' },
+  tabs: { display: 'flex', gap: '8px', padding: '8px 0', borderRadius: '24px', width: 'fit-content' },
   tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '16px', border: 'none', background: 'none', color: '#64748B', fontSize: '14px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' },
   tabBtnActive: { backgroundColor: '#EFF6FF', color: '#0061FF' },
   tabContent: { display: 'flex', flexDirection: 'column', gap: '24px' },

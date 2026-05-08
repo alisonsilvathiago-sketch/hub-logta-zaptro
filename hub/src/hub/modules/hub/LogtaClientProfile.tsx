@@ -103,9 +103,43 @@ const LogtaClientProfile: React.FC = () => {
           </div>
         )}
 
+        {/* FINANCEIRO / FISCAL */}
+        {activeTab === 'financeiro' && (
+          <div style={s.tabContent}>
+            <div style={HUB_METRIC_GRID_STYLE}>
+              <HubMetricCard label="Faturamento Mensal" value="R$ 142.5k" icon={DollarSign} accent="#10B981" softBg="#F0FDF4" />
+              <HubMetricCard label="CT-es Autorizados" value="842" icon={FileText} accent="#8B5CF6" softBg="#F5F3FF" />
+              <HubMetricCard label="Impostos Estimados" value="R$ 12.8k" icon={DollarSign} accent="#EF4444" softBg="#FEF2F2" />
+              <HubMetricCard label="Inadimplência" value="0.5%" icon={AlertTriangle} accent="#F59E0B" softBg="#FFF7ED" />
+            </div>
+            <div style={s.card}>
+              <h3 style={s.cardTitle}>Últimas Emissões Fiscais</h3>
+              {[
+                { doc: 'CT-e 94812', val: 'R$ 1.240,00', status: 'Autorizado', time: 'Há 10 min' },
+                { doc: 'NF-e 8291', val: 'R$ 3.800,00', status: 'Autorizado', time: 'Há 1 hora' },
+                { doc: 'CT-e 94811', val: 'R$ 890,00', status: 'Cancelado', time: 'Há 3 horas' },
+              ].map((f, i) => (
+                <div key={i} style={s.auditRow}>
+                  <div style={{ flex: 1 }}>
+                    <p style={s.snapTitle}>{f.doc} · {f.val}</p>
+                    <p style={s.snapSub}>{f.time}</p>
+                  </div>
+                  <span style={{ ...s.snapOk, backgroundColor: f.status === 'Autorizado' ? '#F0FDF4' : '#FEF2F2', color: f.status === 'Autorizado' ? '#10B981' : '#EF4444' }}>{f.status}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* FROTA & LIMITES */}
         {activeTab === 'frota' && (
           <div style={s.tabContent}>
+            <div style={HUB_METRIC_GRID_STYLE}>
+              <HubMetricCard label="Veículos Cadastrados" value={String(client.vehicles)} icon={Truck} accent="#10B981" softBg="#F0FDF4" />
+              <HubMetricCard label="Capacidade de Frota" value={`${editForm.limit} veículos`} icon={Activity} accent="#0061FF" softBg="#EFF6FF" />
+              <HubMetricCard label="Motoristas Ativos" value="15" icon={Users} accent="#8B5CF6" softBg="#F5F3FF" />
+              <HubMetricCard label="Manutenção Pendente" value="2" icon={AlertTriangle} accent="#EF4444" softBg="#FEF2F2" />
+            </div>
             <div style={s.card}>
               <h3 style={s.cardTitle}>Gestão de Limites de Frota</h3>
               <div style={s.storageVisual}>
@@ -131,6 +165,34 @@ const LogtaClientProfile: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* SEGURANÇA */}
+        {activeTab === 'seguranca' && (
+          <div style={s.tabContent}>
+            <div style={HUB_METRIC_GRID_STYLE}>
+              <HubMetricCard label="Sessões Ativas" value="12" icon={Zap} accent="#10B981" softBg="#F0FDF4" />
+              <HubMetricCard label="Acessos Negados" value="0" icon={Shield} accent="#0061FF" softBg="#EFF6FF" />
+              <HubMetricCard label="Logs de Auditoria" value="482" icon={FileText} accent="#8B5CF6" softBg="#F5F3FF" />
+              <HubMetricCard label="Criptografia" value="AES-256" icon={Lock} accent="#10B981" softBg="#F0FDF4" />
+            </div>
+            <div style={s.card}>
+              <h3 style={s.cardTitle}>Logs de Auditoria do Cliente</h3>
+              {[
+                { action: 'Geração de CT-e', user: 'Admin', time: '14:32' },
+                { action: 'Alteração de Rota', user: 'Logístico', time: '14:15' },
+                { action: 'Login no Sistema', user: 'Expedição', time: '13:00' },
+              ].map((log, i) => (
+                <div key={i} style={s.auditRow}>
+                  <div style={{ flex: 1 }}>
+                    <p style={s.snapTitle}>{log.action}</p>
+                    <p style={s.snapSub}>Usuário: {log.user}</p>
+                  </div>
+                  <span style={s.auditTime}>{log.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -138,7 +200,7 @@ const LogtaClientProfile: React.FC = () => {
 
 const s: Record<string, React.CSSProperties> = {
   container: { flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#F8FAFC', minHeight: '100vh', overflowY: 'auto' },
-  header: { padding: '32px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFF', borderBottom: '1px solid #E2E8F0' },
+  header: { padding: '40px 40px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '16px' },
   backBtn: { width: '44px', height: '44px', borderRadius: '14px', border: '2px solid #E2E8F0', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#475569' },
   avatar: { width: '52px', height: '52px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: '900', color: 'white' },
@@ -150,7 +212,7 @@ const s: Record<string, React.CSSProperties> = {
   saveBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid', color: 'white', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
   editInput: { fontSize: '22px', fontWeight: '900', color: '#0F172A', border: '2px solid #10B981', borderRadius: '12px', padding: '8px 16px', outline: 'none' },
   content: { padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px' },
-  tabs: { display: 'flex', gap: '8px', backgroundColor: '#FFFFFF', padding: '8px', borderRadius: '24px', width: 'fit-content', border: '1px solid #E2E8F0' },
+  tabs: { display: 'flex', gap: '8px', padding: '8px 0', borderRadius: '24px', width: 'fit-content' },
   tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '16px', border: 'none', background: 'none', color: '#64748B', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
   tabContent: { display: 'flex', flexDirection: 'column', gap: '24px' },
   card: { backgroundColor: '#FFFFFF', borderRadius: '32px', padding: '32px', border: '1px solid #E2E8F0' },
