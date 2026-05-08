@@ -4,7 +4,8 @@ import {
   Search, Bell, User, ChevronDown, 
   Settings, LogOut, Menu, ChevronRight,
   Shield, Database, Zap, HardDrive, Users, Brain,
-  KeyRound, Webhook, ScrollText, Plug, UserCog, Calendar, MessageSquare, Activity
+  KeyRound, Webhook, ScrollText, Plug, UserCog, Calendar, MessageSquare, Activity,
+  Workflow, Cpu, Library
 } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
 import SyncIndicator from './SyncIndicator';
@@ -323,6 +324,42 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
                   <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/settings/equipe'); }}>
                     <UserCog size={16} strokeWidth={2} color="#475569" />
                     <span>Equipe Master</span>
+                  </button>
+                </div>
+
+                <div style={styles.divider} />
+
+                <div style={styles.dropdownSection}>
+                  <div style={styles.dropdownSectionTitle}>Comunicação & CRM</div>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/agenda'); }}>
+                    <Calendar size={16} strokeWidth={2} color="#475569" />
+                    <span>Agenda</span>
+                  </button>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/hubchat'); }}>
+                    <MessageSquare size={16} strokeWidth={2} color="#475569" />
+                    <span>HubChat</span>
+                  </button>
+                </div>
+
+                <div style={styles.divider} />
+
+                <div style={styles.dropdownSection}>
+                  <div style={styles.dropdownSectionTitle}>Automação & plataforma</div>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/automacoes'); }}>
+                    <Workflow size={16} strokeWidth={2} color="#475569" />
+                    <span>Automações</span>
+                  </button>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/ia-gateway'); }}>
+                    <Cpu size={16} strokeWidth={2} color="#475569" />
+                    <span>Gateway IA</span>
+                  </button>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/integracoes'); }}>
+                    <Plug size={16} strokeWidth={2} color="#475569" />
+                    <span>Integrações</span>
+                  </button>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/biblioteca'); }}>
+                    <Library size={16} strokeWidth={2} color="#475569" />
+                    <span>Biblioteca</span>
                   </button>
                 </div>
 
