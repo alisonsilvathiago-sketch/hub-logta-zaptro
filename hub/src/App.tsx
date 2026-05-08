@@ -40,6 +40,7 @@ import HubLogDock from './hub/modules/hub/LogDock';
 import LogDockLogin from './hub/pages/LogDockLogin';
 import LogDockLayout from './hub/layouts/LogDockLayout';
 import GlobalLoader from '@shared/components/GlobalLoader';
+import MasterKnowledge from './hub/modules/hub/Knowledge';
 
 import { runMasterAuditSync } from './core/lib/masterIntelligence';
 
@@ -231,6 +232,7 @@ const App: React.FC = () => {
             <Route path="logdock" element={<HubLogDock />} />
             <Route path="integracoes" element={<IntegrationsPage />} />
             <Route path="integracoes/:tab" element={<IntegrationsPage />} />
+            <Route path="biblioteca" element={<MasterKnowledge />} />
             <Route path="profile" element={<AccountSettings />} />
             <Route path="configuracoes/perfil" element={<Navigate to="/master/account" replace />} />
           </Route>

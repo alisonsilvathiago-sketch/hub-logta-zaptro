@@ -17,6 +17,7 @@ import {
   Plug,
   Activity,
   Anchor,
+  Library,
 } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
 
@@ -75,6 +76,7 @@ const menuBlocks: MenuBlock[] = [
       { label: 'Automações', icon: Workflow, path: '/master/automacoes' },
       { label: 'Gateway IA', icon: Cpu, path: '/master/ia-gateway' },
       { label: 'Integrações', icon: Plug, path: '/master/integracoes' },
+      { label: 'Biblioteca', icon: Library, path: '/master/biblioteca' },
       { label: 'LogDock', icon: Anchor, path: '/master/logdock' },
     ],
   },
@@ -295,10 +297,10 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
   },
   sectionTitle: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 700,
     color: '#94A3B8',
-    padding: '2px 10px 1px',
+    padding: '8px 10px 4px',
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
     lineHeight: 1.3,

@@ -205,7 +205,7 @@ const styles: Record<string, any> = {
   addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '24px', fontWeight: '600', cursor: 'pointer' },
   catBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '24px', fontWeight: '600', color: 'var(--text-main)', cursor: 'pointer' },
 
- { display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '20px' },
+  controls: { display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '20px' },
   searchWrapper: { flex: 1, position: 'relative', display: 'flex', alignItems: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '24px', padding: '0 16px' },
   searchInput: { flex: 1, padding: '16px', border: 'none', outline: 'none', fontSize: '14px', fontWeight: '600' },
   filters: { display: 'flex', gap: '10px' },

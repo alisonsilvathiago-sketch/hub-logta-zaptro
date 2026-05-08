@@ -3,12 +3,12 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  border-radius: 12px;
+  border-radius: 999px;
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid transparent;
+  border: 2px solid transparent;
   white-space: nowrap;
   outline: none;
   position: relative;
@@ -23,25 +23,26 @@
 
 /* Variants */
 .hub-button--primary {
-  background-color: #0061FF;
-  color: #FFFFFF !important;
-  box-shadow: 0 4px 12px rgba(0, 97, 255, 0.2);
+  background-color: #EFF6FF;
+  color: #0061FF !important;
+  border-color: #0061FF;
+  box-shadow: none;
 }
 
-/* MasterLayout aplica `span { color: var(--text-body) }` — força branco no primário */
+/* MasterLayout aplica `span { color: var(--text-body) }` — força cor no primário */
 .hub-button--primary .hub-button__label,
 .hub-button--primary .hub-button__icon {
-  color: #ffffff !important;
+  color: #0061FF !important;
 }
 
 .hub-button--primary .hub-button__icon svg {
-  stroke: #ffffff;
+  stroke: #0061FF;
 }
 
 .hub-button--primary:hover:not(:disabled) {
-  background-color: #0056E0;
+  background-color: #DBEAFE;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0, 97, 255, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 97, 255, 0.15);
 }
 
 .hub-button--secondary {
@@ -78,7 +79,6 @@
 .hub-button--sm {
   padding: 8px 16px;
   font-size: 12px;
-  border-radius: 10px;
   gap: 6px;
 }
 
@@ -93,7 +93,7 @@
 }
 
 .hub-button--primary.hub-button--md .hub-button__label > div > span:first-of-type {
-  color: #ffffff !important;
+  color: #0061FF !important;
   font-size: 17px;
 }
 
@@ -115,9 +115,9 @@
 .hub-button__loader {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(0, 97, 255, 0.2);
   border-radius: 50%;
-  border-top-color: #fff;
+  border-top-color: #0061FF;
   animation: hub-spin 0.6s linear infinite;
 }
 
