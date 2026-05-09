@@ -19,7 +19,7 @@ export class OptimizationEngineService {
   private setupListeners() {
     // Listen for conversions to update experiment results
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
-      if (data.action === 'PAYMENT_RECEIVED') {
+      if (data.action === 'PAYMENT_RECEIVED' && data.actorId) {
         await this.recordConversion(data.actorId);
       }
     });

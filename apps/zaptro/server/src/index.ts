@@ -81,39 +81,38 @@ async function main() {
   registerLogisticsPublicRoutes(app, cfg);
 
   // --- Intelligent Hub Initialization ---
-  // Initialize the Event Hub (Singleton)
-  const eventHub = EventHub.getInstance();
+  EventHub.getInstance();
 
-  // Initialize Autonomous Services (they start listening to events automatically)
-  const workflowService = new WorkflowService(cfg, queue);
+  // Side effect: construct services so they subscribe to the event hub
+  new WorkflowService(cfg, queue);
   const maintenanceService = new MaintenanceService();
-  const automationHandlers = new AutomationHandlers();
-  const intelligenceService = new IntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const autoAutomationService = new AutoAutomationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new AutomationHandlers();
+  new IntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new AutoAutomationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const billingIntelligenceService = new BillingIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const unifiedApiService = new UnifiedApiService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const customerHealthService = new CustomerHealthService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const optimizationEngineService = new OptimizationEngineService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const decisionEngineService = new DecisionEngineService(cfg.supabaseUrl, cfg.supabaseAnonKey, optimizationEngineService);
-  const growthEngineService = new GrowthEngineService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const gamificationService = new GamificationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new DecisionEngineService(cfg.supabaseUrl, cfg.supabaseAnonKey, optimizationEngineService);
+  new GrowthEngineService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new GamificationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const deliveryIntelligenceService = new DeliveryIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const masterOrchestratorService = new MasterOrchestratorService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const logisticsIntelligenceService = new LogisticsIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const routeOptimizationService = new RouteOptimizationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new MasterOrchestratorService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new LogisticsIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new RouteOptimizationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const fuelMonitoringService = new FuelMonitoringService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const operationsShieldService = new OperationsShieldService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const operationalBrainService = new OperationalBrainService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const documentAuditService = new DocumentAuditService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const internalEfficiencyService = new InternalEfficiencyService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const aggregateManagementService = new AggregateManagementService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const deliveryGuardianService = new DeliveryGuardianService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const reschedulingIntelligenceService = new ReschedulingIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const autonomousNavigatorService = new AutonomousNavigatorService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const geofencingValidationService = new GeofencingValidationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const lastMileMasterService = new LastMileMasterService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new OperationsShieldService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new OperationalBrainService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new DocumentAuditService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new InternalEfficiencyService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new AggregateManagementService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new DeliveryGuardianService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new ReschedulingIntelligenceService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new AutonomousNavigatorService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new GeofencingValidationService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new LastMileMasterService(cfg.supabaseUrl, cfg.supabaseAnonKey);
   const talentScoutService = new TalentScoutService(cfg.supabaseUrl, cfg.supabaseAnonKey);
-  const auditorService = new AuditorService(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  new AuditorService(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
   // Link services to maintenance for the daily/hourly cycle
   maintenanceService.setBillingService(billingIntelligenceService);

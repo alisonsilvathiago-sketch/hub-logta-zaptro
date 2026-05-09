@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import { createClient } from '@supabase/supabase-js';
+import { JWT } from 'google-auth-library';
 
 export class GoogleIntegrationService {
   private supabase;
@@ -22,18 +23,21 @@ export class GoogleIntegrationService {
       throw new Error('Google Service Account Key not found in master_settings');
     }
 
-    const key = data.value;
-    
-    return new google.auth.JWT(
-      key.client_email,
-      undefined,
-      key.private_key,
-      [
+    const raw = data.value;
+    const key = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!key?.client_email || !key?.private_key) {
+      throw new Error('Invalid Google service account key JSON in master_settings');
+    }
+
+    return new JWT({
+      email: key.client_email,
+      key: key.private_key,
+      scopes: [
         'https://www.googleapis.com/auth/calendar',
         'https://www.googleapis.com/auth/drive',
-        'https://www.googleapis.com/auth/meetings.space.created'
-      ]
-    );
+        'https://www.googleapis.com/auth/meetings.space.created',
+      ],
+    });
   }
 
   /**

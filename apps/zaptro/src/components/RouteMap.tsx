@@ -62,22 +62,24 @@ const RouteMap: React.FC<RouteMapProps> = ({ stops, center = [-23.5505, -46.6333
 
         {/* Desenhar a linha que conecta as paradas */}
         {sortedCoords.length > 1 && (
-          <Polyline
-            positions={sortedCoords}
-            color={ZAPTRO_MAP_ROUTE_COLORS.main}
-            weight={6}
-            opacity={1}
-            lineCap="round"
-            lineJoin="round"
-          />
-          <Polyline
-            positions={sortedCoords}
-            color={ZAPTRO_MAP_ROUTE_COLORS.accent}
-            weight={3}
-            opacity={0.8}
-            lineCap="round"
-            lineJoin="round"
-          />
+          <>
+            <Polyline
+              positions={sortedCoords}
+              color={ZAPTRO_MAP_ROUTE_COLORS.main}
+              weight={6}
+              opacity={1}
+              lineCap="round"
+              lineJoin="round"
+            />
+            <Polyline
+              positions={sortedCoords}
+              color={ZAPTRO_MAP_ROUTE_COLORS.accent}
+              weight={3}
+              opacity={0.8}
+              lineCap="round"
+              lineJoin="round"
+            />
+          </>
         )}
 
         {/* Centralizar no primeiro ponto se disponível */}

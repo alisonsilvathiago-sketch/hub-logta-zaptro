@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@core/lib/supabase';
 import { 
@@ -17,38 +17,37 @@ interface Activity {
 const GlobalActivityTicker: React.FC = () => {
   const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
+  const lastActivityKeyRef = useRef<string | null>(null);
+  const lastActivityAtRef = useRef<number>(0);
 
   useEffect(() => {
-    // Listeners (kept the same)
-    const companyChannel = supabase.channel('activity-companies')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, (payload) => {
-        addActivity('company', payload.eventType as any, payload.new?.name || payload.old?.name);
-      })
-      .subscribe();
-
-    const paymentChannel = supabase.channel('activity-payments')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'master_payments' }, (payload) => {
-        addActivity('payment', payload.eventType as any, `R$ ${payload.new?.amount || payload.old?.amount}`);
-      })
-      .subscribe();
-
-    const planChannel = supabase.channel('activity-plans')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'plans' }, (payload) => {
-        addActivity('plan', payload.eventType as any, payload.new?.name || payload.old?.name);
-      })
-      .subscribe();
-
+    // Somente eventos reais (evita spam de UPDATEs constantes em tabelas operacionais)
     const auditChannel = supabase.channel('activity-audit')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_log' }, (payload) => {
-        const { action, resource, actor_email } = payload.new;
-        addActivity('audit', 'INSERT', `${actor_email || 'Sistema'}: ${action} em ${resource}`);
+        const action = (payload.new as any)?.action;
+        const resource = (payload.new as any)?.resource;
+        const actor_email = (payload.new as any)?.actor_email;
+
+        // Exibir somente ações relevantes (login/entrada/ações do usuário)
+        const actionUpper = String(action || '').toUpperCase();
+        const allow = [
+          'LOGIN',
+          'SIGN_IN',
+          'SESSION_START',
+          'ACCESS_GRANTED',
+          'IMPERSONATION',
+          'PASSWORD_RESET',
+          'USER_CREATED',
+          'USER_UPDATED',
+        ];
+        const isAllowed = allow.some((k) => actionUpper.includes(k));
+        if (!isAllowed) return;
+
+        addActivity('audit', 'INSERT', `${actor_email || 'Usuário'}: ${action} ${resource ? `em ${resource}` : ''}`.trim());
       })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(companyChannel);
-      supabase.removeChannel(paymentChannel);
-      supabase.removeChannel(planChannel);
       supabase.removeChannel(auditChannel);
     };
   }, []);
@@ -72,7 +71,14 @@ const GlobalActivityTicker: React.FC = () => {
       timestamp: new Date()
     };
 
-    setActivities(prev => [newActivity, ...prev].slice(0, 3));
+    // Dedupe (mesma mensagem repetida em sequência / burst)
+    const key = `${type}:${action}:${message}`;
+    const now = Date.now();
+    if (lastActivityKeyRef.current === key && now - lastActivityAtRef.current < 20_000) return;
+    lastActivityKeyRef.current = key;
+    lastActivityAtRef.current = now;
+
+    setActivities(() => [newActivity]);
     
     // Auto-remove after 5 seconds
     setTimeout(() => {
@@ -158,12 +164,12 @@ const styles: Record<string, React.CSSProperties> = {
     pointerEvents: 'none'
   },
   toastCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-    backdropFilter: 'blur(12px)',
+    backgroundColor: '#FFFFFF',
+    backdropFilter: 'none',
     borderRadius: '16px',
     padding: '16px',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+    border: '1px solid rgba(226, 232, 240, 1)',
+    boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)',
     animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
     pointerEvents: 'auto'
   },
@@ -177,20 +183,20 @@ const styles: Record<string, React.CSSProperties> = {
     width: '6px',
     height: '6px',
     borderRadius: '50%',
-    backgroundColor: '#EF4444',
-    boxShadow: '0 0 6px #EF4444'
+    backgroundColor: 'var(--accent)',
+    boxShadow: '0 0 6px rgba(0, 97, 255, 0.35)'
   },
   toastTitle: {
     fontSize: '10px',
     fontWeight: '800',
-    color: '#94A3B8',
+    color: '#64748B',
     letterSpacing: '0.5px',
     flex: 1
   },
   toastTime: {
     fontSize: '9px',
     fontWeight: '700',
-    color: '#475569'
+    color: '#94A3B8'
   },
   toastBody: {
     display: 'flex',
@@ -201,7 +207,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '32px',
     height: '32px',
     borderRadius: '10px',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#F1F5F9',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center'
@@ -209,7 +215,7 @@ const styles: Record<string, React.CSSProperties> = {
   toastMessage: {
     fontSize: '13px',
     fontWeight: '600',
-    color: '#F8FAFC',
+    color: '#0F172A',
     lineHeight: '1.4'
   }
 };

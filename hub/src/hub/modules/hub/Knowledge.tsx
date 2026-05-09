@@ -9,6 +9,7 @@ import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetr
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import LogtaModal from '@shared/components/Modal';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 export const MasterKnowledge: React.FC = () => {
   const [articles, setArticles] = useState<any[]>([]);
@@ -199,8 +200,8 @@ const styles: Record<string, any> = {
   container: { padding: '0', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '40px' },
   bread: { fontSize: '11px', fontWeight: '700', color: 'var(--primary)', letterSpacing: '1px', marginBottom: '8px' },
-  title: { fontSize: '36px', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '-1.5px', marginBottom: '8px' },
-  subtitle: { fontSize: '13px', color: 'var(--text-muted)', maxWidth: '600px' },
+  title: { fontSize: '29px', fontWeight: '700', color: '#000000', letterSpacing: 0, marginBottom: '8px', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '12px' },
   addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '24px', fontWeight: '600', cursor: 'pointer' },
   catBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '24px', fontWeight: '600', color: 'var(--text-main)', cursor: 'pointer' },

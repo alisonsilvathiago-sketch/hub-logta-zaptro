@@ -4,10 +4,11 @@ import {
   ArrowLeft, Coins, TrendingUp, Shield, Cpu, Zap,
   Clock, AlertTriangle, CheckCircle2, Lock, Edit3, Save, X,
   FileText, DollarSign, Activity, Users, Building2,
-  Phone, Mail, UserCheck, Key, ChevronRight, BarChart3, CreditCard
+  Phone, Mail, UserCheck, Key, ChevronRight, BarChart3, CreditCard, MapPin, Smartphone, Trash2, MessageSquare
 } from 'lucide-react';
 import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
 import { toastSuccess } from '@core/lib/toast';
+import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 
 const MOCK_CLIENTS: Record<string, any> = {
   '1': { 
@@ -70,7 +71,7 @@ const CreditsClientProfile: React.FC = () => {
       {/* HEADER */}
       <header style={s.header}>
         <div style={s.headerLeft}>
-          <button style={s.backBtn} onClick={() => navigate('/master/credits-admin')}>
+          <button style={s.backBtn} onClick={() => navigate('/master/credits')}>
             <ArrowLeft size={20} />
           </button>
           <div style={{ ...s.avatar, backgroundColor: '#F59E0B' }}>{client.name[0]}</div>
@@ -89,11 +90,33 @@ const CreditsClientProfile: React.FC = () => {
         <div style={s.headerActions}>
           {isEditing ? (
             <>
-              <button style={s.cancelBtn} onClick={() => setIsEditing(false)}><X size={16} /> Cancelar</button>
-              <button style={{ ...s.saveBtn, backgroundColor: '#F59E0B' }} onClick={handleSave}><Save size={16} /> Salvar Alterações</button>
+              <button style={{ ...s.editBtn, backgroundColor: '#10B981' }} onClick={handleSave}>
+                <CheckCircle2 size={18} /> Salvar
+              </button>
+              <button style={{ ...s.deleteBtn, backgroundColor: '#F1F5F9', color: '#64748B' }} onClick={() => setIsEditing(false)}>
+                <X size={18} /> Cancelar
+              </button>
             </>
           ) : (
-            <button style={{ ...s.editBtn, borderColor: '#F59E0B', color: '#F59E0B', backgroundColor: '#FFFBEB' }} onClick={() => setIsEditing(true)}><Edit3 size={16} /> Editar Perfil</button>
+            <>
+              <button 
+                style={s.chatBtn} 
+                onClick={() => navigate(`/master/hubchat?token=4dbc4jv0n196sv9a0bdk&id=${client.id}`)}
+              >
+                <MessageSquare size={18} /> Chat
+              </button>
+              <button style={s.editBtn} onClick={() => setIsEditing(true)}>
+                <Edit3 size={18} /> Editar Cadastro
+              </button>
+              <button style={s.deleteBtn} onClick={() => {
+                if(window.confirm('Excluir cliente permanentemente?')) {
+                  toastSuccess('Cliente excluído do sistema de Créditos.');
+                  navigate('/master/credits');
+                }
+              }}>
+                <Trash2 size={18} /> Excluir Cliente
+              </button>
+            </>
           )}
         </div>
       </header>
@@ -107,7 +130,7 @@ const CreditsClientProfile: React.FC = () => {
             ['ia', Cpu, 'IA & APIs'],
             ['seguranca', Shield, 'Acesso & Segurança'],
           ] as const).map(([key, Icon, label]) => (
-            <button key={key} style={{ ...s.tabBtn, ...(activeTab === key ? { backgroundColor: '#FFFBEB', color: '#F59E0B' } : {}) }} onClick={() => setActiveTab(key)}>
+            <button key={key} style={{ ...s.tabBtn, ...(activeTab === key ? s.tabActive : {}) }} onClick={() => setActiveTab(key)}>
               <Icon size={16} /> {label}
             </button>
           ))}
@@ -154,10 +177,73 @@ const CreditsClientProfile: React.FC = () => {
                     <label style={s.fieldLabel}>{label}</label>
                     <div style={s.fieldInputWrapper}>
                       <Icon size={16} color="#94A3B8" />
-                      <span style={s.fieldValue}>{(client as any)[key]}</span>
+                      {isEditing ? (
+                        <input value={(editForm as any)[key]} onChange={e => setEditForm(p => ({ ...p, [key]: e.target.value }))} style={s.fieldInput} />
+                      ) : (
+                        <span style={s.fieldValue}>{(editForm as any)[key]}</span>
+                      )}
                     </div>
                   </div>
                 ))}
+                <div style={{ ...s.fieldGroup, gridColumn: 'span 2' }}>
+                  <label style={s.fieldLabel}>Endereço Completo</label>
+                  <div style={s.fieldInputWrapper}>
+                    <MapPin size={16} color="#94A3B8" />
+                    {isEditing ? (
+                      <input value={editForm.address} onChange={e => setEditForm(p => ({ ...p, address: e.target.value }))} style={s.fieldInput} />
+                    ) : (
+                      <span style={s.fieldValue}>{editForm.address}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={s.card}>
+              <div style={s.cardHeader}>
+                <h3 style={s.cardTitle}>Colaboradores / Usuários</h3>
+                <button style={{ ...s.addSmallBtn, backgroundColor: '#FFFBEB', color: '#F59E0B' }}><Plus size={14} /> Novo Colaborador</button>
+              </div>
+              <table style={s.table}>
+                <thead><tr><th style={s.th}>Nome</th><th style={s.th}>Cargo</th><th style={s.th}>Último Acesso</th><th style={s.th}>Ações</th></tr></thead>
+                <tbody>
+                  {client.collaborators.map((c: any) => (
+                    <tr key={c.id} style={s.tr}>
+                      <td style={s.td}><span style={s.colabName}>{c.name}</span></td>
+                      <td style={s.td}><span style={s.colabRole}>{c.role}</span></td>
+                      <td style={s.td}><span style={s.colabTime}>{c.lastLogin}</span></td>
+                      <td style={s.td}>
+                        <button style={s.iconBtn} title="Resetar Senha"><Key size={14} /></button>
+                        <button style={s.iconBtn} title="Editar"><Edit3 size={14} /></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        {activeTab === 'seguranca' && (
+          <div style={s.tabContent}>
+            <div style={s.card}>
+              <h3 style={s.cardTitle}>Segurança de Créditos & IA</h3>
+              <div style={s.securityGrid}>
+                <div style={s.securityItem}>
+                  <div style={s.securityIcon}><Smartphone size={20} color="#F59E0B" /></div>
+                  <div style={{ flex: 1 }}>
+                    <p style={s.snapTitle}>Autenticação de Dois Fatores (2FA)</p>
+                    <p style={s.snapSub}>Necessário para autorizar recargas de alto valor.</p>
+                  </div>
+                  <button style={{ ...s.addSmallBtn, backgroundColor: '#FFFBEB', color: '#F59E0B' }} onClick={() => toastSuccess('2FA Ativado!')}>Ativar 2FA</button>
+                </div>
+                <div style={s.securityItem}>
+                  <div style={s.securityIcon}><Shield size={20} color="#10B981" /></div>
+                  <div style={{ flex: 1 }}>
+                    <p style={s.snapTitle}>Limite de Consumo Diário</p>
+                    <p style={s.snapSub}>Evite gastos inesperados por uso excessivo de APIs.</p>
+                  </div>
+                  <button style={{ ...s.addSmallBtn, backgroundColor: '#ECFDF5', color: '#10B981' }} onClick={() => toastSuccess('Limite configurado!')}>Ativar Limite</button>
+                </div>
               </div>
             </div>
           </div>
@@ -176,14 +262,17 @@ const s: Record<string, React.CSSProperties> = {
   clientName: { margin: 0, fontSize: '22px', fontWeight: '900', color: '#0F172A', letterSpacing: '-0.5px' },
   statusBadge: { padding: '4px 12px', borderRadius: '999px', fontSize: '11px', fontWeight: '800' },
   clientSub: { margin: 0, fontSize: '13px', color: '#64748B', fontWeight: '600' },
-  headerActions: { display: 'flex', gap: '12px', alignItems: 'center' },
-  editBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
+  headerActions: { display: 'flex', gap: '16px', alignItems: 'center' },
+  chatBtn: { backgroundColor: 'white', color: '#64748B', border: '1px solid #E2E8F0', padding: '12px 28px', borderRadius: '999px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' },
+  editBtn: { backgroundColor: '#2D5BFF', color: 'white', border: 'none', padding: '12px 28px', borderRadius: '999px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 8px 16px rgba(45, 91, 255, 0.25)' },
   cancelBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
-  saveBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid', color: 'white', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
-  editInput: { fontSize: '22px', fontWeight: '900', color: '#0F172A', border: '2px solid #F59E0B', borderRadius: '12px', padding: '4px 12px', outline: 'none', backgroundColor: 'white' },
+  saveBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid', color: 'white', fontSize: '14px', fontWeight: '800', cursor: 'pointer', backgroundColor: '#2D5BFF' },
+  deleteBtn: { backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FEE2E2', padding: '12px 28px', borderRadius: '999px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s' },
+  editInput: { padding: '8px 16px', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '24px', fontWeight: '800', color: '#0F172A', outline: 'none', width: '300px' },
   content: { padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px' },
-  tabs: { display: 'flex', gap: '8px', padding: '8px 0', borderRadius: '24px', width: 'fit-content' },
-  tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '16px', border: 'none', background: 'none', color: '#64748B', fontSize: '14px', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
+  tabs: hubPillTabStripStyles.container,
+  tabBtn: { ...hubPillTabStripStyles.button, fontSize: '13px' },
+  tabActive: { ...hubPillTabStripStyles.buttonActive, fontSize: '13px' },
   tabContent: { display: 'flex', flexDirection: 'column', gap: '24px' },
   card: { backgroundColor: '#FFFFFF', borderRadius: '32px', padding: '32px', border: '1px solid #E2E8F0' },
   cardTitle: { margin: '0 0 24px 0', fontSize: '18px', fontWeight: '800', color: '#0F172A' },
@@ -195,6 +284,10 @@ const s: Record<string, React.CSSProperties> = {
   auditRow: { display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 0', borderBottom: '1px solid #F1F5F9' },
   snapTitle: { margin: 0, fontSize: '14px', fontWeight: '800', color: '#1E293B' },
   snapSub: { margin: 0, fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
+  addSmallBtn: { padding: '8px 16px', borderRadius: '999px', border: 'none', fontSize: '12px', fontWeight: '800', cursor: 'pointer' },
+  securityGrid: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  securityItem: { display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 0', borderBottom: '1px solid #F1F5F9' },
+  securityIcon: { width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#F8FAFC', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 };
 
 export default CreditsClientProfile;

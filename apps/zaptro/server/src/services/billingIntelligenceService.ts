@@ -9,7 +9,6 @@ export class BillingIntelligenceService {
   private hub: EventHub;
   private supabase: SupabaseClient;
   private asaasKey: string | null = null;
-  private readonly ASAAS_URL = 'https://sandbox.asaas.com/api/v3';
 
   constructor(supabaseUrl: string, supabaseKey: string) {
     this.hub = EventHub.getInstance();
@@ -38,7 +37,8 @@ export class BillingIntelligenceService {
   private setupListeners() {
     // Watch for payment confirmation to trigger autonomous renewal
     this.hub.on(SystemEvent.PAYMENT_RECEIVED, async (data) => {
-      await this.processAutonomousRenewal(data.companyId, data.paymentId);
+      if (!data.companyId) return;
+      await this.processAutonomousRenewal(data.companyId, data.paymentId ?? '');
     });
 
     // Layer 5: Learning from errors
@@ -47,6 +47,11 @@ export class BillingIntelligenceService {
         await this.handleBillingFailure(data);
       }
     });
+  }
+
+  /** Alias for MaintenanceService */
+  async processDailyBilling(): Promise<void> {
+    return this.runDailyBillingCycle();
   }
 
   /**
@@ -138,7 +143,7 @@ export class BillingIntelligenceService {
     });
   }
 
-  private async processAutonomousRenewal(companyId: string, paymentId: string) {
+  private async processAutonomousRenewal(companyId: string, _paymentId: string) {
     console.log(`[BillingMachine] Payment confirmed. Renewing subscription for ${companyId}...`);
     
     try {

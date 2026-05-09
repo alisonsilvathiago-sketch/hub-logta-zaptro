@@ -21,6 +21,7 @@ import { HubMetricCard, HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetr
 import Button from '@shared/components/Button';
 import Pagination from '@shared/components/Pagination';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 import Kbd from '@shared/components/Kbd';
 import { getPlatform } from '@core/lib/platform';
@@ -142,7 +143,7 @@ const MasterCRM: React.FC = () => {
       <header style={styles.header}>
         <div>
           <h1 className="h1-style" style={{ margin: 0 }}>Gestão de Expansão & Vendas</h1>
-          <p className="text-subtitle" style={{ margin: '4px 0 0 0' }}>Centralize leads e negociações em um único ecossistema.</p>
+          <p style={HUB_PAGE_SUBTITLE}>Centralize leads e negociações em um único ecossistema.</p>
         </div>
         <div style={styles.headerActions}>
           <div style={{ display: 'flex', gap: '12px' }}>
@@ -348,9 +349,9 @@ const MasterCRM: React.FC = () => {
       <LogtaModal 
         isOpen={!!selectedLead} 
         onClose={() => setSelectedLead(null)} 
-        size="xl"
-        title={selectedLead?.name}
-        subtitle={`${selectedLead?.city} • ID: ${selectedLead?.id?.substring(0,8)}`}
+        size="lg"
+        title={selectedLead?.name || 'Oportunidade'}
+        subtitle={`${selectedLead?.city || 'Local não informado'} • ID: ${selectedLead?.id?.substring(0,8) || '---'}`}
         icon={<Briefcase />}
       >
         {selectedLead && (
@@ -359,7 +360,7 @@ const MasterCRM: React.FC = () => {
                 <div style={styles.infoGrid}>
                    <div style={styles.iGroup}>
                       <label style={styles.iLabel}>VALOR DA OPORTUNIDADE</label>
-                      <div style={styles.modalPrice}>R$ {Number(selectedLead.potential_value).toLocaleString()}</div>
+                      <div style={styles.modalPrice}>R$ {Number(selectedLead.potential_value || 0).toLocaleString()}</div>
                    </div>
                    <div style={styles.iGroup}>
                       <label style={styles.iLabel}>ESTÁGIO ATUAL</label>
@@ -500,8 +501,8 @@ const styles = {
   container: { padding: '0', backgroundColor: 'transparent', minHeight: '100vh' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '48px' },
   bread: { fontSize: '10px', fontWeight: '700', color: '#0061FF', marginBottom: '8px', letterSpacing: '1px', textTransform: 'uppercase' as const },
-  title: { fontSize: '26px', fontWeight: '600', color: '#111827', margin: 0, letterSpacing: '-0.5px' },
-  subtitle: { color: '#6B7280', fontSize: '13px', fontWeight: '400' },
+  title: { fontSize: '29px', fontWeight: '600', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '20px', alignItems: 'center' },
   addBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 28px', backgroundColor: '#111827', color: '#FFFFFF', border: 'none', borderRadius: '16px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)', transition: 'all 0.2s', letterSpacing: '0.4px' },
   

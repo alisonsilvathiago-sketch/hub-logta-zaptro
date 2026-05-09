@@ -16,6 +16,7 @@ import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError } from '@core/lib/toast';
 import { googleCalendarApi } from '@core/lib/googleCalendarApi';
 import LogtaModal from '@shared/components/Modal';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 // Icons for integrations
 const GoogleMeetIcon = () => (
@@ -803,8 +804,8 @@ const Agenda: React.FC = () => {
 const styles: Record<string, any> = {
   container: { display: 'flex', minHeight: 'calc(100vh - 100px)', padding: '20px 0' },
   headerTitleRow: { marginBottom: '32px' },
-  pageTitle: { fontSize: '28px', fontWeight: '800', color: '#0F172A', margin: 0, letterSpacing: '-1px' },
-  pageSub: { fontSize: '13px', color: '#94A3B8', fontWeight: '500', marginTop: '4px' },
+  pageTitle: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  pageSub: { ...HUB_PAGE_SUBTITLE },
   loading: { height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0061FF', fontWeight: '800' },
   topBar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
   navGroup: { display: 'flex', alignItems: 'center', gap: '16px' },

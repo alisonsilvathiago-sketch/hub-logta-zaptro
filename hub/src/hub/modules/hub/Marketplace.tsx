@@ -9,6 +9,7 @@ import {
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError } from '@core/lib/toast';
 import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 const MasterMarketplace: React.FC = () => {
   const [apps, setApps] = useState<any[]>([]);
@@ -164,11 +165,11 @@ const styles = {
   container: { padding: '0', display: 'flex', flexDirection: 'column' as const, gap: '32px' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   headerInfo: { display: 'flex', flexDirection: 'column' as const, gap: '4px' },
-  title: { fontSize: '28px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: '-1.2px' },
-  subtitle: { fontSize: '13px', color: '#6b7280', margin: 0 },
+  title: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   primaryBtn: { backgroundColor: 'var(--primary)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '24px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)' },
   
- { backgroundColor: 'white', padding: '16px', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex' },
+  refinement: { backgroundColor: 'white', padding: '16px', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex' },
   searchWrap: { display: 'flex', alignItems: 'center', gap: '12px', padding: '0 16px', borderRight: '1px solid #e8e8e8', width: '400px' },
   searchInput: { border: 'none', outline: 'none', fontSize: '14px', fontWeight: '600', color: '#000000', width: '100%' },
 

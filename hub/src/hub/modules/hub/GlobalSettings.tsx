@@ -7,24 +7,24 @@ import {
   RefreshCw, Zap, HardDrive, User,
   Activity, Cpu, Network, Shield,
   CreditCard, Layout, Link as LinkIcon, Smartphone,
-  Bell,
+  Bell, Workflow, MessageSquare, Plug,
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Sub-componentes
 import EvolutionManager from './EvolutionManager';
 import TeamHub from './TeamHub';
-import { useNavigate } from 'react-router-dom';
 import Button from '@shared/components/Button';
+import { HUB_PAGE_SUBTITLE, HUB_SIDEBAR_NAV_LABEL } from '@hub/styles/hubPageTypography';
 
 type SettingsNavTab = {
   id: string;
   label: string;
   icon: React.ReactNode;
-  /** Rota absoluta fora de `/master/settings/*` (ex.: central de alertas). */
+  /** Rota absoluta em `/master/...` (ex.: automações, integrações). */
   externalPath?: string;
 };
 
@@ -72,6 +72,17 @@ const MasterSettings: React.FC = () => {
   useEffect(() => {
     setActiveTab(getTabFromPath());
   }, [location.pathname, location.search]);
+
+  /** Abas que têm página dedicada: evita ficar só no placeholder com ?tab=. */
+  useEffect(() => {
+    const path = location.pathname;
+    const onSettingsHome =
+      path === '/master/settings' || path === '/master/settings/';
+    if (!onSettingsHome) return;
+    const q = new URLSearchParams(location.search).get('tab');
+    if (q === 'automacoes') navigate('/master/automacoes', { replace: true });
+    else if (q === 'integracoes') navigate('/master/integracoes', { replace: true });
+  }, [location.pathname, location.search, navigate]);
 
   const handleSaveAll = async () => {
     if (!profile?.id) return;
@@ -121,11 +132,27 @@ const MasterSettings: React.FC = () => {
   };
 
   const tabs: SettingsNavTab[] = [
-    { id: 'geral', label: 'Geral & Branding', icon: <Globe size={18} /> },
-    { id: 'equipe', label: 'Equipe Master', icon: <Users size={18} /> },
-    { id: 'evolution', label: 'Evolution API Hub', icon: <Smartphone size={18} /> },
-    { id: 'notificacoes', label: 'Notificações', icon: <Bell size={18} />, externalPath: '/master/notifications' },
-    { id: 'sistema', label: 'Status do Núcleo', icon: <Database size={18} /> },
+    { id: 'geral', label: 'Geral & Branding', icon: <Globe size={18} strokeWidth={2} /> },
+    { id: 'equipe', label: 'Equipe & Acesso', icon: <Users size={18} strokeWidth={2} /> },
+    { id: 'seguranca', label: 'Segurança', icon: <ShieldCheck size={18} strokeWidth={2} /> },
+    { id: 'infra', label: 'Infraestrutura', icon: <Database size={18} strokeWidth={2} /> },
+    { id: 'logdock', label: 'LogDock (Drive & Backup)', icon: <HardDrive size={18} strokeWidth={2} /> },
+    {
+      id: 'automacoes',
+      label: 'Automações',
+      icon: <Workflow size={18} strokeWidth={2} />,
+      externalPath: '/master/automacoes',
+    },
+    {
+      id: 'integracoes',
+      label: 'Integrações',
+      icon: <Plug size={18} strokeWidth={2} />,
+      externalPath: '/master/integracoes',
+    },
+    { id: 'financeiro', label: 'Financeiro', icon: <CreditCard size={18} strokeWidth={2} /> },
+    { id: 'comunicacao', label: 'Comunicação', icon: <MessageSquare size={18} strokeWidth={2} /> },
+    { id: 'api', label: 'API & Developers', icon: <Terminal size={18} strokeWidth={2} /> },
+    { id: 'labs', label: 'Labs / Beta', icon: <Zap size={18} strokeWidth={2} /> },
   ];
 
   const renderActiveTab = () => {
@@ -141,7 +168,58 @@ const MasterSettings: React.FC = () => {
       );
       case 'equipe': return <TeamHub />;
       case 'evolution': return <EvolutionManager />;
-      case 'sistema': return <CoreStatusTab />;
+      case 'infra': return <CoreStatusTab />;
+      case 'seguranca': return (
+        <div style={styles.tabContent}>
+           <div style={styles.tabHeader}>
+              <h3 style={styles.tabTitle}>Segurança & Governança de Borda</h3>
+              <p style={styles.tabSub}>Controle central de acesso, autenticação multifator e firewall perimetral do ecossistema.</p>
+           </div>
+           
+           <div style={{...styles.card, border: '1px solid #FEE2E2', backgroundColor: '#FEF2F2', marginBottom: '32px'}}>
+              <div style={{display: 'flex', gap: '20px', alignItems: 'center'}}>
+                 <div style={{...styles.logoPreview, backgroundColor: '#EF4444'}}><ShieldCheck size={24} /></div>
+                 <div>
+                    <h4 style={{margin: 0, fontSize: '15px', fontWeight: '800', color: '#991B1B'}}>Central de Segurança Ativa</h4>
+                    <p style={{margin: '4px 0 0', fontSize: '12px', color: '#B91C1C'}}>Acesse o módulo de infraestrutura para gerenciar 2FA, logs de auditoria, firewall e bloqueios de IP em tempo real.</p>
+                 </div>
+                 <Button 
+                    variant="primary" 
+                    label="IR PARA SEGURANÇA MASTER" 
+                    onClick={() => navigate('/master/infrastructure/seguranca')}
+                    style={{ marginLeft: 'auto', backgroundColor: '#EF4444' }} 
+                 />
+              </div>
+           </div>
+
+           <div style={styles.fGrid}>
+              <div style={styles.fGroup}>
+                 <label style={styles.fLabel}>Política de 2FA para Admins</label>
+                 <select style={styles.input} defaultValue="OBRIGATORIO">
+                    <option value="OBRIGATORIO">Obrigatório (Recomendado)</option>
+                    <option value="OPCIONAL">Opcional</option>
+                 </select>
+              </div>
+              <div style={styles.fGroup}>
+                 <label style={styles.fLabel}>Sessão de Inatividade</label>
+                 <select style={styles.input} defaultValue="30">
+                    <option value="15">15 Minutos</option>
+                    <option value="30">30 Minutos</option>
+                    <option value="60">1 Hora</option>
+                 </select>
+              </div>
+           </div>
+        </div>
+      );
+      case 'logdock': return <div style={styles.tabPlaceholder}>Módulo LogDock: Configurações de drive, backups, sincronização e armazenamento.</div>;
+      case 'automacoes':
+        return <Navigate to="/master/automacoes" replace />;
+      case 'integracoes':
+        return <Navigate to="/master/integracoes" replace />;
+      case 'financeiro': return <div style={styles.tabPlaceholder}>Módulo Financeiro: Assinaturas, planos, cobranças, gateways e invoices.</div>;
+      case 'comunicacao': return <div style={styles.tabPlaceholder}>Módulo de Comunicação: HubChat, WhatsApp, SMTP e templates de notificações.</div>;
+      case 'api': return <div style={styles.tabPlaceholder}>API & Developers: Documentação, tokens, webhooks e logs de API.</div>;
+      case 'labs': return <div style={styles.tabPlaceholder}>Labs / Beta: Funcionalidades experimentais e recursos beta.</div>;
       default: return <div style={styles.tabPlaceholder}>Selecione um módulo no menu lateral.</div>;
     }
   };
@@ -171,16 +249,19 @@ const MasterSettings: React.FC = () => {
         <aside style={styles.sidebarWrapper}>
           <nav style={styles.sidebar}>
             {tabs.map((tab) => {
-              const isExternal = Boolean(tab.externalPath);
-              const isActive = isExternal
-                ? location.pathname.startsWith('/master/notifications')
-                : activeTab === tab.id;
+              const isActive =
+                activeTab === tab.id ||
+                (!!tab.externalPath &&
+                  (location.pathname === tab.externalPath ||
+                    location.pathname.startsWith(`${tab.externalPath}/`)));
               return (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() =>
-                    tab.externalPath ? navigate(tab.externalPath) : navigate(`/master/settings/${tab.id}`)
+                    tab.externalPath
+                      ? navigate(tab.externalPath)
+                      : navigate(`/master/settings?tab=${tab.id}`)
                   }
                   style={{
                     ...styles.tabBtn,
@@ -190,13 +271,12 @@ const MasterSettings: React.FC = () => {
                   <div
                     style={{
                       ...styles.tabIcon,
-                      backgroundColor: isActive ? 'var(--primary)' : 'rgba(241, 245, 249, 0.65)',
-                      color: isActive ? '#fff' : 'var(--text-secondary, #64748B)',
+                      color: isActive ? '#0061FF' : '#64748B',
                     }}
                   >
                     {tab.icon}
                   </div>
-                  <span>{tab.label}</span>
+                  <span style={HUB_SIDEBAR_NAV_LABEL}>{tab.label}</span>
                 </button>
               );
             })}
@@ -510,8 +590,8 @@ const styles: Record<string, any> = {
   container: { padding: '0', minHeight: '100vh', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
   badge: { fontSize: '10px', fontWeight: '600', color: 'var(--primary)', letterSpacing: '0.8px', marginBottom: '8px', textTransform: 'uppercase' },
-  title: { fontSize: '34px', fontWeight: '500', color: '#0F172A', letterSpacing: '0.4px', margin: 0, lineHeight: '1.2' },
-  subtitle: { fontSize: '13px', color: '#64748B', fontWeight: '400', lineHeight: '1.6' },
+  title: { fontSize: '29px', fontWeight: '500', color: '#000000', letterSpacing: 0, margin: 0, lineHeight: '1.2', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '12px' },
   refreshBtn: { width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '24px', cursor: 'pointer', color: '#64748b' },
   saveBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 28px', backgroundColor: '#1e293b', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.3px' },
@@ -525,36 +605,78 @@ const styles: Record<string, any> = {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    padding: '12px 14px',
+    padding: '9px 14px',
     border: 'none',
     backgroundColor: 'transparent',
     borderRadius: '22px',
-    fontSize: '14px',
+    fontSize: '13px',
     fontWeight: 600,
     color: 'var(--text-secondary, #64748B)',
     cursor: 'pointer',
     textAlign: 'left',
     transition: 'background-color 0.18s ease, color 0.18s ease',
-    letterSpacing: '0',
-    boxSizing: 'border-box',
     width: '100%',
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
   },
   tabBtnActive: {
     backgroundColor: 'var(--accent-light, #F0F7FF)',
     color: 'var(--text-primary, #0F172A)',
+    fontWeight: 600,
   },
-  tabIcon: { width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' },
+  tabIcon: {
+    width: 20,
+    height: 20,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
 
-  content: { backgroundColor: 'white', padding: '40px', borderRadius: '40px', border: '1px solid #e2e8f0', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.05)', minHeight: '700px' },
+  content: {
+    backgroundColor: 'white',
+    padding: '40px',
+    borderRadius: '40px',
+    border: '1px solid #e2e8f0',
+    boxShadow: '0 20px 40px -10px rgba(0,0,0,0.05)',
+    minHeight: '700px',
+    marginTop: '7px',
+    marginBottom: '7px',
+  },
   tabHeader: { marginBottom: '32px' },
-  tabTitle: { fontSize: '24px', fontWeight: '500', color: '#0F172A', marginBottom: '8px', letterSpacing: '0.3px' },
-  tabSub: { fontSize: '13px', color: '#64748B', fontWeight: '400', lineHeight: '1.5' },
-  tabPlaceholder: { height: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontWeight: '500' },
+  tabTitle: {
+    fontSize: '25px',
+    fontWeight: 500,
+    color: 'var(--accent-glow)',
+    margin: '0 0 8px 0',
+    letterSpacing: 0,
+    lineHeight: 1.2,
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+    backgroundImage: 'none',
+    WebkitBackgroundClip: 'unset',
+    backgroundClip: 'unset',
+  },
+  tabSub: {
+    ...HUB_PAGE_SUBTITLE,
+    fontWeight: 400,
+    fontSize: '12px',
+    color: 'rgba(115, 115, 115, 1)',
+  },
+  tabPlaceholder: {
+    height: '384px',
+    maxHeight: '428px',
+    marginTop: '7px',
+    marginBottom: '7px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#94a3b8',
+    fontWeight: '500',
+  },
 
   fGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
   fGroup: { display: 'flex', flexDirection: 'column', gap: '10px' },
   fLabel: { fontSize: '11px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' },
-  input: { padding: '14px 18px', borderRadius: '18px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', fontWeight: '500', outline: 'none', fontSize: '14px', transition: 'all 0.2s' },
+  input: { padding: '14px 18px', borderRadius: '18px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', fontWeight: 400, outline: 'none', fontSize: '12px', color: 'rgba(0, 0, 0, 0.8)', transition: 'all 0.2s' },
   textarea: { padding: '18px', borderRadius: '22px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', fontWeight: '500', outline: 'none', resize: 'vertical' },
 
   card: { padding: '24px', backgroundColor: 'white', borderRadius: '24px', border: '1px solid #e2e8f0' },

@@ -7,6 +7,7 @@ import {
 import { useAuth } from '@core/context/AuthContext';
 import { toast } from 'sonner';
 import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 interface SystemEvent {
   id: number;
@@ -93,14 +94,14 @@ const MasterHubDashboard: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-1.2px', lineHeight: 1.2 }}>
+            <h1 style={{ fontSize: '29px', fontWeight: 900, color: '#000000', margin: 0, letterSpacing: 0, lineHeight: 1.2, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }}>
               Hub Master Command
             </h1>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', background: '#E0F2FE', color: '#0284C7', padding: '4px 10px', borderRadius: '12px', fontWeight: 800, textTransform: 'uppercase' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', background: '#E0F2FE', color: '#0284C7', padding: '4px 10px', borderRadius: '12px', fontWeight: 600, textTransform: 'uppercase', opacity: 0.88 }}>
               v1.4.0 <Radio size={10} style={{ animation: 'pulse 1.5s infinite ease-in-out' }} />
             </span>
           </div>
-          <p style={{ color: '#64748B', fontSize: '13px', marginTop: '4px', margin: 0 }}>
+          <p style={HUB_PAGE_SUBTITLE}>
             Gerenciamento global do ecossistema Logta, Zaptro e LogDock.
           </p>
         </div>
@@ -116,7 +117,7 @@ const MasterHubDashboard: React.FC = () => {
               background: '#FFFFFF',
               color: '#0F172A',
               fontSize: '13px',
-              fontWeight: 700,
+              fontWeight: 600,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -137,9 +138,9 @@ const MasterHubDashboard: React.FC = () => {
             {isSyncing ? 'Sincronizando...' : 'Atualizar Dados'}
           </button>
           
-          <div style={{ background: '#FFFFFF', padding: '10px 18px', borderRadius: '12px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: '#0F172A', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ background: '#FFFFFF', padding: '10px 18px', borderRadius: '12px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: '#0F172A', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <Activity size={14} color="#10B981" style={{ animation: 'pulse 1.5s infinite ease-in-out' }} /> 
-            <span style={{ color: '#10B981' }}>Sistema Saudável</span>
+            <span style={{ color: '#10B981', opacity: 0.88 }}>Sistema Saudável</span>
           </div>
         </div>
       </div>
@@ -157,8 +158,8 @@ const MasterHubDashboard: React.FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 2,
-                fontSize: 14,
-                fontWeight: 800,
+                fontSize: 13,
+                fontWeight: 600,
                 color: '#10B981',
               }}
             >
@@ -174,7 +175,7 @@ const MasterHubDashboard: React.FC = () => {
           iconVariant="solid"
           accent="#0061FF"
           topRight={
-            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-secondary)' }}>60% Alocado</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>60% Alocado</span>
           }
           value="1.2 TB"
           footer={
@@ -199,7 +200,7 @@ const MasterHubDashboard: React.FC = () => {
           iconVariant="soft"
           accent="#0061FF"
           topRight={
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#10B981' }}>Status Seguro</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#10B981' }}>Status Seguro</span>
           }
           value="0"
         />
@@ -210,12 +211,12 @@ const MasterHubDashboard: React.FC = () => {
           iconVariant="solid"
           accent="#0061FF"
           topRight={
-            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-secondary)' }}>99.99% Global</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>99.99% Global</span>
           }
           value={
             <>
               {telemetry.requests}{' '}
-              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-secondary)' }}>req/s</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>req/s</span>
             </>
           }
           footer={
@@ -288,19 +289,20 @@ const MasterHubDashboard: React.FC = () => {
           >
             <span
               style={{
-                fontSize: '11px',
-                fontWeight: 800,
+                fontSize: '9px',
+                fontWeight: 600,
                 color: idx === 2 ? '#2A61FF' : '#94A3B8',
                 textTransform: 'uppercase',
                 letterSpacing: idx === 2 ? '0px' : '0.06em',
+                opacity: 0.88,
               }}
             >
               {card.label}
             </span>
             <span
               style={{
-                fontSize: '33px',
-                fontWeight: 800,
+                fontSize: '26px',
+                fontWeight: 900,
                 color:
                   idx === 1
                     ? 'rgba(5, 5, 5, 1)'
@@ -308,7 +310,7 @@ const MasterHubDashboard: React.FC = () => {
                       ? 'rgba(0, 0, 0, 1)'
                       : 'rgba(42, 97, 255, 1)',
                 letterSpacing: '-0.03em',
-                marginTop: '27px',
+                marginTop: '20px',
                 marginBottom: '10px',
               }}
             >
@@ -316,10 +318,11 @@ const MasterHubDashboard: React.FC = () => {
             </span>
             <span
               style={{
-                fontSize: '11px',
+                fontSize: '12px',
                 color: '#64748B',
                 fontWeight: 500,
                 letterSpacing: '0.2px',
+                opacity: 0.88,
               }}
             >
               {card.sub}
@@ -328,12 +331,13 @@ const MasterHubDashboard: React.FC = () => {
               style={{
                 marginTop: 2,
                 fontSize: idx === 2 ? '10px' : '11px',
-                fontWeight: 700,
+                fontWeight: 800,
                 color: idx === 2 ? 'rgba(255, 255, 255, 1)' : '#0061FF',
                 background: idx === 2 ? 'rgba(0, 0, 0, 1)' : '#EFF6FF',
                 borderRadius: 999,
                 padding: idx === 2 ? '4px 19px' : '4px 10px',
                 alignSelf: 'flex-start',
+                opacity: 0.88,
               }}
             >
               {card.pill}
@@ -558,8 +562,8 @@ const MasterHubDashboard: React.FC = () => {
               >
                 <div
                   style={{
-                    fontSize: '10px',
-                    fontWeight: 800,
+                    fontSize: '12px',
+                    fontWeight: 600,
                     padding: '6px 12px',
                     borderRadius: '8px',
                     backgroundColor: badge.bg,
@@ -567,14 +571,15 @@ const MasterHubDashboard: React.FC = () => {
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',
                     justifySelf: 'start',
+                    opacity: 0.88,
                   }}
                 >
                   {event.system}
                 </div>
-                <p style={{ margin: 0, fontSize: '11px', color: '#334155', fontWeight: 500, lineHeight: 1.55, letterSpacing: '0px' }}>
+                <p style={{ margin: 0, fontSize: '12px', color: '#334155', fontWeight: 500, lineHeight: 1.55, letterSpacing: '0px', opacity: 0.88 }}>
                   {event.message}
                 </p>
-                <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap', opacity: 0.88 }}>
                   {event.time}
                 </span>
               </div>

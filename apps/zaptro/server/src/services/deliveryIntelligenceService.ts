@@ -29,7 +29,7 @@ export class DeliveryIntelligenceService {
         'DocumentAuditCoordination'
       ];
 
-      if (trackableLogics.includes(decision.logic)) {
+      if (decision.companyId && trackableLogics.includes(decision.logic)) {
         await this.startTracking(decision.companyId, decision.outcome, decision.logic);
       }
     });
@@ -37,13 +37,16 @@ export class DeliveryIntelligenceService {
     // Listen for behavior updates that might "Complete" a delivery (e.g. user read or paid)
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
       // Logic for Completion
-      if (data.action === 'PAYMENT_RECEIVED') {
+      if (data.action === 'PAYMENT_RECEIVED' && data.actorId) {
         await this.markAsCompleted(data.actorId, 'BILLING_MESSAGE');
       }
-      if (data.action === 'MESSAGE_READ') {
+      if (data.action === 'MESSAGE_READ' && data.actorId && data.metadata?.messageType) {
         await this.updateStatus(data.actorId, data.metadata.messageType, 'READ');
       }
-      if (data.action === 'DELIVERY_CONFIRMED_BY_CLIENT' || data.action === 'DELIVERY_RESCHEDULED_BY_CLIENT') {
+      if (
+        (data.action === 'DELIVERY_CONFIRMED_BY_CLIENT' || data.action === 'DELIVERY_RESCHEDULED_BY_CLIENT') &&
+        data.actorId
+      ) {
         await this.markAsCompleted(data.actorId, 'CONFIRMATION_REQUEST');
       }
     });

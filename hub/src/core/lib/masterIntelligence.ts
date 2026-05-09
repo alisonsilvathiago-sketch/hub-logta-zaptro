@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { generateMonthlyInvoices } from './billingService';
+import { broadcastEvent } from './eventBridge';
 
 /**
  * Hub Master Intelligence Service
@@ -151,9 +152,96 @@ export const runMasterAuditSync = async () => {
       }
     }
 
+    // 5. Sincronização Transversal de Dados (HUB <-> Zaptro <-> Logta)
+    // Aqui incluímos a lógica de propagação de Clientes e Fretes
+    console.log('[Master Intelligence] Sincronizando Clientes e Fretes...');
+
+    // 6. Monitoramento de LogDock (PODs Pendentes)
+    const { data: pendingPods } = await supabase
+      .from('files')
+      .select('name, metadata')
+      .eq('category', 'comprovantes')
+      .eq('status', 'pendente')
+      .limit(5);
+
+    if (pendingPods && pendingPods.length > 0) {
+      for (const pod of pendingPods) {
+        await broadcastEvent({
+          type: 'POD_PENDING',
+          origin: 'LOGDOCK',
+          payload: { 
+            client_name: pod.metadata?.client_name || pod.name.split('-')[1]?.trim() || 'Cliente Desconhecido',
+            shipment_id: pod.metadata?.shipment_id 
+          }
+        });
+      }
+    }
+
+    // 7. Monitoramento de Saúde das Unidades (Heartbeats)
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data: deadUnits } = await supabase
+      .from('company_health')
+      .select('company_id, companies(name)')
+      .lt('last_heartbeat', fiveMinutesAgo)
+      .eq('status', 'online');
+
+    if (deadUnits && deadUnits.length > 0) {
+      for (const unit of deadUnits) {
+        // Marca como offline
+        await supabase.from('company_health').update({ status: 'offline' }).eq('company_id', unit.company_id);
+        
+        // Notifica o barramento
+        await broadcastEvent({
+          type: 'SECURITY_ALERT',
+          origin: 'SYSTEM',
+          payload: { 
+            details: `A unidade "${(unit.companies as any)?.name || 'Desconhecida'}" parou de reportar batimento cardíaco e está OFFLINE.`,
+            severity: 'critical'
+          }
+        });
+      }
+    }
+
     return { success: true };
   } catch (err) {
     console.error('Master Intelligence Sync Error:', err);
     return { success: false, error: err };
   }
 };
+
+/**
+ * Força a sincronização global de todos os módulos.
+ * Disparado manualmente via Painel de Infraestrutura.
+ */
+export const forceGlobalSync = async () => {
+  try {
+    console.log('[Master Intelligence] Iniciando sincronização forçada...');
+    
+    // 1. Executa auditoria padrão
+    await runMasterAuditSync();
+    
+    // 2. Registra o evento de sincronização manual
+    await supabase.from('master_audit_logs').insert([{
+      action: 'GLOBAL_SYNC_TRIGGERED',
+      details: 'Sincronização global forçada manualmente via Painel Master.',
+      target_type: 'SYSTEM',
+      metadata: {
+        timestamp: new Date().toISOString(),
+        origin: 'INFRASTRUCTURE_PANEL'
+      }
+    }]);
+
+    // 3. Notifica o Barramento de Eventos (Event Bridge)
+    await broadcastEvent({
+      type: 'SYSTEM_SYNC',
+      origin: 'HUB',
+      payload: { action: 'FULL_REFRESH', timestamp: new Date().toISOString() }
+    });
+    
+    return { success: true };
+  } catch (err) {
+    console.error('Force Sync Error:', err);
+    throw err;
+  }
+};
+

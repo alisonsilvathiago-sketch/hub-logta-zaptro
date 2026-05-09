@@ -25,6 +25,7 @@ import {
   Calendar,
   ShieldCheck,
   CheckCircle2,
+  Check,
   Download,
   ExternalLink
 } from 'lucide-react';
@@ -730,10 +731,10 @@ const ClientePerfilView = () => {
 
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
-    setClient(prev => ({
-      ...prev,
-      ...editForm
-    }));
+    setClient({
+      ...client,
+      ...editForm,
+    });
     setSuccess(true);
     if ((window as any).showToast) {
       (window as any).showToast('success', 'Dados da empresa atualizados com sucesso!', 'Cadastro Atualizado');

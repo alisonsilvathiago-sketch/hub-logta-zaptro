@@ -19,7 +19,11 @@ export class DocumentAuditService {
 
   private setupListeners() {
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
-      if (data.action === 'DOCUMENT_UPLOADED' || data.action === 'DOCUMENT_GENERATED') {
+      if (
+        (data.action === 'DOCUMENT_UPLOADED' || data.action === 'DOCUMENT_GENERATED') &&
+        data.metadata?.docId &&
+        data.actorId
+      ) {
         await this.auditDocument(data.metadata.docId, data.actorId);
       }
     });

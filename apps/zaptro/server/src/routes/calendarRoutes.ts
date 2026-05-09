@@ -3,6 +3,7 @@ import { GoogleApiService } from '../services/GoogleApiService.js';
 import { AppConfig } from '../config.js';
 
 export function registerCalendarRoutes(app: Express, cfg: AppConfig) {
+  void cfg;
   const googleService = new GoogleApiService();
 
   /**

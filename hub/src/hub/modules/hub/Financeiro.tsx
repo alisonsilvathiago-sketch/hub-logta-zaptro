@@ -16,6 +16,9 @@ import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/
 import LogtaModal from '@shared/components/Modal';
 import HubMetricCard from '@shared/components/HubMetricCard';
 import Pagination from '@shared/components/Pagination';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
+import { HUB_TOP_CTA_PRIMARY, HUB_TOP_CTA_SECONDARY } from '@hub/styles/hubTopCta';
+import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 
 const MasterFinanceiro: React.FC = () => {
   const [activeTab, setActiveTab] = useState('CONCILIACAO');
@@ -29,9 +32,13 @@ const MasterFinanceiro: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState<number | 'all'>(20);
   const [totalCount, setTotalCount] = useState(0);
 
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+
   const fetchData = async () => {
     setLoading(true);
     try {
+      // 1. Fetch Payments
       let query = supabase
         .from('master_payments')
         .select('*', { count: 'exact' });
@@ -43,10 +50,21 @@ const MasterFinanceiro: React.FC = () => {
       }
 
       const { data, error, count } = await query.order('created_at', { ascending: false });
-      
       if (error) throw error;
       setPayments(data || []);
       setTotalCount(count || 0);
+
+      // 2. Fetch Consolidated Metrics (New!)
+      const { data: revData } = await supabase.rpc('get_consolidated_revenue', { p_days: 30 });
+      const total = (revData || []).reduce((acc: number, curr: any) => acc + Number(curr.total_revenue), 0);
+      setTotalRevenue(total);
+
+      const { count: pending } = await supabase
+        .from('master_payments')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'PENDENTE');
+      setPendingCount(pending || 0);
+
     } catch (err) {
       toastError('Erro ao sincronizar dados financeiros.');
     } finally {
@@ -106,35 +124,35 @@ const MasterFinanceiro: React.FC = () => {
              toastSuccess('Sincronizando com gateway Asaas...');
              fetchData();
            }}>
-              <RefreshCw size={18} color="var(--accent)" /> Sincronizar Gateway
+              <RefreshCw size={15} color="var(--accent)" /> Sincronizar Gateway
            </button>
            <button style={styles.primaryBtn}>
-              <Download size={18} /> Exportar Lote NF-e
+              <Download size={15} /> Exportar Lote NF-e
            </button>
         </div>
       </header>
 
 
-      {/* Sub-abas — estilo linha (diferente das abas principais) */}
+      {/* Sub-abas */}
       <div style={styles.tabsContainer}>
         <button 
           style={{...styles.tabBtn, ...(activeTab === 'CONCILIACAO' ? styles.tabActive : {})}}
           onClick={() => setActiveTab('CONCILIACAO')}
         >
-          <Zap size={16} color={activeTab === 'CONCILIACAO' ? 'var(--accent)' : 'var(--text-secondary)'} /> Conciliação Pendente
+          <Zap size={16} /> Conciliação Pendente
         </button>
         <button 
           style={{...styles.tabBtn, ...(activeTab === 'NOTAS' ? styles.tabActive : {})}}
           onClick={() => setActiveTab('NOTAS')}
         >
-          <FileText size={16} color={activeTab === 'NOTAS' ? 'var(--accent)' : 'var(--text-secondary)'} /> Notas Emitidas
+          <FileText size={16} /> Notas Emitidas
         </button>
       </div>
 
       {/* MAIN LIST */}
       <div style={styles.statsGrid}>
         <HubMetricCard
-          label="Total Conciliado"
+          label="Total Consolidado (30d)"
           icon={DollarSign}
           iconVariant="soft"
           accent="#0061FF"
@@ -149,10 +167,10 @@ const MasterFinanceiro: React.FC = () => {
                 color: '#10B981',
               }}
             >
-              +8.4% <TrendingUp size={14} />
+              ECOSSISTEMA <ArrowUpRight size={14} />
             </span>
           }
-          value="R$ 1.2M"
+          value={`R$ ${totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
         />
         <HubMetricCard
           label="Taxa de Sucesso"
@@ -162,15 +180,15 @@ const MasterFinanceiro: React.FC = () => {
           value="99.2%"
         />
         <HubMetricCard
-          label="Pendentes (HOJE)"
+          label="Faturas Pendentes"
           icon={Clock}
           iconVariant="soft"
           accent="#0061FF"
           iconSize={20}
           topRight={
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#F59E0B' }}>AGUARDANDO</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#F59E0B' }}>ASAAS</span>
           }
-          value="42"
+          value={pendingCount.toString()}
         />
         <HubMetricCard
           label="Chargebacks / Disputas"
@@ -310,51 +328,21 @@ const styles: Record<string, any> = {
   },
   bread: { fontSize: '11px', fontWeight: '800', color: 'var(--accent)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' },
   title: { fontSize: '20px', fontWeight: '800', color: 'var(--secondary)', margin: 0, letterSpacing: '-0.35px' },
-  subtitle: { color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '500', marginTop: '6px' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '12px', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' },
-  syncBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--secondary)', fontWeight: '700', fontSize: '14px', cursor: 'pointer' },
-  primaryBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },
+  syncBtn: { ...HUB_TOP_CTA_SECONDARY },
+  primaryBtn: { ...HUB_TOP_CTA_PRIMARY, boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },
 
-  tabsContainer: {
-    display: 'flex',
-    gap: '4px',
-    marginTop: '20px',
-    marginBottom: '28px',
-    backgroundColor: 'transparent',
-    padding: 0,
-    borderRadius: 0,
-    width: '100%',
-    borderBottom: '1px solid var(--border)',
-  },
-  tabBtn: {
-    padding: '12px 18px',
-    borderRadius: 0,
-    fontSize: '13px',
-    fontWeight: '700',
-    color: 'var(--text-secondary)',
-    border: 'none',
-    backgroundColor: 'transparent',
-    cursor: 'pointer',
-    transition: 'color 0.15s, border-color 0.15s',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    borderBottom: '2px solid transparent',
-    marginBottom: '-1px',
-  },
-  tabActive: {
-    backgroundColor: 'transparent',
-    color: 'var(--accent)',
-    boxShadow: 'none',
-    borderBottomColor: 'var(--accent)',
-  },
+  tabsContainer: { ...hubPillTabStripStyles.container, marginTop: '20px', marginBottom: '28px' },
+  tabBtn: { ...hubPillTabStripStyles.button, fontSize: '13px' },
+  tabActive: { ...hubPillTabStripStyles.buttonActive, fontSize: '13px' },
 
   statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '28px' },
 
   tableCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
   tableHeader: { padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-secondary)' },
   searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'white', padding: '0 24px', borderRadius: '20px', border: '1px solid var(--border)', height: '56px', maxWidth: '500px' },
-  searchInput: { border: 'none', backgroundColor: 'transparent', outline: 'none', fontSize: '15px', fontWeight: '600', color: 'var(--secondary)', width: '100%' },
+  searchInput: { border: 'none', backgroundColor: 'transparent', outline: 'none', fontSize: '12px', fontWeight: '600', color: 'var(--secondary)', width: '100%' },
   tableFilters: { display: 'flex', gap: '12px' },
   filterBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 20px', height: '48px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--secondary)', fontWeight: '700', fontSize: '13px', cursor: 'pointer' },
 

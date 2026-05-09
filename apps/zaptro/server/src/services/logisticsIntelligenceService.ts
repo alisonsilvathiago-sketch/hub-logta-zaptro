@@ -20,7 +20,7 @@ export class LogisticsIntelligenceService {
   private setupListeners() {
     // Listen for external logistics triggers (e.g. GPS updates or manual alerts)
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
-      if (data.action === 'GPS_UPDATE_RECEIVED') {
+      if (data.action === 'GPS_UPDATE_RECEIVED' && data.actorId && data.metadata) {
         await this.analyzeDeliveryDelay(data.actorId, data.metadata);
       }
     });
@@ -42,7 +42,6 @@ export class LogisticsIntelligenceService {
 
       // 2. Risk Calculation (Intelligence Layer)
       // Logic: If ETA > Estimated Delivery Time, or if speed is low in a known congestion zone
-      const now = new Date();
       const eta = new Date(gpsData.current_eta);
       const est = new Date(delivery.estimated_delivery_at);
       

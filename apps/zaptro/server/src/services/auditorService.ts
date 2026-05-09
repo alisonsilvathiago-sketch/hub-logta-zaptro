@@ -19,11 +19,11 @@ export class AuditorService {
   private setupAuditListeners() {
     // Listen for new document uploads
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
-      if (data.action === 'DOCUMENT_UPLOADED') {
+      if (data.action === 'DOCUMENT_UPLOADED' && data.metadata?.docId) {
         await this.auditFiscalDocument(data.metadata.docId, data.metadata);
       }
 
-      if (data.action === 'PAYMENT_RECEIVED') {
+      if (data.action === 'PAYMENT_RECEIVED' && data.metadata) {
         await this.reconcilePayment(data.metadata);
       }
     });

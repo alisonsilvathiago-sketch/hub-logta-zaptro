@@ -12,6 +12,13 @@ import Pagination from '@shared/components/Pagination';
 import HubMetricCard from '@shared/components/HubMetricCard';
 import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 import { toast } from 'sonner';
+import { HUB_PAGE_SUBTITLE, HUB_FIELD_TEXT } from '@hub/styles/hubPageTypography';
+import {
+  onlyDigits,
+  maskCpfOrCnpj,
+  validateCpf,
+  validateCnpj,
+} from '@shared/lib/brDocuments';
 
 const ClientsList: React.FC = () => {
   const navigate = useNavigate();
@@ -27,6 +34,7 @@ const ClientsList: React.FC = () => {
   const [newClientPhone, setNewClientPhone] = useState('');
   const [newClientPlan, setNewClientPlan] = useState('Plano Ouro (Logta + Zaptro)');
   const [newClientPassword, setNewClientPassword] = useState('Logta123!');
+  const [newClientDocument, setNewClientDocument] = useState('');
   const [plansList, setPlansList] = useState<any[]>([
     { id: 'ouro', name: 'Plano Ouro (Logta + Zaptro)' },
     { id: 'prata', name: 'Plano Prata' },
@@ -56,6 +64,29 @@ const ClientsList: React.FC = () => {
       toast.error('Preencha os campos obrigatórios.');
       return;
     }
+
+    const docDigits = onlyDigits(newClientDocument);
+    if (docDigits.length === 14) {
+      if (validateCnpj(docDigits)) {
+        toast.info('CNPJ detectado: cadastro de empresa é feito em Empresas. Redirecionando…');
+        setShowNewClientModal(false);
+        setNewClientDocument('');
+        navigate('/master/companies');
+        return;
+      }
+      toast.error('CNPJ inválido.');
+      return;
+    }
+    if (docDigits.length > 11 && docDigits.length < 14) {
+      toast.error('Documento incompleto. Para PF use CPF (11 dígitos); para PJ, cadastre em Empresas.');
+      return;
+    }
+    if (docDigits.length !== 11 || !validateCpf(docDigits)) {
+      toast.error('Informe um CPF válido (Pessoa Física).');
+      return;
+    }
+
+    const cpfFormatted = maskCpfOrCnpj(docDigits);
     
     const tempId = crypto.randomUUID();
     const newClientObj = {
@@ -73,16 +104,30 @@ const ClientsList: React.FC = () => {
     };
 
     try {
-      await supabase
-        .from('clients')
-        .insert([{
+      const { error } = await supabase.from('clients').insert([
+        {
           name: newClientName,
           email: newClientEmail,
           phone: newClientPhone,
-          plan: newClientPlan
-        }]);
+          plan: newClientPlan,
+          document: cpfFormatted,
+        },
+      ]);
+      if (error) throw error;
     } catch (err) {
-      console.warn('Fallback mock:', err);
+      console.warn('Insert com document falhou; tentando sem coluna document:', err);
+      try {
+        await supabase.from('clients').insert([
+          {
+            name: newClientName,
+            email: newClientEmail,
+            phone: newClientPhone,
+            plan: newClientPlan,
+          },
+        ]);
+      } catch (err2) {
+        console.warn('Fallback mock:', err2);
+      }
     }
 
     setContacts(prev => [newClientObj, ...prev]);
@@ -93,6 +138,7 @@ const ClientsList: React.FC = () => {
     setNewClientName('');
     setNewClientEmail('');
     setNewClientPhone('');
+    setNewClientDocument('');
     setNewClientPlan('OURO');
     setNewClientPassword('Logta123!');
   };
@@ -477,18 +523,34 @@ const ClientsList: React.FC = () => {
                 <input
                   type="text"
                   required
-                  style={{ padding: '12px 18px', borderRadius: '14px', border: '1px solid #E2E8F0', outline: 'none', fontSize: '14px', color: '#0F172A', fontWeight: '500' }}
+                  style={{ padding: '12px 18px', borderRadius: '14px', border: '1px solid #E2E8F0', outline: 'none', color: '#0F172A', ...HUB_FIELD_TEXT }}
                   value={newClientName}
                   onChange={(e) => setNewClientName(e.target.value)}
                   placeholder="Nome do Cliente"
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>CPF (Pessoa Física)</label>
+                <input
+                  type="text"
+                  required
+                  style={{ padding: '12px 18px', borderRadius: '14px', border: '1px solid #E2E8F0', outline: 'none', color: '#0F172A', ...HUB_FIELD_TEXT }}
+                  value={newClientDocument}
+                  onChange={(e) => setNewClientDocument(maskCpfOrCnpj(e.target.value))}
+                  placeholder="000.000.000-00"
+                  inputMode="numeric"
+                  autoComplete="off"
+                />
+                <span style={{ fontSize: 11, color: '#94A3B8' }}>
+                  CNPJ redireciona automaticamente para o cadastro de Empresas.
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ fontSize: '12px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>E-mail de Acesso</label>
                 <input
                   type="email"
                   required
-                  style={{ padding: '12px 18px', borderRadius: '14px', border: '1px solid #E2E8F0', outline: 'none', fontSize: '14px', color: '#0F172A', fontWeight: '500' }}
+                  style={{ padding: '12px 18px', borderRadius: '14px', border: '1px solid #E2E8F0', outline: 'none', color: '#0F172A', ...HUB_FIELD_TEXT }}
                   value={newClientEmail}
                   onChange={(e) => setNewClientEmail(e.target.value)}
                   placeholder="exemplo@email.com"
@@ -498,7 +560,7 @@ const ClientsList: React.FC = () => {
                 <label style={{ fontSize: '12px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>WhatsApp / Telefone</label>
                 <input
                   type="text"
-                  style={{ padding: '12px 18px', borderRadius: '14px', border: '1px solid #E2E8F0', outline: 'none', fontSize: '14px', color: '#0F172A', fontWeight: '500' }}
+                  style={{ padding: '12px 18px', borderRadius: '14px', border: '1px solid #E2E8F0', outline: 'none', color: '#0F172A', ...HUB_FIELD_TEXT }}
                   value={newClientPhone}
                   onChange={(e) => setNewClientPhone(e.target.value)}
                   placeholder="(11) 99999-9999"
@@ -508,7 +570,7 @@ const ClientsList: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
                   <label style={{ fontSize: '12px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Plano Contratado</label>
                   <select
-                    style={{ padding: '12px 18px', borderRadius: '14px', border: '1px solid #E2E8F0', outline: 'none', fontSize: '14px', color: '#0F172A', fontWeight: '500', backgroundColor: 'white' }}
+                    style={{ padding: '12px 18px', borderRadius: '14px', border: '1px solid #E2E8F0', outline: 'none', color: '#0F172A', backgroundColor: 'white', ...HUB_FIELD_TEXT }}
                     value={newClientPlan}
                     onChange={(e) => setNewClientPlan(e.target.value)}
                   >
@@ -521,7 +583,7 @@ const ClientsList: React.FC = () => {
                   <label style={{ fontSize: '12px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Senha Provisória</label>
                   <input
                     type="password"
-                    style={{ padding: '12px 18px', borderRadius: '14px', border: '1px solid #E2E8F0', outline: 'none', fontSize: '14px', color: '#0F172A', fontWeight: '500' }}
+                    style={{ padding: '12px 18px', borderRadius: '14px', border: '1px solid #E2E8F0', outline: 'none', color: '#0F172A', ...HUB_FIELD_TEXT }}
                     value={newClientPassword}
                     onChange={(e) => setNewClientPassword(e.target.value)}
                   />
@@ -546,8 +608,8 @@ const ClientsList: React.FC = () => {
 const styles: Record<string, any> = {
   container: { padding: '20px 0 40px' },
   headerTitleRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' },
-  pageTitle: { fontSize: '28px', fontWeight: '500', color: '#0F172A', margin: 0, letterSpacing: '0.4px' },
-  pageSub: { fontSize: '13px', color: '#94A3B8', fontWeight: '400', marginTop: '4px', letterSpacing: '0.2px' },
+  pageTitle: { fontSize: '29px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  pageSub: { ...HUB_PAGE_SUBTITLE },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -556,13 +618,13 @@ const styles: Record<string, any> = {
     flexWrap: 'wrap',
     gap: '16px',
   },
-  title: { fontSize: '32px', fontWeight: '800', color: '#0F172A', margin: 0, letterSpacing: '-1.5px' },
-  subtitle: { color: '#64748B', fontSize: '13px', fontWeight: '500' },
+  title: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   addBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 26px', height: '50px', backgroundColor: '#0061FF', color: 'white', border: 'none', borderRadius: '18px', fontWeight: '700', fontSize: '15px', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)', letterSpacing: '0.02em' },
   
   controls: { display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'center', flexWrap: 'wrap' },
   searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'white', padding: '12px 24px', borderRadius: '20px', border: '1px solid #E2E8F0', transition: 'all 0.2s' },
-  searchInput: { border: 'none', outline: 'none', width: '100%', fontSize: '14px', fontWeight: '500', color: '#0F172A', letterSpacing: '0.2px' },
+  searchInput: { border: 'none', outline: 'none', width: '100%', color: '#0F172A', letterSpacing: '0.2px', ...HUB_FIELD_TEXT },
   filterBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: '20px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', color: '#64748B', letterSpacing: '0.2px' },
   
   tableCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #E2E8F0', overflow: 'hidden' },
@@ -609,7 +671,7 @@ const styles: Record<string, any> = {
     border: 'none',
     borderStyle: 'none',
     fontSize: '11px',
-    fontWeight: 800,
+    fontWeight: 600,
     color: 'var(--text-secondary)',
     display: 'inline-flex',
     alignItems: 'center',

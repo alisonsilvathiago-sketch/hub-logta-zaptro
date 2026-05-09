@@ -18,6 +18,7 @@ import { supabase } from '@core/lib/supabase';
 import { toastSuccess } from '@core/lib/toast';
 import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 import MasterCredentialsVault from './MasterCredentialsVault';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 const INTEGRATION_TABS = [
   { id: 'google' as const, label: 'Google Cloud', icon: Cloud },
@@ -108,7 +109,7 @@ const IntegrationsPage: React.FC = () => {
             }}
             onClick={() => setActiveTab(t.id)}
           >
-            <t.icon size={18} color={activeTab === t.id ? 'var(--accent)' : 'var(--text-secondary)'} />
+            <t.icon size={15} color={activeTab === t.id ? 'var(--accent)' : 'var(--text-secondary)'} />
             {t.label}
           </button>
         ))}
@@ -359,8 +360,8 @@ const styles: Record<string, any> = {
     fontSize: '14px',
     cursor: 'pointer',
   },
-  title: { fontSize: '28px', fontWeight: '800', color: '#0F172A', margin: 0, letterSpacing: '-1px' },
-  subtitle: { fontSize: '13px', color: '#64748B', marginTop: '4px', fontWeight: '400' },
+  title: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   cardActionsRow: {
     display: 'flex',
     flexWrap: 'wrap' as const,

@@ -5,7 +5,7 @@ import {
   Settings, LogOut, Menu, ChevronRight,
   Shield, Database, Zap, HardDrive, Users, Brain,
   KeyRound, Webhook, ScrollText, Plug, UserCog, Calendar, MessageSquare, Activity,
-  Workflow, Cpu, Library
+  Workflow, Cpu, Library, HelpCircle, LifeBuoy, BookOpen
 } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
 import SyncIndicator from './SyncIndicator';
@@ -91,6 +91,9 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
 
   const breadcrumbs = getBreadcrumbs();
 
+  /** Cor única para ícones da direita (busca, chat, config, sino) */
+  const headerIconColor = '#64748B';
+
   const goAgenda = () => {
     const params = new URLSearchParams(location.search);
     params.set(MASTER_ROUTE_TOKEN_PARAM, getExpectedMasterRouteToken('/master/agenda'));
@@ -108,7 +111,7 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
       <div style={styles.leftSection}>
         {isMobile && (
           <button style={styles.menuBtn} onClick={onMenuClick}>
-            <Menu size={24} color="#0F172A" />
+            <Menu size={18} color="#0F172A" />
           </button>
         )}
         
@@ -119,11 +122,15 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
             <span style={styles.slash}>/</span>
             {breadcrumbs.map((b, i) => (
               <React.Fragment key={i}>
-                <Link to={b.path} style={{
+                <Link
+                  to={b.path}
+                  style={{
                   ...styles.breadcrumbLink,
-                  fontWeight: i === breadcrumbs.length - 1 ? '800' : '700',
-                  color: i === breadcrumbs.length - 1 ? '#0F172A' : '#64748B'
-                }}>
+                  fontWeight: 600,
+                  color: i === breadcrumbs.length - 1 ? '#0F172A' : '#64748B',
+                  opacity: i === breadcrumbs.length - 1 ? 1 : 0.88,
+                }}
+                >
                   {b.label}
                 </Link>
                 {i < breadcrumbs.length - 1 && <ChevronRight size={14} color="#CBD5E1" style={{ margin: '0 8px' }} />}
@@ -138,7 +145,7 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
 
       <div style={styles.rightSection}>
         {/* Collaborators Working Now */}
-        <div style={{ display: 'flex', alignItems: 'center', marginRight: '4px' }} title="8 colaboradores trabalhando agora">
+        <div style={styles.rightSectionCollaborators} title="8 colaboradores trabalhando agora">
           {[
             { img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&h=80&q=80', name: 'Ana' },
             { img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&h=80&q=80', name: 'Lucas' },
@@ -194,8 +201,8 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '11px',
-            fontWeight: 800,
+            fontSize: '13px',
+            fontWeight: 600,
             color: '#475569',
             zIndex: 5
           }}>
@@ -205,32 +212,12 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
 
         <button
           type="button"
-          title="Agenda"
-          aria-label="Abrir Agenda"
-          style={{ ...styles.iconAction, border: 'none', flexShrink: 0 }}
-          onClick={goAgenda}
-        >
-          <Calendar size={20} strokeWidth={2} color="#64748B" />
-        </button>
-
-        <button
-          type="button"
-          title="HubChat"
-          aria-label="Abrir HubChat"
-          style={{ ...styles.iconAction, border: 'none', flexShrink: 0 }}
-          onClick={goHubChat}
-        >
-          <MessageSquare size={20} strokeWidth={2} color="#64748B" />
-        </button>
-
-        <button
-          type="button"
           title="Busca (atalho)"
           aria-label="Abrir busca do hub"
-          style={{ ...styles.iconAction, border: 'none', flexShrink: 0 }}
+          style={{ ...styles.iconAction, ...styles.rightSectionIconBtn, border: 'none', flexShrink: 0 }}
           onClick={() => (window as any).toggleSpotlight?.()}
         >
-          <Search size={20} />
+          <Search size={18} color={headerIconColor} strokeWidth={2} />
           <div style={styles.kbdHint}>
             <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '11px', padding: '0 3px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF', margin: 0 }}>{platform.cmd}</Kbd>
             <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '11px', padding: '0 3px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF', margin: 0 }}>K</Kbd>
@@ -239,18 +226,38 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
 
         <button
           type="button"
+          title="HubChat"
+          aria-label="HubChat"
+          style={{ ...styles.iconAction, ...styles.rightSectionIconBtn, border: 'none', flexShrink: 0 }}
+          onClick={goHubChat}
+        >
+          <MessageSquare size={18} color={headerIconColor} strokeWidth={2} />
+        </button>
+
+        <button
+          type="button"
+          title="Configurações"
+          aria-label="Configurações"
+          style={{ ...styles.iconAction, ...styles.rightSectionIconBtn, border: 'none', flexShrink: 0 }}
+          onClick={() => navigate('/master/settings')}
+        >
+          <Settings size={18} color={headerIconColor} strokeWidth={2} />
+        </button>
+
+        <button
+          type="button"
           title="Notificações"
           aria-label="Notificações"
-          style={{ ...styles.iconAction, border: 'none', flexShrink: 0 }}
+          style={{ ...styles.iconAction, ...styles.rightSectionIconBtn, border: 'none', flexShrink: 0 }}
           onClick={() => navigate('/master/notifications')}
         >
-          <Bell size={20} />
+          <Bell size={18} color={headerIconColor} strokeWidth={2} />
           <div style={styles.notificationBadge} />
         </button>
         
         <div 
           ref={profilePopoverRef}
-          style={styles.userProfile} 
+          style={{ ...styles.userProfile, ...styles.rightSectionProfile }}
           onClick={(e) => {
             e.stopPropagation();
             setDropdownOpen(!dropdownOpen);
@@ -270,7 +277,7 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
             <div style={styles.dropdown} onClick={(e) => e.stopPropagation()}>
               <div style={styles.profileMenuHero}>
                 <div style={styles.profileMenuAvatarLarge}>
-                  {profile?.full_name ? profile.full_name[0] : <User size={20} />}
+                  {profile?.full_name ? profile.full_name[0] : <User size={18} />}
                 </div>
                 <div style={styles.profileMenuHeroText}>
                   <div style={styles.profileMenuName}>{profile?.full_name || 'Administrador master'}</div>
@@ -280,108 +287,40 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
 
               <div style={styles.dropdownScroll}>
                 <div style={styles.dropdownSection}>
-                  <div style={styles.dropdownSectionTitle}>Conta</div>
+                  <div style={styles.dropdownSectionTitle}>Perfil</div>
                   <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/profile'); }}>
                     <User size={16} strokeWidth={2} color="#475569" />
-                    <span>Meu perfil</span>
+                    <span style={styles.menuRowLabel}>Meu Perfil</span>
                   </button>
                   <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/settings'); }}>
                     <Settings size={16} strokeWidth={2} color="#475569" />
-                    <span>Preferências e configurações</span>
+                    <span style={styles.menuRowLabel}>Configurações</span>
+                  </button>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/infrastructure'); }}>
+                    <Zap size={16} strokeWidth={2} color="#475569" />
+                    <span style={styles.menuRowLabel}>Infraestrutura</span>
                   </button>
                   <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/notifications'); }}>
                     <Bell size={16} strokeWidth={2} color="#475569" />
-                    <span>Notificações</span>
+                    <span style={styles.menuRowLabel}>Notificações</span>
                   </button>
                 </div>
 
                 <div style={styles.divider} />
 
                 <div style={styles.dropdownSection}>
-                  <div style={styles.dropdownSectionTitle}>Infraestrutura</div>
-                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/infrastructure/saude'); }}>
-                    <Activity size={16} strokeWidth={2} color="#475569" />
-                    <span>Visão geral</span>
+                  <div style={styles.dropdownSectionTitle}>Acessos Rápidos</div>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow}>
+                    <HelpCircle size={16} strokeWidth={2} color="#475569" />
+                    <span style={styles.menuRowLabel}>Central de Ajuda</span>
                   </button>
-                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/infrastructure/seguranca'); }}>
-                    <Shield size={16} strokeWidth={2} color="#475569" />
-                    <span>Segurança</span>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow}>
+                    <LifeBuoy size={16} strokeWidth={2} color="#475569" />
+                    <span style={styles.menuRowLabel}>Suporte Master</span>
                   </button>
-                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/infrastructure/backup'); }}>
-                    <HardDrive size={16} strokeWidth={2} color="#475569" />
-                    <span>Backup & storage</span>
-                  </button>
-                </div>
-
-                <div style={styles.divider} />
-
-                <div style={styles.dropdownSection}>
-                  <div style={styles.dropdownSectionTitle}>Equipe master</div>
-                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); const p = new URLSearchParams(location.search); p.set('tab', 'usuarios-hub'); const qs = p.toString(); navigate(`/master/settings/equipe${qs ? `?${qs}` : '?tab=usuarios-hub'}`); }}>
-                    <Users size={16} strokeWidth={2} color="#475569" />
-                    <span>Usuários Hub</span>
-                  </button>
-                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/settings/equipe'); }}>
-                    <UserCog size={16} strokeWidth={2} color="#475569" />
-                    <span>Equipe Master</span>
-                  </button>
-                </div>
-
-                <div style={styles.divider} />
-
-                <div style={styles.dropdownSection}>
-                  <div style={styles.dropdownSectionTitle}>Comunicação & CRM</div>
-                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/agenda'); }}>
-                    <Calendar size={16} strokeWidth={2} color="#475569" />
-                    <span>Agenda</span>
-                  </button>
-                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/hubchat'); }}>
-                    <MessageSquare size={16} strokeWidth={2} color="#475569" />
-                    <span>HubChat</span>
-                  </button>
-                </div>
-
-                <div style={styles.divider} />
-
-                <div style={styles.dropdownSection}>
-                  <div style={styles.dropdownSectionTitle}>Automação & plataforma</div>
-                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/automacoes'); }}>
-                    <Workflow size={16} strokeWidth={2} color="#475569" />
-                    <span>Automações</span>
-                  </button>
-                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/ia-gateway'); }}>
-                    <Cpu size={16} strokeWidth={2} color="#475569" />
-                    <span>Gateway IA</span>
-                  </button>
-                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/integracoes'); }}>
-                    <Plug size={16} strokeWidth={2} color="#475569" />
-                    <span>Integrações</span>
-                  </button>
-                  <button type="button" className="hub-menu-row" style={styles.menuRow} onClick={() => { setDropdownOpen(false); navigate('/master/biblioteca'); }}>
-                    <Library size={16} strokeWidth={2} color="#475569" />
-                    <span>Biblioteca</span>
-                  </button>
-                </div>
-
-                <div style={styles.divider} />
-
-                <div style={styles.dropdownSection}>
-                  <div style={styles.dropdownSectionTitle}>Outros produtos</div>
-                  <button type="button" className="hub-menu-row" style={{ ...styles.menuRow, ...styles.menuRowHighlight }} onClick={() => { setDropdownOpen(false); navigate('/logdock/app'); }}>
-                    <HardDrive size={16} strokeWidth={2} color="#0061FF" />
-                    <span>LogDock.com.br (Focado)</span>
-                  </button>
-                  <button
-                    type="button"
-                    style={styles.menuRow}
-                    onClick={() => {
-                      setDropdownOpen(false);
-                      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-                      window.open(isLocal ? 'http://localhost:5174' : 'https://app.zaptro.com.br', '_blank', 'noopener,noreferrer');
-                    }}
-                  >
-                    <Zap size={16} strokeWidth={2} color="#475569" />
-                    <span>Zaptro Commerce</span>
+                  <button type="button" className="hub-menu-row" style={styles.menuRow}>
+                    <BookOpen size={16} strokeWidth={2} color="#475569" />
+                    <span style={styles.menuRowLabel}>Documentação Hub</span>
                   </button>
                 </div>
 
@@ -397,7 +336,7 @@ const Header: React.FC<{ onMenuClick?: () => void; isMobile?: boolean }> = ({ on
                   }}
                 >
                   <LogOut size={16} strokeWidth={2} color="#DC2626" />
-                  <span>Sair do painel</span>
+                  <span style={styles.menuRowDangerLabel}>Sair do painel</span>
                 </button>
               </div>
             </div>
@@ -428,20 +367,49 @@ const styles: Record<string, any> = {
   breadcrumbSeparator: { width: '1px', height: '24px', backgroundColor: '#E2E8F0' },
   breadcrumbContainer: { display: 'flex', alignItems: 'center' },
   slash: { color: '#94A3B8', fontSize: '18px', fontWeight: '500', marginRight: '12px' },
-  breadcrumbLink: { textDecoration: 'none', fontSize: '14px', transition: 'color 0.2s' },
+  breadcrumbLink: {
+    textDecoration: 'none',
+    fontSize: '13px',
+    fontWeight: 600,
+    transition: 'color 0.2s',
+  },
 
-  rightSection: { display: 'flex', alignItems: 'center', gap: '20px' },
+  rightSection: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 0,
+    width: '453px',
+    maxWidth: '100%',
+    flexShrink: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    boxSizing: 'border-box' as const,
+  },
+  rightSectionCollaborators: {
+    display: 'flex',
+    alignItems: 'center',
+    marginRight: '10px',
+    flexShrink: 0,
+  },
+  rightSectionIconBtn: {
+    marginLeft: '10px',
+  },
+  rightSectionProfile: {
+    marginLeft: '10px',
+  },
   iconAction: { 
-    width: '44px', height: '44px', borderRadius: '22px', 
+    width: '39px', height: '39px', borderRadius: '20px', 
     backgroundColor: '#F6F7F8', color: '#64748B', 
     display: 'flex', alignItems: 'center', justifyContent: 'center', 
-    cursor: 'pointer', transition: 'all 0.2s', border: '1px solid #E5E7EB',
+    cursor: 'pointer', transition: 'all 0.2s', border: 'none',
     position: 'relative',
-    fontSize: '11px',
+    fontSize: '13px',
+    fontWeight: 600,
     padding: 0,
     boxSizing: 'border-box' as const,
   },
-  notificationBadge: { position: 'absolute', top: '12px', right: '12px', width: '8px', height: '8px', backgroundColor: '#EF4444', borderRadius: '50%', border: '2px solid white' },
+  notificationBadge: { position: 'absolute', top: '10px', right: '10px', width: '8px', height: '8px', backgroundColor: '#EF4444', borderRadius: '50%', border: '2px solid white' },
   kbdHint: { 
     position: 'absolute', 
     bottom: '-8px', 
@@ -464,13 +432,13 @@ const styles: Record<string, any> = {
     position: 'relative' as const,
   },
   avatar: {
-    width: '44px', height: '44px', borderRadius: '22px',
+    width: '39px', height: '39px', borderRadius: '20px',
     backgroundColor: '#0061FF', color: 'white',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontWeight: '800', fontSize: '16px', boxShadow: '0 4px 6px rgba(99, 102, 241, 0.2)'
+    fontWeight: '800', fontSize: '15px', boxShadow: 'none',
   },
   userInfo: { display: 'flex', alignItems: 'center', gap: '8px' },
-  userName: { fontSize: '11px', fontWeight: '700', color: '#0F172A' },
+  userName: { fontSize: '13px', fontWeight: '600', color: '#0F172A', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
   
   dropdown: {
     position: 'absolute' as const,
@@ -480,15 +448,14 @@ const styles: Record<string, any> = {
     maxWidth: 'calc(100vw - 48px)',
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
-    border: '1px solid rgba(15, 23, 42, 0.08)',
-    boxShadow:
-      '0 0 0 1px rgba(15, 23, 42, 0.03), 0 4px 6px rgba(15, 23, 42, 0.04), 0 24px 48px -12px rgba(15, 23, 42, 0.18)',
+    border: '1px solid rgba(0, 0, 0, 0.06)',
+    boxShadow: 'none',
     padding: 8,
     zIndex: 1000,
     animation: 'hubProfileMenuIn 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
   },
   dropdownScroll: {
-    maxHeight: 'min(72vh, 520px)',
+    maxHeight: '403px',
     overflowY: 'auto' as const,
     padding: '4px 4px 6px',
     scrollbarWidth: 'thin' as const,
@@ -500,7 +467,8 @@ const styles: Record<string, any> = {
     padding: '10px 12px',
     borderRadius: 12,
     marginBottom: 4,
-    background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+    backgroundColor: '#F8FAFC',
+    backgroundImage: 'none',
     border: '1px solid #E2E8F0',
   },
   profileMenuAvatarLarge: {
@@ -515,12 +483,12 @@ const styles: Record<string, any> = {
     fontWeight: 800,
     fontSize: 18,
     flexShrink: 0,
-    boxShadow: '0 8px 20px rgba(0, 97, 255, 0.25)',
+    boxShadow: 'none',
   },
   profileMenuHeroText: { minWidth: 0, flex: 1 },
   profileMenuName: {
-    fontSize: 14,
-    fontWeight: 700,
+    fontSize: 13,
+    fontWeight: 600,
     color: '#0F172A',
     letterSpacing: '-0.02em',
     lineHeight: 1.25,
@@ -539,8 +507,8 @@ const styles: Record<string, any> = {
   },
   dropdownSection: { display: 'flex', flexDirection: 'column', gap: 2 },
   dropdownSectionTitle: {
-    fontSize: 11,
-    fontWeight: 700,
+    fontSize: 12,
+    fontWeight: 600,
     color: '#94A3B8',
     padding: '8px 10px 4px',
     letterSpacing: '0.06em',
@@ -560,8 +528,18 @@ const styles: Record<string, any> = {
     fontSize: 13,
     fontWeight: 600,
     color: '#334155',
-    fontFamily: 'inherit',
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
     transition: 'background-color 0.15s ease, color 0.15s ease',
+  },
+  menuRowLabel: {
+    fontSize: 13,
+    fontWeight: 600,
+    opacity: 0.88,
+  },
+  menuRowDangerLabel: {
+    fontSize: 13,
+    fontWeight: 600,
+    opacity: 1,
   },
   menuRowHighlight: {
     backgroundColor: '#EFF6FF',
@@ -579,9 +557,9 @@ const styles: Record<string, any> = {
     cursor: 'pointer',
     textAlign: 'left' as const,
     fontSize: 13,
-    fontWeight: 700,
+    fontWeight: 600,
     color: '#DC2626',
-    fontFamily: 'inherit',
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
     marginTop: 2,
     transition: 'background-color 0.15s ease',
   },

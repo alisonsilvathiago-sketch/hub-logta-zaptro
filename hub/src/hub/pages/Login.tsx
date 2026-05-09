@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Lock, Mail, ArrowRight, Eye, EyeOff, Loader2,
-  AlertCircle, ShieldCheck
+import {
+  Loader2,
+  AlertCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError } from '@core/lib/toast';
@@ -14,7 +16,6 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'forgot'>('login');
 
-  //  REDIRECT IF ALREADY LOGGED IN
   useEffect(() => {
     const devSession = localStorage.getItem('hub-dev-session');
     if (devSession) {
@@ -29,7 +30,6 @@ const Login: React.FC = () => {
     });
   }, []);
 
-  //  DEV BYPASS FOR LOCALHOST
   const isDev = window.location.hostname === 'localhost';
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -39,7 +39,6 @@ const Login: React.FC = () => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    //  BYPASS CHECK
     if (isDev && normalizedEmail === 'adm@teste.com' && password === '123456') {
       localStorage.setItem('hub-dev-session', JSON.stringify({
         email: normalizedEmail,
@@ -61,7 +60,6 @@ const Login: React.FC = () => {
 
       if (data.user) {
         toastSuccess('Bem-vindo ao Hub Master!');
-        // O AuthContext cuidará do redirecionamento após detectar a sessão
       }
     } catch (err: any) {
       setError(err.message || 'Erro ao autenticar. Verifique suas credenciais.');
@@ -89,44 +87,28 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        {/* Lado Esquerdo - Branding Hub */}
-        <div style={styles.leftPanel}>
-          <div style={styles.brandBox}>
-            <div style={styles.logoCircle}>
-              <ShieldCheck size={32} color="white" />
-            </div>
-            <div style={styles.brandText}>
-              <h1 style={styles.brandTitle}>Logta Hub</h1>
-              <p style={styles.brandSubtitle}>Painel Master de Gestão</p>
-            </div>
-          </div>
-          
-          <div style={styles.heroContent}>
-            <h2 style={styles.heroTitle}>Controle total sobre o seu ecossistema.</h2>
-            <p style={styles.heroDescription}>
-              Gerencie instâncias, faturamento Asaas e backups automatizados em uma única interface profissional.
-            </p>
-          </div>
-
-          <div style={styles.footerBranding}>
-            <span>&copy; 2026 Logta Tech Soluções</span>
-          </div>
+    <div className="hub-login-split">
+      <div className="hub-login-promo">
+        <div className="hub-login-promo__bottom" style={styles.promoBottom}>
+          <p style={styles.promoKicker}>Hub Master</p>
+          <h2 style={styles.promoTitle}>
+            Acesse seu painel central com clareza e produtividade
+          </h2>
         </div>
+      </div>
 
-        {/* Lado Direito - Formulário */}
-        <div style={styles.rightPanel}>
-          <div style={styles.formCard}>
-            <div style={styles.formHeader}>
-              <h3 style={styles.formTitle}>
-                {authMode === 'login' ? 'Acesso Administrativo' : 'Recuperar Senha'}
-              </h3>
-              <p style={styles.formSubtitle}>
-                {authMode === 'login' 
-                  ? 'Entre com suas credenciais master para continuar.' 
-                  : 'Introduza o seu e-mail para receber as instruções.'}
-              </p>
+      <div className="hub-login-page hub-login-split__form" style={styles.formPanel}>
+        <div style={styles.main}>
+          <div style={styles.formShell}>
+            <div style={styles.cardHeader}>
+              <h1 style={styles.titleHeading}>
+                {authMode === 'login' ? 'Entrar' : 'Recuperar acesso'}
+              </h1>
+              {authMode === 'forgot' && (
+                <p style={styles.subtitle}>
+                  Informe o e-mail cadastrado para receber o link de redefinição.
+                </p>
+              )}
             </div>
 
             {error && (
@@ -136,73 +118,100 @@ const Login: React.FC = () => {
               </div>
             )}
 
-            <form onSubmit={authMode === 'login' ? handleLogin : handleForgotPassword} style={styles.form}>
-              <div style={styles.inputGroup}>
-                <label style={styles.label}>E-mail Master</label>
-                <div style={styles.inputWrapper}>
-                  <Mail size={18} style={styles.inputIcon} />
-                  <input 
-                    type="email" 
-                    placeholder="admin@logta.com" 
-                    style={styles.input} 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+            <form
+              onSubmit={authMode === 'login' ? handleLogin : handleForgotPassword}
+              style={styles.form}
+            >
+              <div style={styles.field}>
+                <label htmlFor="hub-login-email" style={styles.label}>Seu e-mail</label>
+                <input
+                  id="hub-login-email"
+                  className="hub-login-field"
+                  type="email"
+                  placeholder="nome@empresa.com"
+                  style={styles.input}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
               </div>
 
               {authMode === 'login' && (
-                <div style={styles.inputGroup}>
-                  <div style={styles.labelRow}>
-                    <label style={styles.label}>Senha</label>
-                    <span 
-                      style={styles.forgotLink} 
-                      onClick={() => setAuthMode('forgot')}
-                    >
-                      Esqueceu?
-                    </span>
-                  </div>
-                  <div style={styles.inputWrapper}>
-                    <Lock size={18} style={styles.inputIcon} />
-                    <input 
-                      type={showPassword ? 'text' : 'password'} 
-                      placeholder="••••••••" 
-                      style={styles.input} 
+                <div style={{ ...styles.field, marginTop: '18px' }}>
+                  <label htmlFor="hub-login-password" style={styles.label}>Senha</label>
+                  <div style={styles.passwordRow}>
+                    <input
+                      id="hub-login-password"
+                      className="hub-login-field"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      style={{
+                        ...styles.input,
+                        height: '51px',
+                        fontSize: '16px',
+                        paddingTop: 0,
+                        paddingBottom: 0,
+                        paddingLeft: '21px',
+                        paddingRight: '52px',
+                        lineHeight: '49px',
+                      }}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      autoComplete="current-password"
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       style={styles.eyeBtn}
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                     >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showPassword ? <EyeOff size={18} strokeWidth={1.75} /> : <Eye size={18} strokeWidth={1.75} />}
                     </button>
                   </div>
                 </div>
               )}
 
-              <button type="submit" style={styles.submitBtn} disabled={loading}>
+              <button
+                type="submit"
+                style={{
+                  ...styles.submitBtn,
+                  ...(loading ? { opacity: 0.88, cursor: 'wait' as const } : {}),
+                }}
+                disabled={loading}
+              >
                 {loading ? (
                   <Loader2 size={20} className="animate-spin" />
                 ) : (
-                  <>
-                    {authMode === 'login' ? 'Entrar no Hub' : 'Enviar Link'}
-                    <ArrowRight size={18} />
-                  </>
+                  authMode === 'login' ? 'Entrar' : 'Enviar link'
                 )}
               </button>
 
               {authMode === 'forgot' && (
-                <button 
-                  type="button" 
-                  style={styles.backBtn}
+                <button
+                  type="button"
+                  style={styles.textLinkBtn}
                   onClick={() => setAuthMode('login')}
                 >
-                  Voltar para o Login
+                  Voltar ao login
                 </button>
+              )}
+
+              {authMode === 'login' && (
+                <p style={styles.forgotRow}>
+                  Esqueceu sua senha?{' '}
+                  <button
+                    type="button"
+                    style={styles.inlineLink}
+                    onClick={() => {
+                      setError(null);
+                      setAuthMode('forgot');
+                    }}
+                  >
+                    Recuperar senha
+                  </button>
+                </p>
               )}
             </form>
           </div>
@@ -212,202 +221,198 @@ const Login: React.FC = () => {
   );
 };
 
-const styles: Record<string, any> = {
-  page: {
-    height: '100vh',
-    width: '100vw',
-    backgroundColor: '#F8FAFC',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontFamily: '"Inter", sans-serif',
-  },
-  container: {
-    display: 'flex',
-    width: '1000px',
-    height: '640px',
-    backgroundColor: 'white',
-    borderRadius: '32px',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)',
-    overflow: 'hidden',
-    border: '1px solid #E2E8F0',
-  },
-  leftPanel: {
+const fontSans = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+const styles: Record<string, React.CSSProperties> = {
+  formPanel: {
     flex: 1,
-    backgroundColor: '#0F172A',
-    padding: '60px',
+    minWidth: 0,
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between',
-    color: 'white',
+    backgroundColor: '#FFFFFF',
+    fontFamily: fontSans,
+    boxSizing: 'border-box',
   },
-  brandBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-  },
-  logoCircle: {
-    width: '56px',
-    height: '56px',
-    backgroundColor: '#0061FF',
-    borderRadius: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.4)',
-  },
-  brandTitle: {
-    fontSize: '24px',
-    fontWeight: '800',
-    margin: 0,
-    letterSpacing: '-1px',
-  },
-  brandSubtitle: {
-    fontSize: '14px',
-    color: '#94A3B8',
-    margin: 0,
-    fontWeight: '500',
-  },
-  heroContent: {
-    marginBottom: '40px',
-  },
-  heroTitle: {
-    fontSize: '32px',
-    fontWeight: '700',
-    lineHeight: '1.2',
-    marginBottom: '20px',
-    letterSpacing: '-1px',
-  },
-  heroDescription: {
-    fontSize: '16px',
-    color: '#94A3B8',
-    lineHeight: '1.6',
-  },
-  footerBranding: {
-    fontSize: '12px',
-    color: '#475569',
-    fontWeight: '600',
-  },
-  rightPanel: {
-    flex: 1.1,
-    padding: '60px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  formCard: {
+  promoBottom: {
     width: '100%',
-    maxWidth: '360px',
+    maxWidth: '446px',
+    height: '151px',
+    marginLeft: '26px',
+    marginRight: '26px',
+    boxSizing: 'border-box',
   },
-  formHeader: {
-    marginBottom: '32px',
+  promoKicker: {
+    margin: 0,
+    fontSize: '13px',
+    fontWeight: 600,
+    color: 'rgba(255, 255, 255, 0.85)',
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase' as const,
+    fontFamily: fontSans,
   },
-  formTitle: {
-    fontSize: '24px',
-    fontWeight: '800',
+  promoTitle: {
+    margin: '12px 0 0',
+    fontSize: 'clamp(1.5rem, 2.8vw, 2.125rem)',
+    fontWeight: 700,
+    color: '#FFFFFF',
+    lineHeight: 1.2,
+    letterSpacing: '-0.02em',
+    fontFamily: fontSans,
+  },
+  main: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 'clamp(28px, 6vw, 56px) clamp(24px, 5vw, 64px) 48px',
+    minHeight: 0,
+  },
+  formShell: {
+    width: '100%',
+    maxWidth: '420px',
+  },
+  cardHeader: {
+    marginBottom: '28px',
+  },
+  titleHeading: {
+    margin: 0,
+    fontFamily: fontSans,
+    fontSize: '37px',
+    fontWeight: 800,
     color: '#0F172A',
-    marginBottom: '8px',
-    letterSpacing: '-0.5px',
+    letterSpacing: 0,
+    lineHeight: 1.15,
   },
-  formSubtitle: {
-    fontSize: '14px',
-    color: '#64748B',
-    fontWeight: '500',
+  subtitle: {
+    margin: '12px 0 0',
+    fontSize: '13px',
+    fontWeight: 400,
+    color: 'rgba(115, 115, 115, 1)',
+    lineHeight: 1.5,
+    maxWidth: '360px',
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '24px',
+    gap: '4px',
   },
-  inputGroup: {
+  field: {
+    width: '100%',
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
   },
-  labelRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   label: {
     fontSize: '13px',
-    fontWeight: '700',
-    color: '#475569',
+    fontWeight: 600,
+    color: '#334155',
+    letterSpacing: '-0.01em',
   },
-  forgotLink: {
-    fontSize: '12px',
-    color: '#0061FF',
-    fontWeight: '700',
-    cursor: 'pointer',
-  },
-  inputWrapper: {
+  passwordRow: {
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
   },
-  inputIcon: {
-    position: 'absolute',
-    left: '14px',
-    color: '#94A3B8',
-  },
   input: {
     width: '100%',
-    padding: '14px 14px 14px 44px',
-    borderRadius: '14px',
-    border: '1.5px solid #E2E8F0',
+    boxSizing: 'border-box',
+    paddingTop: '19px',
+    paddingBottom: '19px',
+    paddingLeft: '16px',
+    paddingRight: '16px',
+    borderRadius: '12px',
+    border: '1px solid #E2E8F0',
     fontSize: '15px',
-    fontWeight: '600',
+    fontWeight: 500,
     outline: 'none',
-    transition: 'all 0.2s',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
+    color: '#0F172A',
+    fontFamily: fontSans,
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   },
   eyeBtn: {
     position: 'absolute',
-    right: '12px',
+    right: '10px',
+    top: '25px',
+    transform: 'translateY(-50%)',
+    width: '39px',
+    height: '39px',
     background: 'none',
+    backgroundColor: 'transparent',
     border: 'none',
-    color: '#94A3B8',
+    color: 'rgba(120, 120, 120, 1)',
     cursor: 'pointer',
-  },
-  submitBtn: {
-    width: '100%',
-    padding: '16px',
-    backgroundColor: '#0061FF',
-    color: 'white',
-    border: 'none',
-    borderRadius: '16px',
-    fontSize: '16px',
-    fontWeight: '700',
-    cursor: 'pointer',
+    padding: 0,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '10px',
-    transition: 'all 0.2s',
-    boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)',
+    borderRadius: '10px',
+    boxShadow: 'none',
   },
-  backBtn: {
+  submitBtn: {
+    width: '100%',
+    marginTop: '18px',
+    marginBottom: '18px',
+    boxSizing: 'border-box',
+    minHeight: '59px',
+    padding: '17px 16px',
+    backgroundColor: 'var(--accent)',
+    color: 'rgba(255, 255, 255, 1)',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '17px',
+    fontWeight: 700,
+    letterSpacing: '-0.01em',
+    cursor: 'pointer',
+    fontFamily: fontSans,
+    boxShadow: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textLinkBtn: {
     background: 'none',
     border: 'none',
     color: '#64748B',
     fontSize: '14px',
-    fontWeight: '600',
+    fontWeight: 600,
     cursor: 'pointer',
-    marginTop: '8px',
+    fontFamily: fontSans,
+    marginTop: '2px',
+    textAlign: 'left' as const,
+    padding: 0,
+  },
+  forgotRow: {
+    margin: '4px 0 0',
+    fontSize: '14px',
+    color: '#64748B',
+    fontWeight: 500,
+    lineHeight: 1.5,
+    textAlign: 'center' as const,
+  },
+  inlineLink: {
+    background: 'none',
+    border: 'none',
+    padding: 0,
+    color: 'var(--accent)',
+    fontWeight: 650,
+    cursor: 'pointer',
+    fontSize: 'inherit',
+    fontFamily: fontSans,
   },
   errorBox: {
     backgroundColor: '#FEF2F2',
     color: '#EF4444',
-    padding: '12px 16px',
+    padding: '12px 14px',
     borderRadius: '12px',
     fontSize: '13px',
-    fontWeight: '600',
+    fontWeight: 600,
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    marginBottom: '20px',
+    marginBottom: '4px',
     border: '1px solid #FEE2E2',
-  }
+  },
 };
 
 export default Login;

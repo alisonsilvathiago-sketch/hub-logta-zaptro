@@ -52,12 +52,12 @@ const Modal: React.FC<ModalProps> = ({
   const getWidth = () => {
     if (maxWidth) return maxWidth;
     switch(size) {
-      case 'sm': return '440px';
-      case 'md': return '640px';
-      case 'lg': return '840px';
-      case 'xl': return '1100px';
+      case 'sm': return '400px';
+      case 'md': return '540px';
+      case 'lg': return '720px';
+      case 'xl': return '960px';
       case 'full': return '95vw';
-      default: return '640px';
+      default: return '540px';
     }
   };
 

@@ -2,28 +2,27 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
-  TrendingUp,
   Users,
   CreditCard,
   LogOut,
   Box,
   Sparkles,
   Building2,
-  Shield,
   HardDrive,
-  Workflow,
   Truck,
-  Cpu,
-  Plug,
-  Activity,
-  Anchor,
-  Library,
   MessageSquare,
   PackageSearch,
-  Coins,
   Database,
+  Brain,
+  Plug,
+  Settings,
+  UserCog,
+  Zap,
+  BarChart3,
+  Coins,
 } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
+import HubLogo from './HubLogo';
 
 import Kbd from '@shared/components/Kbd';
 import { getPlatform } from '@core/lib/platform';
@@ -40,7 +39,7 @@ type MenuBlock =
   | { type: 'divider' }
   | { type: 'section'; title: string; items: MenuItem[] };
 
-/** IA do Hub: categorias separadas (clientes/CRM, operações, financeiro, empresas, automação, infra) sem alterar o sistema visual da sidebar. */
+/** Navegação master por blocos (painel, operação, produtos). Ícones e cores alinhados em todas as seções. */
 const menuBlocks: MenuBlock[] = [
   {
     type: 'section',
@@ -52,39 +51,27 @@ const menuBlocks: MenuBlock[] = [
   },
   {
     type: 'section',
-    title: 'Clientes & CRM',
+    title: 'Operação Diária',
     items: [
-      { label: 'CRM & Expansão', icon: TrendingUp, path: '/master/crm', shortcut: 'C' },
       { label: 'Clientes Hub', icon: Users, path: '/master/clientes' },
+      { label: 'Financeiro', icon: CreditCard, path: '/master/billing', shortcut: 'F' },
+      { label: 'Operações', icon: Truck, path: '/master/logistica', shortcut: 'O' },
+      { label: 'Empresas', icon: Building2, path: '/master/companies', shortcut: 'E' },
     ],
   },
   {
     type: 'section',
-    title: 'Operações',
-    items: [{ label: 'Logística', icon: Truck, path: '/master/logistica', shortcut: 'L' }],
-  },
-  {
-    type: 'section',
-    title: 'Financeiro',
-    items: [{ label: 'Financeiro', icon: CreditCard, path: '/master/billing', shortcut: 'F' }],
-  },
-  {
-    type: 'section',
-    title: 'Empresas & SaaS',
-    items: [{ label: 'Empresas', icon: Building2, path: '/master/companies', shortcut: 'E' }],
-  },
-  {
-    type: 'section',
-    title: 'Produtos',
+    title: 'Produtos Logta',
     items: [
-      { label: 'LogDock', icon: HardDrive, path: '/master/logdock-admin' },
-      { label: 'Zaptro', icon: MessageSquare, path: '/master/zaptro-admin' },
-      { label: 'Logta', icon: PackageSearch, path: '/master/logta-admin' },
-      { label: 'Créditos', icon: Coins, path: '/master/credits-admin' },
-      { label: 'Backups', icon: Database, path: '/master/backups-admin' },
+      { label: 'Logta', icon: PackageSearch, path: '/master/logta' },
+      { label: 'LogDock', icon: HardDrive, path: '/master/logdock' },
+      { label: 'Zaptro', icon: MessageSquare, path: '/master/zaptro' },
+      { label: 'Gateway IA', icon: Brain, path: '/master/ia-gateway' },
+      { label: 'Créditos', icon: Coins, path: '/master/credits' },
+      { label: 'Motores WhatsApp', icon: Plug, path: '/master/evolution' },
+      { label: 'Backups', icon: Database, path: '/master/backups' },
     ],
   },
-
 ];
 
 const MasterSidebar: React.FC<{ variant?: 'rail' | 'drawer' }> = ({ variant = 'rail' }) => {
@@ -108,23 +95,25 @@ const MasterSidebar: React.FC<{ variant?: 'rail' | 'drawer' }> = ({ variant = 'r
       onMouseEnter={() => !isDrawer && setIsHovered(true)}
       onMouseLeave={() => !isDrawer && setIsHovered(false)}
     >
-      <div style={styles.logoContainer}>
+      <div style={{ ...styles.logoContainer, justifyContent: expanded ? 'flex-start' : 'center' }}>
         <div style={styles.logoIcon}>
-          <Box size={24} color="#FFF" strokeWidth={2} />
-        </div>
-        <div style={{ ...styles.logoTextContainer, opacity: expanded ? 1 : 0, pointerEvents: expanded ? 'auto' : 'none' }}>
-          <div style={styles.logoText}>hub.logta</div>
+          <HubLogo size={44} color="#000000" />
         </div>
       </div>
 
-      <nav style={styles.nav} aria-label="Navegação principal">
+      <nav className="master-sidebar-nav" style={styles.nav} aria-label="Navegação principal">
         {menuBlocks.map((block, idx) => {
           if (block.type === 'divider') {
             return <div key={`d-${idx}`} style={styles.navDividerWrap} aria-hidden="true"><div style={styles.navDivider} /></div>;
           }
           if (block.type === 'section') {
+            const isProducts = block.title === 'Produtos Logta';
             return (
               <div key={`s-${idx}`} style={styles.navSection}>
+                {expanded && block.title !== 'Operação Diária' && block.title !== 'Painel' && (
+                  <div style={{ ...styles.sectionTitle, fontSize: isProducts ? '11px' : '12px', marginBottom: isProducts ? '4px' : '4px' }}>{block.title}</div>
+                )}
+                {!expanded && isProducts && <div style={{ height: '1px', backgroundColor: '#F1F5F9', margin: '10px 10px' }} />}
                 <div style={styles.groupItems}>
                   {block.items.map((item, i) => (
                     <MenuLink key={i} item={item} expanded={expanded} location={location} platform={platform} />
@@ -147,7 +136,7 @@ const MasterSidebar: React.FC<{ variant?: 'rail' | 'drawer' }> = ({ variant = 'r
 
       <div style={styles.footer}>
         <button type="button" className="master-sidebar-logout" style={styles.logoutBtn} onClick={signOut}>
-          <LogOut size={20} strokeWidth={2} />
+          <LogOut size={18} strokeWidth={2} />
           <span style={{ ...styles.logoutLabel, opacity: expanded ? 1 : 0, width: expanded ? 'auto' : 0, overflow: 'hidden' }}>
             Sair do Painel
           </span>
@@ -157,10 +146,15 @@ const MasterSidebar: React.FC<{ variant?: 'rail' | 'drawer' }> = ({ variant = 'r
   );
 };
 
+const ICON_BOX = 20;
+const ICON_SIZE = 20;
+
 const MenuLink = ({ item, expanded, location, platform }: { item: MenuItem; expanded: boolean; location: ReturnType<typeof useLocation>; platform: ReturnType<typeof getPlatform> }) => {
   const isActive =
     location.pathname === item.path ||
     (item.path !== '/master' && location.pathname.startsWith(item.path));
+
+  const itemColor = isActive ? '#0061FF' : '#64748B';
 
   return (
     <NavLink
@@ -169,21 +163,41 @@ const MenuLink = ({ item, expanded, location, platform }: { item: MenuItem; expa
       style={{
         ...styles.menuItem,
         ...(isActive ? styles.menuItemActive : {}),
+        minHeight: 40,
+        gap: 12,
         justifyContent: expanded ? 'flex-start' : 'center',
         paddingLeft: 12,
         paddingRight: 12,
+        marginBottom: 0,
       }}
       title={!expanded ? item.label : ''}
     >
-      <item.icon
-        size={20}
-        strokeWidth={2}
-        style={{ flexShrink: 0 }}
-        color={isActive ? '#0061FF' : '#64748B'}
-      />
+      <div
+        style={{
+          width: ICON_BOX,
+          height: ICON_BOX,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <item.icon
+          size={ICON_SIZE}
+          strokeWidth={2}
+          style={{ flexShrink: 0 }}
+          color={itemColor}
+        />
+      </div>
       {expanded && (
         <div style={styles.menuItemMeta}>
-          <span style={{ ...styles.menuLabel, color: isActive ? '#0F172A' : '#475569' }}>{item.label}</span>
+          <span style={{ 
+            ...styles.menuLabel, 
+            color: isActive ? '#0F172A' : '#475569',
+            fontSize: '13px',
+            fontWeight: isActive ? 700 : 600,
+            opacity: isActive ? 1 : 0.88,
+          }}>{item.label}</span>
           {item.shortcut && (
             <div style={styles.kbdRow}>
               <Kbd style={styles.kbdSmall}>{platform.cmd}</Kbd>
@@ -223,15 +237,12 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   logoIcon: {
-    width: 48,
-    height: 48,
-    background: 'linear-gradient(145deg, #0061FF 0%, #0052D9 100%)',
-    borderRadius: 14,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: 'none',
     flexShrink: 0,
+    background: 'transparent',
+    boxShadow: 'none',
   },
   logoTextContainer: {
     display: 'flex',
@@ -248,11 +259,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   nav: {
     flex: 1,
-    minHeight: 63,
+    minHeight: 48,
     maxHeight: 1000,
-    height: 459,
+    height: 456,
     padding: '0 12px',
-    marginTop: -10,
+    marginTop: 0,
     marginBottom: 0,
     display: 'flex',
     flexDirection: 'column',
@@ -280,17 +291,18 @@ const styles: Record<string, React.CSSProperties> = {
   navSection: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 4,
+    gap: 8,
     width: '100%',
+    paddingBottom: 4,
   },
   navSectionFlat: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 3,
+    gap: 6,
     width: '100%',
   },
   sectionTitle: {
-    fontSize: 9,
+    fontSize: 12,
     fontWeight: 700,
     color: '#94A3B8',
     padding: '8px 10px 4px',
@@ -302,15 +314,15 @@ const styles: Record<string, React.CSSProperties> = {
   groupItems: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 3,
+    gap: 6,
     width: '100%',
   },
   menuItem: {
     display: 'flex',
     alignItems: 'center',
-    gap: 10,
-    minHeight: 40,
-    borderRadius: 10,
+    gap: 12,
+    minHeight: 44,
+    borderRadius: 12,
     color: '#64748B',
     textDecoration: 'none',
     fontSize: 13,
@@ -322,11 +334,12 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid transparent',
     width: '100%',
     boxSizing: 'border-box',
+    overflow: 'hidden',
   },
   menuItemActive: {
     backgroundColor: 'rgba(0, 97, 255, 0.07)',
     border: '1px solid rgba(0, 97, 255, 0.12)',
-    boxShadow: 'none',
+    boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15)',
   },
   menuItemMeta: {
     display: 'flex',
@@ -352,7 +365,7 @@ const styles: Record<string, React.CSSProperties> = {
   kbdSmall: {
     height: 16,
     minWidth: 16,
-    fontSize: 8,
+    fontSize: 9,
     padding: '0 4px',
     background: '#F1F5F9',
     border: '1px solid #E2E8F0',

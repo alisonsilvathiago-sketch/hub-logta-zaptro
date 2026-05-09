@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import '@shared/index.css';
+import './hub-fields.css';
 import ErrorBoundary from '@shared/components/ErrorBoundary';
 import { AuthProvider } from './core/context/AuthContext';
 import { TenantProvider } from './core/context/TenantContext';

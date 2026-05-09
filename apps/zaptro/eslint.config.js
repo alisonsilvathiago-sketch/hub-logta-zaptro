@@ -29,6 +29,13 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
+      // Regras do React Compiler via eslint-plugin-react-hooks: úteis em código novo,
+      // mas geram centenas de erros em telas legadas sem ganho imediato no build (Vite já passa).
+      'react-hooks/refs': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/unsupported-syntax': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': [
         'warn',

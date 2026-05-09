@@ -26,6 +26,7 @@ export class GamificationService {
   private setupListeners() {
     // Listen for positive behaviors
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
+      if (!data.actorId) return;
       switch (data.action) {
         case 'PAYMENT_RECEIVED':
           await this.awardPoints(data.actorId, 500, 'PAYMENT_ON_TIME', data.metadata);

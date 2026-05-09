@@ -8,6 +8,7 @@ import {
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import { setSharedCookie, removeSharedCookie } from '@core/lib/cookies';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 interface UserProfile {
   id: string;
@@ -294,8 +295,8 @@ const UserManagement: React.FC<{ embedded?: boolean }> = ({ embedded = false }) 
 const styles: Record<string, any> = {
   container: { padding: '0', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-  title: { fontSize: '28px', fontWeight: '500', color: 'var(--primary)', letterSpacing: '0.4px' },
-  subtitle: { color: 'var(--text-muted)', fontSize: '13px', fontWeight: '400', letterSpacing: '0.2px' },
+  title: { fontSize: '29px', fontWeight: '500', color: '#000000', letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '12px' },
   refreshBtn: { width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' },
 

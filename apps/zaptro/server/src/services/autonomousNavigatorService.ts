@@ -20,13 +20,22 @@ export class AutonomousNavigatorService {
   private setupListeners() {
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
       // 1. If confirmed -> Ensure insertion in active route
-      if (data.action === 'DELIVERY_CONFIRMED_BY_CLIENT') {
+      if (data.action === 'DELIVERY_CONFIRMED_BY_CLIENT' && data.metadata?.deliveryId) {
         await this.handleFulfillmentInsertion(data.metadata.deliveryId);
       }
       
       // 2. If rescheduled -> Remove from current and insert in new route
-      if (data.action === 'DELIVERY_RESCHEDULED_BY_CLIENT') {
-        await this.handleRescheduleIntegration(data.metadata.deliveryId, data.metadata.newDate, data.metadata.slotId);
+      if (
+        data.action === 'DELIVERY_RESCHEDULED_BY_CLIENT' &&
+        data.metadata?.deliveryId &&
+        data.metadata?.newDate &&
+        data.metadata?.slotId
+      ) {
+        await this.handleRescheduleIntegration(
+          data.metadata.deliveryId,
+          data.metadata.newDate,
+          data.metadata.slotId,
+        );
       }
     });
   }
@@ -61,7 +70,8 @@ export class AutonomousNavigatorService {
 
       // 2. Find best future route (Simulated search)
       // This logic would look for an existing route on newDate that passes near the client's location.
-      const targetRouteId = 'FUTURE_ROUTE_ID_STUB'; 
+      const _targetRouteId = 'FUTURE_ROUTE_ID_STUB';
+      void _targetRouteId;
 
       // 3. Inject into the future route sequence
       await this.supabase.from('logistics_route_sequences').insert([{

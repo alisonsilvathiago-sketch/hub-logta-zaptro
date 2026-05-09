@@ -102,7 +102,7 @@ export function registerLogisticsPublicRoutes(app: Express, cfg: any) {
    * GET /v1/public/fuel-market
    * Returns current fuel prices for the public portal
    */
-  app.get('/v1/public/fuel-market', async (req: Request, res: Response) => {
+  app.get('/v1/public/fuel-market', async (_req: Request, res: Response) => {
     try {
       const { data } = await supabase.from('fuel_prices').select('*');
       res.json(data);

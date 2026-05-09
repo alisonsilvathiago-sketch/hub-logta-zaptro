@@ -37,7 +37,7 @@ export function registerWebhookRoutes(app: Express) {
   /**
    * GET /v1/webhooks/health
    */
-  app.get('/v1/webhooks/health', (req, res) => {
+  app.get('/v1/webhooks/health', (_req, res) => {
     res.json({ status: 'active', listeners: 'EventHub' });
   });
 }

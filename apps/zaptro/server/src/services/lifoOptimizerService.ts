@@ -21,7 +21,7 @@ export class LIFOOptimizerService {
   private setupListeners() {
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
       // 1. Triggered when a new plan is created in LastMileMaster
-      if (data.action === 'PLAN_CREATED') {
+      if (data.action === 'PLAN_CREATED' && data.details?.planId) {
         await this.optimizeCargoLoading(data.details.planId);
       }
     });

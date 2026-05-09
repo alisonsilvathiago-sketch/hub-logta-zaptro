@@ -21,7 +21,7 @@ export class DeliveryGuardianService {
   private setupListeners() {
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
       // 1. Initial Trigger: Send confirmation message
-      if (data.action === 'DELIVERY_ORCHESTRATED') {
+      if (data.action === 'DELIVERY_ORCHESTRATED' && data.metadata?.deliveryId && data.actorId) {
         await this.initiateConfirmation(data.metadata.deliveryId, data.actorId);
       }
       
@@ -42,7 +42,7 @@ export class DeliveryGuardianService {
       const token = uuidv4();
       const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12h from now
 
-      const { data: conf } = await this.supabase.from('delivery_actions').insert([{
+      await this.supabase.from('delivery_actions').insert([{
         order_id: deliveryId,
         token,
         status: 'pendente',
@@ -88,10 +88,10 @@ export class DeliveryGuardianService {
       this.hub.emit(SystemEvent.BEHAVIOR_OBSERVED, {
         action: 'DELIVERY_CONFIRMATION_EXPIRED',
         actorId: 'SYSTEM',
-        metadata: { deliveryId: item.delivery_id }
+        metadata: { deliveryId: item.order_id }
       });
 
-      console.log(`[Guardian] Delivery ${item.delivery_id} BLOCKED due to no response (12h).`);
+      console.log(`[Guardian] Delivery ${item.order_id} BLOCKED due to no response (12h).`);
     }
   }
 

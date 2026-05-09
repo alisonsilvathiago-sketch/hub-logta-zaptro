@@ -23,7 +23,10 @@ export class MasterOrchestratorService {
       console.log(`[MasterOrchestrator] Event intercepted: ${data.action} from ${data.actorId}`);
       
       // We log the start of an orchestration cycle for high-value actions
-      if (['BILLING_DUE_SOON', 'BILLING_OVERDUE', 'LEVEL_UP', 'REFERRAL_INVITE_TRIGGERED'].includes(data.action)) {
+      if (
+        data.actorId &&
+        ['BILLING_DUE_SOON', 'BILLING_OVERDUE', 'LEVEL_UP', 'REFERRAL_INVITE_TRIGGERED'].includes(data.action)
+      ) {
         await this.logOrchestrationStep(data.actorId, data.action, { step: 'EVENT_DETECTED', module: 'LOGTA', data });
       }
     });
@@ -32,18 +35,22 @@ export class MasterOrchestratorService {
     this.hub.on(SystemEvent.DECISION_MADE, async (decision) => {
       console.log(`[MasterOrchestrator] Strategic Decision Approved: ${decision.logic} for ${decision.companyId}`);
       
-      await this.logOrchestrationStep(decision.companyId, decision.logic, { 
-        step: 'DECISION_FINALIZED', 
-        module: 'CORTEX', 
-        result: decision.outcome 
-      });
+      if (decision.companyId) {
+        await this.logOrchestrationStep(decision.companyId, decision.logic, {
+          step: 'DECISION_FINALIZED',
+          module: 'CORTEX',
+          result: decision.outcome,
+        });
+      }
     });
 
     // 3. Listen for Results (The Hub analyzes the outcome)
     this.hub.on(SystemEvent.PAYMENT_RECEIVED, async (data) => {
       console.log(`[MasterOrchestrator] Operation Successful: Payment Received for ${data.companyId}`);
       
-      await this.finalizeOrchestration(data.companyId, 'COMPLETED');
+      if (data.companyId) {
+        await this.finalizeOrchestration(data.companyId, 'COMPLETED');
+      }
     });
   }
 

@@ -4,11 +4,13 @@ import {
   ArrowLeft, PackageSearch, TrendingUp, Shield, Truck,
   Clock, AlertTriangle, CheckCircle2, Lock, Edit3, Save, X,
   MapPin, FileText, DollarSign, Activity, Zap, Users, Building2,
-  Phone, Mail, UserCheck, Key, Map as MapIcon, ChevronRight
+  Phone, Mail, UserCheck, Key, Map as MapIcon, ChevronRight, Smartphone, Plus, MessageSquare, Trash2
 } from 'lucide-react';
 import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
 import LogtaModal from '@shared/components/Modal';
+import MapGlobal, { Marker, Popup, truckIcon, carIcon, problemIcon } from '@shared/components/MapGlobal';
 import { toastSuccess } from '@core/lib/toast';
+import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 
 const MOCK_CLIENTS: Record<string, any> = {
   '1': { 
@@ -74,7 +76,7 @@ const LogtaClientProfile: React.FC = () => {
       {/* HEADER */}
       <header style={s.header}>
         <div style={s.headerLeft}>
-          <button style={s.backBtn} onClick={() => navigate('/master/logta-admin')}>
+          <button style={s.backBtn} onClick={() => navigate('/master/logta')}>
             <ArrowLeft size={20} />
           </button>
           <div style={{ ...s.avatar, backgroundColor: '#10B981' }}>{client.name[0]}</div>
@@ -93,11 +95,33 @@ const LogtaClientProfile: React.FC = () => {
         <div style={s.headerActions}>
           {isEditing ? (
             <>
-              <button style={s.cancelBtn} onClick={() => setIsEditing(false)}><X size={16} /> Cancelar</button>
-              <button style={{ ...s.saveBtn, backgroundColor: '#10B981' }} onClick={handleSave}><Save size={16} /> Salvar Alterações</button>
+              <button style={{ ...s.editBtn, backgroundColor: '#10B981' }} onClick={handleSave}>
+                <CheckCircle2 size={18} /> Salvar
+              </button>
+              <button style={{ ...s.deleteBtn, backgroundColor: '#F1F5F9', color: '#64748B' }} onClick={() => setIsEditing(false)}>
+                <X size={18} /> Cancelar
+              </button>
             </>
           ) : (
-            <button style={{ ...s.editBtn, borderColor: '#10B981', color: '#10B981', backgroundColor: '#F0FDF4' }} onClick={() => setIsEditing(true)}><Edit3 size={16} /> Editar Perfil</button>
+            <>
+              <button 
+                style={s.chatBtn} 
+                onClick={() => navigate(`/master/hubchat?token=4dbc4jv0n196sv9a0bdk&id=${client.id}`)}
+              >
+                <MessageSquare size={18} /> Chat
+              </button>
+              <button style={s.editBtn} onClick={() => setIsEditing(true)}>
+                <Edit3 size={18} /> Editar Cadastro
+              </button>
+              <button style={s.deleteBtn} onClick={() => {
+                if(window.confirm('Excluir cliente permanentemente?')) {
+                  toastSuccess('Cliente excluído do Logta.');
+                  navigate('/master/logta');
+                }
+              }}>
+                <Trash2 size={18} /> Excluir Cliente
+              </button>
+            </>
           )}
         </div>
       </header>
@@ -112,7 +136,7 @@ const LogtaClientProfile: React.FC = () => {
             ['frota', Truck, 'Frota & Motoristas'],
             ['seguranca', Shield, 'Acesso & Segurança'],
           ] as const).map(([key, Icon, label]) => (
-            <button key={key} style={{ ...s.tabBtn, ...(activeTab === key ? { backgroundColor: '#F0FDF4', color: '#10B981' } : {}) }} onClick={() => setActiveTab(key)}>
+            <button key={key} style={{ ...s.tabBtn, ...(activeTab === key ? s.tabActive : {}) }} onClick={() => setActiveTab(key)}>
               <Icon size={16} /> {label}
             </button>
           ))}
@@ -230,14 +254,48 @@ const LogtaClientProfile: React.FC = () => {
             <div style={s.grid2}>
               <div style={s.card}>
                 <h3 style={s.cardTitle}>Monitoramento em Tempo Real</h3>
-                <div style={s.mapPlaceholder}>
-                  <div style={{ position: 'absolute', inset: 0 }}>
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'rgb(16, 185, 129)', position: 'absolute', boxShadow: 'rgba(16, 185, 129, 0.2) 0px 0px 0px 4px', top: '20%', left: '30%' }} />
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'rgb(0, 97, 255)', position: 'absolute', boxShadow: 'rgba(0, 97, 255, 0.2) 0px 0px 0px 4px', top: '50%', left: '70%' }} />
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'rgb(16, 185, 129)', position: 'absolute', boxShadow: 'rgba(16, 185, 129, 0.2) 0px 0px 0px 4px', top: '80%', left: '40%' }} />
-                  </div>
-                  <MapIcon size={48} color="#CBD5E1" />
-                  <p style={{ color: '#94A3B8', fontWeight: '700', marginTop: '12px', position: 'relative' }}>Mapa de Rotas Ativas</p>
+                <div style={{ height: '300px', borderRadius: '24px', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
+                  <MapGlobal 
+                    center={[-23.55052, -46.633308]} 
+                    zoom={13} 
+                    scrollWheelZoom={false}
+                    style={{ height: '100%', width: '100%' }}
+                  >
+                    {truckIcon && (
+                      <Marker position={[-23.55052, -46.633308]} icon={truckIcon}>
+                        <Popup>
+                          <div style={{ padding: '4px' }}>
+                            <p style={{ margin: 0, fontWeight: 900, fontSize: '13px' }}>Scania R450</p>
+                            <p style={{ margin: 0, fontSize: '11px', color: '#64748B' }}>Motorista: Pedro Motorista</p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    )}
+                    {truckIcon && (
+                      <Marker position={[-23.54200, -46.625000]} icon={truckIcon}>
+                        <Popup>
+                          <div style={{ padding: '4px' }}>
+                            <p style={{ margin: 0, fontWeight: 900, fontSize: '13px' }}>Volvo FH 540</p>
+                            <p style={{ margin: 0, fontSize: '11px', color: '#64748B' }}>Motorista: Marcos Santos</p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    )}
+                    {carIcon && (
+                      <Marker position={[-23.53800, -46.615000]} icon={carIcon}>
+                        <Popup>
+                          <p style={{ margin: 0, fontWeight: 800 }}>Origem: CD São Paulo</p>
+                        </Popup>
+                      </Marker>
+                    )}
+                    {problemIcon && (
+                      <Marker position={[-23.55500, -46.638000]} icon={problemIcon}>
+                        <Popup>
+                          <p style={{ margin: 0, fontWeight: 800, color: '#EF4444' }}>Alerta de Tráfego</p>
+                        </Popup>
+                      </Marker>
+                    )}
+                  </MapGlobal>
                 </div>
               </div>
 
@@ -260,37 +318,116 @@ const LogtaClientProfile: React.FC = () => {
         )}
 
         {/* Outras abas permanecem com o conteúdo básico ou expandido conforme necessário */}
-        {(activeTab === 'financeiro' || activeTab === 'seguranca') && (
-           <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid #E2E8F0' }}>
-             <Zap size={48} color="#E2E8F0" style={{ marginBottom: '16px' }} />
-             <h3 style={s.cardTitle}>Módulo {activeTab.toUpperCase()}</h3>
-             <p style={{ color: '#64748B' }}>Dados financeiros e de segurança detalhados para o cliente ID {id}.</p>
-           </div>
+        {activeTab === 'seguranca' && (
+          <div style={s.tabContent}>
+            <div style={s.card}>
+              <h3 style={s.cardTitle}>Segurança da Conta</h3>
+              <div style={s.securityGrid}>
+                <div style={s.securityItem}>
+                  <div style={s.securityIcon}><Smartphone size={20} color="#0061FF" /></div>
+                  <div style={{ flex: 1 }}>
+                    <p style={s.snapTitle}>Autenticação de Dois Fatores (2FA)</p>
+                    <p style={s.snapSub}>Adicione uma camada extra de segurança à conta master.</p>
+                  </div>
+                  <button style={{ ...s.addSmallBtn, backgroundColor: '#F0FDF4', color: '#10B981' }} onClick={() => toastSuccess('2FA Ativado com sucesso!')}>Ativar 2FA</button>
+                </div>
+
+                <div style={s.securityItem}>
+                  <div style={s.securityIcon}><Lock size={20} color="#EF4444" /></div>
+                  <div style={{ flex: 1 }}>
+                    <p style={s.snapTitle}>Bloqueio de Sessões Simultâneas</p>
+                    <p style={s.snapSub}>Impedir que múltiplos usuários usem a mesma conta.</p>
+                  </div>
+                  <button style={{ ...s.addSmallBtn, backgroundColor: '#FEF2F2', color: '#EF4444' }} onClick={() => toastSuccess('Bloqueio ativado!')}>Ativar Bloqueio</button>
+                </div>
+
+                <div style={s.securityItem}>
+                  <div style={s.securityIcon}><Key size={20} color="#F59E0B" /></div>
+                  <div style={{ flex: 1 }}>
+                    <p style={s.snapTitle}>Rotação de Chaves de API</p>
+                    <p style={s.snapSub}>Última rotação há 45 dias. Recomendado realizar agora.</p>
+                  </div>
+                  <button style={{ ...s.addSmallBtn, backgroundColor: '#FFFBEB', color: '#F59E0B' }} onClick={() => toastSuccess('Chaves rotacionadas!')}>Rotacionar Agora</button>
+                </div>
+              </div>
+            </div>
+
+            <div style={s.card}>
+              <h3 style={s.cardTitle}>Logs de Auditoria Recentes</h3>
+              {[
+                { action: 'Login bem sucedido', user: 'alison@zaptro.com.br', date: 'Hoje, 14:20', ip: '189.12.3.45' },
+                { action: 'Alteração de Permissão', user: 'ricardo@falcao.com.br', date: 'Ontem, 09:15', ip: '201.44.12.1' },
+                { action: 'Tentativa de Login Falha', user: 'desconhecido', date: 'Há 2 dias', ip: '45.1.22.9' },
+              ].map((log, i) => (
+                <div key={i} style={s.auditRow}>
+                  <div style={{ flex: 1 }}>
+                    <p style={s.snapTitle}>{log.action} · <span style={{ fontWeight: '600', color: '#64748B' }}>{log.user}</span></p>
+                    <p style={s.snapSub}>{log.date} · IP: {log.ip}</p>
+                  </div>
+                  <CheckCircle2 size={16} color={log.action.includes('Falha') ? '#EF4444' : '#10B981'} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'financeiro' && (
+          <div style={s.tabContent}>
+            <div style={HUB_METRIC_GRID_STYLE}>
+              <HubMetricCard label="Faturamento (Mês)" value="R$ 142.500" icon={DollarSign} accent="#10B981" softBg="#F0FDF4" />
+              <HubMetricCard label="Impostos a Pagar" value="R$ 12.430" icon={FileText} accent="#EF4444" softBg="#FEF2F2" />
+              <HubMetricCard label="Crédito Disponível" value="R$ 50.000" icon={Zap} accent="#0061FF" softBg="#EFF6FF" />
+              <HubMetricCard label="Inadimplência" value="2.4%" icon={AlertTriangle} accent="#F59E0B" softBg="#FFF7ED" />
+            </div>
+
+            <div style={s.card}>
+              <h3 style={s.cardTitle}>Documentos Fiscais Pendentes</h3>
+              <div style={s.securityGrid}>
+                {[
+                  { doc: 'CT-e #1420', val: 'R$ 1.200,00', date: 'Hoje', status: 'Pendente' },
+                  { doc: 'NFS-e #882', val: 'R$ 450,00', date: 'Ontem', status: 'Processando' },
+                ].map((d, i) => (
+                  <div key={i} style={s.securityItem}>
+                    <div style={s.securityIcon}><FileText size={20} color="#64748B" /></div>
+                    <div style={{ flex: 1 }}>
+                      <p style={s.snapTitle}>{d.doc} · {d.val}</p>
+                      <p style={s.snapSub}>{d.date}</p>
+                    </div>
+                    <span style={{ fontSize: '11px', fontWeight: '800', backgroundColor: '#FFFBEB', color: '#F59E0B', padding: '4px 10px', borderRadius: '6px' }}>{d.status}</span>
+                  </div>
+                ))}
+              </div>
+              <button style={s.viewAllBtn}>Ver Todos os Documentos <ChevronRight size={16} /></button>
+            </div>
+          </div>
         )}
       </div>
     </div>
   );
 };
 
-const Plus = ({ size, color }: any) => <Zap size={size} color={color} />;
+
 
 const s: Record<string, React.CSSProperties> = {
   container: { flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#F8FAFC', minHeight: '100vh', overflowY: 'auto' },
   header: { padding: '40px 40px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '16px' },
-  backBtn: { width: '44px', height: '44px', borderRadius: '14px', border: '2px solid #E2E8F0', backgroundColor: 'white', display: 'flex', alignItems: 'center', justify_content: 'center', cursor: 'pointer', color: '#475569' },
+  backBtn: { width: '44px', height: '44px', borderRadius: '14px', border: '2px solid #E2E8F0', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#475569' },
   avatar: { width: '52px', height: '52px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: '900', color: 'white' },
   clientName: { margin: 0, fontSize: '22px', fontWeight: '900', color: '#0F172A', letterSpacing: '-0.5px' },
   statusBadge: { padding: '4px 12px', borderRadius: '999px', fontSize: '11px', fontWeight: '800' },
   clientSub: { margin: 0, fontSize: '13px', color: '#64748B', fontWeight: '600' },
-  headerActions: { display: 'flex', gap: '12px', alignItems: 'center' },
-  editBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
+  headerActions: { display: 'flex', gap: '16px', alignItems: 'center' },
+  chatBtn: { backgroundColor: 'white', color: '#64748B', border: '1px solid #E2E8F0', padding: '12px 28px', borderRadius: '999px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' },
+  editBtn: { backgroundColor: '#2D5BFF', color: 'white', border: 'none', padding: '12px 28px', borderRadius: '999px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 8px 16px rgba(45, 91, 255, 0.25)' },
+  deleteBtn: { backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FEE2E2', padding: '12px 28px', borderRadius: '999px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s' },
+  editInput: { padding: '8px 16px', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '24px', fontWeight: '800', color: '#0F172A', outline: 'none', width: '300px' },
   cancelBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
   saveBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid', color: 'white', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
-  editInput: { fontSize: '22px', fontWeight: '900', color: '#0F172A', border: '2px solid #10B981', borderRadius: '12px', padding: '4px 12px', outline: 'none', backgroundColor: 'white' },
   content: { padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px' },
-  tabs: { display: 'flex', gap: '8px', padding: '8px 0', borderRadius: '24px', width: 'fit-content' },
-  tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '16px', border: 'none', background: 'none', color: '#64748B', fontSize: '14px', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
+  tabs: hubPillTabStripStyles.container,
+  tabBtn: { ...hubPillTabStripStyles.button, fontSize: '13px' },
+  tabActive: { ...hubPillTabStripStyles.buttonActive, fontSize: '13px' },
   tabContent: { display: 'flex', flexDirection: 'column', gap: '24px' },
   card: { backgroundColor: '#FFFFFF', borderRadius: '32px', padding: '32px', border: '1px solid #E2E8F0' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
@@ -310,21 +447,24 @@ const s: Record<string, React.CSSProperties> = {
   colabName: { fontSize: '14px', fontWeight: '800', color: '#1E293B' },
   colabRole: { fontSize: '12px', fontWeight: '700', color: '#64748B', backgroundColor: '#F1F5F9', padding: '4px 10px', borderRadius: '6px' },
   colabTime: { fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
-  iconBtn: { width: '32px', height: '32px', borderRadius: '8px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', display: 'inline-flex', alignItems: 'center', justify_content: 'center', cursor: 'pointer', marginRight: '6px' },
+  iconBtn: { width: '32px', height: '32px', borderRadius: '8px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', marginRight: '6px' },
   grid2: { display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' },
-  mapPlaceholder: { height: '300px', backgroundColor: '#F8FAFC', borderRadius: '24px', border: '2px dashed #E2E8F0', display: 'flex', flexDirection: 'column', alignItems: 'center', justify_content: 'center', position: 'relative', overflow: 'hidden' },
+  mapPlaceholder: { height: '300px', backgroundColor: '#F8FAFC', borderRadius: '24px', border: '2px dashed #E2E8F0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' },
   mapOverlay: { position: 'absolute', inset: 0 },
   mapDot: { width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#10B981', position: 'absolute', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.2)' },
   driverRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 0', borderBottom: '1px solid #F1F5F9' },
-  driverAvatar: { width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justify_content: 'center', fontSize: '14px', fontWeight: '800', color: '#475569' },
+  driverAvatar: { width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800', color: '#475569', flexShrink: 0 },
   driverName: { margin: 0, fontSize: '14px', fontWeight: '800', color: '#1E293B' },
   driverSub: { margin: 0, fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
   driverStatus: { fontSize: '11px', fontWeight: '800' },
-  viewAllBtn: { width: '100%', padding: '14px', marginTop: '16px', borderRadius: '16px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justify_content: 'center', gap: '8px' },
+  viewAllBtn: { width: '100%', padding: '14px', marginTop: '16px', borderRadius: '16px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' },
   auditRow: { display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 0', borderBottom: '1px solid #F1F5F9' },
   snapTitle: { margin: 0, fontSize: '14px', fontWeight: '800', color: '#1E293B' },
   snapSub: { margin: 0, fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
   auditTime: { fontSize: '12px', fontWeight: '700', color: '#CBD5E1' },
+  securityGrid: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  securityItem: { display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 0', borderBottom: '1px solid #F1F5F9' },
+  securityIcon: { width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#F8FAFC', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 };
 
 export default LogtaClientProfile;

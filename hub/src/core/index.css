@@ -67,8 +67,8 @@ body {
 /* ── Global Cards (Premium Light) ──────────────── */
 /* Exclui KPI HubMetricCard: .premium-card e .hub-metric-card__* casam em [class*="card"]. */
 .card,
-[class*="card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]),
-[class*="Card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]) {
+[class*="card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):not([class*="hub-splash"]),
+[class*="Card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):not([class*="hub-splash"]) {
   border-radius: 24px;
   background-color: #ffffff !important;
   color: #0F172A;
@@ -78,8 +78,8 @@ body {
 }
 
 .card:hover,
-[class*="card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):hover,
-[class*="Card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):hover,
+[class*="card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):not([class*="hub-splash"]):hover,
+[class*="Card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):not([class*="hub-splash"]):hover,
 .hover-scale:not(.hub-metric-card):hover {
   transform: translateY(-6px) !important;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;

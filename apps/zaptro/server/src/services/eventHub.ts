@@ -12,14 +12,27 @@ export enum SystemEvent {
 }
 
 export interface EventPayload {
-  [SystemEvent.LEAD_CREATED]: { name: string; email: string; source: string };
-  [SystemEvent.LEAD_CONVERTED]: { leadId: string; userId: string; plan: string };
-  [SystemEvent.PAYMENT_RECEIVED]: { amount: number; currency: string; userId: string };
-  [SystemEvent.TASK_COMPLETED]: { taskId: string; assignedTo: string };
-  [SystemEvent.ERROR_CRITICAL]: { message: string; stack?: string; service: string };
-  [SystemEvent.MAINTENANCE_REQUIRED]: { type: string; details: any };
-  [SystemEvent.BEHAVIOR_OBSERVED]: { action: string; userId: string; context: any };
-  [SystemEvent.DECISION_MADE]: { logic: string; outcome: any; confidence: number };
+  [SystemEvent.LEAD_CREATED]: { name: string; email: string; source: string; actorId?: string };
+  [SystemEvent.LEAD_CONVERTED]: { leadId: string; userId: string; plan: string; actorId?: string };
+  [SystemEvent.PAYMENT_RECEIVED]: {
+    amount: number;
+    currency: string;
+    userId: string;
+    companyId?: string;
+    paymentId?: string;
+  };
+  [SystemEvent.TASK_COMPLETED]: { taskId: string; assignedTo: string; targetId?: string };
+  [SystemEvent.ERROR_CRITICAL]: { message: string; stack?: string; service: string; companyId?: string };
+  [SystemEvent.MAINTENANCE_REQUIRED]: { type: string; details: any; targetId?: string; companyId?: string };
+  [SystemEvent.BEHAVIOR_OBSERVED]: {
+    action: string;
+    userId?: string;
+    context?: any;
+    actorId?: string;
+    metadata?: any;
+    details?: any;
+  };
+  [SystemEvent.DECISION_MADE]: { logic: string; outcome: any; confidence?: number; companyId?: string };
 }
 
 /**

@@ -20,10 +20,10 @@ export class RouteOptimizationService {
   private setupListeners() {
     // Listen for new delivery batches or traffic alerts
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
-      if (data.action === 'NEW_DELIVERY_BATCH_CREATED') {
+      if (data.action === 'NEW_DELIVERY_BATCH_CREATED' && data.actorId && Array.isArray(data.metadata?.deliveryIds)) {
         await this.optimizeNewBatch(data.actorId, data.metadata.deliveryIds);
       }
-      if (data.action === 'TRAFFIC_ALERT_RECEIVED') {
+      if (data.action === 'TRAFFIC_ALERT_RECEIVED' && data.metadata?.routeId) {
         await this.recalculateRoute(data.metadata.routeId);
       }
     });

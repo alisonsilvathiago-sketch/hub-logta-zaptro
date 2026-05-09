@@ -1,5 +1,3 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-
 /**
  * WhatsAppService: Handles communication via Evolution API or Twilio.
  * Integrated with the Autonomous Hub for instant driver notifications.

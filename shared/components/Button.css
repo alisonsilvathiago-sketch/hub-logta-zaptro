@@ -71,6 +71,18 @@
   color: #FFFFFF;
 }
 
+/* MasterLayout aplica `span { color: var(--text-body) }` — label + Lucide em branco */
+.hub-button--danger .hub-button__label,
+.hub-button--danger .hub-button__icon {
+  color: #FFFFFF !important;
+}
+
+.hub-button--danger .hub-button__icon svg {
+  stroke: #FFFFFF;
+  width: 18px;
+  height: 18px;
+}
+
 .hub-button--danger:hover:not(:disabled) {
   background-color: #DC2626;
 }

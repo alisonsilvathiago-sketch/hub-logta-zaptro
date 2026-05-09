@@ -19,6 +19,7 @@ import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetr
 import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import UserManagement from './Admins';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 // --- TYPES ---
 interface StaffMember {
@@ -137,7 +138,7 @@ const TeamHub: React.FC = () => {
           onClick={() => goTeamTab(tab.id)}
         >
           <tab.icon
-            size={18}
+            size={15}
             color={activeTab === tab.id ? 'var(--accent)' : 'var(--text-secondary)'}
           />
           {tab.label}
@@ -1338,8 +1339,8 @@ const styles: Record<string, any> = {
   embeddedRoot: { padding: 0, margin: 0, width: '100%' },
   embeddedTabsWrap: { marginBottom: '28px' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-  title: { fontSize: '28px', fontWeight: '500', color: '#000', margin: 0, letterSpacing: '0.4px' },
-  subtitle: { color: '#64748b', fontSize: '13px', fontWeight: '400', margin: 0 },
+  title: { fontSize: '29px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '16px' },
   mainCard: { backgroundColor: 'white', borderRadius: '28px', border: '1px solid #e2e8f0', overflow: 'hidden' },
   cardHeader: { padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' },

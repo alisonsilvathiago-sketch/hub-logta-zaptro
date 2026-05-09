@@ -19,15 +19,15 @@ export class OperationsShieldService {
   private setupListeners() {
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
       // 1. Security Logic
-      if (data.action === 'GPS_DEVIATION_DETECTED') {
+      if (data.action === 'GPS_DEVIATION_DETECTED' && data.actorId) {
         await this.handleSecurityAlert(data.actorId, data.metadata);
       }
       // 2. Pickup Logic
-      if (data.action === 'PICKUP_SCHEDULED') {
+      if (data.action === 'PICKUP_SCHEDULED' && data.metadata?.orderId && data.metadata?.scheduledAt) {
         await this.monitorPickup(data.metadata.orderId, data.metadata.scheduledAt);
       }
       // 3. Performance Logic
-      if (data.action === 'DELIVERY_COMPLETED') {
+      if (data.action === 'DELIVERY_COMPLETED' && data.metadata?.driverId) {
         await this.updateDriverPerformance(data.metadata.driverId, data.metadata);
       }
     });

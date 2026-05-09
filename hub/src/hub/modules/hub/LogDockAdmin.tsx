@@ -10,6 +10,7 @@ import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetr
 import LogtaModal from '@shared/components/Modal';
 import Button from '@shared/components/Button';
 import { toastSuccess } from '@core/lib/toast';
+import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 
 const MOCK_CLIENTS = [
   { id: 1, name: 'Transportadora Falcão', used: 12.5, total: 15, plan: 'Start', status: 'active', files: 1420, zaptro: true, logta: true, logdock: true, ia: false, backup: true },
@@ -72,7 +73,7 @@ const LogDockAdmin: React.FC = () => {
         <div style={styles.headerTitle}>
           <Database size={32} color="#0061FF" />
           <div>
-            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '900', color: '#0F172A', letterSpacing: '-0.5px' }}>LogDock</h1>
+            <h1 style={{ margin: 0, fontSize: '29px', fontWeight: '900', color: '#000000', letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }}>LogDock</h1>
             <p style={{ margin: 0, fontSize: '14px', color: '#64748B', fontWeight: '600' }}>
               Painel Master de Administração do Drive Central
             </p>
@@ -88,36 +89,19 @@ const LogDockAdmin: React.FC = () => {
 
       <div style={styles.content}>
         <div style={styles.tabs}>
-          <button 
-            style={{...styles.tabBtn, ...(activeTab === 'dashboard' ? styles.tabBtnActive : {})}}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            <Activity size={18} /> Dashboard
-          </button>
-          <button 
-            style={{...styles.tabBtn, ...(activeTab === 'clientes' ? styles.tabBtnActive : {})}}
-            onClick={() => setActiveTab('clientes')}
-          >
-            <Users size={18} /> Gestão de Espaço
-          </button>
-          <button 
-            style={{...styles.tabBtn, ...(activeTab === 'uploads' ? styles.tabBtnActive : {})}}
-            onClick={() => setActiveTab('uploads')}
-          >
-            <TrendingUp size={18} /> Monitor de Uploads
-          </button>
-          <button 
-            style={{...styles.tabBtn, ...(activeTab === 'seguranca' ? styles.tabBtnActive : {})}}
-            onClick={() => setActiveTab('seguranca')}
-          >
-            <Shield size={18} /> Segurança & Logs
-          </button>
-          <button 
-            style={{...styles.tabBtn, ...(activeTab === 'backups' ? styles.tabBtnActive : {})}}
-            onClick={() => setActiveTab('backups')}
-          >
-            <RotateCcw size={18} /> Backups & Restore
-          </button>
+          {[
+            ['dashboard', Activity, 'Dashboard'],
+            ['politicas', Shield, 'Políticas de Retenção'],
+            ['logs', Clock, 'Snapshots & Logs'],
+          ].map(([key, Icon, label]) => (
+            <button 
+              key={key as string}
+              style={{...styles.tabBtn, ...(activeTab === key ? styles.tabBtnActive : {})}}
+              onClick={() => setActiveTab(key as any)}
+            >
+              <Icon size={18} /> {label as string}
+            </button>
+          ))}
         </div>
 
         {activeTab === 'dashboard' && (
@@ -129,70 +113,24 @@ const LogDockAdmin: React.FC = () => {
               <HubMetricCard label="Uploads Hoje" value="8,492" icon={TrendingUp} accent="#8B5CF6" softBg="#F5F3FF" />
             </div>
 
-            {/* FILTRO DE PRODUTOS */}
             <div style={styles.card}>
-              <h3 style={styles.cardTitle}>Uso por Produto — Clientes Ativos</h3>
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '28px', flexWrap: 'wrap' }}>
-                {['Todos', 'Zaptro', 'Logta', 'LogDock', 'IA Créditos', 'Backups'].map(prod => {
-                  const isActive = filterProduct === prod;
-                  return (
-                    <button 
-                      key={prod} 
-                      onClick={() => setFilterProduct(prod)}
-                      style={{ 
-                        padding: '8px 18px', 
-                        borderRadius: '999px', 
-                        border: '2px solid', 
-                        borderColor: isActive ? '#0061FF' : '#E2E8F0', 
-                        backgroundColor: isActive ? '#EFF6FF' : 'white', 
-                        color: isActive ? '#0061FF' : '#64748B', 
-                        fontSize: '13px', 
-                        fontWeight: '800', 
-                        cursor: 'pointer',
-                        transition: '0.2s'
-                      }}
-                    >
-                      {prod}
-                    </button>
-                  );
-                })}
+              <h3 style={styles.cardTitle}>Status de Infraestrutura LogDock</h3>
+              <div style={styles.statusList}>
+                <div style={styles.statusItem}>
+                  <CheckCircle2 size={20} color="#10B981" />
+                  <div>
+                    <h4 style={styles.statusTitle}>Nodes de Armazenamento</h4>
+                    <p style={styles.statusDesc}>3 clusters ativos (AWS S3, GCP Cloud Storage, Azure Blob). Sincronia 100%.</p>
+                  </div>
+                </div>
+                <div style={styles.statusItem}>
+                  <CheckCircle2 size={20} color="#10B981" />
+                  <div>
+                    <h4 style={styles.statusTitle}>Criptografia Master</h4>
+                    <p style={styles.statusDesc}>AES-256 ativa em todos os volumes de clientes.</p>
+                  </div>
+                </div>
               </div>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>Cliente</th>
-                    <th style={styles.th}>Zaptro</th>
-                    <th style={styles.th}>Logta</th>
-                    <th style={styles.th}>LogDock</th>
-                    <th style={styles.th}>IA Créditos</th>
-                    <th style={styles.th}>Backups</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {MOCK_CLIENTS
-                    .filter(c => {
-                      if (filterProduct === 'Todos') return true;
-                      if (filterProduct === 'Zaptro') return c.zaptro;
-                      if (filterProduct === 'Logta') return c.logta;
-                      if (filterProduct === 'LogDock') return c.logdock;
-                      if (filterProduct === 'IA Créditos') return c.ia;
-                      if (filterProduct === 'Backups') return c.backup;
-                      return true;
-                    })
-                    .map((c, i) => (
-                    <tr key={i} style={{ ...styles.tr, cursor: 'pointer' }} onClick={() => navigate(`/master/logdock-admin/${c.id}`)}>
-                      <td style={styles.td}><span style={{ ...styles.clientName, color: '#0061FF', textDecoration: 'underline dotted' }}>{c.name}</span></td>
-                      {[c.zaptro, c.logta, c.logdock, c.ia, c.backup].map((active, j) => (
-                        <td key={j} style={styles.td}>
-                          <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '800', backgroundColor: active ? '#F0FDF4' : '#F8FAFC', color: active ? '#10B981' : '#CBD5E1' }}>
-                            {active ? '✓ Ativo' : '—'}
-                          </span>
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
 
             <div style={styles.dashboardGrid}>
@@ -200,63 +138,37 @@ const LogDockAdmin: React.FC = () => {
                 <h3 style={styles.cardTitle}>Consumo por Tipo de Arquivo</h3>
                 <div style={styles.chartMock}>
                   <div style={styles.barRow}>
-                    <span style={styles.barLabel}>Comprovantes (POD) - Imagem</span>
+                    <span style={styles.barLabel}>Comprovantes (POD)</span>
                     <div style={styles.barTrack}><div style={{...styles.barFill, width: '45%', backgroundColor: '#10B981'}} /></div>
                     <span style={styles.barValue}>45%</span>
                   </div>
                   <div style={styles.barRow}>
-                    <span style={styles.barLabel}>Documentos Fiscais (PDF)</span>
+                    <span style={styles.barLabel}>Documentos Fiscais</span>
                     <div style={styles.barTrack}><div style={{...styles.barFill, width: '30%', backgroundColor: '#0061FF'}} /></div>
                     <span style={styles.barValue}>30%</span>
                   </div>
-                  <div style={styles.barRow}>
-                    <span style={styles.barLabel}>Vídeos de Ocorrência</span>
-                    <div style={styles.barTrack}><div style={{...styles.barFill, width: '15%', backgroundColor: '#8B5CF6'}} /></div>
-                    <span style={styles.barValue}>15%</span>
-                  </div>
-                  <div style={styles.barRow}>
-                    <span style={styles.barLabel}>Outros (Áudios, Excel, Zip)</span>
-                    <div style={styles.barTrack}><div style={{...styles.barFill, width: '10%', backgroundColor: '#94A3B8'}} /></div>
-                    <span style={styles.barValue}>10%</span>
-                  </div>
                 </div>
               </div>
-
               <div style={styles.card}>
-                <h3 style={styles.cardTitle}>Status de Infraestrutura</h3>
-                <div style={styles.statusList}>
-                  <div style={styles.statusItem}>
-                    <CheckCircle2 size={20} color="#10B981" />
-                    <div>
-                      <h4 style={styles.statusTitle}>Sincronização Zaptro</h4>
-                      <p style={styles.statusDesc}>Operando normalmente. 12ms ping.</p>
+                <h3 style={styles.cardTitle}>Monitor de Uploads (Live)</h3>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                  {MOCK_UPLOADS.slice(0, 3).map(up => (
+                    <div key={up.id} style={{fontSize: '13px', display: 'flex', justifyContent: 'space-between'}}>
+                      <span style={{color: '#64748B'}}>{up.file}</span>
+                      <span style={{fontWeight: '700'}}>{up.size}</span>
                     </div>
-                  </div>
-                  <div style={styles.statusItem}>
-                    <CheckCircle2 size={20} color="#10B981" />
-                    <div>
-                      <h4 style={styles.statusTitle}>Backup Automático</h4>
-                      <p style={styles.statusDesc}>Último snapshot há 2 horas.</p>
-                    </div>
-                  </div>
-                  <div style={styles.statusItem}>
-                    <CheckCircle2 size={20} color="#10B981" />
-                    <div>
-                      <h4 style={styles.statusTitle}>Criptografia Master</h4>
-                      <p style={styles.statusDesc}>AES-256 ativa em todos os volumes.</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {activeTab === 'clientes' && (
+        {activeTab === 'politicas' && (
           <div style={styles.tabContent}>
             <div style={styles.card}>
               <div style={styles.cardHeader}>
-                <h3 style={styles.cardTitle}>Gestão de Espaço por Cliente</h3>
+                <h3 style={styles.cardTitle}>Gestão de Espaço & Políticas</h3>
                 <div style={styles.searchBox}>
                   <Search size={18} color="#94A3B8" />
                   <input type="text" placeholder="Buscar cliente..." style={styles.searchInput} />
@@ -277,20 +189,10 @@ const LogDockAdmin: React.FC = () => {
                   {MOCK_CLIENTS.map(client => {
                     const pct = (client.used / client.total) * 100;
                     return (
-                      <tr
-                        key={client.id}
-                        style={{ ...styles.tr, cursor: 'pointer' }}
-                        onClick={() => navigate(`/master/logdock-admin/${client.id}`)}
-                      >
-                        <td style={styles.td}>
-                          <span style={{ ...styles.clientName, color: '#0061FF', textDecoration: 'underline dotted' }}>{client.name}</span>
-                        </td>
-                        <td style={styles.td}>
-                          <span style={styles.badge}>{client.plan}</span>
-                        </td>
-                        <td style={styles.td}>
-                          <span style={styles.statsText}>{client.files.toLocaleString()}</span>
-                        </td>
+                      <tr key={client.id} style={styles.tr}>
+                        <td style={styles.td}><strong>{client.name}</strong></td>
+                        <td style={styles.td}><span style={styles.badge}>{client.plan}</span></td>
+                        <td style={styles.td}>{client.files.toLocaleString()}</td>
                         <td style={styles.td}>
                           <div style={styles.progressCell}>
                             <div style={styles.progressInfo}>
@@ -303,34 +205,13 @@ const LogDockAdmin: React.FC = () => {
                           </div>
                         </td>
                         <td style={styles.td}>
-                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                            <button style={styles.actionBtnSm} onClick={() => handleOpenUpgrade(client)}>
-                              <HardDrive size={14} /> Limite
-                            </button>
-                            <button style={styles.actionBtnSm} onClick={() => window.open('https://logdock.com.br', '_blank')}>
-                              <ExternalLink size={14} /> LogDock
-                            </button>
-                            <button style={{...styles.actionBtnSm, backgroundColor: '#F0FDF4', color: '#10B981', borderColor: '#10B981'}} onClick={() => handleOpenBilling(client)}>
-                              <Receipt size={14} /> Cobrança
-                            </button>
-                          </div>
+                          <button style={styles.actionBtnSm} onClick={() => handleOpenUpgrade(client)}>Upgrade</button>
                         </td>
                       </tr>
                     )
                   })}
                 </tbody>
               </table>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'uploads' && (
-          <div style={styles.tabContent}>
-            <div style={HUB_METRIC_GRID_STYLE}>
-              <HubMetricCard label="Uploads Hoje" value="8,492" icon={TrendingUp} accent="#0061FF" softBg="#EFF6FF" />
-              <HubMetricCard label="Volume Transferido" value="142 GB" icon={HardDrive} accent="#10B981" softBg="#F0FDF4" />
-              <HubMetricCard label="Arquivos Bloqueados" value="7" icon={AlertTriangle} accent="#EF4444" softBg="#FEF2F2" />
-              <HubMetricCard label="Clientes Ativos Hoje" value="38" icon={Users} accent="#8B5CF6" softBg="#F5F3FF" />
             </div>
             <div style={styles.card}>
               <div style={styles.cardHeader}>
@@ -597,9 +478,9 @@ const styles: Record<string, React.CSSProperties> = {
   header: { padding: '40px 40px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { display: 'flex', alignItems: 'center', gap: '16px' },
   content: { padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px' },
-  tabs: { display: 'flex', gap: '8px', backgroundColor: '#FFFFFF', padding: '8px', borderRadius: '24px', width: 'fit-content', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' },
-  tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '16px', border: 'none', background: 'none', color: '#64748B', fontSize: '14px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' },
-  tabBtnActive: { backgroundColor: '#EFF6FF', color: '#0061FF' },
+  tabs: hubPillTabStripStyles.container,
+  tabBtn: hubPillTabStripStyles.button,
+  tabBtnActive: hubPillTabStripStyles.buttonActive,
   tabContent: { display: 'flex', flexDirection: 'column', gap: '32px', animation: 'fadeIn 0.3s ease' },
   dashboardGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' },
   card: { backgroundColor: '#FFFFFF', borderRadius: '32px', padding: '32px', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' },

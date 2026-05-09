@@ -4,6 +4,7 @@ import { supabase } from '@core/lib/supabase';
 import { useAuth } from '@core/context/AuthContext';
 import { useToast } from '@core/context/ToastContext';
 import SyncIndicator from '../../components/SyncIndicator';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 const ProfilePage: React.FC = () => {
   const { profile, refreshProfile } = useAuth();
@@ -286,8 +287,8 @@ const styles: Record<string, any> = {
   },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
   headerInfo: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  pageTitle: { fontSize: '32px', fontWeight: '800', color: '#0F172A', margin: 0, letterSpacing: '-1.5px' },
-  pageSub: { fontSize: '13px', color: '#94A3B8', fontWeight: '500' },
+  pageTitle: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  pageSub: { ...HUB_PAGE_SUBTITLE },
   saveBtn: { 
     backgroundColor: '#0061FF', color: 'white', border: 'none', padding: '12px 24px', 
     borderRadius: '24px', fontWeight: '700', cursor: 'pointer', display: 'flex', 

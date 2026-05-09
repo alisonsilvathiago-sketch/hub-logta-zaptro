@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Header from '../components/Header';
 import MasterSidebar from '../components/MasterSidebar';
@@ -12,14 +12,128 @@ import {
   getExpectedMasterRouteToken,
 } from '@core/lib/masterRouteToken';
 
+const HUB_MASTER_SPLASH_PHRASE_MS = 2000;
+
+/** Três frases em sequência (~2s cada); sem ícone. */
+const HubMasterLoaderSplash: React.FC<{ greetingName?: string | null }> = ({ greetingName }) => {
+  const [phraseIndex, setPhraseIndex] = useState(0);
+
+  useEffect(() => {
+    if (phraseIndex >= 2) return;
+    const t = window.setTimeout(() => setPhraseIndex((i) => i + 1), HUB_MASTER_SPLASH_PHRASE_MS);
+    return () => window.clearTimeout(t);
+  }, [phraseIndex]);
+
+  const first = (greetingName || '').trim().split(/\s+/)[0] || '';
+  const phrases = [
+    first ? `Olá, ${first}` : 'Olá!',
+    'Estamos atualizando o painel…',
+    'Abrindo o Hub Master…',
+  ];
+
+  return (
+    <>
+      <div
+        className="hub-splash-loading-text hub-master-loader-phrase"
+        key={phraseIndex}
+        aria-live="polite"
+        aria-atomic="true"
+        style={{
+          margin: 0,
+          width: '100%',
+          maxWidth: 'min(90vw, 720px)',
+          boxSizing: 'border-box',
+          padding: '12px 24px',
+          textAlign: 'center',
+          fontSize: 46,
+          fontWeight: 900,
+          lineHeight: 1.15,
+          letterSpacing: '-0.02em',
+          color: '#FFFFFF',
+          backgroundColor: 'transparent',
+          backgroundImage: 'none',
+          WebkitBackgroundClip: 'unset',
+          backgroundClip: 'unset',
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+          border: 'none',
+          borderRadius: 0,
+          boxShadow: 'none',
+        }}
+      >
+        {phrases[phraseIndex]}
+      </div>
+      <style>{`
+        @keyframes hub-master-loader-fade {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        #hub-master-splash-screen .hub-splash-loading-text,
+        #hub-master-splash-screen .hub-master-loader-phrase {
+          animation: hub-master-loader-fade 0.35s ease-out;
+          background: transparent !important;
+          background-color: transparent !important;
+          color: #ffffff !important;
+          border: none !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          font-weight: 900 !important;
+          font-size: 46px !important;
+        }
+      `}</style>
+    </>
+  );
+};
+
+/** Tempo mínimo com o splash visível após carregar (3 frases × 2s + folga). */
+const HUB_MASTER_MIN_SPLASH_MS = 6200;
+
 const MasterLayout: React.FC = () => {
   const { user, profile, isLoading, signOut } = useAuth();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
+  const [splashMinElapsed, setSplashMinElapsed] = useState(true);
+  const splashSinceRef = useRef<number | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const rawNeedsSplash = isLoading || (!!user && !profile);
+
+  useEffect(() => {
+    if (rawNeedsSplash) {
+      if (splashSinceRef.current == null) splashSinceRef.current = Date.now();
+      setSplashMinElapsed(false);
+      return;
+    }
+
+    if (!user && !isLoading) {
+      splashSinceRef.current = null;
+      setSplashMinElapsed(true);
+      return;
+    }
+
+    const start = splashSinceRef.current;
+    if (start == null) {
+      setSplashMinElapsed(true);
+      return;
+    }
+
+    const remaining = Math.max(0, HUB_MASTER_MIN_SPLASH_MS - (Date.now() - start));
+    if (remaining === 0) {
+      splashSinceRef.current = null;
+      setSplashMinElapsed(true);
+      return;
+    }
+
+    const t = window.setTimeout(() => {
+      splashSinceRef.current = null;
+      setSplashMinElapsed(true);
+    }, remaining);
+    return () => window.clearTimeout(t);
+  }, [rawNeedsSplash, user, isLoading]);
+
+  const showSplash = rawNeedsSplash || !splashMinElapsed;
 
   // Monitoramento Inteligente de Conexão - TOP LEVEL
   useEffect(() => {
@@ -89,56 +203,29 @@ const MasterLayout: React.FC = () => {
     navigate,
   ]);
 
-  if (isLoading) {
+  if (showSplash) {
     return (
-      <div style={{ 
-        height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', backgroundColor: '#0F172A' 
-      }}>
-        <div style={{
-          width: '64px', height: '64px', borderRadius: '24px', backgroundColor: '#0061FF',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          animation: 'pulse 1.5s infinite ease-in-out', boxShadow: '0 0 40px rgba(99,102,241,0.3)'
-        }}>
-          <div style={{ width: '20px', height: '20px', backgroundColor: 'white', borderRadius: '4px' }} />
-        </div>
-        <p style={{ marginTop: '24px', color: '#94A3B8', fontSize: '13px', fontWeight: '800', letterSpacing: '2px', textTransform: 'uppercase' }}>
-          Sincronizando Matriz Master...
-        </p>
-        <style>{`
-          @keyframes pulse {
-            0% { transform: scale(0.9); opacity: 0.8; }
-            50% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(0.9); opacity: 0.8; }
-          }
-        `}</style>
+      <div
+        id="hub-master-splash-screen"
+        role="status"
+        aria-busy="true"
+        aria-label={user && !profile ? 'Carregando perfil' : 'Carregando'}
+        style={{
+          height: '100vh',
+          width: '100vw',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#000000',
+        }}
+      >
+        <HubMasterLoaderSplash greetingName={profile?.full_name} />
       </div>
     );
   }
 
   // Refined Auth Protection Logic
   const isMaster = profile?.role === 'MASTER' || profile?.role === 'MASTER_ADMIN';
-
-  // Wait for profile if user exists but profile doesn't yet
-  if (user && !profile) {
-    return (
-      <div style={{
-        height: '100vh',
-        width: '100vw',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#F8FAFC',
-        color: '#64748B',
-        fontSize: '13px',
-        fontWeight: '800',
-        letterSpacing: '1px',
-        textTransform: 'uppercase'
-      }}>
-        Sincronizando perfil master...
-      </div>
-    );
-  }
 
   if (!user && !isLoading) {
     return <Navigate to="/" replace />;
@@ -152,7 +239,7 @@ const MasterLayout: React.FC = () => {
         textAlign: 'center', padding: '40px'
       }}>
         <AlertCircle size={48} color="#EF4444" style={{ marginBottom: '24px' }} />
-        <h1 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '12px' }}>Acesso Negado</h1>
+        <h1 style={{ fontSize: '29px', fontWeight: '800', marginBottom: '12px', letterSpacing: 0, color: '#000000', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }}>Acesso Negado</h1>
         <p style={{ color: '#94A3B8', maxWidth: '400px', marginBottom: '32px' }}>
           Sua conta não possui permissões administrativas para acessar o Hub Master.
         </p>
@@ -213,6 +300,7 @@ const MasterLayout: React.FC = () => {
           --text-secondary: #64748B;
           --border: #E2E8F0;
           --accent: #0061FF;
+          --accent-glow: #38BDF8;
           --accent-light: #F0F7FF;
           --bg-overlay: rgba(99, 102, 241, 0.05);
           --bg-secondary: #F1F5F9;
@@ -235,31 +323,42 @@ const MasterLayout: React.FC = () => {
         }
 
         h1, .h1-style, .page-title, .title-main {
-          font-size: 32px !important;
+          font-size: 29px !important;
           font-weight: 800 !important;
           color: #000000 !important;
-          letter-spacing: -1.2px !important;
+          letter-spacing: 0 !important;
           line-height: 1.2 !important;
           margin-bottom: 4px !important;
-          font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+          background-image: none !important;
+          background-clip: unset !important;
+          -webkit-background-clip: unset !important;
         }
 
         h2, .h2-style {
           font-size: 22px !important;
           font-weight: 800 !important;
-          color: var(--text-title) !important;
+          color: #000000 !important;
           line-height: 1.25 !important;
           margin-bottom: 12px !important;
-          letter-spacing: -0.6px !important;
+          letter-spacing: 0 !important;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+          background-image: none !important;
+          background-clip: unset !important;
+          -webkit-background-clip: unset !important;
         }
 
         h3, .h3-style {
           font-size: 16px !important;
           font-weight: 700 !important;
-          color: var(--text-title) !important;
+          color: #000000 !important;
           line-height: 1.25 !important;
           margin-bottom: 8px !important;
-          letter-spacing: -0.2px !important;
+          letter-spacing: 0 !important;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+          background-image: none !important;
+          background-clip: unset !important;
+          -webkit-background-clip: unset !important;
         }
 
         p, span, div {
@@ -267,11 +366,21 @@ const MasterLayout: React.FC = () => {
         }
 
         .text-subtitle {
-          color: var(--text-subtitle) !important;
-          font-size: 13px !important;
-          font-weight: 400 !important;
-          margin-top: 0px !important;
+          color: rgba(0, 0, 0, 0.46) !important;
+          font-size: 12px !important;
+          font-weight: 500 !important;
+          margin: 0 !important;
+          padding: 7px 0 !important;
+          max-width: 510px !important;
           line-height: 1.5 !important;
+          letter-spacing: 0 !important;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+        }
+
+        main table th {
+          font-size: 10px !important;
+          line-height: 1 !important;
+          letter-spacing: 0 !important;
         }
 
         .animate-fade-in {

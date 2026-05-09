@@ -129,7 +129,7 @@ const IaGatewayCenter: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-1px' }}>AI Gateway Center</h1>
+              <h1 style={{ fontSize: '29px', fontWeight: 900, color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }}>AI Gateway Center</h1>
               <span style={{ background: '#EFF6FF', color: '#0061FF', fontSize: '11px', fontWeight: 800, padding: '4px 10px', borderRadius: '20px', textTransform: 'uppercase' }}>MASTER ONLY</span>
             </div>
             <p style={{ color: '#64748B', fontSize: '13px', marginTop: '4px' }}>Gerenciamento avançado de servidores, providers de IA, controle de multiagentes e chaves de criptografia.</p>

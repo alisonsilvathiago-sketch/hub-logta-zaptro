@@ -4,10 +4,11 @@ import {
   ArrowLeft, MessageSquare, TrendingUp, Shield, Zap,
   Clock, AlertTriangle, CheckCircle2, Lock, Edit3, Save, X,
   FileText, DollarSign, Activity, Users, Building2,
-  Phone, Mail, UserCheck, Key, ChevronRight, Share2, MessageCircle
+  Phone, Mail, UserCheck, Key, ChevronRight, Share2, MessageCircle, MapPin, Smartphone, Trash2
 } from 'lucide-react';
 import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
 import { toastSuccess } from '@core/lib/toast';
+import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 
 const MOCK_CLIENTS: Record<string, any> = {
   '1': { 
@@ -69,7 +70,7 @@ const ZaptroClientProfile: React.FC = () => {
       {/* HEADER */}
       <header style={s.header}>
         <div style={s.headerLeft}>
-          <button style={s.backBtn} onClick={() => navigate('/master/zaptro-admin')}>
+          <button style={s.backBtn} onClick={() => navigate('/master/zaptro')}>
             <ArrowLeft size={20} />
           </button>
           <div style={{ ...s.avatar, backgroundColor: '#7C3AED' }}>{client.name[0]}</div>
@@ -88,11 +89,33 @@ const ZaptroClientProfile: React.FC = () => {
         <div style={s.headerActions}>
           {isEditing ? (
             <>
-              <button style={s.cancelBtn} onClick={() => setIsEditing(false)}><X size={16} /> Cancelar</button>
-              <button style={{ ...s.saveBtn, backgroundColor: '#7C3AED' }} onClick={handleSave}><Save size={16} /> Salvar Alterações</button>
+              <button style={{ ...s.editBtn, backgroundColor: '#10B981' }} onClick={handleSave}>
+                <CheckCircle2 size={18} /> Salvar
+              </button>
+              <button style={{ ...s.deleteBtn, backgroundColor: '#F1F5F9', color: '#64748B' }} onClick={() => setIsEditing(false)}>
+                <X size={18} /> Cancelar
+              </button>
             </>
           ) : (
-            <button style={{ ...s.editBtn, borderColor: '#7C3AED', color: '#7C3AED', backgroundColor: '#F5F3FF' }} onClick={() => setIsEditing(true)}><Edit3 size={16} /> Editar Perfil</button>
+            <>
+              <button 
+                style={s.chatBtn} 
+                onClick={() => navigate(`/master/hubchat?token=4dbc4jv0n196sv9a0bdk&id=${client.id}`)}
+              >
+                <MessageSquare size={18} /> Chat
+              </button>
+              <button style={s.editBtn} onClick={() => setIsEditing(true)}>
+                <Edit3 size={18} /> Editar Cadastro
+              </button>
+              <button style={s.deleteBtn} onClick={() => {
+                if(window.confirm('Excluir cliente permanentemente?')) {
+                  toastSuccess('Cliente excluído do Zaptro.');
+                  navigate('/master/zaptro');
+                }
+              }}>
+                <Trash2 size={18} /> Excluir Cliente
+              </button>
+            </>
           )}
         </div>
       </header>
@@ -106,7 +129,7 @@ const ZaptroClientProfile: React.FC = () => {
             ['canais', Share2, 'Canais & API'],
             ['seguranca', Shield, 'Acesso & Segurança'],
           ] as const).map(([key, Icon, label]) => (
-            <button key={key} style={{ ...s.tabBtn, ...(activeTab === key ? { backgroundColor: '#F5F3FF', color: '#7C3AED' } : {}) }} onClick={() => setActiveTab(key)}>
+            <button key={key} style={{ ...s.tabBtn, ...(activeTab === key ? s.tabActive : {}) }} onClick={() => setActiveTab(key)}>
               <Icon size={16} /> {label}
             </button>
           ))}
@@ -196,20 +219,48 @@ const ZaptroClientProfile: React.FC = () => {
         {activeTab === 'canais' && (
           <div style={s.tabContent}>
             <div style={s.card}>
-              <h3 style={s.cardTitle}>Canais de Atendimento Ativos</h3>
-              {client.channels.map((ch: any) => (
-                <div key={ch.id} style={s.channelRow}>
-                  <div style={{ ...s.channelIcon, backgroundColor: ch.type === 'WhatsApp' ? '#F0FDF4' : '#F5F3FF' }}>
-                    {ch.type === 'WhatsApp' ? <MessageCircle size={18} color="#10B981" /> : <Activity size={18} color="#7C3AED" />}
+              <h3 style={s.cardTitle}>Canais & Integrações API</h3>
+              <div style={s.securityGrid}>
+                {client.channels.map((ch: any) => (
+                  <div key={ch.id} style={s.securityItem}>
+                    <div style={{ ...s.securityIcon, backgroundColor: ch.type === 'WhatsApp' ? '#F0FDF4' : '#F5F3FF' }}>
+                      {ch.type === 'WhatsApp' ? <MessageCircle size={20} color="#10B981" /> : <Activity size={20} color="#7C3AED" />}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={s.snapTitle}>{ch.name}</p>
+                      <p style={s.snapSub}>{ch.type} · v2.4.0</p>
+                    </div>
+                    <span style={{ fontSize: '11px', fontWeight: '800', color: '#10B981' }}>{ch.status.toUpperCase()}</span>
                   </div>
+                ))}
+              </div>
+              <button style={s.viewAllBtn}>Configurar Novo Canal <ChevronRight size={16} /></button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'seguranca' && (
+          <div style={s.tabContent}>
+            <div style={s.card}>
+              <h3 style={s.cardTitle}>Segurança da Conta Zaptro</h3>
+              <div style={s.securityGrid}>
+                <div style={s.securityItem}>
+                  <div style={s.securityIcon}><Smartphone size={20} color="#7C3AED" /></div>
                   <div style={{ flex: 1 }}>
-                    <p style={s.driverName}>{ch.name}</p>
-                    <p style={s.driverSub}>{ch.type}</p>
+                    <p style={s.snapTitle}>Autenticação de Dois Fatores (2FA)</p>
+                    <p style={s.snapSub}>Proteja as instâncias de WhatsApp com autenticação master.</p>
                   </div>
-                  <span style={{ ...s.driverStatus, color: '#10B981' }}>{ch.status}</span>
+                  <button style={{ ...s.addSmallBtn, backgroundColor: '#F5F3FF', color: '#7C3AED' }} onClick={() => toastSuccess('2FA Ativado!')}>Ativar 2FA</button>
                 </div>
-              ))}
-              <button style={s.viewAllBtn}>Configurar Nova API <ChevronRight size={16} /></button>
+                <div style={s.securityItem}>
+                  <div style={s.securityIcon}><Lock size={20} color="#EF4444" /></div>
+                  <div style={{ flex: 1 }}>
+                    <p style={s.snapTitle}>Criptografia de Ponta-a-Ponta</p>
+                    <p style={s.snapSub}>Reforce a segurança dos logs de conversas.</p>
+                  </div>
+                  <button style={{ ...s.addSmallBtn, backgroundColor: '#FEF2F2', color: '#EF4444' }} onClick={() => toastSuccess('Criptografia reforçada!')}>Ativar Reforço</button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -227,14 +278,15 @@ const s: Record<string, React.CSSProperties> = {
   clientName: { margin: 0, fontSize: '22px', fontWeight: '900', color: '#0F172A', letterSpacing: '-0.5px' },
   statusBadge: { padding: '4px 12px', borderRadius: '999px', fontSize: '11px', fontWeight: '800' },
   clientSub: { margin: 0, fontSize: '13px', color: '#64748B', fontWeight: '600' },
-  headerActions: { display: 'flex', gap: '12px', alignItems: 'center' },
-  editBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
-  cancelBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
-  saveBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid', color: 'white', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
-  editInput: { fontSize: '22px', fontWeight: '900', color: '#0F172A', border: '2px solid #7C3AED', borderRadius: '12px', padding: '4px 12px', outline: 'none', backgroundColor: 'white' },
+  headerActions: { display: 'flex', gap: '16px', alignItems: 'center' },
+  chatBtn: { backgroundColor: 'white', color: '#64748B', border: '1px solid #E2E8F0', padding: '12px 28px', borderRadius: '999px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' },
+  editBtn: { backgroundColor: '#2D5BFF', color: 'white', border: 'none', padding: '12px 28px', borderRadius: '999px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 8px 16px rgba(45, 91, 255, 0.25)' },
+  deleteBtn: { backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FEE2E2', padding: '12px 28px', borderRadius: '999px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s' },
+  editInput: { padding: '8px 16px', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '24px', fontWeight: '800', color: '#0F172A', outline: 'none', width: '300px' },
   content: { padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px' },
-  tabs: { display: 'flex', gap: '8px', padding: '8px 0', borderRadius: '24px', width: 'fit-content' },
-  tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '16px', border: 'none', background: 'none', color: '#64748B', fontSize: '14px', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
+  tabs: hubPillTabStripStyles.container,
+  tabBtn: { ...hubPillTabStripStyles.button, fontSize: '13px' },
+  tabActive: { ...hubPillTabStripStyles.buttonActive, fontSize: '13px' },
   tabContent: { display: 'flex', flexDirection: 'column', gap: '24px' },
   card: { backgroundColor: '#FFFFFF', borderRadius: '32px', padding: '32px', border: '1px solid #E2E8F0' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
@@ -261,6 +313,9 @@ const s: Record<string, React.CSSProperties> = {
   driverStatus: { fontSize: '11px', fontWeight: '800' },
   viewAllBtn: { width: '100%', padding: '14px', marginTop: '16px', borderRadius: '16px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
   placeholderChart: { height: '120px', backgroundColor: '#F8FAFC', borderRadius: '16px', border: '2px dashed #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontSize: '13px', fontWeight: '600' },
+  securityGrid: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  securityItem: { display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 0', borderBottom: '1px solid #F1F5F9' },
+  securityIcon: { width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#F8FAFC', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 };
 
 export default ZaptroClientProfile;

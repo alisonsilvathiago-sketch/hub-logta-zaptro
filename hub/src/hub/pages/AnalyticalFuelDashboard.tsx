@@ -10,6 +10,7 @@ import {
   BarChart, Bar, Cell
 } from 'recharts';
 import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 const AnalyticalFuelDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -227,8 +228,8 @@ const styles = {
   headerLeft: { display: 'flex', alignItems: 'center', gap: '24px' },
   backBtn: { border: '1px solid #E2E8F0', background: 'none', padding: '10px', borderRadius: '12px', cursor: 'pointer', color: '#64748B' },
   logoBox: { display: 'flex', alignItems: 'center', gap: '16px' },
-  title: { fontSize: '20px', fontWeight: '900', color: '#0F172A', margin: 0, letterSpacing: '-0.5px' },
-  subtitle: { fontSize: '13px', color: '#64748B', margin: 0, fontWeight: '500' },
+  title: { fontSize: '29px', fontWeight: '900', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', alignItems: 'center', gap: '16px' },
   searchBox: { display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#F1F5F9', padding: '10px 16px', borderRadius: '12px', width: '320px' },
   searchInput: { border: 'none', background: 'none', fontSize: '13px', color: '#1E293B', width: '100%', fontWeight: '600', outline: 'none' },

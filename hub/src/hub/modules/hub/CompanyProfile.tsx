@@ -465,7 +465,7 @@ const CompanyProfile: React.FC = () => {
 
 
             <div style={{ ...styles.card, ...styles.overviewCellInfo }}>
-              <div style={{ display: 'flex', justify_content: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h3 style={{ ...styles.cardTitle, marginBottom: 0 }}>Informações Principais</h3>
                 <button 
                   style={{...styles.primaryBtn, padding: '8px 16px', fontSize: '12px', backgroundColor: '#0061FF', color: 'white'}} 
@@ -741,6 +741,42 @@ const CompanyProfile: React.FC = () => {
             </div>
           </div>
         )}
+
+        {activeTab === 'logs' && (
+          <div style={styles.card}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={styles.cardTitle}>Logs de Auditoria Master</h3>
+              <button style={styles.outlineBtn} onClick={() => toastSuccess('Logs exportados!')}><Download size={16} /> Exportar CSV</button>
+            </div>
+            <div style={styles.tableWrapper}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>DATA / HORA</th>
+                    <th style={styles.th}>AÇÃO</th>
+                    <th style={styles.th}>USUÁRIO</th>
+                    <th style={styles.th}>MÓDULO</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { date: '08/05/2026 15:30', action: 'Login Master Admin', user: 'alison@zaptro.com.br', module: 'HUB_MASTER' },
+                    { date: '08/05/2026 14:15', action: 'Update Company Profile', user: 'ricardo@falcao.com.br', module: 'LOGTA_ADMIN' },
+                    { date: '07/05/2026 09:10', action: 'API Key Rotation', user: 'SYSTEM', module: 'SECURITY' },
+                    { date: '06/05/2026 18:45', action: 'Payment Received', user: 'BILLING_BOT', module: 'FINANCE' },
+                  ].map((log, i) => (
+                    <tr key={i} style={styles.tr}>
+                      <td style={styles.td}><span style={{ color: '#64748B', fontWeight: '600' }}>{log.date}</span></td>
+                      <td style={styles.td}><strong>{log.action}</strong></td>
+                      <td style={styles.td}>{log.user}</td>
+                      <td style={styles.td}><span style={styles.roleTag}>{log.module}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
       {/* EDIT MODAL POPUP */}
       {showEditModal && (
@@ -882,7 +918,7 @@ const styles: Record<string, any> = {
   backBtn: { width: '40px', height: '40px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
   avatar: { width: '64px', height: '64px', borderRadius: '20px', backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E2E8F0', overflow: 'hidden' },
   logoImg: { width: '100%', height: '100%', objectFit: 'cover' },
-  companyName: { fontSize: '28px', fontWeight: '500', color: '#0F172A', margin: 0, letterSpacing: '0.4px', lineHeight: '1.2' },
+  companyName: { fontSize: '29px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: 0, lineHeight: '1.2', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
   statusBadge: { padding: '4px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', letterSpacing: '0.4px' },
   metaRow: { display: 'flex', gap: '16px', marginTop: '4px' },
   metaItem: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#64748B', fontWeight: '500' },

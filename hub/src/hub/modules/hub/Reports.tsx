@@ -11,6 +11,7 @@ import { supabase } from '@core/lib/supabase';
 import { useAuth } from '@core/context/AuthContext';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import Pagination from '@shared/components/Pagination';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 import { useSearchParams } from 'react-router-dom';
 
@@ -531,8 +532,8 @@ const styles: Record<string, any> = {
 
   container: { padding: '0', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
-  title: { fontSize: '32px', fontWeight: '700', color: 'var(--secondary)', margin: 0, letterSpacing: '-0.5px' },
-  subtitle: { color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '500', marginTop: '6px' },
+  title: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   stats: { display: 'flex', alignItems: 'center', gap: '32px', backgroundColor: 'white', padding: '20px 32px', borderRadius: '32px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', border: '1px solid var(--border)' },
   miniStat: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
   miniStatValue: { fontSize: '24px', color: 'var(--secondary)', fontWeight: '800' },

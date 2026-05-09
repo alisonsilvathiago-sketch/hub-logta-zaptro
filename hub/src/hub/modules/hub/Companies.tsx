@@ -23,7 +23,14 @@ import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetr
 import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 import { supabase } from '@core/lib/supabase';
 import { useAuth } from '@core/context/AuthContext';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 import type { Company, Profile } from '@core/types';
+import {
+  onlyDigits,
+  maskCpfOrCnpj,
+  validateCpf,
+  validateCnpj,
+} from '@shared/lib/brDocuments';
 import { SystemsManagementContent, PerformanceContent } from './TeamHub';
 
 // Mock data for charts if DB doesn't have enough history
@@ -37,7 +44,7 @@ const growthData = [
 const CompanyManagement: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, impersonate } = useAuth();
+  const { user, profile, impersonate } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -280,7 +287,35 @@ const CompanyManagement: React.FC = () => {
     const toastId = toastLoading('Iniciando instância Master...');
     
     try {
+      const docDigits = onlyDigits(newCompany.cnpj);
+      if (docDigits.length === 11) {
+        toastDismiss(toastId);
+        if (validateCpf(docDigits)) {
+          toastSuccess('CPF detectado: pessoa física cadastra-se em Clientes. Redirecionando…');
+          setIsAddModalOpen(false);
+          setNewCompany({ name: '', subdomain: '', plan: 'BRONZE', email: '', phone: '', cnpj: '' });
+          navigate('/master/clientes');
+        } else {
+          toastError('CPF inválido. Para empresas, informe um CNPJ com 14 dígitos.');
+        }
+        setSaving(false);
+        return;
+      }
+      if (docDigits.length > 11 && docDigits.length < 14) {
+        toastDismiss(toastId);
+        toastError('CNPJ incompleto (são necessários 14 dígitos).');
+        setSaving(false);
+        return;
+      }
+      if (docDigits.length !== 14 || !validateCnpj(docDigits)) {
+        toastDismiss(toastId);
+        toastError('Informe um CNPJ válido (Pessoa Jurídica).');
+        setSaving(false);
+        return;
+      }
+
       const companyId = crypto.randomUUID();
+      const cnpjFormatted = maskCpfOrCnpj(docDigits);
       const { error } = await supabase
         .from('companies')
         .insert([{
@@ -290,7 +325,8 @@ const CompanyManagement: React.FC = () => {
           plan: newCompany.plan,
           status: 'active',
           settings: {
-            cnpj: newCompany.cnpj,
+            cnpj: cnpjFormatted,
+            party_kind: 'PJ' as const,
             email: newCompany.email,
             phone: newCompany.phone,
             modules: ['logistics', 'finance', 'crm'],
@@ -423,7 +459,13 @@ const CompanyManagement: React.FC = () => {
         )}
       </div>
 
-      <nav style={hubPillTabStripStyles.container} aria-label="Seções da central de empresas">
+      <nav
+        style={{
+          ...hubPillTabStripStyles.container,
+          backgroundColor: '#FFFFFF',
+        }}
+        aria-label="Seções da central de empresas"
+      >
         <button
           type="button"
           style={{
@@ -432,7 +474,7 @@ const CompanyManagement: React.FC = () => {
           }}
           onClick={() => goCompaniesShell('empresas')}
         >
-          <Building2 size={18} strokeWidth={2} color={companiesShellSection === 'empresas' ? 'var(--accent)' : 'var(--text-secondary)'} />
+          <Building2 size={15} strokeWidth={2} color={companiesShellSection === 'empresas' ? 'var(--accent)' : 'var(--text-secondary)'} />
           Empresas
         </button>
         <button
@@ -443,7 +485,7 @@ const CompanyManagement: React.FC = () => {
           }}
           onClick={() => goCompaniesShell('modulos-sync')}
         >
-          <Database size={18} strokeWidth={2} color={companiesShellSection === 'modulos-sync' ? 'var(--accent)' : 'var(--text-secondary)'} />
+          <Database size={15} strokeWidth={2} color={companiesShellSection === 'modulos-sync' ? 'var(--accent)' : 'var(--text-secondary)'} />
           Módulos & Sync
         </button>
         <button
@@ -454,7 +496,7 @@ const CompanyManagement: React.FC = () => {
           }}
           onClick={() => goCompaniesShell('metricas-score')}
         >
-          <BarChart3 size={18} strokeWidth={2} color={companiesShellSection === 'metricas-score' ? 'var(--accent)' : 'var(--text-secondary)'} />
+          <BarChart3 size={15} strokeWidth={2} color={companiesShellSection === 'metricas-score' ? 'var(--accent)' : 'var(--text-secondary)'} />
           Métricas & Score
         </button>
       </nav>
@@ -1187,14 +1229,24 @@ const CompanyManagement: React.FC = () => {
                />
              </div>
              <div style={styles.inputGroup}>
-               <label style={styles.label}>Documento (CNPJ)</label>
+               <label style={styles.label}>CNPJ (Pessoa Jurídica)</label>
                <input 
                  style={styles.formInput} 
                  value={newCompany.cnpj} 
                  required 
-                 onChange={e => setNewCompany({...newCompany, cnpj: e.target.value})} 
+                 onChange={e =>
+                   setNewCompany({
+                     ...newCompany,
+                     cnpj: maskCpfOrCnpj(e.target.value),
+                   })
+                 }
                  placeholder="00.000.000/0001-00"
+                 inputMode="numeric"
+                 autoComplete="off"
                />
+               <span style={{ fontSize: 11, color: '#94A3B8', marginTop: 4, display: 'block' }}>
+                 Se o documento for CPF, o cadastro segue automaticamente em Clientes.
+               </span>
              </div>
            </div>
 
@@ -1231,8 +1283,8 @@ const CompanyManagement: React.FC = () => {
 const styles: Record<string, any> = {
   container: { padding: '0', backgroundColor: 'transparent' },
   pageHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
-  pageTitle: { fontSize: '32px', fontWeight: '700', color: 'var(--secondary)', margin: 0, letterSpacing: '-0.5px' },
-  pageSub: { color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '500', marginTop: '6px' },
+  pageTitle: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  pageSub: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '16px' },
   refreshBtn: { width: '48px', height: '48px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' },
   addBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', backgroundColor: 'var(--accent)', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },

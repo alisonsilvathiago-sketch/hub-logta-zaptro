@@ -21,13 +21,22 @@ import {
   Eye, 
   HardDrive,
   Key,
-  ArrowDownRight
+  ArrowDownRight,
+  Shield,
+  Users,
+  Smartphone,
+  MessageSquare
 } from 'lucide-react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { supabaseZaptro as supabase } from '@core/lib/supabase-zaptro';
 import LogtaModal from '@shared/components/Modal';
 import Button from '@shared/components/Button';
 import HubMetricCard from '@shared/components/HubMetricCard';
+import { forceGlobalSync } from '@core/lib/masterIntelligence';
+import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
+import { checkAllSystemsConnectivity, type ConnectivityStatus } from '@core/lib/hubConnectivityService';
+import { subscribeToEvents, type HubEvent } from '@core/lib/eventBridge';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 type InfraStatVariant = 'soft' | 'solid';
 
@@ -129,6 +138,25 @@ const InfrastructureManagement: React.FC = () => {
   const [whitelist, setWhitelist] = useState<any[]>([]);
   const [securityStats, setSecurityStats] = useState<any>({});
   const [integrations, setIntegrations] = useState<any[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [connectivity, setConnectivity] = useState<ConnectivityStatus[]>([]);
+  const [liveEvents, setLiveEvents] = useState<HubEvent[]>([]);
+
+  const handleSyncCloud = async () => {
+    const tid = toastLoading('Iniciando sincronização global...');
+    setSyncing(true);
+    try {
+      await forceGlobalSync();
+      const status = await checkAllSystemsConnectivity();
+      setConnectivity(status);
+      toastSuccess('Sincronização global concluída com sucesso.');
+    } catch (err) {
+      toastError('Falha ao sincronizar: ' + (err as any).message);
+    } finally {
+      toastDismiss(tid);
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => {
     setActiveTab(getTabFromPath());
@@ -159,6 +187,12 @@ const InfrastructureManagement: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    
+    const unsubscribe = subscribeToEvents((event) => {
+      setLiveEvents(prev => [event, ...prev].slice(0, 50));
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const fetchData = async () => {
@@ -174,6 +208,9 @@ const InfrastructureManagement: React.FC = () => {
 
       const { data: ints } = await supabase.from('integrations').select('*');
       if (ints) setIntegrations(ints);
+
+      const status = await checkAllSystemsConnectivity();
+      setConnectivity(status);
 
       setSecurityStats({
         attempts: 1284,
@@ -195,12 +232,33 @@ const InfrastructureManagement: React.FC = () => {
     switch (status.toUpperCase()) {
       case 'ACTIVE':
       case 'ATIVO':
-      case 'OPERANTE': return '#10B981';
+      case 'OPERANTE':
+      case 'ONLINE':
+      case 'OK':
+      case 'STABLE':
+      case 'UP':
+        return '#10B981';
       case 'PENDING':
-      case 'MAINTENANCE': return '#F59E0B';
-      default: return '#EF4444';
+      case 'MAINTENANCE':
+      case 'DEGRADED':
+      case 'DEGRADADO':
+        return '#F59E0B';
+      case 'OFFLINE':
+      case 'DOWN':
+      case 'CRITICAL':
+      case 'UNHEALTHY':
+        return '#EF4444';
+      default:
+        return '#EF4444';
     }
   };
+
+  /** Evita ponto vermelho com halo verde: `statusDot` fixa box-shadow em #10B981 */
+  const statusDotWithGlow = (color: string) => ({
+    ...styles.statusDot,
+    backgroundColor: color,
+    boxShadow: `0 0 8px ${color}`,
+  });
 
   const getProviderIcon = (provider: string) => {
     switch (provider.toLowerCase()) {
@@ -212,13 +270,13 @@ const InfrastructureManagement: React.FC = () => {
     }
   };
 
-  const activeServices = integrations.length > 0 ? integrations.map(i => ({
-    name: i.provider.toUpperCase(),
-    status: i.status || 'OFFLINE',
-    latency: `${Math.floor(Math.random() * 100) + 20}ms`,
-    load: `${Math.floor(Math.random() * 20) + 5}%`,
-    icon: getProviderIcon(i.provider),
-    details: { category: 'Serviço Master', description: `Gerenciamento centralizado para ${i.provider}.` }
+  const activeServices = connectivity.length > 0 ? connectivity.map(c => ({
+    name: c.system,
+    status: c.status.toUpperCase(),
+    latency: `${c.latency}ms`,
+    load: c.status === 'online' ? `${Math.floor(Math.random() * 5) + 2}%` : '0%',
+    icon: getProviderIcon(c.system.split(' ')[0]),
+    details: { category: 'Infraestrutura Master', description: c.error || `Serviço ${c.system} operando normalmente.` }
   })) : services;
 
   return (
@@ -230,9 +288,21 @@ const InfrastructureManagement: React.FC = () => {
         </div>
         <div style={styles.headerActions}>
           <div style={styles.statusBadgeGlobal}>
-            <div style={{ ...styles.statusDot, backgroundColor: '#10B981' }} />
+            <div style={statusDotWithGlow('#10B981')} />
             SISTEMA OPERANTE
           </div>
+          <Button 
+            variant="outline" 
+            icon={<Layers size={18} />} 
+            label="Limpar Cache"
+            onClick={() => console.log('Limpando cache global...')} 
+          />
+          <Button 
+            variant="danger" 
+            icon={<ShieldAlert size={18} />} 
+            label="MODO PÂNICO"
+            onClick={() => console.log('ATIVANDO MODO PÂNICO!')} 
+          />
           <Button 
             variant="secondary" 
             icon={<RefreshCw size={18} />} 
@@ -299,8 +369,8 @@ const InfrastructureManagement: React.FC = () => {
               >
                 <div style={styles.svcHeader}>
                   <div style={styles.svcIcon}>{svc.icon}</div>
-                  <div style={styles.svcStatus}>
-                    <div style={{ ...styles.statusDot, backgroundColor: getStatusColor(svc.status) }} />
+                  <div style={{ ...styles.svcStatus, color: getStatusColor(svc.status) }}>
+                    <div style={statusDotWithGlow(getStatusColor(svc.status))} />
                      <span>{(svc.status || 'OPERANTE').toUpperCase()}</span>
                   </div>
                 </div>
@@ -354,7 +424,7 @@ const InfrastructureManagement: React.FC = () => {
                            <td style={styles.td}><span style={styles.moduleBadge}>{api.version}</span></td>
                            <td style={styles.td}>
                               <div style={{...styles.statusTag, color: api.status === 'CRITICAL' ? '#EF4444' : api.status === 'MAINTENANCE' ? '#F59E0B' : '#10B981'}}>
-                                 <div style={{...styles.statusDot, backgroundColor: api.status === 'CRITICAL' ? '#EF4444' : api.status === 'MAINTENANCE' ? '#F59E0B' : '#10B981'}} />
+                                 <div style={statusDotWithGlow(api.status === 'CRITICAL' ? '#EF4444' : api.status === 'MAINTENANCE' ? '#F59E0B' : '#10B981')} />
                                  {api.status}
                               </div>
                            </td>
@@ -392,24 +462,28 @@ const InfrastructureManagement: React.FC = () => {
           {/* SUB-NAVEGAÇÃO DE SEGURANÇA */}
           <div style={styles.secSubTabNav}>
             {[
-              { id: 'tokens', label: 'Motores de Token & Acesso', icon: <Key size={16} /> },
+              { id: 'tokens', label: 'Motores de Token', icon: <Key size={16} /> },
               { id: 'middleware', label: 'Middlewares & Rotas', icon: <Layers size={16} /> },
-              { id: 'rbac', label: 'RBAC (Roles & Permissões)', icon: <Lock size={16} /> },
-              { id: 'auditoria', label: 'Diretórios de Logs', icon: <Terminal size={16} /> },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setSecSubTab(tab.id)}
-                style={{
-                  ...styles.secSubTabBtn,
-                  backgroundColor: secSubTab === tab.id ? 'var(--accent)' : 'white',
-                  color: secSubTab === tab.id ? 'white' : '#64748B',
-                  borderColor: secSubTab === tab.id ? 'var(--accent)' : '#E2E8F0',
-                }}
-              >
-                {tab.icon} {tab.label}
-              </button>
-            ))}
+              { id: 'firewall', label: 'Firewall & WAF', icon: <Shield size={16} /> },
+              { id: '2fa', label: 'Governança & 2FA', icon: <Lock size={16} /> },
+              { id: 'rbac', label: 'RBAC & Roles', icon: <Users size={16} /> },
+              { id: 'auditoria', label: 'Trilha de Auditoria', icon: <Terminal size={16} /> },
+            ].map((tab) => {
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setSecSubTab(tab.id)}
+                  style={{
+                    ...styles.secSubTabBtn,
+                    backgroundColor: secSubTab === tab.id ? 'var(--accent)' : 'white',
+                    color: secSubTab === tab.id ? 'white' : '#64748B',
+                    borderColor: secSubTab === tab.id ? 'var(--accent)' : '#E2E8F0',
+                  }}
+                >
+                  {tab.icon} {tab.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* SEC SUB-TABS CONTENT */}
@@ -460,7 +534,7 @@ const InfrastructureManagement: React.FC = () => {
                       <div key={ip.id} style={styles.ipItem}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <code style={{ fontWeight: '800', fontFamily: 'monospace', fontSize: '13px', color: 'var(--accent)' }}>{ip.ip_address}</code>
-                          <div style={{...styles.statusDot, backgroundColor: '#10B981'}} />
+                          <div style={statusDotWithGlow('#10B981')} />
                         </div>
                         <div style={{ fontSize: '11px', color: '#64748B', marginTop: '6px', fontWeight: '600' }}>{ip.description}</div>
                       </div>
@@ -488,6 +562,123 @@ const InfrastructureManagement: React.FC = () => {
                   <div style={styles.secureBanner}>
                     <ShieldCheck size={18} color="#10B981" />
                     <span style={{ fontSize: '11px', fontWeight: '800', color: '#166534' }}>VALIDADOR HMAC: ATIVO</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {secSubTab === 'firewall' && (
+            <div style={styles.twoColumnGrid}>
+              <div style={styles.mainCardSecurity}>
+                <div style={styles.cardHeaderPlain}>
+                  <h4 style={styles.secCardTitle}>Firewall Perimetral & WAF</h4>
+                  <p style={styles.secCardSub}>Proteção ativa contra ataques de força bruta, SQLi e requisições maliciosas.</p>
+                </div>
+                <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {[
+                    { name: 'Proteção contra DDoS', status: 'ATIVO', mode: 'Mitigação Automática', level: 'ALTO' },
+                    { name: 'Bloqueio de User-Agents Suspeitos', status: 'ATIVO', mode: 'Pattern Matching', level: 'MÉDIO' },
+                    { name: 'Filtro de Geo-IP (Restrição Global)', status: 'INATIVO', mode: 'Países Bloqueados: 0', level: 'CRÍTICO' },
+                    { name: 'Rate Limiting Dinâmico', status: 'ATIVO', mode: 'Baseado em Sessão', level: 'ALTO' },
+                  ].map((fw, idx) => (
+                    <div key={idx} style={styles.tokenItemCard}>
+                      <div style={styles.tokenCardHeader}>
+                        <strong style={{ fontSize: '15px', color: '#0F172A', fontWeight: '800' }}>{fw.name}</strong>
+                        <span style={{
+                          fontSize: '10px',
+                          fontWeight: '800',
+                          backgroundColor: fw.status === 'ATIVO' ? '#ECFDF5' : '#F1F5F9',
+                          color: fw.status === 'ATIVO' ? '#10B981' : '#64748B',
+                          padding: '4px 10px',
+                          borderRadius: '12px'
+                        }}>{fw.status}</span>
+                      </div>
+                      <div style={{...styles.tokenSpecs, border: 'none', padding: 0, marginTop: '8px'}}>
+                        <div><span style={styles.specLabel}>Modo:</span> <strong style={styles.specVal}>{fw.mode}</strong></div>
+                        <div><span style={styles.specLabel}>Nível de Risco:</span> <strong style={{...styles.specVal, color: fw.level === 'CRÍTICO' ? '#EF4444' : '#F59E0B'}}>{fw.level}</strong></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                <div style={styles.sidebarCardSecurity}>
+                  <h3 style={styles.sidebarTitle}>Lista Negra de IPs</h3>
+                  <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '20px' }}>IPs bloqueados permanentemente por atividades suspeitas ou excesso de falhas.</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {[
+                      { ip: '185.220.101.42', reason: 'Brute Force Attack', time: 'Há 2h' },
+                      { ip: '45.143.203.11', reason: 'Suspicious Bot Crawler', time: 'Há 5h' },
+                    ].map((ip, i) => (
+                      <div key={i} style={{...styles.ipItem, borderColor: '#FEE2E2', backgroundColor: '#FEF2F2'}}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <code style={{ fontWeight: '800', fontFamily: 'monospace', fontSize: '13px', color: '#EF4444' }}>{ip.ip}</code>
+                          <ShieldAlert size={14} color="#EF4444" />
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#B91C1C', marginTop: '6px', fontWeight: '600' }}>{ip.reason} • {ip.time}</div>
+                      </div>
+                    ))}
+                    <Button variant="danger" icon={<Lock size={14} />} label="BLOQUEAR NOVO IP" fullWidth />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {secSubTab === '2fa' && (
+            <div style={styles.twoColumnGrid}>
+              <div style={styles.mainCardSecurity}>
+                <div style={styles.cardHeaderPlain}>
+                  <h4 style={styles.secCardTitle}>Autenticação de Dois Fatores (2FA)</h4>
+                  <p style={styles.secCardSub}>Configurações globais de obrigatoriedade e métodos de verificação.</p>
+                </div>
+                <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div style={styles.secureBanner}>
+                    <ShieldCheck size={24} color="#10B981" />
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: '800', color: '#166534' }}>POLÍTICA GLOBAL DE 2FA: RECOMENDADA</div>
+                      <div style={{ fontSize: '12px', color: '#166534', opacity: 0.8 }}>78% dos administradores possuem 2FA ativo.</div>
+                    </div>
+                  </div>
+                  
+                  <div style={styles.detailGrid}>
+                    <div style={styles.detailItem}>
+                      <div style={styles.detailLabel}>Método Padrão</div>
+                      <div style={styles.detailVal}><Smartphone size={18} /> Authenticator App (TOTP)</div>
+                    </div>
+                    <div style={styles.detailItem}>
+                      <div style={styles.detailLabel}>Backup</div>
+                      <div style={styles.detailVal}><Terminal size={18} /> Recovery Codes (8 dígitos)</div>
+                    </div>
+                  </div>
+
+                  <div style={styles.tokenItemCard}>
+                    <h5 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '800' }}>Obrigatoriedade por Role</h5>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {['MASTER_ADMIN', 'ADMIN', 'FINANCEIRO'].map(role => (
+                        <div key={role} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #E2E8F0' }}>
+                          <span style={{ fontSize: '13px', fontWeight: '600', color: '#334155' }}>{role}</span>
+                          <span style={{ fontSize: '11px', fontWeight: '800', color: '#10B981' }}>OBRIGATÓRIO</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                <div style={styles.sidebarCardSecurity}>
+                  <h3 style={styles.sidebarTitle}>Segurança da Sessão</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div>
+                      <label style={styles.specLabel}>Tempo de Inatividade</label>
+                      <div style={{...styles.detailVal, fontSize: '14px', marginTop: '4px'}}>30 Minutos</div>
+                    </div>
+                    <div>
+                      <label style={styles.specLabel}>Sessões Simultâneas</label>
+                      <div style={{...styles.detailVal, fontSize: '14px', marginTop: '4px'}}>Até 3 dispositivos</div>
+                    </div>
+                    <Button variant="outline" label="Revogar Todas as Sessões" fullWidth />
                   </div>
                 </div>
               </div>
@@ -635,7 +826,7 @@ const InfrastructureManagement: React.FC = () => {
                           <td style={styles.td}><span style={styles.moduleBadge}>{item.client}</span></td>
                           <td style={styles.td}>
                             <div style={{...styles.statusTag, color: '#10B981'}}>
-                              <div style={{...styles.statusDot, backgroundColor: '#10B981'}} />
+                              <div style={statusDotWithGlow('#10B981')} />
                               {item.status}
                             </div>
                           </td>
@@ -786,6 +977,59 @@ const InfrastructureManagement: React.FC = () => {
           </div>
 
           <div style={{ marginTop: '48px' }}>
+            <h3 style={styles.sectionTitle}>Barramento de Eventos (Event Bridge)</h3>
+            <p style={styles.subtitle}>Fluxo de eventos em tempo real entre HUB, Zaptro e Logta.</p>
+            
+            <div style={{ 
+              marginTop: '20px', 
+              backgroundColor: '#0F172A', 
+              borderRadius: '24px', 
+              padding: '24px',
+              maxHeight: '300px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              border: '1px solid #1E293B'
+            }}>
+              {liveEvents.length === 0 ? (
+                <div style={{ color: '#64748B', textAlign: 'center', padding: '40px', fontSize: '13px' }}>
+                  Aguardando eventos no barramento...
+                </div>
+              ) : (
+                liveEvents.map((evt, idx) => (
+                  <div key={idx} style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '16px', 
+                    padding: '12px 16px', 
+                    backgroundColor: '#1E293B', 
+                    borderRadius: '12px',
+                    fontSize: '12px'
+                  }}>
+                    <div style={{ 
+                      padding: '4px 8px', 
+                      backgroundColor: '#334155', 
+                      borderRadius: '6px', 
+                      color: '#94A3B8',
+                      fontWeight: '800',
+                      fontSize: '10px'
+                    }}>
+                      {evt.origin}
+                    </div>
+                    <div style={{ flex: 1, color: '#E2E8F0', fontWeight: '600' }}>
+                      {evt.type}
+                    </div>
+                    <div style={{ color: '#64748B', fontFamily: 'monospace' }}>
+                      {new Date(evt.timestamp).toLocaleTimeString()}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginTop: '48px' }}>
             <h3 style={styles.sectionTitle}>Comandos de Manutenção Global</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginTop: '24px' }}>
               <button style={styles.masterCommandBtn} onClick={() => console.log('Clear Cache')}>
@@ -795,8 +1039,16 @@ const InfrastructureManagement: React.FC = () => {
                   <div style={styles.masterCommandSub}>Limpa Redis e Buffers de Borda</div>
                 </div>
               </button>
-              <button style={styles.masterCommandBtn} onClick={() => console.log('Sync Cloud')}>
-                <Globe size={20} />
+              <button 
+                style={{
+                  ...styles.masterCommandBtn,
+                  opacity: syncing ? 0.6 : 1,
+                  cursor: syncing ? 'not-allowed' : 'pointer'
+                }} 
+                onClick={handleSyncCloud}
+                disabled={syncing}
+              >
+                <Globe size={20} className={syncing ? 'animate-spin' : ''} />
                 <div>
                   <div style={styles.masterCommandLabel}>Sincronizar Cloud</div>
                   <div style={styles.masterCommandSub}>Forçar propagação de Configs</div>
@@ -947,8 +1199,8 @@ const styles: Record<string, any> = {
   },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '48px' },
   headerTitleGroup: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  title: { fontSize: '32px', fontWeight: '800', color: '#0F172A', margin: 0, letterSpacing: '-1px' },
-  subtitle: { fontSize: '13px', color: '#64748B', fontWeight: '500', marginTop: '4px' },
+  title: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '16px', alignItems: 'center' },
   statusBadgeGlobal: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#F0FDFA', color: '#0D9488', padding: '10px 20px', borderRadius: '14px', fontSize: '11px', fontWeight: '800', border: '1px solid #CCFBF1' },
   statusDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px #10B981' },

@@ -20,7 +20,7 @@ export class AggregateManagementService {
   private setupListeners() {
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
       // 1. Delivery Assignment Logic
-      if (data.action === 'NEW_DELIVERY_AVAILABLE') {
+      if (data.action === 'NEW_DELIVERY_AVAILABLE' && data.metadata?.deliveryId && data.actorId) {
         await this.assignToBestAggregate(data.metadata.deliveryId, data.actorId);
       }
       // 2. Performance & Payment Logic

@@ -8,6 +8,7 @@ import {
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError } from '@core/lib/toast';
 import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 const MasterNotifications: React.FC = () => {
   const [companies, setCompanies] = useState<any[]>([]);
@@ -133,7 +134,7 @@ const MasterNotifications: React.FC = () => {
                      ...(targetType === 'GLOBAL' ? hubPillTabStripStyles.buttonActive : {}),
                    }}
                  >
-                   <LayoutGrid size={18} color={targetType === 'GLOBAL' ? 'var(--accent)' : 'var(--text-secondary)'} /> Global
+                   <LayoutGrid size={15} color={targetType === 'GLOBAL' ? 'var(--accent)' : 'var(--text-secondary)'} /> Global
                  </button>
                  <button
                    type="button"
@@ -143,7 +144,7 @@ const MasterNotifications: React.FC = () => {
                      ...(targetType === 'COMPANY' ? hubPillTabStripStyles.buttonActive : {}),
                    }}
                  >
-                   <Building2 size={18} color={targetType === 'COMPANY' ? 'var(--accent)' : 'var(--text-secondary)'} /> Empresa
+                   <Building2 size={15} color={targetType === 'COMPANY' ? 'var(--accent)' : 'var(--text-secondary)'} /> Empresa
                  </button>
                  <button
                    type="button"
@@ -153,7 +154,7 @@ const MasterNotifications: React.FC = () => {
                      ...(targetType === 'USER' ? hubPillTabStripStyles.buttonActive : {}),
                    }}
                  >
-                   <Users size={18} color={targetType === 'USER' ? 'var(--accent)' : 'var(--text-secondary)'} /> Usuário
+                   <Users size={15} color={targetType === 'USER' ? 'var(--accent)' : 'var(--text-secondary)'} /> Usuário
                  </button>
               </div>
 
@@ -278,8 +279,8 @@ const MasterNotifications: React.FC = () => {
 const styles = {
   container: { padding: '40px', display: 'flex', flexDirection: 'column' as const, gap: '32px' },
   header: { display: 'flex', flexDirection: 'column' as const, gap: '12px' },
-  title: { fontSize: '28px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: '0.4px' },
-  subtitle: { fontSize: '13px', color: '#6b7280', margin: 0, fontWeight: '400', letterSpacing: '0.2px' },
+  title: { fontSize: '29px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   
   grid: { display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px' },
   card: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #e2e8f0', padding: '32px', height: 'fit-content' },

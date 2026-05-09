@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   RefreshCw, Layers, Bell, Maximize2, Zap, Play, ShieldCheck, DollarSign, Brain, Lock, Box, Navigation, CheckCircle2, Droplets, TrendingDown, Fuel, ShieldAlert, Anchor, Repeat, FileCheck, Share2, LocateFixed, Users, MapPin, Activity, AlertTriangle, ArrowUpRight, ArrowDownRight, Map as MapIcon, Search, List, Car, MoreHorizontal, Package, Star, TrendingUp, ArrowLeft, ArrowRight, Globe
 } from 'lucide-react';
@@ -22,6 +22,7 @@ import HubMetricCard from '@shared/components/HubMetricCard';
 import { FuelPump } from '@shared/components/FuelIntelligence';
 import type { LucideIcon } from 'lucide-react';
 import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 // --- STYLES & HELPERS ---
 const getStatusStyles = (status: string) => {
@@ -78,6 +79,8 @@ const LogisticsMonitoring: React.FC = () => {
   const [routes, setRoutes] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [optimizations, setOptimizations] = useState<any[]>([]);
+  const [showAiInsights, setShowAiInsights] = useState(false);
+  const hideAiInsightsTimerRef = useRef<number | null>(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -267,6 +270,15 @@ const LogisticsMonitoring: React.FC = () => {
       
       setOptimizations(prev => [newOpt, ...prev]);
       toastSuccess('Novas sugestões de otimização disponíveis com IA!');
+
+      // Mostra o painel por alguns segundos e some (não fica "salvo" ocupando espaço).
+      setShowAiInsights(true);
+      if (hideAiInsightsTimerRef.current) {
+        window.clearTimeout(hideAiInsightsTimerRef.current);
+      }
+      hideAiInsightsTimerRef.current = window.setTimeout(() => {
+        setShowAiInsights(false);
+      }, 7000);
     } catch (err) {
       toastError('Erro ao rodar otimizador.');
     } finally {
@@ -480,23 +492,27 @@ const LogisticsMonitoring: React.FC = () => {
             </div>
           </div>
 
-          <div style={styles.sidebarSection}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={styles.sidebarTitle}>Insights IA</h3>
+          <div style={{ ...styles.sidebarSection, ...(showAiInsights ? {} : styles.aiCollapsedSection) }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showAiInsights ? '16px' : 0 }}>
+              <h3 style={{ ...styles.sidebarTitle, marginBottom: 0 }}>Insights IA</h3>
               <button style={styles.runAiBtn} onClick={handleRunOptimizer}><Zap size={12} /> RODAR AI</button>
             </div>
-            {optimizations.length > 0 ? optimizations.map((opt, i) => (
-              <div key={i} style={styles.aiCard}>
-                <Zap size={20} color="#0061FF" style={{ flexShrink: 0 }} />
-                <div>
-                  <p style={styles.aiText}><strong>{opt.title}:</strong> {opt.suggestion}</p>
-                  <div style={styles.aiImpact}>Impacto: {opt.impact}</div>
-                </div>
-              </div>
-            )) : (
-              <div style={styles.emptyPanelHint}>
-                Toque em <strong>RODAR AI</strong> para gerar sugestões de otimização de rotas e cargas.
-              </div>
+            {showAiInsights && (
+              <>
+                {optimizations.length > 0 ? optimizations.map((opt, i) => (
+                  <div key={i} style={styles.aiCard}>
+                    <Zap size={20} color="#0061FF" style={{ flexShrink: 0 }} />
+                    <div>
+                      <p style={styles.aiText}><strong>{opt.title}:</strong> {opt.suggestion}</p>
+                      <div style={styles.aiImpact}>Impacto: {opt.impact}</div>
+                    </div>
+                  </div>
+                )) : (
+                  <div style={styles.emptyPanelHint}>
+                    Toque em <strong>RODAR AI</strong> para gerar sugestões de otimização de rotas e cargas.
+                  </div>
+                )}
+              </>
             )}
           </div>
         </aside>
@@ -525,6 +541,28 @@ const LogisticsDestinations: React.FC = () => {
     { id: 'c4', nome: 'CD Rio Operações', ok: false, destino: 'Centro de Distribuição - RJ', detalhe: 'CD em manutenção — sem despacho' },
   ];
   const okCount = clientesMalha.filter((c) => c.ok).length;
+
+  const openPublicTracking = (params: {
+    id: string;
+    veiculo?: string;
+    motorista?: string;
+    origem?: string;
+    destino?: string;
+    status?: string;
+    empresa?: string;
+  }) => {
+    const sp = new URLSearchParams();
+    sp.set('id', params.id);
+    if (params.veiculo) sp.set('veiculo', params.veiculo);
+    if (params.motorista) sp.set('motorista', params.motorista);
+    if (params.origem) sp.set('origem', params.origem);
+    if (params.destino) sp.set('destino', params.destino);
+    if (params.status) sp.set('status', params.status);
+    if (params.empresa) sp.set('empresa', params.empresa);
+
+    const url = `${window.location.origin}/rastreamento-publico?${sp.toString()}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   const handleCreateDestino = (e: React.FormEvent) => {
     e.preventDefault();
@@ -570,7 +608,37 @@ const LogisticsDestinations: React.FC = () => {
         </div>
         <ul style={styles.destinosClientList}>
           {clientesMalha.map((c) => (
-            <li key={c.id} style={styles.destinosClientRow}>
+            <li
+              key={c.id}
+              style={styles.destinosClientRow}
+              role="button"
+              tabIndex={0}
+              onClick={() =>
+                openPublicTracking({
+                  id: c.id,
+                  veiculo: `Operação Logta — ${c.destino}`,
+                  motorista: 'Equipe Logta',
+                  origem: c.destino,
+                  destino: c.destino,
+                  status: c.ok ? 'Em trânsito' : 'Problema / manutenção',
+                  empresa: c.nome,
+                })
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openPublicTracking({
+                    id: c.id,
+                    veiculo: `Operação Logta — ${c.destino}`,
+                    motorista: 'Equipe Logta',
+                    origem: c.destino,
+                    destino: c.destino,
+                    status: c.ok ? 'Em trânsito' : 'Problema / manutenção',
+                    empresa: c.nome,
+                  });
+                }
+              }}
+            >
               {c.ok ? (
                 <CheckCircle2 size={16} color="#10B981" strokeWidth={2.5} aria-hidden />
               ) : (
@@ -599,12 +667,43 @@ const LogisticsDestinations: React.FC = () => {
 
       <div style={styles.destinosGrid}>
         {destinos.map((destino) => (
-          <div key={destino.id} style={{ ...styles.destinoCardFlat, transition: 'transform 0.2s' }} className="hover-scale">
-            <div style={styles.destinoIconFlat}>
+          <div
+            key={destino.id}
+            style={{ ...styles.destinoCard, transition: 'transform 0.2s' }}
+            className="hover-scale"
+            role="button"
+            tabIndex={0}
+            onClick={() =>
+              openPublicTracking({
+                id: String(destino.id),
+                veiculo: `Base / CD — ${destino.name}`,
+                motorista: 'Operação',
+                origem: destino.name,
+                destino: destino.name,
+                status: destino.status === 'Ativo' ? 'Em trânsito' : destino.status,
+                empresa: destino.name,
+              })
+            }
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openPublicTracking({
+                  id: String(destino.id),
+                  veiculo: `Base / CD — ${destino.name}`,
+                  motorista: 'Operação',
+                  origem: destino.name,
+                  destino: destino.name,
+                  status: destino.status === 'Ativo' ? 'Em trânsito' : destino.status,
+                  empresa: destino.name,
+                });
+              }
+            }}
+          >
+            <div style={styles.destinoIcon}>
               <MapPin size={24} color="#0061FF" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <h3 style={styles.destinoTitleFlat}>{destino.name}</h3>
+              <h3 style={styles.destinoTitle}>{destino.name}</h3>
               <div style={styles.destinoStats}>
                 <div style={styles.destinoStat}>
                   <Box size={14} /> <span>{destino.shipments} Envios</span>
@@ -1294,7 +1393,7 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div>
             <h3 style={styles.cardTitle}>Radar de Preços Brasil</h3>
-            <p style={{ ...styles.pageSub, fontSize: '12px', marginTop: '4px' }}>Variação regional baseada em sua localização.</p>
+            <p style={{ ...styles.pageSub, marginTop: '4px', padding: '4px 0', maxWidth: '100%' }}>Variação regional baseada em sua localização.</p>
           </div>
           <div style={styles.statusBadgeActive}>IA ACTIVE SCAN</div>
         </div>
@@ -1662,8 +1761,8 @@ const LogisticsDashboard: React.FC<{
         <div style={styles.titleWrapper}>
           <div style={{ ...styles.iconBox, backgroundColor: '#0F172A', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' }}><Box size={24} color="#FFF" /></div>
           <div>
-            <h1 style={{ ...styles.pageTitle, fontSize: '23px', fontWeight: '800', letterSpacing: '-1px' }}>Logístico</h1>
-            <p style={{ ...styles.pageSub, fontSize: '12px', fontWeight: '500' }}>Visão geral do ecossistema e performance da malha.</p>
+            <h1 style={styles.pageTitle}>Operações</h1>
+            <p style={{ ...styles.pageSub, padding: '4px 0', maxWidth: '100%' }}>Visão geral do ecossistema e performance da malha.</p>
           </div>
         </div>
         <div style={{ ...styles.headerActions, gap: '16px' }}>
@@ -1725,7 +1824,7 @@ const LogisticsDashboard: React.FC<{
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
                 <h3 style={styles.cardTitle}>Torre de Controle Ativa</h3>
-                <p style={{ ...styles.pageSub, fontSize: '11px', margin: '4px 0 0 0' }}>Sincronização GPS em tempo real de frotas e geofences.</p>
+                <p style={{ ...styles.pageSub, fontSize: '11px', margin: '4px 0 0 0', padding: 0, maxWidth: '100%' }}>Sincronização GPS em tempo real de frotas e geofences.</p>
               </div>
               <div style={styles.statusBadgeActive}>IA GUARDIAN ACTIVE</div>
             </div>
@@ -1758,7 +1857,7 @@ const LogisticsDashboard: React.FC<{
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
                 <h3 style={styles.cardTitle}>Performance da Malha (Savings)</h3>
-                <p style={{ ...styles.pageSub, fontSize: '11px', margin: '4px 0 0 0' }}>Análise cumulativa de custos economizados por otimização de IA.</p>
+                <p style={{ ...styles.pageSub, fontSize: '11px', margin: '4px 0 0 0', padding: 0, maxWidth: '100%' }}>Análise cumulativa de custos economizados por otimização de IA.</p>
               </div>
               <div style={styles.statusBadgeActive}>IA OTIMIZANDO</div>
             </div>
@@ -1796,7 +1895,7 @@ const LogisticsDashboard: React.FC<{
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ marginBottom: '8px' }}>
             <h3 style={{ ...styles.cardTitle, fontSize: '18px' }}>Resumo Geral dos Módulos</h3>
-            <p style={{ ...styles.pageSub, fontSize: '12px', margin: '4px 0 0 0' }}>Consolidação completa das 7 verticais de inteligência logística.</p>
+            <p style={{ ...styles.pageSub, margin: '4px 0 0 0', padding: '4px 0', maxWidth: '100%' }}>Consolidação completa das 7 verticais de inteligência logística.</p>
           </div>
 
           {[
@@ -2061,8 +2160,8 @@ const styles: Record<string, any> = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
   titleWrapper: { display: 'flex', alignItems: 'center', gap: '20px' },
   iconBox: { width: '56px', height: '56px', backgroundColor: 'var(--accent)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },
-  pageTitle: { fontSize: '32px', fontWeight: '800', color: 'var(--secondary)', margin: 0, letterSpacing: '-1px' },
-  pageSub: { fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '500', marginTop: '4px' },
+  pageTitle: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  pageSub: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '16px', alignItems: 'center' },
   
   searchWrapper: { position: 'relative', width: '360px' },
@@ -2123,6 +2222,15 @@ const styles: Record<string, any> = {
   
   sidebarSection: { backgroundColor: '#FFF', padding: '32px', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
   sidebarTitle: { fontSize: '18px', fontWeight: '800', color: 'var(--secondary)', marginBottom: '24px' },
+  aiCollapsedSection: {
+    height: '58px',
+    padding: '0 20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 0,
+    boxShadow: 'none',
+  },
   
   alertItem: { padding: '16px', borderLeft: '4px solid var(--border)', backgroundColor: 'var(--bg-secondary)', borderRadius: '0 16px 16px 0', marginBottom: '12px' },
   
@@ -2470,19 +2578,30 @@ const styles: Record<string, any> = {
     padding: '20px 40px 80px',
     backgroundColor: 'transparent',
     background: 'unset',
+    maxWidth: '1100px',
+    margin: '0 auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '18px',
   },
   destinosHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '28px',
+    marginBottom: '10px',
+    padding: '20px 22px',
+    backgroundColor: '#FFFFFF',
+    border: '1px solid #E2E8F0',
+    borderRadius: '24px',
+    boxShadow: '0 10px 30px rgba(15, 23, 42, 0.05)',
   },
   destinosPageTitle: {
-    fontSize: '23px',
+    fontSize: '29px',
     fontWeight: 800,
-    color: 'var(--secondary)',
+    color: '#000000',
     margin: 0,
-    letterSpacing: '-0.02em',
+    letterSpacing: 0,
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
   },
   destinosPageSub: {
     fontSize: '12px',
@@ -2491,12 +2610,13 @@ const styles: Record<string, any> = {
     marginTop: '4px',
   },
   destinosClientPanel: {
-    marginBottom: '28px',
-    maxWidth: '800px',
-    padding: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0)',
-    border: 'none',
-    boxShadow: 'none',
+    marginBottom: '6px',
+    maxWidth: '100%',
+    padding: '18px 22px',
+    backgroundColor: '#FFFFFF',
+    border: '1px solid #E2E8F0',
+    borderRadius: '20px',
+    boxShadow: '0 10px 28px rgba(15, 23, 42, 0.04)',
   },
   destinosClientPanelHead: {
     display: 'flex',
@@ -2527,25 +2647,29 @@ const styles: Record<string, any> = {
     listStyle: 'none',
     margin: 0,
     padding: 0,
-    borderTop: '1px solid rgba(226, 232, 240, 0.45)',
+    borderTop: '1px solid rgba(226, 232, 240, 0.65)',
   },
   destinosClientRow: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    padding: '14px 0',
-    borderBottom: '1px solid rgba(226, 232, 240, 0.35)',
+    padding: '12px 0',
+    borderBottom: 'none',
+    cursor: 'pointer',
+    borderRadius: '12px',
+    transition: 'background-color 0.15s ease',
   },
   destinosClientNome: {
-    fontSize: '14px',
-    fontWeight: 700,
+    fontSize: '12px',
+    fontWeight: 600,
     color: 'var(--secondary)',
   },
   destinosClientMeta: {
-    fontSize: '12px',
-    fontWeight: 500,
+    fontSize: '10px',
+    fontWeight: 400,
     color: 'var(--text-secondary)',
     marginTop: '2px',
+    lineHeight: 1.5,
   },
   destinosClientBadge: {
     fontSize: '11px',
@@ -2554,7 +2678,7 @@ const styles: Record<string, any> = {
     borderRadius: '10px',
     flexShrink: 0,
   },
-  destinosGrid: { display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '800px' },
+  destinosGrid: { display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '100%' },
   destinoCard: {
     display: 'flex',
     alignItems: 'center',

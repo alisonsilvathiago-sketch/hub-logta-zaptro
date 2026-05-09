@@ -20,16 +20,25 @@ export class InternalEfficiencyService {
   private setupListeners() {
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
       // 1. Reverse Logistics Logic
-      if (data.action === 'DELIVERY_REFUSED') {
-        await this.handleReverseLogistics(data.metadata.orderId, data.metadata.reason);
+      if (data.action === 'DELIVERY_REFUSED' && data.metadata?.orderId != null && data.metadata?.reason != null) {
+        await this.handleReverseLogistics(String(data.metadata.orderId), String(data.metadata.reason));
       }
       // 2. Dock Queue Logic
-      if (data.action === 'VEHICLE_ARRIVED_AT_DOCK') {
-        await this.handleVehicleArrival(data.metadata.vehicleId);
+      if (data.action === 'VEHICLE_ARRIVED_AT_DOCK' && data.metadata?.vehicleId != null) {
+        await this.handleVehicleArrival(String(data.metadata.vehicleId));
       }
       // 3. Freight Audit Logic
-      if (data.action === 'FREIGHT_CALCULATED') {
-        await this.auditFreight(data.metadata.orderId, data.metadata.chargedValue, data.metadata.expectedValue);
+      if (
+        data.action === 'FREIGHT_CALCULATED' &&
+        data.metadata?.orderId != null &&
+        data.metadata?.chargedValue != null &&
+        data.metadata?.expectedValue != null
+      ) {
+        await this.auditFreight(
+          String(data.metadata.orderId),
+          Number(data.metadata.chargedValue),
+          Number(data.metadata.expectedValue),
+        );
       }
     });
   }

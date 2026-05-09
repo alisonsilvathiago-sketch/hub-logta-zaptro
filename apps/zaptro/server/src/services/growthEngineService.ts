@@ -21,14 +21,14 @@ export class GrowthEngineService {
     // Listen for high-engagement behaviors to trigger referral invites
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
       // If a payment is confirmed and health is high, it's the perfect time to ask for a referral
-      if (data.action === 'PAYMENT_CONFIRMED') {
+      if (data.action === 'PAYMENT_CONFIRMED' && data.actorId) {
         await this.checkAndInvitePromoter(data.actorId);
       }
     });
 
     // Listen for new company signups to track conversions
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
-      if (data.action === 'NEW_SIGNUP' && data.metadata?.referral_slug) {
+      if (data.action === 'NEW_SIGNUP' && data.actorId && data.metadata?.referral_slug) {
         await this.processReferralConversion(data.actorId, data.metadata.referral_slug);
       }
     });

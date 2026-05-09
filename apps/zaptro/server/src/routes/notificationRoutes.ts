@@ -36,7 +36,7 @@ export function registerNotificationRoutes(
       return res.status(400).json({ error: 'invalid_body', details: parsed.error.flatten() });
     }
 
-    const { kind, target_email, variables, company_id, event } = parsed.data;
+    const { kind, target_email, variables } = parsed.data;
 
     try {
       // 1. Check for Intelligent Workflows

@@ -20,15 +20,28 @@ import {
   Phone
 } from 'lucide-react';
 
+type LiveVehicle = {
+  id: number;
+  driver: string;
+  plate: string;
+  x: number;
+  y: number;
+  speed: string;
+  status: string;
+  battery: number;
+  cargo: string;
+  temp: string;
+};
+
 const MapaAoVivo = () => {
-  const [vehicles, setVehicles] = useState([
+  const [vehicles, setVehicles] = useState<LiveVehicle[]>([
     { id: 1, driver: 'Roberto Silva', plate: 'BRA-2L22', x: 25, y: 35, speed: '62 km/h', status: 'Em Rota', battery: 85, cargo: 'Alimentos', temp: '4°C' },
     { id: 2, driver: 'Ana Paula', plate: 'KJU-9011', x: 45, y: 65, speed: '0 km/h', status: 'Parado', battery: 92, cargo: 'Eletrônicos', temp: 'N/A' },
     { id: 3, driver: 'Carlos Lima', plate: 'MNH-4455', x: 75, y: 25, speed: '54 km/h', status: 'Em Rota', battery: 78, cargo: 'Químicos', temp: '18°C' },
     { id: 4, driver: 'Marcos Reis', x: 60, y: 50, speed: '42 km/h', status: 'Em Rota', battery: 88, cargo: 'Geral', plate: 'PKO-0012', temp: 'N/A' },
   ]);
 
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<LiveVehicle | null>(null);
   const [events, setEvents] = useState([
     { id: 1, type: 'success', msg: 'Entrega concluída em Cajamar', time: 'Agora' },
     { id: 2, type: 'warning', msg: 'Congestionamento detectado na BR-116', time: '2m' },

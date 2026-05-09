@@ -21,7 +21,12 @@ export class LastMileMasterService {
   private setupListeners() {
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
       // 1. Plan creation trigger
-      if (data.action === 'BATCH_READY_FOR_PLANNING') {
+      if (
+        data.action === 'BATCH_READY_FOR_PLANNING' &&
+        data.actorId &&
+        data.metadata?.region &&
+        Array.isArray(data.metadata.deliveries)
+      ) {
         await this.generatePlan(data.actorId, data.metadata.region, data.metadata.deliveries);
       }
     });

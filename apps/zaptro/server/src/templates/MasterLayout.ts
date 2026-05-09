@@ -1,4 +1,4 @@
-export type ThemeType = 'GOLD' | 'RUBI' | 'SAFIRA';
+export type ThemeType = 'GOLD' | 'RUBI' | 'SAFIRA' | 'PLATINUM' | 'DARK';
 
 export type EmailBranding = {
   theme: ThemeType;
@@ -45,6 +45,24 @@ const THEMES = {
     muted: '#94a3b8',
     border: '#334155',
     label: 'LOGTA OPERATING SYSTEM'
+  },
+  PLATINUM: {
+    accent: '#e5e7eb',
+    bg: '#09090b',
+    card: '#18181b',
+    text: '#fafafa',
+    muted: '#a1a1aa',
+    border: '#27272a',
+    label: 'HUB MILESTONE'
+  },
+  DARK: {
+    accent: '#D9FF00',
+    bg: '#000000',
+    card: '#0a0a0a',
+    text: '#f9fafb',
+    muted: '#9ca3af',
+    border: '#1f2937',
+    label: 'LOGTA NOTIFY'
   }
 };
 

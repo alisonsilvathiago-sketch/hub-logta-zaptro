@@ -46,7 +46,7 @@ div.hub-metric-card.premium-card {
 /* Rótulos e chips internos: nunca herdar "[class*="card"]" de substring em hub-metric-card__* */
 div.hub-metric-card span.hub-metric-card__label,
 .hub-metric-card span.hub-metric-card__label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -63,7 +63,7 @@ div.hub-metric-card span.hub-metric-card__label,
   outline: none !important;
 }
 
-/* Metadados do card: canto superior direito — alinha com label 10px */
+/* Metadados do card: canto superior direito — alinha com label 9px */
 .hub-metric-card span.hub-metric-card__topRight,
 .hub-metric-card__topRight {
   border: none !important;

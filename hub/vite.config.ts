@@ -4,16 +4,28 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  /** `npm run dev` → http://localhost:5175 */
   server: {
     port: 5175,
     host: 'localhost',
+    origin: 'http://localhost:5175',
+    hmr: {
+      host: 'localhost',
+      port: 5175,
+    },
     strictPort: true,
     proxy: {
       '/api/ai': {
         target: 'http://localhost:11434/api/generate',
         changeOrigin: true,
         rewrite: (path) => '',
-      }
+      },
+      /** API SendGrid (`apps/zaptro/server/`) — em `.env.local`: `VITE_ZAPTRO_MAIL_API_URL=/zaptro-mail-api` */
+      '/zaptro-mail-api': {
+        target: 'http://127.0.0.1:8787',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/zaptro-mail-api/, ''),
+      },
     }
   },
   resolve: {

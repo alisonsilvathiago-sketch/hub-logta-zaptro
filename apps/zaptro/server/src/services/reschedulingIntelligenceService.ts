@@ -1,5 +1,4 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { EventHub, SystemEvent } from './eventHub.js';
 
 /**
  * ReschedulingIntelligenceService: The "Planner" of the Hub.
@@ -7,11 +6,9 @@ import { EventHub, SystemEvent } from './eventHub.js';
  * and manages capacity to avoid operational overload during rescheduling.
  */
 export class ReschedulingIntelligenceService {
-  private hub: EventHub;
   private supabase: SupabaseClient;
 
   constructor(supabaseUrl: string, supabaseKey: string) {
-    this.hub = EventHub.getInstance();
     this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 

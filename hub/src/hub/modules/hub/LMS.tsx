@@ -11,6 +11,7 @@ import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import LogtaModal from '@shared/components/Modal';
 import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 const MasterLMS: React.FC = () => {
   const navigate = useNavigate();
@@ -106,7 +107,7 @@ const MasterLMS: React.FC = () => {
             }}
             onClick={() => setActiveTab('master')}
           >
-             <BookOpen size={18} color={activeTab === 'master' ? 'var(--accent)' : 'var(--text-secondary)'} /> Cursos Master
+             <BookOpen size={15} color={activeTab === 'master' ? 'var(--accent)' : 'var(--text-secondary)'} /> Cursos Master
           </button>
           <button
             type="button"
@@ -116,7 +117,7 @@ const MasterLMS: React.FC = () => {
             }}
             onClick={() => setActiveTab('empresas')}
           >
-             <Layers size={18} color={activeTab === 'empresas' ? 'var(--accent)' : 'var(--text-secondary)'} /> Cursos das Empresas
+             <Layers size={15} color={activeTab === 'empresas' ? 'var(--accent)' : 'var(--text-secondary)'} /> Cursos das Empresas
           </button>
           <button
             type="button"
@@ -126,7 +127,7 @@ const MasterLMS: React.FC = () => {
             }}
             onClick={() => setActiveTab('metricas')}
           >
-             <TrendingUp size={18} color={activeTab === 'metricas' ? 'var(--accent)' : 'var(--text-secondary)'} /> Métricas de Venda
+             <TrendingUp size={15} color={activeTab === 'metricas' ? 'var(--accent)' : 'var(--text-secondary)'} /> Métricas de Venda
           </button>
        </div>
 
@@ -241,7 +242,7 @@ const styles = {
   container: { display: 'flex', flexDirection: 'column' as const, gap: '24px' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: '20px', fontWeight: '600', color: 'var(--text-main)' },
-  subtitle: { fontSize: '13px', color: 'var(--text-muted)' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '24px', fontWeight: '700', cursor: 'pointer' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px', marginTop: '16px' },
   card: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', flexDirection: 'column' as const, transition: 'transform 0.2s', cursor: 'pointer' },

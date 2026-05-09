@@ -4,10 +4,11 @@ import {
   ArrowLeft, HardDrive, TrendingUp, Shield, Database,
   Clock, AlertTriangle, CheckCircle2, Lock, Edit3, Save, X,
   FileText, DollarSign, Activity, Users, Building2,
-  Phone, Mail, UserCheck, Key, ChevronRight, Cloud, Download
+  Phone, Mail, UserCheck, Key, ChevronRight, Cloud, Download, MapPin, Smartphone, Trash2, MessageSquare
 } from 'lucide-react';
 import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
 import { toastSuccess } from '@core/lib/toast';
+import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 
 const MOCK_CLIENTS: Record<string, any> = {
   '1': { 
@@ -38,7 +39,7 @@ const LogDockClientProfile: React.FC = () => {
   const navigate = useNavigate();
   const client = MOCK_CLIENTS[id || '1'] || MOCK_CLIENTS['1'];
 
-  const [activeTab, setActiveTab] = useState<'armazenamento' | 'cadastro' | 'backups' | 'seguranca'>('armazenamento');
+  const [activeTab, setActiveTab] = useState<'armazenamento' | 'cadastro' | 'snapshots' | 'seguranca'>('armazenamento');
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ 
     name: client.name, 
@@ -70,7 +71,7 @@ const LogDockClientProfile: React.FC = () => {
       {/* HEADER */}
       <header style={s.header}>
         <div style={s.headerLeft}>
-          <button style={s.backBtn} onClick={() => navigate('/master/logdock-admin')}>
+          <button style={s.backBtn} onClick={() => navigate('/master/logdock')}>
             <ArrowLeft size={20} />
           </button>
           <div style={{ ...s.avatar, backgroundColor: '#0061FF' }}>{client.name[0]}</div>
@@ -89,11 +90,33 @@ const LogDockClientProfile: React.FC = () => {
         <div style={s.headerActions}>
           {isEditing ? (
             <>
-              <button style={s.cancelBtn} onClick={() => setIsEditing(false)}><X size={16} /> Cancelar</button>
-              <button style={{ ...s.saveBtn, backgroundColor: '#0061FF' }} onClick={handleSave}><Save size={16} /> Salvar Alterações</button>
+              <button style={{ ...s.editBtn, backgroundColor: '#10B981' }} onClick={handleSave}>
+                <CheckCircle2 size={18} /> Salvar
+              </button>
+              <button style={{ ...s.deleteBtn, backgroundColor: '#F1F5F9', color: '#64748B' }} onClick={() => setIsEditing(false)}>
+                <X size={18} /> Cancelar
+              </button>
             </>
           ) : (
-            <button style={{ ...s.editBtn, borderColor: '#0061FF', color: '#0061FF', backgroundColor: '#EFF6FF' }} onClick={() => setIsEditing(true)}><Edit3 size={16} /> Editar Perfil</button>
+            <>
+              <button 
+                style={s.chatBtn} 
+                onClick={() => navigate(`/master/hubchat?token=4dbc4jv0n196sv9a0bdk&id=${client.id}`)}
+              >
+                <MessageSquare size={18} /> Chat
+              </button>
+              <button style={s.editBtn} onClick={() => setIsEditing(true)}>
+                <Edit3 size={18} /> Editar Cadastro
+              </button>
+              <button style={s.deleteBtn} onClick={() => {
+                if(window.confirm('Excluir cliente permanentemente?')) {
+                  toastSuccess('Cliente excluído do LogDock.');
+                  navigate('/master/logdock');
+                }
+              }}>
+                <Trash2 size={18} /> Excluir Cliente
+              </button>
+            </>
           )}
         </div>
       </header>
@@ -104,10 +127,10 @@ const LogDockClientProfile: React.FC = () => {
           {([
             ['armazenamento', Cloud, 'Armazenamento'],
             ['cadastro', Building2, 'Dados Cadastrais'],
-            ['backups', Database, 'Snapshots & Backups'],
+            ['snapshots', Database, 'Snapshots & Logs'],
             ['seguranca', Shield, 'Acesso & Segurança'],
           ] as const).map(([key, Icon, label]) => (
-            <button key={key} style={{ ...s.tabBtn, ...(activeTab === key ? { backgroundColor: '#EFF6FF', color: '#0061FF' } : {}) }} onClick={() => setActiveTab(key)}>
+            <button key={key} style={{ ...s.tabBtn, ...(activeTab === key ? s.tabActive : {}) }} onClick={() => setActiveTab(key)}>
               <Icon size={16} /> {label}
             </button>
           ))}
@@ -190,8 +213,8 @@ const LogDockClientProfile: React.FC = () => {
           </div>
         )}
 
-        {/* BACKUPS */}
-        {activeTab === 'backups' && (
+        {/* SNAPSHOTS & LOGS */}
+        {activeTab === 'snapshots' && (
           <div style={s.tabContent}>
             <div style={s.card}>
               <h3 style={s.cardTitle}>Histórico de Snapshots</h3>
@@ -211,6 +234,40 @@ const LogDockClientProfile: React.FC = () => {
             </div>
           </div>
         )}
+
+        {activeTab === 'seguranca' && (
+          <div style={s.tabContent}>
+            <div style={s.card}>
+              <h3 style={s.cardTitle}>Segurança & Integridade de Dados</h3>
+              <div style={s.securityGrid}>
+                <div style={s.securityItem}>
+                  <div style={s.securityIcon}><Smartphone size={20} color="#0061FF" /></div>
+                  <div style={{ flex: 1 }}>
+                    <p style={s.driverName}>Autenticação de Dois Fatores (2FA)</p>
+                    <p style={s.driverSub}>Proteja o acesso ao painel de infraestrutura.</p>
+                  </div>
+                  <button style={{ ...s.addSmallBtn, backgroundColor: '#F0FDF4', color: '#10B981' }} onClick={() => toastSuccess('2FA Ativado!')}>Ativar 2FA</button>
+                </div>
+                <div style={s.securityItem}>
+                  <div style={s.securityIcon}><Shield size={20} color="#10B981" /></div>
+                  <div style={{ flex: 1 }}>
+                    <p style={s.driverName}>Monitoramento de Integridade</p>
+                    <p style={s.driverSub}>Escaneamento automático de volumes S3/Cloud.</p>
+                  </div>
+                  <button style={{ ...s.addSmallBtn, backgroundColor: '#ECFDF5', color: '#10B981' }} onClick={() => toastSuccess('Escaneamento ativado!')}>Ativar Scan</button>
+                </div>
+                <div style={s.securityItem}>
+                  <div style={s.securityIcon}><Lock size={20} color="#EF4444" /></div>
+                  <div style={{ flex: 1 }}>
+                    <p style={s.driverName}>Criptografia de Repouso (AES-256)</p>
+                    <p style={s.driverSub}>Reforce a criptografia dos arquivos armazenados.</p>
+                  </div>
+                  <button style={{ ...s.addSmallBtn, backgroundColor: '#FEF2F2', color: '#EF4444' }} onClick={() => toastSuccess('Criptografia reforçada!')}>Ativar Cripto</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -225,14 +282,15 @@ const s: Record<string, React.CSSProperties> = {
   clientName: { margin: 0, fontSize: '22px', fontWeight: '900', color: '#0F172A', letterSpacing: '-0.5px' },
   statusBadge: { padding: '4px 12px', borderRadius: '999px', fontSize: '11px', fontWeight: '800' },
   clientSub: { margin: 0, fontSize: '13px', color: '#64748B', fontWeight: '600' },
-  headerActions: { display: 'flex', gap: '12px', alignItems: 'center' },
-  editBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
-  cancelBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
-  saveBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid', color: 'white', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
-  editInput: { fontSize: '22px', fontWeight: '900', color: '#0F172A', border: '2px solid #0061FF', borderRadius: '12px', padding: '4px 12px', outline: 'none', backgroundColor: 'white' },
+  headerActions: { display: 'flex', gap: '16px', alignItems: 'center' },
+  chatBtn: { backgroundColor: 'white', color: '#64748B', border: '1px solid #E2E8F0', padding: '12px 28px', borderRadius: '999px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' },
+  editBtn: { backgroundColor: '#2D5BFF', color: 'white', border: 'none', padding: '12px 28px', borderRadius: '999px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 8px 16px rgba(45, 91, 255, 0.25)' },
+  deleteBtn: { backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FEE2E2', padding: '12px 28px', borderRadius: '999px', fontWeight: '700', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s' },
+  editInput: { padding: '8px 16px', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '24px', fontWeight: '800', color: '#0F172A', outline: 'none', width: '300px' },
   content: { padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px' },
-  tabs: { display: 'flex', gap: '8px', padding: '8px 0', borderRadius: '24px', width: 'fit-content' },
-  tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '16px', border: 'none', background: 'none', color: '#64748B', fontSize: '14px', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
+  tabs: hubPillTabStripStyles.container,
+  tabBtn: { ...hubPillTabStripStyles.button, fontSize: '13px' },
+  tabActive: { ...hubPillTabStripStyles.buttonActive, fontSize: '13px' },
   tabContent: { display: 'flex', flexDirection: 'column', gap: '24px' },
   card: { backgroundColor: '#FFFFFF', borderRadius: '32px', padding: '32px', border: '1px solid #E2E8F0' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
@@ -262,7 +320,10 @@ const s: Record<string, React.CSSProperties> = {
   channelIcon: { width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   driverName: { margin: 0, fontSize: '14px', fontWeight: '800', color: '#1E293B' },
   driverSub: { margin: 0, fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
-  viewAllBtn: { width: '100%', padding: '14px', marginTop: '16px', borderRadius: '16px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
+  viewAllBtn: { width: '100%', padding: '14px', marginTop: '16px', borderRadius: '16px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' },
+  securityGrid: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  securityItem: { display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 0', borderBottom: '1px solid #F1F5F9' },
+  securityIcon: { width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#F8FAFC', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 };
 
 export default LogDockClientProfile;

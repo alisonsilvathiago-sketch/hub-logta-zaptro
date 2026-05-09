@@ -24,7 +24,7 @@ export class UnifiedApiService {
 
     // --- HUB MODULE ---
     app.post('/v1/api/hub/customers', apiRouter, async (req, res) => {
-      await this.handleApiRequest(req, res, 'hub', async (body) => {
+      await this.handleApiRequest(req, res, 'hub', async (_body) => {
         // Logic to create customer in Hub
         return { ok: true, message: 'Customer created via Unified API' };
       });

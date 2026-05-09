@@ -15,6 +15,7 @@ import { useAuth } from '@core/context/AuthContext';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import LogtaModal from '@shared/components/Modal';
 import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 interface Workflow {
   id: string;
@@ -660,8 +661,8 @@ const WorkflowManagement: React.FC = () => {
 const styles: Record<string, any> = {
   container: { padding: '0' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-  title: { fontSize: '28px', fontWeight: '600', color: 'var(--text-primary, #0F172A)', letterSpacing: '-0.02em', margin: 0 },
-  subtitle: { fontSize: '13px', color: 'var(--text-secondary, #64748B)', marginTop: '6px', fontWeight: '400', letterSpacing: '0', lineHeight: 1.5 },
+  title: { fontSize: '29px', fontWeight: '600', color: '#000000', letterSpacing: 0, margin: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '12px' },
   refreshBtn: { width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', color: 'var(--text-muted)' },
   primaryBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '14px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.3px' },

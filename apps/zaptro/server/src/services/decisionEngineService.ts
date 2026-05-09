@@ -62,7 +62,7 @@ export class DecisionEngineService {
         await this.decideGeofencingStrategy(data);
       }
 
-      if (data.action === 'PAYMENT_RECEIVED') {
+      if (data.action === 'PAYMENT_RECEIVED' && data.actorId) {
         await this.updateBehavioralProfile(data.actorId, data.metadata);
       }
     });

@@ -137,8 +137,7 @@ const HubInicio: React.FC = () => {
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 16px', background: 'rgba(0, 97, 255, 0.15)', borderRadius: '20px', color: '#0061FF', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>
               <Bot size={13} /> huba inteligência central
             </div>
-            <h2 style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif', fontSize: 'clamp(3rem, 10vw, 72px)', fontWeight: 950, boxSizing: 'border-box', lineHeight: 1.05, letterSpacing: '-0.03em', backgroundImage: 'linear-gradient(90deg, rgb(255, 255, 255) 0%, rgb(148, 163, 184) 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', color: 'transparent', WebkitTextFillColor: 'transparent', margin: '8px 0px 0px', maxWidth: 'min(95vw, 1100px)', width: '100%' }}>Pergunte à HUBA</h2>
-            <p style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif', fontSize: '13px', color: '#94A3B8', margin: '14px 0 0 0', fontWeight: 500, lineHeight: '1.4', maxWidth: '580px' }}>
+            <p style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif', fontSize: '12px', color: '#94A3B8', margin: '14px 0 0 0', fontWeight: 500, lineHeight: '1.4', maxWidth: '580px' }}>
               A inteligência que unifica o ecossistema Logta, Zaptro e LogDock.
             </p>
           </div>

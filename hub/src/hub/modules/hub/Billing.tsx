@@ -25,6 +25,9 @@ import Pagination from '@shared/components/Pagination';
 
 import MasterFinanceiro from './Financeiro';
 import ClientIaCredits from './ClientIaCredits';
+import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
+import { HUB_TOP_CTA_PRIMARY, HUB_TOP_CTA_SECONDARY } from '@hub/styles/hubTopCta';
+import { maskCpfOrCnpj } from '@shared/lib/brDocuments';
 
 const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
   const [loading, setLoading] = useState(true);
@@ -441,10 +444,6 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
     { name: 'Mar', value: 2000 },
     { name: 'Abr', value: Math.max(0, Number(metrics.mrr)) || 22400 },
   ];
-  const revenuePrev = revenueChartData[revenueChartData.length - 2]?.value ?? 0;
-  const revenueLast = revenueChartData[revenueChartData.length - 1]?.value ?? 0;
-  const revenueMomPct =
-    revenuePrev > 0 ? ((revenueLast - revenuePrev) / revenuePrev) * 100 : null;
 
   const tabs = [
     { id: 'dashboard', label: 'Estratégico', icon: Layout },
@@ -485,14 +484,20 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                 style={{ ...styles.secondaryBtn, whiteSpace: 'nowrap' }}
                 onClick={() => openChargeModal('charge')}
               >
-                <DollarSign size={18} /> NOVA COBRANÇA
+                <DollarSign size={15} /> NOVA COBRANÇA
               </button>
               <button
                 type="button"
-                style={{ ...styles.primaryBtn, whiteSpace: 'nowrap' }}
+                style={{
+                  ...styles.primaryBtn,
+                  whiteSpace: 'nowrap',
+                  boxShadow: 'none',
+                  border: 'none',
+                }}
                 onClick={() => openChargeModal('plan')}
               >
-                <Zap size={18} color="#FACC15" fill="#FACC15" /> NOVO PLANO
+                <Zap size={15} color="#FACC15" strokeWidth={2} fill="none" aria-hidden />
+                NOVO PLANO
               </button>
             </div>
           </header>
@@ -511,7 +516,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                 }}
                 onClick={() => setActiveTab(tab.id as any)}
               >
-                <tab.icon size={18} color={activeTab === tab.id ? 'var(--accent)' : 'var(--text-secondary)'} />
+                <tab.icon size={15} color={activeTab === tab.id ? 'var(--accent)' : 'var(--text-secondary)'} />
                 {tab.label}
               </button>
             ))}
@@ -621,9 +626,6 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                   <h3 style={styles.chartTitle}><Target size={16} color="var(--accent)" /> DISTRIBUIÇÃO POR PRODUTO</h3>
                   <div style={styles.chartTag}>REAL-TIME</div>
                 </div>
-                <p style={styles.chartSubcopy}>
-                  Percentual de <strong style={{ color: '#334155' }}>assinaturas ativas</strong> por produto — o arco mostra a fatia do líder; a legenda traz o recorte em contas.
-                </p>
                 <div style={{ height: 380, position: 'relative' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart margin={{ top: 4, right: 8, left: 8, bottom: 8 }}>
@@ -704,16 +706,6 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                   <h3 style={styles.chartTitle}><Zap size={16} color="#0061FF" /> CRESCIMENTO DE RECEITA (ASAAS)</h3>
                   <div style={{...styles.chartTag, backgroundColor: '#E0E7FF', color: '#4338CA'}}>ASAAS SYNC</div>
                 </div>
-                <p style={styles.chartSubcopy}>
-                  Tendência de faturamento (série do gateway). Compare com o mix de assinaturas ao lado para ver se <strong style={{ color: '#334155' }}>receita e base</strong> evoluem na mesma direção.
-                  {revenueMomPct != null ? (
-                    <span style={styles.chartSubcopyHighlight}>
-                      {' '}
-                      Último mês da série: {revenueMomPct >= 0 ? '+' : ''}
-                      {revenueMomPct.toFixed(1)}% vs. mês anterior.
-                    </span>
-                  ) : null}
-                </p>
                 <div style={{ height: 320 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={revenueChartData}>
@@ -870,7 +862,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                     <div style={{...styles.planIcon, width: '64px', height: '64px', backgroundColor: '#FFF', color: '#0061FF', border: '1px solid #E2E8F0'}}><Plus size={32} /></div>
                     <div style={{textAlign: 'center'}}>
                         <h4 style={{...styles.planCardTitle, margin: 0}}>CRIAR NOVO PLANO</h4>
-                        <p style={{...styles.pageSub, fontSize: '12px'}}>Adicionar ao catálogo master</p>
+                        <p style={styles.pageSub}>Adicionar ao catálogo master</p>
                     </div>
                 </div>
 
@@ -1085,9 +1077,13 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                   <label style={styles.infoLabel}>CPF OU CNPJ</label>
                   <input
                     style={styles.input}
-                    placeholder="00.000.000/0001-00"
+                    placeholder="CPF ou CNPJ"
                     value={newCharge.cpfCnpj}
-                    onChange={e => setNewCharge({ ...newCharge, cpfCnpj: e.target.value })}
+                    onChange={e =>
+                      setNewCharge({ ...newCharge, cpfCnpj: maskCpfOrCnpj(e.target.value) })
+                    }
+                    inputMode="numeric"
+                    autoComplete="off"
                   />
                 </div>
                 <div style={styles.formGroup}>
@@ -1700,22 +1696,36 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                                 style={{ ...styles.primaryBtn, width: '100%' }}
                                 onClick={() => window.open(selectedCharge?.invoice_url, '_blank')}
                             >
-                                <Eye size={18} /> VISUALIZAR NO ASAAS
+                                <Eye size={18} /> VISUALIZAR
                             </button>
                             <button 
-                                style={{ ...styles.secondaryBtn, width: '100%', justifyContent: 'center' }}
+                                style={{
+                                  ...styles.secondaryBtn,
+                                  width: '100%',
+                                  justifyContent: 'center',
+                                  fontSize: '11px',
+                                  gap: '8px',
+                                }}
                                 onClick={() => {
                                     navigator.clipboard.writeText(selectedCharge?.invoice_url);
                                     toastSuccess('Link copiado!');
                                 }}
                             >
-                                <Copy size={18} /> COPIAR LINK DE PAGAMENTO
+                                <Copy size={16} /> LINK DE PAGAMENTO
                             </button>
                             <button 
-                                style={{ ...styles.secondaryBtn, width: '100%', justifyContent: 'center', borderColor: '#10B981', color: '#10B981' }}
+                                style={{
+                                  ...styles.secondaryBtn,
+                                  width: '100%',
+                                  justifyContent: 'center',
+                                  borderColor: '#10B981',
+                                  color: '#10B981',
+                                  fontSize: '11px',
+                                  gap: '8px',
+                                }}
                                 onClick={() => toastSuccess('PDF sendo gerado...')}
                             >
-                                <Download size={18} /> BAIXAR COMPROVANTE PDF
+                                <Download size={16} /> BAIXAR COMPROVANTE
                             </button>
                         </div>
                     </div>
@@ -1739,11 +1749,11 @@ const styles: Record<string, any> = {
     flexWrap: 'nowrap',
   },
   billingTopBarLead: { flex: '1 1 auto', minWidth: 0 },
-  pageTitle: { fontSize: '32px', fontWeight: '700', color: 'var(--secondary)', margin: 0, letterSpacing: '-0.5px' },
-  pageSub: { color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '500', marginTop: '6px' },
+  pageTitle: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  pageSub: { ...HUB_PAGE_SUBTITLE },
   topActions: { display: 'flex', gap: '16px', flexWrap: 'nowrap', flexShrink: 0, alignItems: 'center' },
-  primaryBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', backgroundColor: 'var(--text-title)', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },
-  secondaryBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 24px', height: '48px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--secondary)', fontWeight: '700', fontSize: '14px', cursor: 'pointer' },
+  primaryBtn: { ...HUB_TOP_CTA_PRIMARY, boxShadow: 'none' },
+  secondaryBtn: { ...HUB_TOP_CTA_SECONDARY },
 
   financeiroContextBanner: {
     marginBottom: '20px',
@@ -1752,10 +1762,10 @@ const styles: Record<string, any> = {
     background: 'linear-gradient(135deg, #EFF6FF 0%, #EEF2FF 55%, #F8FAFC 100%)',
     border: '1px solid #BFDBFE',
   },
-  financeiroContextText: { maxWidth: '52rem' },
-  financeiroContextKicker: { fontSize: '11px', fontWeight: 800, color: '#0061FF', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '6px' },
-  financeiroContextTitle: { fontSize: '18px', fontWeight: 800, color: '#0F172A', margin: '0 0 8px' },
-  financeiroContextSub: { fontSize: '14px', color: '#475569', margin: 0, lineHeight: 1.55, fontWeight: 500 },
+  financeiroContextText: { maxWidth: 'min(100%, 721px)', width: '100%' },
+  financeiroContextKicker: { fontSize: '10px', fontWeight: 800, color: '#0061FF', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '6px' },
+  financeiroContextTitle: { fontSize: '15px', fontWeight: 800, color: '#000000', margin: '0 0 8px' },
+  financeiroContextSub: { fontSize: '10px', color: '#475569', margin: 0, lineHeight: 1.55, fontWeight: 500 },
   financeiroPanel: {
     backgroundColor: '#FFFFFF',
     borderRadius: '20px',
@@ -1784,15 +1794,6 @@ const styles: Record<string, any> = {
   chartCard: { backgroundColor: '#FFF', padding: '32px', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
   chartHeaderInner: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' },
   chartTitle: { fontSize: '13px', fontWeight: '800', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, letterSpacing: '0.5px' },
-  chartSubcopy: {
-    fontSize: '14px',
-    fontWeight: 500,
-    color: '#64748B',
-    margin: '0 0 20px',
-    lineHeight: 1.55,
-    maxWidth: '48rem',
-  },
-  chartSubcopyHighlight: { fontWeight: 700, color: '#475569' },
   chartTag: { padding: '4px 10px', backgroundColor: '#F1F5F9', color: '#64748B', borderRadius: '8px', fontSize: '10px', fontWeight: '800' },
   
   customTooltip: { backgroundColor: '#FFF', padding: '12px 16px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '10px' },

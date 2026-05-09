@@ -1,1 +1,35 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Build outputs (Vite / bundlers)
+dist/
+dist-ssr/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# OS & junk (macOS AppleDouble, Windows)
+.DS_Store
+._*
+**/._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs & debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Caches & tooling
+.cache
+*.tsbuildinfo
+.vercel
+
+# Editor (optional — uncomment if you want repo-local settings ignored)
+# .idea
+# .vscode/*
+# !.vscode/extensions.json

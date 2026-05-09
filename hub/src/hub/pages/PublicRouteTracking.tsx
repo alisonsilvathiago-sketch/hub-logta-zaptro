@@ -116,7 +116,7 @@ const PublicRouteTracking: React.FC = () => {
             padding: 10px 16px !important;
             border-radius: 14px !important;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
-            justify-content: space-between !important;
+            justifyContent: 'space-between' !important;
           }
           .floating-header .badge-title {
             font-size: 10px !important;
@@ -446,7 +446,7 @@ const PublicRouteTracking: React.FC = () => {
             {/* Capacity bars */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <div style={{ display: 'flex', justify_content: 'space-between', fontSize: '11px', fontWeight: '800', marginBottom: '4px', display: 'flex', justify_content: 'space-between' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: '800', marginBottom: '4px' }}>
                   <span style={{ color: '#64748B' }}>Espaço Ocupado</span>
                   <span style={{ color: '#0061FF' }}>88%</span>
                 </div>
@@ -456,7 +456,7 @@ const PublicRouteTracking: React.FC = () => {
               </div>
 
               <div>
-                <div style={{ display: 'flex', justify_content: 'space-between', fontSize: '11px', fontWeight: '800', marginBottom: '4px', display: 'flex', justify_content: 'space-between' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: '800', marginBottom: '4px' }}>
                   <span style={{ color: '#64748B' }}>Peso Carregado</span>
                   <span style={{ color: '#0061FF' }}>74%</span>
                 </div>
@@ -482,7 +482,7 @@ const PublicRouteTracking: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#0061FF', display: 'flex', alignItems: 'center', justify_content: 'center', color: 'white', fontWeight: 'bold', fontSize: '12px', display: 'flex', align_items: 'center', justify_content: 'center' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '12px', flexShrink: 0 }}>
                 <span style={{ margin: 'auto' }}>{company[0]}</span>
               </div>
               <div>

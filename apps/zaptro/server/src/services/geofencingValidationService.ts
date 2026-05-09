@@ -21,7 +21,12 @@ export class GeofencingValidationService {
 
   private setupListeners() {
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
-      if (data.action === 'DELIVERY_FINISH_ATTEMPTED') {
+      if (
+        data.action === 'DELIVERY_FINISH_ATTEMPTED' &&
+        data.metadata?.deliveryId != null &&
+        typeof data.metadata.actualLat === 'number' &&
+        typeof data.metadata.actualLng === 'number'
+      ) {
         await this.validateLocation(data.metadata.deliveryId, data.metadata.actualLat, data.metadata.actualLng);
       }
     });

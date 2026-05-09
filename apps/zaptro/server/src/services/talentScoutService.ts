@@ -19,15 +19,15 @@ export class TalentScoutService {
   private setupListeners() {
     // Listen for new driver registrations to trigger automated document audit
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
-      if (data.action === 'DRIVER_REGISTERED') {
+      if (data.action === 'DRIVER_REGISTERED' && data.actorId && data.metadata) {
         await this.runComplianceCheck(data.actorId, data.metadata);
       }
 
-      if (data.action === 'DELIVERY_COMPLETED') {
+      if (data.action === 'DELIVERY_COMPLETED' && data.actorId && data.metadata) {
         await this.updateDriverPerformance(data.actorId, data.metadata);
       }
 
-      if (data.action === 'DELIVERY_PROBLEM_REPORTED') {
+      if (data.action === 'DELIVERY_PROBLEM_REPORTED' && data.actorId && data.metadata) {
         await this.penalizeDriverScore(data.actorId, data.metadata);
       }
     });

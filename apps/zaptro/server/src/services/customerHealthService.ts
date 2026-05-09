@@ -101,6 +101,11 @@ export class CustomerHealthService {
     return 'CRITICAL';
   }
 
+  /** Alias for MaintenanceService */
+  async runDailyHealthAudit(): Promise<void> {
+    return this.runDailyHealthCheck();
+  }
+
   /**
    * Daily Health Analysis (triggered by MaintenanceService)
    */

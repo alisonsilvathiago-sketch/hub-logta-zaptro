@@ -84,7 +84,7 @@ const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ isOpen, onClose }) =>
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
         <div style={styles.searchHeader}>
-          <Search size={20} color="#0061FF" />
+          <Search size={18} color="#0061FF" />
           <input 
             ref={inputRef}
             style={styles.input}

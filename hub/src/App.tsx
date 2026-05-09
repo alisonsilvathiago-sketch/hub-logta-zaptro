@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster, toast } from 'sonner';
-import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, AlertCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import HubLogin from './hub/pages/Login';
 
 // Master Layout & Pages
@@ -35,7 +35,6 @@ import PublicRouteTracking from './hub/pages/PublicRouteTracking';
 import ErrorBoundary from '@shared/components/ErrorBoundary';
 import { KeyboardProvider } from './core/context/KeyboardContext';
 import CommandPalette from '@shared/components/CommandPalette';
-import ShortcutHelp from '@shared/components/ShortcutHelp';
 import HubLogDock from './hub/modules/hub/LogDock';
 import LogDockLogin from './hub/pages/LogDockLogin';
 import LogDockLayout from './hub/layouts/LogDockLayout';
@@ -51,8 +50,10 @@ import CreditsAdmin from './hub/modules/hub/CreditsAdmin';
 import BackupsAdmin from './hub/modules/hub/BackupsAdmin';
 import CreditsClientProfile from './hub/modules/hub/CreditsClientProfile';
 import BackupsClientProfile from './hub/modules/hub/BackupsClientProfile';
+import EvolutionManager from './hub/modules/hub/EvolutionManager';
 
 import { runMasterAuditSync } from './core/lib/masterIntelligence';
+import { subscribeToEvents } from './core/lib/eventBridge';
 
 /** /master/team e /master/team/* → Equipe Master ou Empresas (Módulos/Métricas), preservando query. */
 function RedirectMasterTeamToSettings() {
@@ -100,7 +101,32 @@ const App: React.FC = () => {
     // Executa a primeira vez após carregar
     runMasterAuditSync();
 
-    return () => clearInterval(auditInterval);
+    // 📡 Global Event Bridge Listener
+    const unsubscribe = subscribeToEvents((event) => {
+      if (event.type === 'SYSTEM_SYNC') {
+        toast.info(`Sincronização global detectada: ${event.origin}`, {
+          description: 'As configurações locais estão sendo atualizadas.',
+          icon: <RefreshCw size={16} />
+        });
+      }
+      if (event.type === 'POD_PENDING') {
+        toast.warning(`Comprovante Pendente: ${event.payload.client_name}`, {
+          description: 'Uma carga foi entregue e o canhoto precisa ser validado no LogDock.',
+          icon: <Box size={16} />
+        });
+      }
+      if (event.type === 'SECURITY_ALERT') {
+        toast.error(`ALERTA DE SEGURANÇA: ${event.origin}`, {
+          description: event.payload.details,
+          icon: <AlertTriangle size={16} />
+        });
+      }
+    });
+
+    return () => {
+      clearInterval(auditInterval);
+      unsubscribe();
+    };
   }, []);
 
   React.useEffect(() => {
@@ -156,8 +182,7 @@ const App: React.FC = () => {
       <KeyboardProvider>
         <GlobalLoader />
         <CommandPalette />
-        <ShortcutHelp />
-        
+
         <Routes>
           <Route path="/" element={<HubLogin />} />
           <Route path="/app" element={<Navigate to="/logdock/app" replace />} />
@@ -239,17 +264,18 @@ const App: React.FC = () => {
             <Route path="ia-gateway" element={<IaGatewayCenter />} />
             <Route path="automacoes" element={<Workflows />} />
             <Route path="automacoes/ia-gateway" element={<Navigate to="/master/ia-gateway" replace />} />
-            <Route path="logdock" element={<HubLogDock />} />
-            <Route path="logdock-admin" element={<LogDockAdmin />} />
-            <Route path="logdock-admin/:id" element={<LogDockClientProfile />} />
-            <Route path="zaptro-admin" element={<ZaptroAdmin />} />
-            <Route path="zaptro-admin/:id" element={<ZaptroClientProfile />} />
-            <Route path="logta-admin" element={<LogtaAdmin />} />
-            <Route path="logta-admin/:id" element={<LogtaClientProfile />} />
-            <Route path="credits-admin" element={<CreditsAdmin />} />
-            <Route path="credits-admin/:id" element={<CreditsClientProfile />} />
-            <Route path="backups-admin" element={<BackupsAdmin />} />
-            <Route path="backups-admin/:id" element={<BackupsClientProfile />} />
+            <Route path="logdock-cloud" element={<HubLogDock />} />
+            <Route path="logdock" element={<LogDockAdmin />} />
+            <Route path="logdock/:id" element={<LogDockClientProfile />} />
+            <Route path="zaptro" element={<ZaptroAdmin />} />
+            <Route path="zaptro/:id" element={<ZaptroClientProfile />} />
+            <Route path="logta" element={<LogtaAdmin />} />
+            <Route path="logta/:id" element={<LogtaClientProfile />} />
+            <Route path="credits" element={<CreditsAdmin />} />
+            <Route path="credits/:id" element={<CreditsClientProfile />} />
+            <Route path="backups" element={<BackupsAdmin />} />
+            <Route path="backups/:id" element={<BackupsClientProfile />} />
+            <Route path="evolution" element={<EvolutionManager />} />
             <Route path="integracoes" element={<IntegrationsPage />} />
             <Route path="integracoes/:tab" element={<IntegrationsPage />} />
             <Route path="biblioteca" element={<MasterKnowledge />} />

@@ -19,11 +19,17 @@ export class OperationalBrainService {
   private setupListeners() {
     this.hub.on(SystemEvent.BEHAVIOR_OBSERVED, async (data) => {
       // 1. Prediction Trigger
-      if (data.action === 'LOGISTICS_DELAY_DETECTED' || data.action === 'PACKAGE_LOSS_RISK_DETECTED') {
+      if (
+        (data.action === 'LOGISTICS_DELAY_DETECTED' || data.action === 'PACKAGE_LOSS_RISK_DETECTED') &&
+        data.actorId
+      ) {
         await this.generateRiskPrediction(data.action, data.actorId, data.metadata);
       }
       // 2. ROI Trigger
-      if (data.action === 'DELIVERY_COMPLETED' || data.action === 'PAYMENT_RECEIVED') {
+      if (
+        (data.action === 'DELIVERY_COMPLETED' || data.action === 'PAYMENT_RECEIVED') &&
+        data.actorId
+      ) {
         await this.calculateSavings(data.actorId, data.action, data.metadata);
       }
     });
