@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" role="img" aria-label="Logta">
+  <defs>
+    <linearGradient id="logtaPurple" x1="5" y1="3" x2="27" y2="29" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e9d5ff"/>
+      <stop offset="0.4" stop-color="#a78bfa"/>
+      <stop offset="0.75" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#4c1d95"/>
+    </linearGradient>
+  </defs>
+  <path
+    fill="url(#logtaPurple)"
+    d="M19.5 2 8 17.5h6.5L11.5 30 24 15h-7l2.5-13z"
+  />
+</svg>

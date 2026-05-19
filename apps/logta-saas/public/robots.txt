@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /inicio
+Disallow: /dashboard
+Disallow: /crm
+Disallow: /fretes
+Disallow: /financeiro
+Disallow: /admin-settings
+Disallow: /permissoes
+Allow: /
+Allow: /login

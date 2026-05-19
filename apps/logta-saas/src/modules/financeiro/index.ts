@@ -1,0 +1,14 @@
+export { FinanceiroModuleHub } from './components/FinanceiroModuleHub';
+export { FinanceiroFeatureRoute } from './components/FinanceiroFeatureRoute';
+export { FinanceiroAlertPopup } from './components/FinanceiroAlertPopup';
+export { FinanceiroMonitoringBar } from './components/FinanceiroMonitoringBar';
+export { FinanceiroExecutiveDashboard } from './views/FinanceiroExecutiveDashboard';
+export { resolveFinanceiroTransactionRoute } from './financeiroTransactionLinks';
+export { useFinanceiroTransactionNavigation } from './hooks/useFinanceiroTransactionNavigation';
+export { FinanceiroAlertasView } from './views/FinanceiroAlertasView';
+export { FinanceiroCalculadoraView } from './views/FinanceiroCalculadoraView';
+export { FinanceiroCentralOperacional } from './views/FinanceiroCentralOperacional';
+export { FinanceiroIntelligenceProvider, useFinanceiroIntelligence } from './context/FinanceiroIntelligenceContext';
+export { computeFinanceiroAnalytics } from './financeiroAnalytics';
+export { buildFinanceiroAlerts, buildFinanceiroIaInsights } from './financeiroIntelligence';
+export { getFinanceiroModule, FINANCEIRO_MODULES } from './financeiroModules';

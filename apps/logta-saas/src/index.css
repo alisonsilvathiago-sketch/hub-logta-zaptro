@@ -1,0 +1,1062 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2563EB;
+  --color-blue-700: #1d4ed8;
+  --color-secondary: #0D0D0D;
+  --color-accent: #D7FF00;
+  
+  --radius-xl: 14px;
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: #1A1A1A;
+  background-color: #FFFFFF;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  min-height: 100dvh;
+  background-color: #F9FAFB;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  min-height: 100dvh;
+  font-size: 14px;
+}
+
+/* Conteúdo principal das páginas autenticadas — mobile-first */
+.logta-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: 1rem 1rem;
+}
+
+.logta-page__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.logta-page__body > * {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Kanban ocupa do header até o fim da área útil */
+.logta-kanban-board {
+  display: grid;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: calc(100dvh - 15rem);
+  height: 100%;
+}
+
+@media (min-width: 640px) {
+  .logta-page {
+    padding: 1.5rem 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .logta-page {
+    padding: 2.25rem 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .logta-page {
+    padding: 2.5rem 3rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .logta-page {
+    padding: 2.5rem 4rem;
+  }
+}
+
+/* Títulos globais — override shared/index.css (peso 700, tracking 0) */
+#root h1,
+#root h2,
+#root h3,
+#root h4,
+#root h5,
+#root h6 {
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* Título padrão das páginas autenticadas */
+.logta-page-title {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.25;
+  color: #111827;
+}
+
+/* Título de seção / card (sidebar, painéis) */
+.logta-section-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.3;
+  color: #949494;
+}
+
+/* Títulos / textos Logta — sem borda do tema global [class*="card"] em @shared */
+.logta-card-heading,
+.logta-panel-section-title,
+.logta-stat-card__label,
+.logta-stat-card__value,
+.logta-dashboard-stat-card__value,
+.logta-page-title,
+.logta-section-title,
+.logta-empty-state-title,
+.logta-empty-state-description,
+.logta-highlight-label,
+.logta-highlight-value,
+.logta-kanban-column-title,
+.logta-kanban-card-title,
+.logta-modal-heading {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  transform: none !important;
+}
+
+.logta-card-heading:hover,
+.logta-panel-section-title:hover,
+.logta-stat-card__label:hover,
+.logta-stat-card__value:hover,
+.logta-dashboard-stat-card__value:hover,
+.logta-page-title:hover,
+.logta-section-title:hover,
+.logta-empty-state-title:hover,
+.logta-empty-state-description:hover,
+.logta-highlight-label:hover,
+.logta-highlight-value:hover,
+.logta-kanban-column-title:hover,
+.logta-kanban-card-title:hover,
+.logta-modal-heading:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Título de bloco dentro de cards brancos */
+.logta-card-heading {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.3;
+  color: #9c9c9c;
+}
+
+/* Títulos de listas laterais (Roteirização, painéis operacionais) */
+.logta-sidebar-list-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.35;
+  color: #111827;
+}
+
+/* Ícones do menu lateral principal (App shell) */
+a.logta-sidebar-nav-item,
+button.logta-sidebar-nav-item {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Título de seção em painéis laterais (ex.: Roteirização — Entregas, Alocação) */
+h3.logta-panel-section-title,
+.logta-panel-section-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-transform: uppercase;
+  color: #111827;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Empty state — título e descrição */
+.logta-empty-state-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.3;
+  color: #111827;
+}
+
+.logta-empty-state-description {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+/* Card destacado (fundo primary) */
+.logta-highlight-label {
+  margin: 0 0 0.5rem;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.logta-highlight-value {
+  margin: 0 0 1.5rem;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1.2;
+  color: #ffffff;
+}
+
+/* Cards de métrica (Fretes, dashboards) */
+.logta-metric-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 150px;
+  min-height: 150px;
+  padding: 16px 20px;
+  border: 1px solid #f3f4f6;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.logta-metric-card__label,
+.logta-metric-card__value {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  transform: none !important;
+}
+
+.logta-metric-card__label {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.logta-metric-card__value {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 900;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+}
+
+.logta-metric-card__label:hover,
+.logta-metric-card__value:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Valor em cards de dashboard (Frota, PGR, RH, Documentos, Automações) */
+.logta-dashboard-stat-card__value {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+  color: #111827;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.logta-dashboard-stat-card__value--primary {
+  color: var(--color-primary, #2563eb);
+}
+
+.logta-dashboard-stat-card__value--lg {
+  font-size: 24px;
+  padding: 9px 0;
+}
+
+/* Card métrica padrão (dashboards) */
+.logta-stat-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 120px;
+  padding: 24px;
+  border: 1px solid #f3f4f6;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.logta-stat-card__label--spaced {
+  margin-bottom: 10px;
+}
+
+.logta-stat-card__label {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: #9ca3af;
+}
+
+/* Rótulos/valores dentro do card — nunca herdar borda pill de [class*="card"] em @shared */
+.logta-stat-card .logta-stat-card__label,
+.logta-stat-card .logta-stat-card__value,
+.logta-stat-card .logta-dashboard-stat-card__value,
+.logta-stat-card [class*="logta-stat-card__"],
+.logta-stat-card [class*="logta-dashboard-stat-card__"] {
+  border: none !important;
+  border-width: 0 !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  transform: none !important;
+  outline: none !important;
+}
+
+.logta-stat-card .logta-stat-card__label:hover,
+.logta-stat-card .logta-stat-card__value:hover,
+.logta-stat-card .logta-dashboard-stat-card__value:hover,
+.logta-stat-card [class*="logta-stat-card__"]:hover,
+.logta-stat-card [class*="logta-dashboard-stat-card__"]:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.logta-stat-card__value {
+  margin: 0;
+  padding: 7px 0;
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: var(--color-primary, #2563eb);
+}
+
+/* Painéis brancos / escuros */
+.logta-panel-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.logta-panel-card--dark {
+  border: 1px solid #000000;
+  border-radius: 25px;
+  background: #000000;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+/* Central operacional — fundo azul claro + contorno azul (Frota, Fretes, Financeiro) */
+.logta-panel-card--operational {
+  border: 2px solid color-mix(in srgb, var(--color-primary, #2563eb) 30%, transparent);
+  border-radius: 32px;
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 6%, #ffffff);
+  color: inherit;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
+}
+
+.logta-performance-section {
+  margin-top: 21px;
+  padding: 6px 0;
+}
+
+.logta-panel-card--ranking {
+  min-height: 251px;
+}
+
+.logta-panel-card--retention {
+  min-height: 246px;
+}
+
+/* Tabelas — células de destaque */
+.logta-table-emphasis {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: #111827;
+}
+
+/* Cards financeiros (aba Fretes / Financeiro) */
+.logta-finance-stat-card {
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.logta-finance-stat-card__label,
+.logta-finance-stat-card__value {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  transform: none !important;
+}
+
+.logta-finance-stat-card__label {
+  margin: 0 0 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.logta-finance-stat-card__value {
+  margin: 0;
+  padding: 9px 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.4px;
+  color: rgb(31, 41, 55);
+}
+
+.logta-finance-stat-card__label:hover,
+.logta-finance-stat-card__value:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Barra de abas em pill (padrão Hub) */
+.logta-tab-strip-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.logta-tab-strip-wrap::-webkit-scrollbar {
+  display: none;
+}
+
+.logta-tab-strip {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  padding: 6px;
+  border-radius: 18px;
+  box-sizing: content-box;
+  background: unset;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: inherit;
+}
+
+@media (min-width: 640px) {
+  .logta-tab-strip {
+    width: fit-content;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+}
+
+.logta-tab-strip__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 16px;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-secondary, #64748b);
+  background: transparent;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+@media (min-width: 640px) {
+  .logta-tab-strip__item {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    padding: 0 18px;
+  }
+}
+
+.logta-tab-strip__item:hover {
+  color: var(--text-primary, #1f2937);
+}
+
+.logta-tab-strip__item--active {
+  background-color: var(--accent-light, #f0f7ff);
+  color: var(--accent, #0061ff);
+  font-weight: 800;
+}
+
+.logta-tab-strip__item--active .logta-tab-strip__icon {
+  color: var(--accent, #0061ff);
+}
+
+.logta-tab-strip__icon {
+  flex-shrink: 0;
+  color: var(--text-secondary, #9ca3af);
+}
+
+/* Tabs só com ícones (padrão Logta) */
+.logta-icon-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 59px;
+  padding: 9px 19px;
+  margin: 0 4px;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.logta-icon-tabs__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 41px;
+  height: 41px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary, #64748b);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.logta-icon-tabs__item::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  z-index: 20;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50%) translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.logta-icon-tabs__item:hover::after,
+.logta-icon-tabs__item:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.logta-icon-tabs__item:hover {
+  color: var(--text-primary, #1f2937);
+  background-color: var(--accent-light, #f0f7ff);
+}
+
+.logta-icon-tabs__item.is-active {
+  background-color: var(--accent-light, #f0f7ff);
+  color: var(--accent, #0061ff);
+}
+
+.logta-icon-tabs__item:active {
+  transform: scale(0.96);
+}
+
+/* Faixa de abas no cabeçalho de página (ex.: Controle de Ponto) */
+.logta-icon-tabs--header {
+  display: inline-flex;
+  width: auto;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+/* Cabeçalho de modais escuros (CRM, etc.) */
+.logta-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.logta-modal-header__main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.logta-modal-heading {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.35;
+  color: #ababab;
+}
+
+.logta-modal-header__icon-cluster {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.logta-modal-header__icon-dot {
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  opacity: 0.9;
+}
+
+.logta-modal-header__icon {
+  position: relative;
+  z-index: 1;
+  color: #ffffff;
+}
+
+.logta-modal-header__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent, #0061ff);
+  color: #ffffff;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.logta-modal-header__action:hover {
+  opacity: 0.92;
+}
+
+.logta-modal-header__action:active {
+  transform: scale(0.96);
+}
+
+/* Cabeçalho de módulo: título à esquerda, tabs à direita, ações abaixo */
+.logta-module-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.logta-module-header__top {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+@media (min-width: 640px) {
+  .logta-module-header__top {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+}
+
+.logta-module-header__subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #9ca3af;
+}
+
+.logta-module-header__tabs {
+  align-self: center;
+  overflow: visible;
+}
+
+.logta-module-header__tabs-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logta-module-header__tab-quick-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 41px;
+  height: 41px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent, #0061ff);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 97, 255, 0.25);
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.logta-module-header__tab-quick-add:hover {
+  opacity: 0.92;
+}
+
+.logta-module-header__tab-quick-add:active {
+  transform: scale(0.96);
+}
+
+.logta-module-header__tab-quick-add.is-active {
+  box-shadow:
+    0 0 0 3px rgba(0, 97, 255, 0.35),
+    0 2px 8px rgba(0, 97, 255, 0.35);
+}
+
+.logta-module-header__icon-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 41px;
+  height: 41px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  text-decoration: none;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.logta-module-header__icon-action--dark {
+  background: #18191b;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.logta-module-header__icon-action--dark:hover {
+  opacity: 0.9;
+}
+
+.logta-module-header__icon-action--dark:active {
+  transform: scale(0.96);
+}
+
+@media (min-width: 640px) {
+  .logta-module-header__tabs {
+    align-self: flex-end;
+    margin-left: auto;
+  }
+}
+
+.logta-module-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .logta-module-header__actions {
+    gap: 10px;
+  }
+}
+
+/* Título de coluna em Kanban */
+.logta-kanban-column-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #111827;
+}
+
+.logta-kanban-card-title {
+  margin: 0 0 0.25rem;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #111827;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Avatar do usuário (header / perfil) */
+.logta-user-avatar__initials {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1;
+  color: #ffffff;
+  user-select: none;
+}
+
+/* Tabelas largas: scroll horizontal tátil sem estourar o layout */
+.logta-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* iOS: reduz zoom indesejado em foco de campos < 16px */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]),
+  textarea,
+  select {
+    font-size: 1rem;
+  }
+}
+
+/* Optional: hide scrollbar while keeping scroll (toggle via html/body class). */
+html.hide-scrollbar,
+body.hide-scrollbar {
+  -ms-overflow-style: none; /* IE/old Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+html.hide-scrollbar::-webkit-scrollbar,
+body.hide-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* Chrome/Safari */
+}
+
+#root {
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.truck-strip {
+  position: relative;
+  width: 100%;
+  min-height: 120px;
+}
+
+.truck-run {
+  transform: translateX(-110%);
+  filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.35));
+  will-change: transform;
+}
+
+@keyframes logta-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes logta-toast-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+.logta-toast-enter {
+  animation: logta-toast-in 0.28s ease-out forwards;
+}
+
+.logta-toast-exit {
+  animation: logta-toast-out 0.28s ease-in forwards;
+}
+
+/* Landing /vendas — correções de fluxo sem alterar o design */
+.logta-vendas-page #demo {
+  position: relative;
+  isolation: isolate;
+}
+
+.logta-vendas-page #recursos {
+  position: relative;
+  isolation: isolate;
+}
+
+.logta-vendas-page #recursos .grid {
+  display: grid;
+}
+
+.logta-vendas-page #recursos .grid > * {
+  position: relative;
+  min-width: 0;
+}
+
+/* Orçamento público — scroll no celular (body autenticado usa overflow:hidden) */
+body:has(.orcamento-public-page),
+body:has(.motorista-public-page) {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  height: auto !important;
+}
+
+/* Orçamento público — impressão igual à tela */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    overflow: visible !important;
+    background: #fff !important;
+    height: auto !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .orcamento-public-shell {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  #orcamento-public-document {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  .orcamento-public-table-wrap {
+    overflow: visible !important;
+  }
+
+  .orcamento-public-table-wrap .sm\:table-cell {
+    display: table-cell !important;
+  }
+}
+
+/* OpenStreetMap / Leaflet — padrão Logta */
+.logta-osm-map.leaflet-container {
+  width: 100%;
+  height: 100%;
+  font-family: inherit;
+  z-index: 0;
+}
+
+.logta-osm-map .leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 8px 0 0 0;
+  padding: 2px 6px;
+}
+
+.logta-osm-map .leaflet-control-attribution a {
+  color: var(--color-primary, #2563eb);
+}
+
+.logta-map-truck-marker,
+.logta-map-dest-pin,
+.logta-map-origin-pin {
+  background: transparent !important;
+  border: none !important;
+}
