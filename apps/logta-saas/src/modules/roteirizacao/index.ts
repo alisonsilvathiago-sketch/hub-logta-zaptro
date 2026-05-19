@@ -3,6 +3,7 @@ export {
   useRoteirizacaoIntelligence,
 } from './context/RoteirizacaoIntelligenceContext';
 export { RoteirizacaoAlertPopup } from './components/RoteirizacaoAlertPopup';
+export { RoteirizacaoAlertsInlinePanel } from './components/RoteirizacaoAlertsInlinePanel';
 export { RoteirizacaoMonitoringBar } from './components/RoteirizacaoMonitoringBar';
 export {
   normalizeDeliveryFromShipment,

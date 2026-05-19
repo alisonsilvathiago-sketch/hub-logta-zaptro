@@ -43,7 +43,7 @@ function saveDismissed(set: Set<string>) {
 export function FrotaIntelligenceProvider({
   children,
   vehicles,
-  autoPopup = true,
+  autoPopup = false,
 }: {
   children: React.ReactNode;
   vehicles: FrotaVehicleRow[];
@@ -59,12 +59,6 @@ export function FrotaIntelligenceProvider({
   const monitoring = useMemo(() => getFrotaMonitoringStatus(activeAlerts), [activeAlerts]);
 
   const refreshIntelligence = useCallback(() => setTick((n) => n + 1), []);
-
-  useEffect(() => {
-    if (!autoPopup || activeAlerts.length === 0) return;
-    const t = window.setTimeout(() => setPopupAlert(activeAlerts[0]), 1500);
-    return () => window.clearTimeout(t);
-  }, [autoPopup, activeAlerts]);
 
   const dismissAlert = useCallback((id: string) => {
     setDismissed((prev) => {
@@ -82,7 +76,9 @@ export function FrotaIntelligenceProvider({
     insights,
     monitoring,
     popupAlert,
-    openPopup: setPopupAlert,
+    openPopup: () => {
+      /* Popups centrais descontinuados — use FrotaAlertsInlinePanel */
+    },
     closePopup: () => setPopupAlert(null),
     dismissAlert,
     refreshIntelligence,

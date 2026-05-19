@@ -1,6 +1,7 @@
 export { FinanceiroModuleHub } from './components/FinanceiroModuleHub';
 export { FinanceiroFeatureRoute } from './components/FinanceiroFeatureRoute';
 export { FinanceiroAlertPopup } from './components/FinanceiroAlertPopup';
+export { FinanceiroAlertsInlinePanel } from './components/FinanceiroAlertsInlinePanel';
 export { FinanceiroMonitoringBar } from './components/FinanceiroMonitoringBar';
 export { FinanceiroExecutiveDashboard } from './views/FinanceiroExecutiveDashboard';
 export { resolveFinanceiroTransactionRoute } from './financeiroTransactionLinks';

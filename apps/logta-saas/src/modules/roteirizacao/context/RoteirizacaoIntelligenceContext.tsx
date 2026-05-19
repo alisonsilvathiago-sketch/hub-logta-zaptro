@@ -65,7 +65,7 @@ export function RoteirizacaoIntelligenceProvider({
   motoristas,
   vehicles,
   loading = false,
-  autoPopup = true,
+  autoPopup = false,
 }: ProviderProps) {
   const [dismissed, setDismissed] = useState(loadDismissed);
   const [popupAlert, setPopupAlert] = useState<RoteirizacaoAlert | null>(null);
@@ -105,32 +105,15 @@ export function RoteirizacaoIntelligenceProvider({
     return () => clearInterval(t);
   }, [refreshIntelligence]);
 
-  useEffect(() => {
-    if (!autoPopup || loading || popupAlert) return;
-    const critical = activeAlerts.filter((a) => a.priority === 'critical' || a.priority === 'high');
-    if (critical.length > 0) {
-      const timer = setTimeout(() => setPopupAlert(critical[0]), 900);
-      return () => clearTimeout(timer);
-    }
-  }, [autoPopup, loading, activeAlerts, popupAlert]);
-
-  const dismissAlert = useCallback(
-    (id: string) => {
-      setDismissed((prev) => {
-        const next = new Set(prev);
-        next.add(id);
-        saveDismissed(next);
-        return next;
-      });
-      setPopupAlert(null);
-      setTimeout(() => {
-        const next = sortRoteirizacaoAlerts(alerts.filter((a) => !dismissed.has(a.id) && a.id !== id));
-        const n = next.find((a) => a.priority === 'critical' || a.priority === 'high');
-        if (n) setPopupAlert(n);
-      }, 300);
-    },
-    [alerts, dismissed],
-  );
+  const dismissAlert = useCallback((id: string) => {
+    setDismissed((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      saveDismissed(next);
+      return next;
+    });
+    setPopupAlert(null);
+  }, []);
 
   const value: RoteirizacaoIntelligenceContextValue = {
     deliveries,
@@ -146,7 +129,9 @@ export function RoteirizacaoIntelligenceProvider({
     routeOptimized,
     setRouteOptimized,
     popupAlert,
-    openPopup: setPopupAlert,
+    openPopup: () => {
+      document.getElementById('logta-page-alerts')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
     closePopup: () => setPopupAlert(null),
     dismissAlert,
     refreshIntelligence,

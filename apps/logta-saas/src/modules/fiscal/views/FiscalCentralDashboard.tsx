@@ -11,19 +11,16 @@ import {
   Sparkles,
   Truck,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useFiscalIntelligence } from '../context/FiscalIntelligenceContext';
-import { FiscalAlertPopup } from '../components/FiscalAlertPopup';
 
 export function FiscalCentralDashboard() {
+  const navigate = useNavigate();
   const {
     stats,
     activeAlerts,
     insights,
     monitoring,
-    popupAlert,
-    closePopup,
-    dismissAlert,
-    openPopup,
     refreshIntelligence,
   } = useFiscalIntelligence();
 
@@ -122,7 +119,7 @@ export function FiscalCentralDashboard() {
                   <button
                     key={a.id}
                     type="button"
-                    onClick={() => openPopup(a)}
+                    onClick={() => navigate(a.actionPath)}
                     className="w-full rounded-xl border border-gray-100 bg-gray-50 p-3 text-left hover:border-primary/30"
                   >
                     <div className="flex items-start gap-2">
@@ -154,10 +151,6 @@ export function FiscalCentralDashboard() {
           </div>
         </div>
       </div>
-
-      {popupAlert ? (
-        <FiscalAlertPopup alert={popupAlert} onClose={closePopup} onDismiss={() => dismissAlert(popupAlert.id)} />
-      ) : null}
     </>
   );
 }

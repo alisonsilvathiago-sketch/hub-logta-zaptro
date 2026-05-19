@@ -32,6 +32,7 @@ import { LogtaLogDockUploadModal } from '../components/LogtaLogDockUploadModal';
 import { showToast } from '../components/Toast';
 import {
   FiscalIntelligenceProvider,
+  FiscalAlertsInlinePanel,
   FiscalCentralDashboard,
   defaultFiscalStats,
 } from '../modules/fiscal';
@@ -107,6 +108,7 @@ const Documentos = () => {
   ];
 
   return (
+    <FiscalIntelligenceProvider stats={fiscalSandbox?.fiscalStats ?? defaultFiscalStats} autoPopup={false}>
     <div className="logta-page w-full space-y-8 py-8 animate-in fade-in duration-700 sm:py-10 lg:py-[62px] h-full">
       <LogtaModuleHeader
         title="Documentos Fiscais"
@@ -116,17 +118,17 @@ const Documentos = () => {
         onTabQuickAdd={() => setIsNovoDocOpen(true)}
       />
 
-      <FiscalIntelligenceProvider stats={fiscalSandbox?.fiscalStats ?? defaultFiscalStats}>
-        <div className="animate-in fade-in duration-500">
-          <Routes>
-            <Route index element={<Navigate to="/documentos/dashboard" replace />} />
-            <Route path="dashboard" element={<FiscalCentralDashboard />} />
-            <Route path="cte" element={<CteManagementView cteList={fiscalSandbox?.cteList ?? []} onSelect={setSelectedCte} onUpload={() => setIsUploadOpen(true)} />} />
-            <Route path="mdfe" element={<MdfeManagementView mdfeList={fiscalSandbox?.mdfeList ?? []} onSelect={setSelectedMdfe} onNewMdfe={() => setIsMdfeOpen(true)} onUpload={() => setIsUploadOpen(true)} />} />
-            <Route path="rejeitados" element={<RejectedDocsView rejected={(fiscalSandbox?.cteList ?? []).filter((c) => c.status === 'Rejeitado')} onUpload={() => setIsUploadOpen(true)} />} />
-          </Routes>
-        </div>
-      </FiscalIntelligenceProvider>
+      <FiscalAlertsInlinePanel className="mb-6" />
+
+      <div className="animate-in fade-in duration-500">
+        <Routes>
+          <Route index element={<Navigate to="/documentos/dashboard" replace />} />
+          <Route path="dashboard" element={<FiscalCentralDashboard />} />
+          <Route path="cte" element={<CteManagementView cteList={fiscalSandbox?.cteList ?? []} onSelect={setSelectedCte} onUpload={() => setIsUploadOpen(true)} />} />
+          <Route path="mdfe" element={<MdfeManagementView mdfeList={fiscalSandbox?.mdfeList ?? []} onSelect={setSelectedMdfe} onNewMdfe={() => setIsMdfeOpen(true)} onUpload={() => setIsUploadOpen(true)} />} />
+          <Route path="rejeitados" element={<RejectedDocsView rejected={(fiscalSandbox?.cteList ?? []).filter((c) => c.status === 'Rejeitado')} onUpload={() => setIsUploadOpen(true)} />} />
+        </Routes>
+      </div>
 
       {isNovoDocOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -215,7 +217,7 @@ const Documentos = () => {
                 <span className={`text-[9px] font-black px-2.5 py-1 rounded uppercase tracking-normal block w-fit mb-2 ${selectedCte.status === 'Autorizado' ? 'bg-green-500/10 text-green-400' : selectedCte.status === 'Rejeitado' ? 'bg-red-500/10 text-red-400' : 'bg-blue-500/10 text-blue-400'}`}>
                   Protocolo SEFAZ • {selectedCte.status}
                 </span>
-                <h3 className="text-2xl font-black text-white leading-none tracking-tight">
+                <h3 className="logta-modal-title leading-none tracking-tight">
                   CT-e #{selectedCte.nr}
                 </h3>
                 <p className="text-xs text-neutral-400 font-bold uppercase tracking-normal mt-1.5">
@@ -306,7 +308,7 @@ const Documentos = () => {
                 <span className={`text-[9px] font-black px-2.5 py-1 rounded uppercase tracking-normal block w-fit mb-2 ${selectedMdfe.status === 'Autorizado' ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
                   MANIFESTO SEFAZ • {selectedMdfe.status}
                 </span>
-                <h3 className="text-2xl font-black text-white leading-none tracking-tight">
+                <h3 className="logta-modal-title leading-none tracking-tight">
                   MDF-e #{selectedMdfe.nr}
                 </h3>
                 <p className="text-xs text-neutral-400 font-bold uppercase tracking-normal mt-1.5">
@@ -385,6 +387,7 @@ const Documentos = () => {
         </div>
       )}
     </div>
+    </FiscalIntelligenceProvider>
   );
 };
 

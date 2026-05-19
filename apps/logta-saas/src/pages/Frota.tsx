@@ -204,7 +204,7 @@ const Frota = () => {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsNovoVeiculoOpen(false)} />
           <div className="relative w-full max-w-lg bg-[#18191B] rounded-[32px] shadow-2xl border border-neutral-800 p-8 text-white">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold">Cadastrar Novo Veículo</h3>
+              <h3 className="logta-modal-title">Cadastrar Novo Veículo</h3>
               <button onClick={() => setIsNovoVeiculoOpen(false)} className="text-neutral-400 hover:text-white">✕</button>
             </div>
             

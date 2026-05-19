@@ -252,5 +252,6 @@ export function getFretesMonitoringStatus(alerts: FretesAlert[]) {
     high,
     total: alerts.length,
     nivel: critical > 0 ? 'critico' : high > 0 ? 'atencao' : 'normal',
+    label: critical > 0 ? 'Atenção imediata' : high > 0 ? 'Monitoramento ativo' : 'Operação estável',
   } as const;
 }

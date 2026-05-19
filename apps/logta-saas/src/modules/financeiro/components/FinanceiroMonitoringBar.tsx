@@ -1,10 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Activity, Bell, Sparkles } from 'lucide-react';
+import { LOGTA_PAGE_ALERTS_ID } from '../../../components/LogtaAlertsInlinePanel';
 import { useFinanceiroIntelligence } from '../context/FinanceiroIntelligenceContext';
 
+function scrollToPageAlerts() {
+  document.getElementById(LOGTA_PAGE_ALERTS_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 export function FinanceiroMonitoringBar() {
-  const { monitoring, activeAlerts, lastScanAt, openPopup, showNextPopup } = useFinanceiroIntelligence();
+  const { monitoring, lastScanAt } = useFinanceiroIntelligence();
 
   if (monitoring.total === 0) {
     return (
@@ -51,15 +56,11 @@ export function FinanceiroMonitoringBar() {
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={() => {
-            const first = activeAlerts[0];
-            if (first) openPopup(first);
-            else showNextPopup();
-          }}
+          onClick={scrollToPageAlerts}
           className="hub-premium-pill primary"
           style={{ padding: '8px 14px', fontSize: '10px' }}
         >
-          <Bell size={14} /> Ver alerta
+          <Bell size={14} /> Ver alertas
         </button>
         <Link to="/financeiro/central" className="hub-premium-pill secondary" style={{ padding: '8px 14px', fontSize: '10px' }}>
           <Activity size={14} /> Central

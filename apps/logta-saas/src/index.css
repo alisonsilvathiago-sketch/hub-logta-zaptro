@@ -324,7 +324,7 @@ h3.logta-panel-section-title,
 }
 
 .logta-dashboard-stat-card__value--lg {
-  font-size: 24px;
+  font-size: 30px;
   padding: 9px 0;
 }
 
@@ -665,13 +665,19 @@ h3.logta-panel-section-title,
   flex: 1;
 }
 
+/* Título principal em modais escuros — padrão global */
+.logta-modal-title,
 .logta-modal-heading {
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 800;
   letter-spacing: 0;
   line-height: 1.35;
-  color: #ababab;
+  color: #ffffff;
+}
+
+.logta-modal-title--spaced {
+  margin-top: 0.5rem;
 }
 
 .logta-modal-header__icon-cluster {

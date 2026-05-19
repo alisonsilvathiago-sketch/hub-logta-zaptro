@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import {
   buildFiscalAlerts,
   buildFiscalInsights,
@@ -45,10 +45,11 @@ function saveDismissed(set: Set<string>) {
 export function FiscalIntelligenceProvider({
   children,
   stats = defaultFiscalStats,
-  autoPopup = true,
+  autoPopup: _autoPopup = false,
 }: {
   children: React.ReactNode;
   stats?: FiscalDocStats;
+  /** @deprecated Popups centrais descontinuados — use FiscalAlertsInlinePanel */
   autoPopup?: boolean;
 }) {
   const [dismissed, setDismissed] = useState(loadDismissed);
@@ -61,12 +62,6 @@ export function FiscalIntelligenceProvider({
   const monitoring = useMemo(() => getFiscalMonitoringStatus(activeAlerts), [activeAlerts]);
 
   const refreshIntelligence = useCallback(() => setTick((n) => n + 1), []);
-
-  useEffect(() => {
-    if (!autoPopup || activeAlerts.length === 0) return;
-    const t = window.setTimeout(() => setPopupAlert(activeAlerts[0]), 1800);
-    return () => window.clearTimeout(t);
-  }, [autoPopup, activeAlerts]);
 
   const dismissAlert = useCallback((id: string) => {
     setDismissed((prev) => {
@@ -85,7 +80,9 @@ export function FiscalIntelligenceProvider({
     insights,
     monitoring,
     popupAlert,
-    openPopup: setPopupAlert,
+    openPopup: () => {
+      /* Popups centrais descontinuados — use FiscalAlertsInlinePanel */
+    },
     closePopup: () => setPopupAlert(null),
     dismissAlert,
     refreshIntelligence,

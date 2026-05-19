@@ -58,8 +58,7 @@ import {
 } from '../lib/freteSecurityAudit';
 import {
   FretesIntelligenceProvider,
-  FretesMonitoringBar,
-  FretesAlertPopup,
+  FretesAlertsInlinePanel,
   FretesCentralOperacional,
   FretesFinanceiroInteligente,
   normalizeShipment,
@@ -229,7 +228,7 @@ const Fretes = () => {
 
   if (isDetailPage) {
     return (
-      <FretesIntelligenceProvider shipments={shipmentsNorm} motoristas={drivers} vehicles={vehicles} loading={dataLoading}>
+      <FretesIntelligenceProvider shipments={shipmentsNorm} motoristas={drivers} vehicles={vehicles} loading={dataLoading} autoPopup={false}>
         <div className="logta-page h-full w-full animate-in fade-in duration-500 overflow-y-auto text-left scrollbar-hide">
           <Routes>
             <Route path="lista/:id" element={<FreteDetalheView />} />
@@ -241,7 +240,7 @@ const Fretes = () => {
   }
 
   return (
-    <FretesIntelligenceProvider shipments={shipmentsNorm} motoristas={drivers} vehicles={vehicles} loading={dataLoading}>
+    <FretesIntelligenceProvider shipments={shipmentsNorm} motoristas={drivers} vehicles={vehicles} loading={dataLoading} autoPopup={false}>
     <div className="logta-page h-full w-full space-y-5 overflow-y-auto text-left scrollbar-hide animate-in fade-in duration-700 sm:space-y-8">
       <LogtaModuleHeader
         title="Gestão de Fretes"
@@ -251,7 +250,7 @@ const Fretes = () => {
         onTabQuickAdd={() => setIsNovoFreteOpen(true)}
       />
 
-      <FretesIntelligenceShell />
+      <FretesAlertsInlinePanel />
 
       <FretesExecutiveMetricsBar fallback={metrics} loading={dataLoading} />
 
@@ -460,23 +459,6 @@ const Fretes = () => {
     </FretesIntelligenceProvider>
   );
 };
-
-function FretesIntelligenceShell() {
-  const { popupAlert, closePopup, dismissAlert, activeAlerts } = useFretesIntelligence();
-  return (
-    <>
-      <FretesMonitoringBar />
-      {popupAlert ? (
-        <FretesAlertPopup
-          alert={popupAlert}
-          onClose={closePopup}
-          onDismiss={() => dismissAlert(popupAlert.id)}
-          queueCount={activeAlerts.length}
-        />
-      ) : null}
-    </>
-  );
-}
 
 function FretesExecutiveMetricsBar({
   fallback,
@@ -1136,7 +1118,7 @@ const FreteDetalheView = () => {
         <div className="flex justify-between items-center">
           <div>
             <h3 className="text-sm font-black text-gray-400 uppercase tracking-normal">Acompanhamento de Rota</h3>
-            <p className="text-lg font-black text-gray-900">{frete.origin} → {frete.dest}</p>
+            <p className="text-[21px] font-black leading-tight text-gray-900">{frete.origin} → {frete.dest}</p>
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-400 font-bold uppercase">Previsão / ETA</p>

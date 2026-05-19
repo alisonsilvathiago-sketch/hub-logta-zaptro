@@ -8,12 +8,10 @@ import {
   FinanceiroCalculadoraView,
   FinanceiroCentralOperacional,
   FinanceiroIntelligenceProvider,
-  FinanceiroMonitoringBar,
-  FinanceiroAlertPopup,
+  FinanceiroAlertsInlinePanel,
   computeFinanceiroAnalytics,
   useFinanceiroTransactionNavigation,
 } from '../modules/financeiro';
-import { useFinanceiroIntelligence } from '../modules/financeiro/context/FinanceiroIntelligenceContext';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -176,6 +174,7 @@ const Financeiro = () => {
       shipments={shipments}
       motoristas={motoristas}
       loading={loading}
+      autoPopup={false}
     >
     <div className="logta-page relative w-full min-h-0 flex-1 space-y-8 animate-in fade-in duration-700">
       <LogtaModuleHeader
@@ -186,7 +185,7 @@ const Financeiro = () => {
         onTabQuickAdd={() => setIsNovoLancamentoOpen(true)}
       />
 
-      <FinanceiroIntelligenceShell />
+      <FinanceiroAlertsInlinePanel />
 
       <div className="min-h-0 flex-1 animate-in fade-in duration-500">
         <Routes>
@@ -410,24 +409,6 @@ const Financeiro = () => {
     </FinanceiroIntelligenceProvider>
   );
 };
-
-function FinanceiroIntelligenceShell() {
-  const { popupAlert, closePopup, dismissAlert, activeAlerts } = useFinanceiroIntelligence();
-
-  return (
-    <>
-      <FinanceiroMonitoringBar />
-      {popupAlert ? (
-        <FinanceiroAlertPopup
-          alert={popupAlert}
-          onClose={closePopup}
-          onDismiss={() => dismissAlert(popupAlert.id)}
-          queueCount={activeAlerts.length}
-        />
-      ) : null}
-    </>
-  );
-}
 
 function FinanceiroOperacionalFeaturePage({ transactionCount, saldo }: { transactionCount: number; saldo: number }) {
   const { slug } = useParams();

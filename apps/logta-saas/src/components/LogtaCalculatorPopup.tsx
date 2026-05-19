@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Calculator, Fuel, Gauge, Route, Share2, TrendingUp, X } from 'lucide-react';
 import { showToast } from './Toast';
+import { LogtaCalcKeypad } from './LogtaCalcKeypad';
 import {
   appendCalculatorSnapshot,
   calculatorPublicUrl,
@@ -23,14 +24,26 @@ const TABS: { id: CalcTabId; label: string; icon: typeof Calculator }[] = [
 ];
 
 function parseNum(v: string) {
-  const n = parseFloat(v.replace(/\./g, '').replace(',', '.'));
+  const n = parseFloat(String(v).replace(/\./g, '').replace(',', '.'));
   return Number.isFinite(n) ? n : 0;
 }
+
+function formatNum(n: number) {
+  if (!Number.isFinite(n) || n === 0) return '0';
+  const rounded = Math.round(n * 100) / 100;
+  const [intPart, dec] = String(rounded).split('.');
+  const withDots = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return dec ? `${withDots},${dec}` : withDots;
+}
+
+type FieldId = 'receita' | 'custos' | 'total';
 
 export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
   const [tab, setTab] = useState<CalcTabId>('frete');
   const [history, setHistory] = useState<CalculatorSnapshot[]>(() => loadCalculatorHistory());
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [display, setDisplay] = useState('0');
+  const [activeField, setActiveField] = useState<FieldId>('receita');
 
   const [freteValor, setFreteValor] = useState('12500');
   const [freteCustos, setFreteCustos] = useState('3300');
@@ -38,6 +51,62 @@ export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
   const [lucroCustos, setLucroCustos] = useState('38200');
   const [combTotal, setCombTotal] = useState('8420');
   const [opTotal, setOpTotal] = useState('393600');
+
+  const fields = useMemo(() => {
+    if (tab === 'frete') {
+      return [
+        { id: 'receita' as const, label: 'Receita frete' },
+        { id: 'custos' as const, label: 'Custos' },
+      ];
+    }
+    if (tab === 'lucro') {
+      return [
+        { id: 'receita' as const, label: 'Receita' },
+        { id: 'custos' as const, label: 'Custos' },
+      ];
+    }
+    if (tab === 'combustivel') {
+      return [{ id: 'total' as const, label: 'Combustível' }];
+    }
+    return [{ id: 'total' as const, label: 'Operacional' }];
+  }, [tab]);
+
+  useEffect(() => {
+    setActiveField(fields[0]?.id ?? 'total');
+    setDisplay('0');
+  }, [tab, fields]);
+
+  const getSetter = useCallback(
+    (fieldId: FieldId): [string, (v: string) => void] => {
+      if (tab === 'frete') {
+        return fieldId === 'receita' ? [freteValor, setFreteValor] : [freteCustos, setFreteCustos];
+      }
+      if (tab === 'lucro') {
+        return fieldId === 'receita' ? [lucroReceita, setLucroReceita] : [lucroCustos, setLucroCustos];
+      }
+      if (tab === 'combustivel') return [combTotal, setCombTotal];
+      return [opTotal, setOpTotal];
+    },
+    [tab, freteValor, freteCustos, lucroReceita, lucroCustos, combTotal, opTotal],
+  );
+
+  const applyDisplay = useCallback(() => {
+    const amount = parseNum(display);
+    const [, set] = getSetter(activeField);
+    set(formatNum(amount));
+    setDisplay('0');
+    showToast('success', 'Valor inserido.', 'Calculadora');
+  }, [activeField, display, getSetter]);
+
+  const sumToField = useCallback(() => {
+    const amount = parseNum(display);
+    if (amount === 0) return;
+    const [current, set] = getSetter(activeField);
+    const next = parseNum(current) + amount;
+    set(formatNum(next));
+    setDisplay('0');
+    showToast('success', `Somado: R$ ${amount.toLocaleString('pt-BR')}`, 'Calculadora');
+  }, [activeField, display, getSetter]);
 
   const computed = useMemo(() => {
     if (tab === 'frete') {
@@ -75,6 +144,15 @@ export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
     const t = parseNum(opTotal);
     return { lines: [{ label: 'Custo operacional', value: t }], total: t, title: 'Operacional' };
   }, [tab, freteValor, freteCustos, lucroReceita, lucroCustos, combTotal, opTotal]);
+
+  const fieldValues = useMemo(() => {
+    const map: Record<string, string> = {};
+    fields.forEach((f) => {
+      const [val] = getSetter(f.id as FieldId);
+      map[f.id] = val;
+    });
+    return map;
+  }, [fields, getSetter, freteValor, freteCustos, lucroReceita, lucroCustos, combTotal, opTotal]);
 
   if (!open) return null;
 
@@ -125,6 +203,7 @@ export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
             <X size={18} />
           </button>
         </div>
+
         <div className="flex flex-wrap gap-1.5 border-b border-neutral-800 px-4 py-3">
           {TABS.map((t) => {
             const Icon = t.icon;
@@ -142,25 +221,27 @@ export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
             );
           })}
         </div>
-        <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
-          {tab === 'frete' && (
-            <>
-              <input value={freteValor} onChange={(e) => setFreteValor(e.target.value)} placeholder="Receita R$" className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm font-semibold" />
-              <input value={freteCustos} onChange={(e) => setFreteCustos(e.target.value)} placeholder="Custos R$" className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm font-semibold" />
-            </>
-          )}
-          {tab === 'lucro' && (
-            <>
-              <input value={lucroReceita} onChange={(e) => setLucroReceita(e.target.value)} placeholder="Receita R$" className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm font-semibold" />
-              <input value={lucroCustos} onChange={(e) => setLucroCustos(e.target.value)} placeholder="Custos R$" className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm font-semibold" />
-            </>
-          )}
-          {tab === 'combustivel' && (
-            <input value={combTotal} onChange={(e) => setCombTotal(e.target.value)} placeholder="Total combustível R$" className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm font-semibold" />
-          )}
-          {tab === 'operacional' && (
-            <input value={opTotal} onChange={(e) => setOpTotal(e.target.value)} placeholder="Custo operacional R$" className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm font-semibold" />
-          )}
+
+        <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+          <LogtaCalcKeypad
+            display={display}
+            fields={fields}
+            activeFieldId={activeField}
+            onActiveFieldChange={(id) => setActiveField(id as FieldId)}
+            onDisplayChange={setDisplay}
+            onApply={applyDisplay}
+            onSum={sumToField}
+          />
+
+          <div className="space-y-2 rounded-xl border border-neutral-800 bg-neutral-900/50 px-3 py-2">
+            {fields.map((f) => (
+              <div key={f.id} className="flex justify-between text-[11px]">
+                <span className="text-neutral-500">{f.label}</span>
+                <span className="font-bold tabular-nums text-white">R$ {parseNum(fieldValues[f.id] ?? '0').toLocaleString('pt-BR')}</span>
+              </div>
+            ))}
+          </div>
+
           <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4">
             {computed.lines.map((l) => (
               <div key={l.label} className="mb-2 flex justify-between text-xs">
@@ -173,10 +254,11 @@ export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
               <span className="text-lg font-black text-primary">R$ {computed.total.toLocaleString('pt-BR')}</span>
             </div>
           </div>
+
           {history.length > 0 ? (
             <div>
               <p className="mb-2 text-[10px] font-black uppercase text-neutral-500">Histórico</p>
-              <div className="max-h-28 space-y-2 overflow-y-auto">
+              <div className="max-h-24 space-y-2 overflow-y-auto">
                 {history.slice(0, 5).map((h) => (
                   <div key={h.id} className="rounded-xl bg-neutral-900 px-3 py-2 text-[10px]">
                     <p className="font-bold">{h.title}</p>
@@ -187,6 +269,7 @@ export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
             </div>
           ) : null}
         </div>
+
         <div className="flex gap-2 border-t border-neutral-800 p-4">
           <button type="button" onClick={handleSave} className="flex-1 rounded-xl bg-neutral-800 py-3 text-xs font-bold">
             Salvar

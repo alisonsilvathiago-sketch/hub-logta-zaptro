@@ -4,7 +4,7 @@ import { Activity, Bell, Sparkles } from 'lucide-react';
 import { useFretesIntelligence } from '../context/FretesIntelligenceContext';
 
 export function FretesMonitoringBar() {
-  const { monitoring, activeAlerts, lastScanAt, openPopup } = useFretesIntelligence();
+  const { monitoring, activeAlerts, lastScanAt } = useFretesIntelligence();
 
   if (monitoring.total === 0) {
     return (
@@ -49,14 +49,9 @@ export function FretesMonitoringBar() {
         ) : null}
       </div>
       <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => activeAlerts[0] && openPopup(activeAlerts[0])}
-          className="hub-premium-pill primary"
-          style={{ padding: '8px 14px', fontSize: '10px' }}
-        >
-          <Bell size={14} /> Ver alerta
-        </button>
+        <Link to="/fretes/operacional" className="hub-premium-pill primary" style={{ padding: '8px 14px', fontSize: '10px' }}>
+          <Bell size={14} /> Ver alertas
+        </Link>
         <Link to="/fretes/central" className="hub-premium-pill secondary" style={{ padding: '8px 14px', fontSize: '10px' }}>
           <Activity size={14} /> Central
         </Link>

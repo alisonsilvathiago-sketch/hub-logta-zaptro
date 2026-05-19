@@ -5,8 +5,7 @@ import { useTenant } from '../contexts/TenantContext';
 import { useOperationalData } from '../contexts/OperationalDataContext';
 import {
   RoteirizacaoIntelligenceProvider,
-  RoteirizacaoMonitoringBar,
-  RoteirizacaoAlertPopup,
+  RoteirizacaoAlertsInlinePanel,
   deliveryToMapConfig,
   useRoteirizacaoIntelligence,
   type RouteDeliveryNormalized,
@@ -208,6 +207,7 @@ const Roteirizacao = () => {
       motoristas={motoristas}
       vehicles={vehicles}
       loading={dataLoading}
+      autoPopup={false}
     >
       <RoteirizacaoContent />
     </RoteirizacaoIntelligenceProvider>
@@ -332,9 +332,7 @@ const RoteirizacaoContent = () => {
           <p className="max-w-xl text-sm font-medium leading-snug text-gray-500">
             Central inteligente de rotas — otimização, distribuição e monitoramento em tempo real.
           </p>
-          <div className="mt-4">
-            <RoteirizacaoMonitoringBar />
-          </div>
+          <RoteirizacaoAlertsInlinePanel className="mt-4" />
         </div>
 
         <div className="mb-4 w-full sm:mb-6">
@@ -509,23 +507,9 @@ const RoteirizacaoContent = () => {
         })}
       />
 
-      <RoteirizacaoIntelligenceShell />
     </div>
   );
 };
-
-function RoteirizacaoIntelligenceShell() {
-  const { popupAlert, closePopup, dismissAlert, activeAlerts } = useRoteirizacaoIntelligence();
-  if (!popupAlert) return null;
-  return (
-    <RoteirizacaoAlertPopup
-      alert={popupAlert}
-      onClose={closePopup}
-      onDismiss={() => dismissAlert(popupAlert.id)}
-      queueCount={activeAlerts.length}
-    />
-  );
-}
 
 // --- View Components ---
 
@@ -544,21 +528,12 @@ const PlanejamentoView = ({
   onOptimize: () => void;
   isOptimizing: boolean;
 }) => {
-  const { motoristas, vehicles, activeAlerts, openPopup } = useRoteirizacaoIntelligence();
+  const { motoristas, vehicles } = useRoteirizacaoIntelligence();
   const driver = motoristas[0];
   const vehicle = vehicles[0];
 
   return (
   <div className="space-y-8">
-    {activeAlerts.length > 0 && (
-      <button
-        type="button"
-        onClick={() => openPopup(activeAlerts[0])}
-        className="w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-[11px] font-bold text-amber-800 hover:bg-amber-100"
-      >
-        {activeAlerts.length} alerta(s) de rota — toque para ver
-      </button>
-    )}
     <section>
       <div className="flex justify-between items-center mb-4">
         <h3 className="logta-panel-section-title mb-4">Entregas Pendentes</h3>
@@ -668,7 +643,7 @@ const PlanejamentoView = ({
 };
 
 const OtimizacaoView = () => {
-  const { insights, activeAlerts, openPopup, refreshIntelligence } = useRoteirizacaoIntelligence();
+  const { insights, refreshIntelligence } = useRoteirizacaoIntelligence();
   return (
   <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
     <div className="bg-primary/5 p-6 rounded-[32px] border border-primary/10">
@@ -723,16 +698,6 @@ const OtimizacaoView = () => {
       ))}
     </div>
 
-    {activeAlerts.length > 0 && (
-      <button
-        type="button"
-        onClick={() => openPopup(activeAlerts[0])}
-        className="w-full rounded-2xl border border-primary/20 bg-primary/5 py-3 text-xs font-bold text-primary"
-      >
-        Ver {activeAlerts.length} alerta(s) inteligente(s)
-      </button>
-    )}
-
     <button
       type="button"
       onClick={refreshIntelligence}
@@ -760,7 +725,7 @@ const DEMO_ROTAS: RotasAtivasCard[] = [
 ];
 
 const RotasAtivasView = ({ manualRoutes }: { manualRoutes: ManualRouteRecord[] }) => {
-  const { activeRoutes, activeAlerts, openPopup } = useRoteirizacaoIntelligence();
+  const { activeRoutes } = useRoteirizacaoIntelligence();
 
   const manualCards: RotasAtivasCard[] = manualRoutes.map((m) => ({
     id: m.id,
@@ -792,16 +757,6 @@ const RotasAtivasView = ({ manualRoutes }: { manualRoutes: ManualRouteRecord[] }
         className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-xs font-medium outline-none focus:bg-white focus:border-primary/30 transition-all"
       />
     </div>
-
-    {activeAlerts.length > 0 && (
-      <button
-        type="button"
-        onClick={() => openPopup(activeAlerts[0])}
-        className="mb-2 w-full rounded-xl bg-red-50 px-3 py-2 text-[10px] font-bold text-red-700"
-      >
-        {activeAlerts.filter((a) => a.category === 'entrega' || a.category === 'transito').length || activeAlerts.length} alerta(s) em rotas ativas
-      </button>
-    )}
 
     <div className="space-y-4">
       {routes.map((route) => (

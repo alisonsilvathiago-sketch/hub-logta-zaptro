@@ -64,7 +64,7 @@ export function FinanceiroIntelligenceProvider({
   shipments,
   motoristas,
   loading = false,
-  autoPopup = true,
+  autoPopup = false,
 }: ProviderProps) {
   const [dismissed, setDismissed] = useState<Set<string>>(loadDismissed);
   const [popupAlert, setPopupAlert] = useState<FinanceiroAlert | null>(null);
@@ -102,18 +102,8 @@ export function FinanceiroIntelligenceProvider({
   }, [refreshIntelligence]);
 
   const showNextPopup = useCallback(() => {
-    const next = activeAlerts.find((a) => a.priority === 'critical' || a.priority === 'high') ?? activeAlerts[0];
-    setPopupAlert(next ?? null);
-  }, [activeAlerts]);
-
-  useEffect(() => {
-    if (!autoPopup || loading || popupAlert) return;
-    const critical = activeAlerts.filter((a) => a.priority === 'critical' || a.priority === 'high');
-    if (critical.length > 0) {
-      const t = setTimeout(() => setPopupAlert(critical[0]), 800);
-      return () => clearTimeout(t);
-    }
-  }, [autoPopup, loading, activeAlerts, popupAlert]);
+    document.getElementById('logta-page-alerts')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   const dismissAlert = useCallback((id: string) => {
     setDismissed((prev) => {
@@ -123,14 +113,7 @@ export function FinanceiroIntelligenceProvider({
       return next;
     });
     setPopupAlert(null);
-    setTimeout(() => {
-      const remaining = sortFinanceiroAlerts(
-        alerts.filter((a) => !dismissed.has(a.id) && a.id !== id),
-      );
-      const next = remaining.find((a) => a.priority === 'critical' || a.priority === 'high');
-      if (next) setPopupAlert(next);
-    }, 300);
-  }, [alerts, dismissed]);
+  }, []);
 
   const value: FinanceiroIntelligenceContextValue = {
     alerts,
@@ -140,7 +123,9 @@ export function FinanceiroIntelligenceProvider({
     monitoring,
     loading,
     popupAlert,
-    openPopup: setPopupAlert,
+    openPopup: () => {
+      document.getElementById('logta-page-alerts')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
     closePopup: () => setPopupAlert(null),
     dismissAlert,
     showNextPopup,

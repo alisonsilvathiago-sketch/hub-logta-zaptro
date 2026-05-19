@@ -30,7 +30,7 @@ export function LogtaTransactionDetailModal({ open, transaction, mode, onClose, 
         <p className="text-[10px] font-black uppercase text-primary">
           {mode === 'pagar' ? 'Contas a pagar' : mode === 'receber' ? 'Contas a receber' : 'Detalhe financeiro'}
         </p>
-        <h2 className="mt-2 text-xl font-black">{String(transaction.descricao || transaction.description)}</h2>
+        <h2 className="logta-modal-title logta-modal-title--spaced">{String(transaction.descricao || transaction.description)}</h2>
         <p className="mt-1 text-2xl font-black text-primary">R$ {valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
         <p className="mt-1 text-xs text-neutral-400 uppercase">{String(transaction.categoria || transaction.category)}</p>
 

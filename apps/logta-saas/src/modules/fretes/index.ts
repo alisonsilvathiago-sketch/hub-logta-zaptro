@@ -3,6 +3,7 @@ export {
   useFretesIntelligence,
 } from './context/FretesIntelligenceContext';
 export { FretesAlertPopup } from './components/FretesAlertPopup';
+export { FretesAlertsInlinePanel } from './components/FretesAlertsInlinePanel';
 export { FretesMonitoringBar } from './components/FretesMonitoringBar';
 export { FretesCentralOperacional } from './views/FretesCentralOperacional';
 export { FretesFinanceiroInteligente } from './views/FretesFinanceiroInteligente';

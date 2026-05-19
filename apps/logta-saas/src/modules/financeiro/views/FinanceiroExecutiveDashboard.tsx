@@ -165,28 +165,28 @@ export function FinanceiroExecutiveDashboard({ transactions: _transactions, load
           </div>
         </div>
 
-        <div className="logta-panel-card--dark logta-panel-card--retention p-8">
+        <div className="logta-panel-card--operational logta-panel-card--retention p-8">
           <div className="mb-6 flex items-center gap-2">
             <Sparkles className="text-primary" size={18} />
-            <h3 className="logta-card-heading text-white">IA Financeira</h3>
+            <h3 className="logta-card-heading text-gray-900">IA Financeira</h3>
           </div>
           <div className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="rounded-2xl border border-primary/20 bg-white p-4">
               <p className="text-xs font-bold uppercase tracking-normal text-primary">Previsão de caixa</p>
-              <p className="mt-1 text-xs text-gray-400">
-                Saldo projetado: <strong className="text-white">R$ {analytics.saldo.toLocaleString('pt-BR')}</strong>
+              <p className="mt-1 text-xs text-gray-600">
+                Saldo projetado: <strong className="text-gray-900">R$ {analytics.saldo.toLocaleString('pt-BR')}</strong>
               </p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-xs font-bold uppercase tracking-normal text-yellow-400">Risco</p>
-              <p className="mt-1 text-xs text-gray-400">
-                Inadimplência estimada: <strong className="text-white">{analytics.inadimplenciaEst}%</strong>
+            <div className="rounded-2xl border border-primary/20 bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-normal text-amber-600">Risco</p>
+              <p className="mt-1 text-xs text-gray-600">
+                Inadimplência estimada: <strong className="text-gray-900">{analytics.inadimplenciaEst}%</strong>
               </p>
             </div>
             {analytics.alertasVencimento > 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs font-bold uppercase tracking-normal text-red-400">Vencimentos</p>
-                <p className="mt-1 text-xs text-gray-400">{analytics.alertasVencimento} despesa(s) vencem em 7 dias.</p>
+              <div className="rounded-2xl border border-primary/20 bg-white p-4">
+                <p className="text-xs font-bold uppercase tracking-normal text-red-600">Vencimentos</p>
+                <p className="mt-1 text-xs text-gray-600">{analytics.alertasVencimento} despesa(s) vencem em 7 dias.</p>
               </div>
             ) : null}
           </div>

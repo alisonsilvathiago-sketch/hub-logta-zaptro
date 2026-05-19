@@ -50,7 +50,7 @@ import {
   resolveDemoCompanyId,
   shouldUseLogtaSandbox,
 } from '../lib/seed';
-import { ComercialColaboradorPerfilView } from '../modules/crm';
+import { ComercialColaboradorPerfilView, CrmFinanceiroView } from '../modules/crm';
 import { OrcamentoDashboardView, OrcamentoDetailView } from '../modules/orcamento';
 
 const crmStatusToCol = (status: string) => {
@@ -275,7 +275,7 @@ const CRM = () => {
           <Route path="clientes/:id" element={<ClientePerfilView />} />
           <Route path="vendas" element={<VendasKanban cards={cards} setCards={setCards} setIsAddLeadModalOpen={setIsAddLeadModalOpen} setNewLeadForm={setNewLeadForm} />} />
           <Route path="operacoes" element={<OperacoesKanban opCards={opCards} setOpCards={setOpCards} setSelectedOpCard={setSelectedOpCard} setIsAddOpModalOpen={setIsAddOpModalOpen} setNewOpForm={setNewOpForm} />} />
-          <Route path="financeiro" element={<FinanceiroView />} />
+          <Route path="financeiro" element={<CrmFinanceiroView />} />
           <Route path="inteligencia" element={<InteligenciaView />} />
           <Route path="orcamentos" element={<OrcamentoDashboardView />} />
           <Route path="orcamentos/:id" element={<OrcamentoDetailView />} />
@@ -1475,7 +1475,7 @@ const ClientePerfilView = () => {
                 <p className="mt-5 break-all rounded-2xl border border-neutral-800 bg-neutral-900/60 px-4 py-3 text-sm font-bold text-white">
                   {client.contactEmail}
                 </p>
-                <div className="mt-6 flex flex-wrap gap-2">
+                <div className="mt-6 flex flex-wrap gap-2 py-[30px]">
                   <button
                     type="button"
                     onClick={async () => {
@@ -1522,7 +1522,7 @@ const ClientePerfilView = () => {
 
                   return (
                     <div className="mt-6 flex flex-col gap-2">
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 py-[30px]">
                         <button
                           type="button"
                           onClick={async () => {
@@ -1913,110 +1913,6 @@ const OperacoesKanban = ({
   );
 };
 
-const FinanceiroView = () => {
-  const [isTransferOpen, setIsTransferOpen] = React.useState(false);
-
-  return (
-  <>
-  <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
-    <div className="min-w-0 space-y-6">
-    <div className="logta-panel-card flex min-h-[300px] flex-col p-6 sm:p-8">
-      <h3 className="logta-card-heading mb-6">Faturamento Consolidado por Cliente</h3>
-      <div className="flex flex-1 items-center justify-center">
-        <LogtaEmptyState type="financeiro" onAction={() => setIsTransferOpen(true)} />
-      </div>
-    </div>
-
-      <div className="logta-panel-card p-6 sm:p-8">
-        <h3 className="logta-card-heading mb-6">Últimas Faturas Emitidas</h3>
-        <p className="py-6 text-center text-sm text-gray-400">Nenhuma fatura emitida recentemente.</p>
-      </div>
-    </div>
-
-    <div className="min-w-0 space-y-6">
-    <div className="relative min-h-[300px] overflow-hidden rounded-[20px] bg-primary p-6 text-white shadow-xl shadow-primary/20 sm:p-8">
-        <div className="absolute top-0 right-0 p-8 opacity-20">
-          <DollarSign size={80} />
-        </div>
-        <div className="relative z-10">
-          <h4 className="logta-highlight-label">Crédito Total Disponível</h4>
-          <p className="logta-highlight-value">R$ 0,00</p>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center py-3 border-b border-white/10">
-              <span className="text-sm text-white/70">Limite Global</span>
-              <span className="text-sm font-bold">R$ 0,00</span>
-            </div>
-            <div className="flex justify-between items-center py-3">
-              <span className="text-sm text-white/70">Utilizado</span>
-              <span className="text-sm font-bold">0%</span>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsTransferOpen(true)}
-            className="mt-6 w-full rounded-xl bg-white/15 py-3 text-xs font-bold text-white backdrop-blur-sm transition-all hover:bg-white/25"
-          >
-            Fazer transferência
-          </button>
-        </div>
-      </div>
-
-      <div className="logta-panel-card p-6 sm:p-8">
-        <h3 className="logta-card-heading mb-6">Alertas Financeiros</h3>
-        <p className="py-4 text-sm text-gray-400">Nenhum alerta no momento.</p>
-      </div>
-    </div>
-  </div>
-
-  {isTransferOpen && (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsTransferOpen(false)} />
-      <div className="relative w-full max-w-lg rounded-[32px] border border-neutral-800 bg-[#18191B] p-8 text-white shadow-2xl animate-in zoom-in duration-200">
-        <LogtaModalHeader icon={Zap} title="Transferência" onClose={() => setIsTransferOpen(false)} />
-        <form
-          className="mt-6 space-y-4 text-left"
-          onSubmit={(e) => {
-            e.preventDefault();
-            showToast('success', 'Transferência registrada. Integração bancária em homologação.', 'CRM Financeiro');
-            setIsTransferOpen(false);
-          }}
-        >
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase text-neutral-400">Destino (PIX / conta)</label>
-            <input
-              required
-              placeholder="Chave PIX ou dados bancários"
-              className="w-full rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-sm font-semibold text-white outline-none focus:border-primary"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase text-neutral-400">Valor</label>
-              <input
-                required
-                type="text"
-                placeholder="R$ 0,00"
-                className="w-full rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-sm font-semibold text-white outline-none focus:border-primary"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase text-neutral-400">Tipo</label>
-              <select className="w-full rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-sm font-semibold text-white outline-none focus:border-primary">
-                <option>PIX</option>
-                <option>TED</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" className="w-full rounded-xl bg-primary py-4 text-xs font-bold text-white shadow-lg shadow-primary/20 hover:opacity-90">
-            Confirmar transferência
-          </button>
-        </form>
-      </div>
-    </div>
-  )}
-  </>
-  );
-};
 
 const InteligenciaView = () => {
   const [reportExportOpen, setReportExportOpen] = React.useState(false);

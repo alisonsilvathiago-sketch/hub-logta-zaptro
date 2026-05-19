@@ -1,10 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Activity, Bell, Sparkles } from 'lucide-react';
+import { LOGTA_PAGE_ALERTS_ID } from '../../../components/LogtaAlertsInlinePanel';
 import { useRoteirizacaoIntelligence } from '../context/RoteirizacaoIntelligenceContext';
 
+function scrollToPageAlerts() {
+  document.getElementById(LOGTA_PAGE_ALERTS_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 export function RoteirizacaoMonitoringBar() {
-  const { monitoring, activeAlerts, lastScanAt, openPopup } = useRoteirizacaoIntelligence();
+  const { monitoring, lastScanAt } = useRoteirizacaoIntelligence();
 
   if (monitoring.total === 0) {
     return (
@@ -51,11 +56,11 @@ export function RoteirizacaoMonitoringBar() {
       <div className="flex gap-1.5">
         <button
           type="button"
-          onClick={() => activeAlerts[0] && openPopup(activeAlerts[0])}
+          onClick={scrollToPageAlerts}
           className="rounded-lg bg-primary px-2.5 py-1.5 text-[9px] font-bold text-white hover:opacity-90"
         >
           <Bell size={12} className="inline mr-1" />
-          Ver
+          Ver alertas
         </button>
         <Link to="/roteirizacao/eficiencia" className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[9px] font-bold text-gray-700 hover:bg-gray-50">
           <Activity size={12} className="inline mr-1" />

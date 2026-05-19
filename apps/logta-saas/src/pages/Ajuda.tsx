@@ -175,7 +175,7 @@ const Ajuda = () => {
               ✕
             </button>
             
-            <h3 className="text-xl font-black text-white mb-2">Planos de Assinatura Logta</h3>
+            <h3 className="logta-modal-title mb-2">Planos de Assinatura Logta</h3>
             <p className="text-xs text-neutral-400 font-bold mb-8 uppercase">Encontre o plano ideal para a sua transportadora.</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

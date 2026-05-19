@@ -34,8 +34,9 @@ function AlertCard({ alert, onOpen }: { alert: FretesAlert; onOpen: () => void }
 }
 
 export function FretesCentralOperacional() {
-  const { activeAlerts, alerts, insights, analytics, monitoring, openPopup, refreshIntelligence, lastScanAt } =
+  const { activeAlerts, alerts, insights, analytics, monitoring, refreshIntelligence, lastScanAt } =
     useFretesIntelligence();
+  const navigate = useNavigate();
 
   const grupos = {
     atraso: activeAlerts.filter((a) => a.category === 'atraso' || a.category === 'entrega'),
@@ -119,7 +120,7 @@ export function FretesCentralOperacional() {
                   <h3 className="logta-panel-section-title mb-4">Atrasos & entregas</h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     {grupos.atraso.map((a) => (
-                      <AlertCard key={a.id} alert={a} onOpen={() => openPopup(a)} />
+                      <AlertCard key={a.id} alert={a} onOpen={() => navigate(a.actionPath)} />
                     ))}
                   </div>
                 </section>
@@ -129,7 +130,7 @@ export function FretesCentralOperacional() {
                   <h3 className="logta-panel-section-title mb-4">Motoristas & jornada</h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     {grupos.motorista.map((a) => (
-                      <AlertCard key={a.id} alert={a} onOpen={() => openPopup(a)} />
+                      <AlertCard key={a.id} alert={a} onOpen={() => navigate(a.actionPath)} />
                     ))}
                   </div>
                 </section>
@@ -139,7 +140,7 @@ export function FretesCentralOperacional() {
                   <h3 className="logta-panel-section-title mb-4">Custos & margem</h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     {grupos.custo.map((a) => (
-                      <AlertCard key={a.id} alert={a} onOpen={() => openPopup(a)} />
+                      <AlertCard key={a.id} alert={a} onOpen={() => navigate(a.actionPath)} />
                     ))}
                   </div>
                 </section>

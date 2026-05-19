@@ -309,7 +309,7 @@ const SegurosView = () => {
                 <span className="text-[9px] font-black text-primary bg-primary/10 px-2 py-1 rounded uppercase tracking-normal block w-fit mb-2">
                   {selectedPolicy.branch} • Apólice Ativa
                 </span>
-                <h3 className="text-2xl font-black text-white leading-none tracking-tight">
+                <h3 className="logta-modal-title leading-none tracking-tight">
                   {selectedPolicy.id}
                 </h3>
                 <p className="text-xs text-neutral-400 font-bold uppercase tracking-normal mt-1.5">

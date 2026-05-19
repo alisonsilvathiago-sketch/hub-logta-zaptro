@@ -21,13 +21,13 @@ const priorityBadge: Record<FinanceiroAlertPriority, string> = {
   low: 'bg-gray-50 text-gray-600 border-gray-100',
 };
 
-function AlertCard({ alert, onOpen }: { alert: FinanceiroAlert; onOpen: () => void }) {
+function AlertCard({ alert }: { alert: FinanceiroAlert }) {
   const navigate = useNavigate();
 
   return (
     <button
       type="button"
-      onClick={onOpen}
+      onClick={() => navigate(alert.actionPath)}
       className="logta-panel-card w-full p-6 text-left transition-all hover:border-primary/30 hover:shadow-md"
     >
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -61,7 +61,6 @@ export function FinanceiroCentralOperacional() {
     insights,
     analytics,
     monitoring,
-    openPopup,
     dismissAlert,
     refreshIntelligence,
     lastScanAt,
@@ -164,7 +163,7 @@ export function FinanceiroCentralOperacional() {
                   <h3 className="logta-panel-section-title mb-4">Pagamentos & fornecedores</h3>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {pendentes.map((a) => (
-                      <AlertCard key={a.id} alert={a} onOpen={() => openPopup(a)} />
+                      <AlertCard key={a.id} alert={a} />
                     ))}
                   </div>
                 </section>
@@ -174,7 +173,7 @@ export function FinanceiroCentralOperacional() {
                   <h3 className="logta-panel-section-title mb-4">Recebimentos & clientes</h3>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {recebimentos.map((a) => (
-                      <AlertCard key={a.id} alert={a} onOpen={() => openPopup(a)} />
+                      <AlertCard key={a.id} alert={a} />
                     ))}
                   </div>
                 </section>
@@ -184,7 +183,7 @@ export function FinanceiroCentralOperacional() {
                   <h3 className="logta-panel-section-title mb-4">Operação logística</h3>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {operacional.map((a) => (
-                      <AlertCard key={a.id} alert={a} onOpen={() => openPopup(a)} />
+                      <AlertCard key={a.id} alert={a} />
                     ))}
                   </div>
                 </section>
@@ -194,7 +193,7 @@ export function FinanceiroCentralOperacional() {
                   <h3 className="logta-panel-section-title mb-4">IA & fluxo de caixa</h3>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {iaAlerts.map((a) => (
-                      <AlertCard key={a.id} alert={a} onOpen={() => openPopup(a)} />
+                      <AlertCard key={a.id} alert={a} />
                     ))}
                   </div>
                 </section>

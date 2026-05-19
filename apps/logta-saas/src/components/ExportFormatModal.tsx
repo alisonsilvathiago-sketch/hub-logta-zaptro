@@ -59,7 +59,7 @@ export function ExportFormatModal({
         >
           <X size={18} />
         </button>
-        <h2 id="export-format-title" className="pr-10 text-xl font-black text-white">
+        <h2 id="export-format-title" className="logta-modal-title pr-10">
           {title}
         </h2>
         <p className="mt-2 text-sm font-medium text-neutral-400">{description}</p>
