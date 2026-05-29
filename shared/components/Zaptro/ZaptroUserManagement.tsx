@@ -277,7 +277,7 @@ const styles: Record<string, any> = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   titleArea: { display: 'flex', flexDirection: 'column', gap: '4px' },
   title: { fontSize: '22px', fontWeight: '700', color: '#0F172A', margin: 0 },
-  subtitle: { fontSize: '14px', color: '#64748B', fontWeight: '500' },
+  subtitle: { fontSize: '14px', color: '#949494', fontWeight: '500' },
   addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: '#CCFF00', color: '#000', border: 'none', borderRadius: '14px', fontWeight: '700', cursor: 'pointer' },
   
   searchBar: { display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: ZAPTRO_FIELD_BG, borderRadius: '16px', padding: '12px 20px', border: '1px solid #EBEBEC' },
@@ -295,9 +295,9 @@ const styles: Record<string, any> = {
   userEmail: { fontSize: '12px', color: '#94A3B8' },
   roleBadge: { padding: '4px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', color: '#0F172A' },
   accessIcons: { display: 'flex', gap: '6px' },
-  accessIcon: { width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#FBFBFC', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  accessIcon: { width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#FBFBFC', color: '#949494', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   actions: { display: 'flex', justifyContent: 'flex-end', gap: '8px' },
-  iconBtn: { width: '34px', height: '34px', borderRadius: '10px', border: 'none', backgroundColor: '#FBFBFC', color: '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  iconBtn: { width: '34px', height: '34px', borderRadius: '10px', border: 'none', backgroundColor: '#FBFBFC', color: '#949494', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 
   form: { display: 'flex', flexDirection: 'column', gap: '20px' },
   field: { display: 'flex', flexDirection: 'column', gap: '8px' },

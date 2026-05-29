@@ -123,11 +123,11 @@ const PublicDeliveryAction: React.FC = () => {
           <div className="animate-fade-in">
              <div style={styles.infoBox}>
                 <div style={styles.infoItem}>
-                   <MapPin size={18} color="#94A3B8" />
+                   <MapPin size={18} color="#949494" />
                    <span>Endereço de Entrega Cadastrado</span>
                 </div>
                 <div style={styles.infoItem}>
-                   <Clock size={18} color="#94A3B8" />
+                   <Clock size={18} color="#949494" />
                    <span>Previsão: Hoje, entre 14h e 18h</span>
                 </div>
              </div>
@@ -202,8 +202,8 @@ const styles: Record<string, any> = {
   title: { color: '#FFF', fontSize: '22px', fontWeight: '800', margin: 0 },
   subtitle: { color: '#666', fontSize: '14px', fontWeight: '600', margin: 0 },
   infoBox: { backgroundColor: '#1A1A1A', borderRadius: '20px', padding: '20px', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px' },
-  infoItem: { display: 'flex', alignItems: 'center', gap: '12px', color: '#94A3B8', fontSize: '13px', fontWeight: '500' },
-  instruction: { color: '#94A3B8', fontSize: '15px', lineHeight: '1.6', margin: '0 0 32px' },
+  infoItem: { display: 'flex', alignItems: 'center', gap: '12px', color: '#949494', fontSize: '13px', fontWeight: '500' },
+  instruction: { color: '#949494', fontSize: '15px', lineHeight: '1.6', margin: '0 0 32px' },
   actions: { display: 'flex', flexDirection: 'column', gap: '12px' },
   primaryBtn: { backgroundColor: '#D9FF00', color: '#000', border: 'none', padding: '16px', borderRadius: '16px', fontSize: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' },
   secondaryBtn: { backgroundColor: '#222', color: '#FFF', border: 'none', padding: '16px', borderRadius: '16px', fontSize: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' },

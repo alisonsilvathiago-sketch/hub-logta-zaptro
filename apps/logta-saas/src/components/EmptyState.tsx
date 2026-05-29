@@ -91,8 +91,9 @@ const emptyStates = {
   },
 
   rh: {
-    title: "Sua equipe ainda não está aqui",
-    description: "Cadastre colaboradores e motoristas para gerenciar sua força de trabalho.",
+    title: "Nenhum colaborador cadastrado ainda",
+    description:
+      "Cadastre colaboradores e motoristas pelo RH. A equipe unificada aparece aqui para todos os usuários da transportadora.",
     button: "Novo colaborador",
     icon: <Users size={40} />,
   },

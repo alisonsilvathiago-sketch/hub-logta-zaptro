@@ -94,8 +94,15 @@ export function resolveFinanceiroTransactionRoute(
     return '/crm/clientes/cli-prime';
   }
 
-  const plateMatch = text.match(/\b[A-Z]{3}-\d{4}\b/i);
-  if (plateMatch) return '/frota/dashboard';
+  const plateMatch = text.match(/\b[A-Z]{3}-?\d[A-Z0-9]\d{2}\b/i) || text.match(/\b[A-Z]{3}-\d{4}\b/i);
+  if (plateMatch) {
+    const rawPlate = plateMatch[0].toUpperCase();
+    const isMaintenance = cat.includes('manutencao') || cat.includes('pneus') || /manutenção|pneu|troca|revisão/i.test(text);
+    if (isMaintenance) {
+      return `/frota/manutencao/${encodeURIComponent(rawPlate)}`;
+    }
+    return `/frota/veiculos/${encodeURIComponent(rawPlate)}`;
+  }
 
   const byCat = routeByCategory(cat, isReceita);
   if (byCat) return byCat;

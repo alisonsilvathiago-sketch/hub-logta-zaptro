@@ -75,7 +75,7 @@ function TeamMemberThumb({
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: variant === 'header' ? 'rgba(255,255,255,0.22)' : '#f1f5f9',
-          color: variant === 'header' ? '#fff' : '#64748b',
+          color: variant === 'header' ? '#fff' : '#949494',
         }}
       >
         <Hash size={Math.round(size * 0.45)} strokeWidth={2.2} />
@@ -135,24 +135,8 @@ function threadKeyFromInboundRow(row: { room_id?: string | null; sender_id?: str
   return null;
 }
 
-function mockClientSummary(query: string): ClientSummary {
-  const raw = query.trim();
-  const digits = onlyDigits(raw);
-  const isCnpj = digits.length === 14;
-  const isCpf = digits.length === 11;
-  const name =
-    raw.includes('@') ? raw.split('@')[0].replace(/[._-]/g, ' ') : isCnpj ? 'Transportadora Exemplo LTDA' : isCpf ? 'Cliente PF (exemplo)' : raw || 'Cliente sem nome';
-  const docLabel = isCnpj ? `CNPJ ${digits.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5')}` : isCpf ? `CPF ${digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4')}` : raw || '—';
-  const phoneDigits = digits.length >= 10 && digits.length <= 13 ? (digits.startsWith('55') ? digits : `55${digits}`) : '5511999887766';
-  return {
-    name,
-    doc: docLabel,
-    route: 'Campinas, SP → Recife, PE',
-    product: isCnpj ? 'Carga seca — 24 pallets (contrato)' : 'Carga fracionada — 6 pallets',
-    eta: 'Previsão: 3 a 5 dias úteis',
-    phoneDigits,
-  };
-}
+// Removido mockClientSummary
+
 
 const Chat: React.FC = () => {
   const { profile, isMaster } = useAuth();
@@ -363,14 +347,31 @@ const Chat: React.FC = () => {
     setIsOpen(false);
   };
 
-  const runClientLookup = () => {
+  const runClientLookup = async () => {
     const q = clientQuery.trim();
     if (!q) {
-      toastError('Digite nome, CPF ou CNPJ para buscar o resumo.');
+      toastError('Digite nome ou documento para buscar.');
       return;
     }
-    setClientSummary(mockClientSummary(q));
-    toastSuccess('Resumo de exemplo gerado. Em produção isto vem do CRM / TMS.');
+    try {
+      const { data, error } = await db.from('clients').select('*').ilike('name', `%${q}%`).limit(1);
+      if (data && data.length > 0) {
+         const c = data[0];
+         setClientSummary({
+           name: c.name,
+           doc: c.cnpj || c.cpf || '—',
+           route: 'Em Operação', // Fica como label padrão se não tivermos fretes ativos fáceis de associar
+           product: 'Diversos',
+           eta: 'Consultar portal',
+           phoneDigits: c.phone ? onlyDigits(c.phone) : ''
+         });
+         toastSuccess('Cliente localizado.');
+      } else {
+         toastError('Nenhum cliente encontrado com este nome/documento.');
+      }
+    } catch (err) {
+      toastError('Erro ao buscar cliente.');
+    }
   };
 
   const openWhatsAppForClient = () => {
@@ -452,7 +453,7 @@ const Chat: React.FC = () => {
             </button>
           </header>
           <div style={styles.zaptroQuickSearchRow}>
-            <Search size={18} color="#64748b" />
+            <Search size={18} color="#949494" />
             <input
               style={styles.zaptroQuickInput}
               placeholder="Nome, CPF ou CNPJ do cliente…"
@@ -548,7 +549,7 @@ const Chat: React.FC = () => {
       {isSearching ? (
         <div style={styles.searchPanel}>
            <div style={styles.searchBar}>
-              <Search size={16} color="#94a3b8" />
+              <Search size={16} color="#949494" />
               <input
                 ref={teamSearchInputRef}
                 placeholder="Nome ou função (ex.: Maria comercial)…"
@@ -581,7 +582,7 @@ const Chat: React.FC = () => {
       ) : (
         <>
           <div style={styles.recipientSearchStrip}>
-            <Search size={16} color="#94a3b8" />
+            <Search size={16} color="#949494" />
             <input
               type="search"
               enterKeyHint="search"
@@ -627,7 +628,7 @@ const Chat: React.FC = () => {
           <div style={styles.messageArea} ref={scrollRef}>
             {messages.length === 0 ? (
               <div style={styles.emptyThread}>
-                <Users size={28} color="#94a3b8" style={{ marginBottom: 10 }} />
+                <Users size={28} color="#949494" style={{ marginBottom: 10 }} />
                 <p style={styles.emptyThreadTitle}>Mensagens só entre equipa</p>
                 <p style={styles.emptyThreadText}>
                   Usa a <strong>pesquisa acima</strong> para escolher um <strong>colega</strong> ou um <strong>setor</strong>. A mensagem chega <strong>na hora</strong> a quem está nessa conversa; com o painel fechado ou outro destinatário, vês a{' '}
@@ -658,7 +659,7 @@ const Chat: React.FC = () => {
           <div style={styles.inputArea}>
             <input type="file" ref={fileInputRef} style={{display: 'none'}} onChange={handleFileUpload} />
             <div style={styles.inputWrapper}>
-              <button style={{...styles.hBtn, color: '#64748b'}} onClick={() => fileInputRef.current?.click()}><Paperclip size={18} /></button>
+              <button style={{...styles.hBtn, color: '#949494'}} onClick={() => fileInputRef.current?.click()}><Paperclip size={18} /></button>
               <input 
                 style={styles.input} 
                 placeholder="Mensagem..." 
@@ -802,8 +803,8 @@ const styles: Record<string, any> = {
     boxSizing: 'border-box' as const,
   },
   recipientSearchRowName: { display: 'block', fontSize: 13, fontWeight: 600, color: '#1e293b' },
-  recipientSearchRowMeta: { display: 'block', fontSize: 11, fontWeight: 600, color: '#64748b', marginTop: 2 },
-  recipientSearchEmpty: { margin: 0, padding: '16px 20px', fontSize: 13, fontWeight: 600, color: '#64748b' },
+  recipientSearchRowMeta: { display: 'block', fontSize: 11, fontWeight: 600, color: '#949494', marginTop: 2 },
+  recipientSearchEmpty: { margin: 0, padding: '16px 20px', fontSize: 13, fontWeight: 600, color: '#949494' },
 
   searchPanel: { flex: 1, display: 'flex', flexDirection: 'column' as const, backgroundColor: 'white' },
   searchBar: { padding: '16px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #e8e8e8' },
@@ -811,7 +812,7 @@ const styles: Record<string, any> = {
   contactResults: { flex: 1, overflowY: 'auto' as const },
   contactRow: { padding: '12px 24px', display: 'flex', gap: '12px', alignItems: 'center', cursor: 'pointer', borderBottom: '1px solid #e8e8e8', '&:hover': { backgroundColor: '#ebebeb' } },
   contactName: { fontSize: '13px', fontWeight: '700', color: '#1e293b', margin: 0 },
-  contactRole: { fontSize: '11px', color: '#64748b', margin: 0 },
+  contactRole: { fontSize: '11px', color: '#949494', margin: 0 },
 
   messageArea: { flex: 1, padding: '20px', overflowY: 'auto' as const, display: 'flex', flexDirection: 'column' as const, gap: '16px' },
   emptyThread: {
@@ -824,10 +825,10 @@ const styles: Record<string, any> = {
     alignItems: 'center',
   },
   emptyThreadTitle: { margin: 0, fontSize: '14px', fontWeight: 600, color: '#1e293b' },
-  emptyThreadText: { margin: '8px 0 0', fontSize: '12px', color: '#64748b', lineHeight: 1.5, fontWeight: 600 },
+  emptyThreadText: { margin: '8px 0 0', fontSize: '12px', color: '#949494', lineHeight: 1.5, fontWeight: 600 },
   messageItem: { maxWidth: '80%', display: 'flex', flexDirection: 'column' as const },
   msgHeader: { marginBottom: '4px' },
-  msgUser: { fontSize: '11px', fontWeight: '700', color: '#64748b' },
+  msgUser: { fontSize: '11px', fontWeight: '700', color: '#949494' },
   msgBubble: { padding: '10px 14px', borderRadius: '16px', fontSize: '14px', lineHeight: '1.4' },
   attachmentLink: { display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', marginTop: '6px', color: 'inherit', textDecoration: 'underline' },
   
@@ -920,7 +921,7 @@ const styles: Record<string, any> = {
     flex: 1,
   },
   zaptroQuickName: { fontSize: '16px', fontWeight: 600, margin: 0, color: '#0f172a' },
-  zaptroQuickDoc: { fontSize: '12px', color: '#64748b', margin: '4px 0 12px' },
+  zaptroQuickDoc: { fontSize: '12px', color: '#949494', margin: '4px 0 12px' },
   zaptroQuickList: {
     listStyle: 'none',
     margin: 0,
@@ -929,7 +930,7 @@ const styles: Record<string, any> = {
     flexDirection: 'column' as const,
     gap: '10px',
     fontSize: '13px',
-    color: '#334155',
+    color: '#6B6B6B',
     lineHeight: 1.45,
   },
   zaptroQuickWaBtn: {

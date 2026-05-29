@@ -9,7 +9,9 @@ import { useNavigate } from 'react-router-dom';
 import { useZaptroTheme } from '../context/ZaptroThemeContext';
 import { ZAPTRO_SHADOW } from '../constants/zaptroShadows';
 import { notifyZaptro } from '../components/Zaptro/ZaptroNotificationSystem';
-import Pagination from '@shared/components/Pagination';
+import ZaptroListPagination from '../components/Zaptro/ZaptroListPagination';
+import { supabase } from '../lib/supabase';
+import { Activity } from 'lucide-react';
 
 // Lead Statuses
 const STAGES = [
@@ -33,30 +35,73 @@ export const ZaptroLeadsTab: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState<'all' | string>('all');
 
-  // Mock Leads
-  const [leads, setLeads] = useState([
-    { id: 'l1', name: 'Transportes Transville', phone: '(11) 98877-6655', stage: 'negociacao', value: 'R$ 12.500,00', date: '2024-04-23', tags: ['Urgente', 'Alto Valor'], owner: 'Alison Silva' },
-    { id: 'l2', name: 'Logística Express', phone: '(21) 97766-5544', stage: 'novo', value: '—', date: '2024-04-24', tags: ['Novo'], owner: 'João Santos' },
-    { id: 'l3', name: 'Distribuidora Alvorada', phone: '(47) 99911-2233', stage: 'orcamento', value: 'R$ 4.200,00', date: '2024-04-22', tags: ['Recorrente'], owner: 'Alison Silva' },
-    { id: 'l4', name: 'Mercado Central Ltda', phone: '(31) 98888-0000', stage: 'atendimento', value: '—', date: '2024-04-24', tags: ['Frio'], owner: 'Ana Souza' },
-  ]);
-
-  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalLeads, setTotalLeads] = useState(0);
 
-  const filteredLeads = leads.filter(l => {
-    const q = searchTerm.toLowerCase();
-    const matchesText = l.name.toLowerCase().includes(q) || 
-                       l.phone.includes(searchTerm);
-    const matchesStage = stageFilter === 'all' || l.stage === stageFilter;
-    return matchesText && matchesStage;
-  });
+  const fetchLeads = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
 
-  const totalPages = Math.ceil(filteredLeads.length / rowsPerPage);
-  const paginatedLeads = filteredLeads.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
+      const { data: profile } = await supabase
+        .from('perfis')
+        .select('empresa_id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!profile?.empresa_id) return;
+
+      let query = supabase
+        .from('crm_leads')
+        .select('*', { count: 'exact' })
+        .eq('empresa_id', profile.empresa_id);
+
+      if (searchTerm) {
+        query = query.or(`nome.ilike.%${searchTerm}%,telefone.ilike.%${searchTerm}%`);
+      }
+
+      if (stageFilter !== 'all') {
+        query = query.eq('status', stageFilter);
+      }
+
+      const from = (currentPage - 1) * rowsPerPage;
+      const to = from + rowsPerPage - 1;
+      
+      const { data, count, error } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+
+      setLeads(data?.map(l => ({
+        id: l.id,
+        name: l.nome,
+        phone: l.telefone || '—',
+        stage: l.status || 'novo',
+        value: l.valor ? `R$ ${Number(l.valor).toLocaleString('pt-BR')}` : '—',
+        date: l.created_at,
+        tags: l.tags || [],
+        owner: l.responsavel_nome || 'Sistema'
+      })) || []);
+      
+      setTotalLeads(count || 0);
+    } catch (err) {
+      console.error('Erro ao buscar leads:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm, stageFilter, currentPage, rowsPerPage]);
+
+  React.useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
+
+  const filteredLeads = leads; // Já filtrado na query
 
   const getStageLeads = (stageId: string) => filteredLeads.filter(l => l.stage === stageId);
 
@@ -85,7 +130,7 @@ export const ZaptroLeadsTab: React.FC = () => {
               {stageLeads.map(lead => (
                 <div 
                   key={lead.id} 
-                  onClick={() => navigate(`/clientes/leads/perfil/${lead.id}`)}
+                  onClick={() => navigate(`/app/crm/leads/${lead.id}`)}
                   className="hover-scale"
                   style={{ 
                     backgroundColor: surface, 
@@ -163,15 +208,24 @@ export const ZaptroLeadsTab: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {!paginatedLeads.length ? (
+            {loading ? (
+              <tr>
+                <td colSpan={5} style={{ padding: 48, textAlign: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                    <Activity className="animate-spin" size={32} color={palette.lime} />
+                    <span style={{ fontSize: 14, fontWeight: 700, color: palette.textMuted }}>Carregando leads...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : !leads.length ? (
               <tr>
                 <td colSpan={5} style={{ padding: 48, textAlign: 'center', color: palette.textMuted, fontWeight: 700 }}>Nenhum lead encontrado.</td>
               </tr>
             ) : (
-              paginatedLeads.map(lead => {
+              leads.map(lead => {
                 const stage = STAGES.find(s => s.id === lead.stage);
                 return (
-                  <tr key={lead.id} className="hover-scale" onClick={() => navigate(`/clientes/leads/perfil/${lead.id}`)} style={{ borderBottom: `1px solid ${border}` }}>
+                  <tr key={lead.id} className="hover-scale" onClick={() => navigate(`/app/crm/leads/${lead.id}`)} style={{ borderBottom: `1px solid ${border}` }}>
                     <td style={{ padding: '20px 24px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                         <div style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: palette.lime, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{lead.name[0]}</div>
@@ -196,7 +250,7 @@ export const ZaptroLeadsTab: React.FC = () => {
                       </div>
                     </td>
                     <td style={{ padding: '20px 24px' }}>
-                      <button className="hover-scale" style={{ padding: '10px 16px', backgroundColor: surface2, color: palette.text, border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }} onClick={(e) => { e.stopPropagation(); navigate(`/clientes/leads/perfil/${lead.id}`); }}>
+                      <button className="hover-scale" style={{ padding: '10px 16px', backgroundColor: surface2, color: palette.text, border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }} onClick={(e) => { e.stopPropagation(); navigate(`/app/crm/leads/${lead.id}`); }}>
                         Ver Detalhes <ArrowRight size={16} />
                       </button>
                     </td>
@@ -208,13 +262,14 @@ export const ZaptroLeadsTab: React.FC = () => {
         </table>
       </div>
 
-      <Pagination 
+      <ZaptroListPagination
         currentPage={currentPage}
-        totalItems={filteredLeads.length}
+        totalPages={Math.max(1, Math.ceil(totalLeads / rowsPerPage))}
+        totalItems={totalLeads}
         itemsPerPage={rowsPerPage}
         onPageChange={setCurrentPage}
         onItemsPerPageChange={(val) => {
-          setRowsPerPage(val as number);
+          setRowsPerPage(val);
           setCurrentPage(1);
         }}
       />
@@ -257,21 +312,33 @@ export const ZaptroLeadsTab: React.FC = () => {
       {/* Toolbar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 12, flex: 1, minWidth: '300px' }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, backgroundColor: surface2, padding: '12px 18px', borderRadius: 16, border: `1px solid ${border}` }}>
-            <Search size={18} color={palette.textMuted} />
-            <input 
-              placeholder="Buscar leads por nome ou telefone..." 
+          <div
+            className="zaptro-field-wrap"
+            style={{ flex: 1, backgroundColor: surface2, borderColor: border }}
+          >
+            <Search size={16} color={palette.textMuted} />
+            <input
+              placeholder="Buscar leads por nome ou telefone..."
               value={searchTerm}
-              onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              style={{ border: 'none', outline: 'none', fontSize: 14, fontWeight: 600, width: '100%', backgroundColor: 'transparent', color: palette.text }} 
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              style={{ color: palette.text }}
             />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', backgroundColor: surface2, border: `1px solid ${border}`, borderRadius: 16 }}>
+          <div
+            className="zaptro-field-wrap"
+            style={{ flex: '0 1 180px', backgroundColor: surface2, borderColor: border, gap: 8 }}
+          >
             <Filter size={16} color={palette.textMuted} />
             <select
               value={stageFilter}
-              onChange={(e) => { setStageFilter(e.target.value); setCurrentPage(1); }}
-              style={{ border: 'none', outline: 'none', fontSize: 13, fontWeight: 700, backgroundColor: 'transparent', color: palette.text, cursor: 'pointer', padding: '12px 0', fontFamily: 'inherit', appearance: 'none' }}
+              onChange={(e) => {
+                setStageFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              style={{ color: palette.text, fontFamily: 'inherit' }}
             >
               <option value="all">Filtro: Todos</option>
               {STAGES.map(s => (
@@ -298,14 +365,18 @@ export const ZaptroLeadsTab: React.FC = () => {
               <ListIcon size={16} />
             </button>
           </div>
-          <button className="hover-scale" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', backgroundColor: 'rgba(217, 255, 0, 0.14)', color: '#000', border: '1px solid rgba(217, 255, 0, 1)', borderRadius: 16, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+          <button className="hub-premium-pill dark">
             <Plus size={18} strokeWidth={2.5} /> Novo Lead
           </button>
         </div>
       </div>
 
       {/* Main Content */}
-      {viewMode === 'kanban' ? renderKanban() : renderList()}
+      {loading && viewMode === 'kanban' ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+          <Activity className="animate-spin" size={48} color={palette.lime} />
+        </div>
+      ) : viewMode === 'kanban' ? renderKanban() : renderList()}
     </div>
   );
 };

@@ -100,6 +100,9 @@ import {
   showWaDesktopNotificationIfAllowed,
 } from '../lib/zaptroWaMessageNotifications';
 import { whatsapp } from '../lib/whatsapp';
+import { resolveCompanyWhatsappInstance } from '../lib/whatsappInbox';
+import { getConnectionState, sendMessage as sendEvolutionMessage, activateWhatsappInbox } from '../services/evolution.service';
+import { logWaFlow, logWaFlowError, markWaWebhookReceived } from '../lib/whatsappFlowDiagnostic';
 
 const LIME = '#D9FF00';
  
@@ -196,7 +199,7 @@ function persistInboxStarred(ids: Set<string>) {
 }
 
 function isZaptroDemoConversationId(id: string): boolean {
-  return id.startsWith('zaptro-demo-');
+  return false;
 }
 
 function onlyDigits(s: string | null | undefined): string {
@@ -378,6 +381,7 @@ const WhatsAppPremiumContent: React.FC = () => {
   }, [searchParams, setSearchParams]);
   
   const [activeSession, setActiveSession] = useState<string | null>(null);
+  const [connectionStartTime, setConnectionStartTime] = useState<string | null>(null);
   /** Verificação Evolution / gateway — animação «a conectar» no painel direito enquanto `checking`. */
   const [waGatewayStatus, setWaGatewayStatus] = useState<'checking' | 'connected' | 'offline'>('checking');
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -761,13 +765,13 @@ const WhatsAppPremiumContent: React.FC = () => {
       return;
     }
     
-    // Se não encontrou, cria uma conversa virtual para podermos enviar a 1ª mensagem
-    const digits = onlyDigits(decoded);
-    if (digits.length >= 8) {
+    // Se não encontrou, cria uma conversa virtual para podermos
+    const cleanNumber = onlyDigits(decoded);
+    if (cleanNumber.length >= 8) {
       const virtualChat: Conversation = {
-        id: `virtual-${digits}`,
-        sender_number: digits,
-        sender_name: digits,
+        id: `virtual-${cleanNumber}`,
+        sender_number: cleanNumber,
+        sender_name: identity?.name || cleanNumber,
         company_id: profile?.company_id || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -775,7 +779,13 @@ const WhatsAppPremiumContent: React.FC = () => {
         unread_count: 0,
         is_group: false,
       };
+
+      // Add the virtual chat to the conversations list so it appears in the UI sidebar
+      setConversations((prev) => [...prev, virtualChat]);
+      setMessages([]);
       setSelectedChat(virtualChat);
+      navigate(zaptroWhatsappInboxThreadPath(cleanNumber));
+      notifyZaptro('success', 'WhatsApp', `Conversa iniciada com ${identity?.name || cleanNumber} (${identity?.type || 'NOVO'})`);
     } else {
       if (conversations.length > 0) {
         notifyZaptro(
@@ -842,22 +852,49 @@ const WhatsAppPremiumContent: React.FC = () => {
 
     const findActiveSession = async () => {
       try {
-        const instanceName = `instance_${companyId.substring(0, 8)}`;
-        const { data } = await supabaseZaptro.functions.invoke('evolution-gateway', {
-          body: { action: 'status', instanceName, companyId },
-        });
+        const instanceName = await resolveCompanyWhatsappInstance(companyId, profile?.id);
+        const live = await getConnectionState(instanceName);
         if (cancelled) return;
-        if (data?.connected) {
-          setActiveSession(instanceName);
+
+        const { data: row } = await supabaseZaptro
+          .from('whatsapp_instances')
+          .select('status, instance_id')
+          .eq('company_id', companyId)
+          .maybeSingle();
+
+        const dbConnected = row?.status === 'connected';
+        const resolvedInstance = row?.instance_id || instanceName;
+
+        if (live.connected || dbConnected) {
+          setActiveSession(resolvedInstance);
+          setConnectionStartTime(new Date().toISOString());
           setWaGatewayStatus('connected');
+          logWaFlow('QR_CONNECTED', { source: 'WhatsAppPremium/findActiveSession', instance: resolvedInstance });
+          logWaFlow('EVOLUTION_CONNECTED', {
+            source: 'WhatsAppPremium/findActiveSession',
+            instance: resolvedInstance,
+            liveConnected: live.connected,
+            dbConnected,
+          });
+          void activateWhatsappInbox(companyId, resolvedInstance).catch((e) => {
+            logWaFlowError(e instanceof Error ? e.message : String(e), {
+              step: 'activateWhatsappInbox/inbox',
+              instance: resolvedInstance,
+            });
+          });
         } else {
           setActiveSession(null);
+          setConnectionStartTime(null);
+          setMessages([]);
           setWaGatewayStatus('offline');
         }
       } catch (e) {
+        logWaFlowError(e instanceof Error ? e.message : String(e), { step: 'WhatsAppPremium/findActiveSession' });
         console.error('Erro ao verificar sessão:', e);
         if (!cancelled) {
           setActiveSession(null);
+          setConnectionStartTime(null);
+          setMessages([]);
           setWaGatewayStatus('offline');
         }
       }
@@ -870,7 +907,7 @@ const WhatsAppPremiumContent: React.FC = () => {
   }, [profile?.company_id]);
 
   const fetchConversationsFromDb = useCallback(
-    async (opts?: { manageLoading?: boolean }) => {
+    async (opts?: { manageLoading?: boolean; autoOpenFirst?: boolean }) => {
       if (!profile?.company_id) return;
       try {
         let query = supabaseZaptro
@@ -883,9 +920,15 @@ const WhatsAppPremiumContent: React.FC = () => {
           query = query.or(`assigned_to.eq.${profile.id},assigned_to.is.null`);
         }
 
-        const { data, error } = await query.order('last_customer_message_at', { ascending: false });
+        const { data, error } = await query.order('updated_at', { ascending: false });
 
-        if (!error) setConversations(data || []);
+        if (!error && data) {
+          setConversations(data || []);
+          if (opts?.autoOpenFirst && data.length > 0 && !selectedChatRef.current) {
+            setSelectedChat(data[0]);
+            logWaFlow('UI_UPDATED', { source: 'autoOpenFirst', conversationId: data[0].id });
+          }
+        }
       } catch (err) {
         console.error('Erro ao carregar conversas:', err);
       } finally {
@@ -903,16 +946,29 @@ const WhatsAppPremiumContent: React.FC = () => {
 
     const channel = supabaseZaptro
       .channel('whatsapp_realtime_v3')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_conversations' }, () => {
-        void fetchConversationsFromDb({ manageLoading: false });
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_conversations' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          logWaFlow('CHAT_CREATED', { source: 'realtime/whatsapp_conversations', id: (payload.new as { id?: string })?.id });
+        }
+        void fetchConversationsFromDb({ manageLoading: false, autoOpenFirst: true });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_instances' }, (payload) => {
-        const row = payload.new as any;
-        if (row && row.instance_id === `instance_${profile.company_id.substring(0, 8)}`) {
-          setWaGatewayStatus(row.status === 'connected' ? 'connected' : 'offline');
+        const row = payload.new as { company_id?: string; instance_id?: string; status?: string };
+        if (row?.company_id === profile.company_id) {
+          const connected = row.status === 'connected';
+          setWaGatewayStatus(connected ? 'connected' : 'offline');
+          if (connected && row.instance_id) {
+            setActiveSession(row.instance_id);
+            setConnectionStartTime(new Date().toISOString());
+            void fetchConversationsFromDb({ manageLoading: false });
+          }
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          logWaFlow('MESSAGE_LISTENER_STARTED', { channel: 'whatsapp_realtime_v3', companyId: profile.company_id });
+        }
+      });
 
     return () => {
       supabaseZaptro.removeChannel(channel);
@@ -923,13 +979,16 @@ const WhatsAppPremiumContent: React.FC = () => {
     const sel = selectedChatRef.current;
     if (!sel || sel.id !== conversationId) return;
     if (isZaptroDemoConversationId(sel.id)) return;
-    const { data } = await supabaseZaptro
+    const query = supabaseZaptro
       .from('whatsapp_messages')
       .select('*')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true });
+    
+    const filteredQuery = connectionStartTime ? query.gt('created_at', connectionStartTime) : query;
+    const { data } = await filteredQuery;
     if (data) setMessages(data);
-  }, []);
+  }, [connectionStartTime]);
 
   // 1.5 Carregar fluxo de automação ativo
   useEffect(() => {
@@ -957,7 +1016,8 @@ const WhatsAppPremiumContent: React.FC = () => {
     const companyId = profile?.company_id;
     if (!companyId || !text) return;
 
-    const instanceId = `instance_${companyId.substring(0, 8)}`;
+    const instanceId =
+      activeSession || (await resolveCompanyWhatsappInstance(companyId, profile?.id));
     const options = Array.isArray(flow.options) ? flow.options : [];
     
     // Procura por match exato ou numérico (1, 2, 3...)
@@ -979,10 +1039,18 @@ const WhatsAppPremiumContent: React.FC = () => {
           .eq('id', conversationId);
           
         if (match.response) {
-          await whatsapp.sendMessage(instanceId, messageRow.from_number || messageRow.to_number, match.response);
+          await sendEvolutionMessage(
+            messageRow.from_number || messageRow.to_number,
+            match.response,
+            instanceId,
+          );
         }
       } else if (match.response) {
-        await whatsapp.sendMessage(instanceId, messageRow.from_number || messageRow.to_number, match.response);
+        await sendEvolutionMessage(
+          messageRow.from_number || messageRow.to_number,
+          match.response,
+          instanceId,
+        );
       }
     } else if (['oi', 'olá', 'bom dia', 'boa tarde', 'boa noite', 'menu', 'ajuda'].includes(text)) {
       // Se mandar uma saudação, manda a mensagem de boas-vindas com o menu
@@ -991,10 +1059,14 @@ const WhatsAppPremiumContent: React.FC = () => {
         if (options.length > 0) {
           fullMsg += '\n\n' + options.map((o: any, i: number) => `${i + 1} - ${o.label}`).join('\n');
         }
-        await whatsapp.sendMessage(instanceId, messageRow.from_number || messageRow.to_number, fullMsg);
+        await sendEvolutionMessage(
+          messageRow.from_number || messageRow.to_number,
+          fullMsg,
+          instanceId,
+        );
       }
     }
-  }, [profile?.company_id]);
+  }, [profile?.company_id, profile?.id, activeSession]);
 
   // Novas mensagens (entrada): som, notificação do sistema, lista e thread aberta
   useEffect(() => {
@@ -1010,6 +1082,23 @@ const WhatsAppPremiumContent: React.FC = () => {
           const dir = String(row.direction ?? '').toLowerCase();
           const convId = String(row.conversation_id ?? '');
           if (!convId) return;
+
+          logWaFlow('MESSAGE_EVENT_RECEIVED', {
+            conversationId: convId,
+            direction: dir,
+            messageId: row.id,
+          });
+
+          if (dir === 'in') {
+            markWaWebhookReceived({
+              source: 'inferred/whatsapp_messages INSERT',
+              conversationId: convId,
+              messageId: row.id,
+            });
+          }
+
+          logWaFlow('MESSAGE_RECEIVED', { conversationId: convId, direction: dir });
+          logWaFlow('MESSAGE_SAVED', { conversationId: convId, direction: dir, messageId: row.id });
 
           if (dir === 'in') {
             const preview = String(row.content ?? 'Nova mensagem').slice(0, 140);
@@ -1034,11 +1123,19 @@ const WhatsAppPremiumContent: React.FC = () => {
             void processAutomationFlow(automationFlow, row, convId);
           }
 
-          void fetchConversationsFromDb({ manageLoading: false });
+          void fetchConversationsFromDb({ manageLoading: false, autoOpenFirst: true });
           void refetchMessagesIfSelected(convId);
+          logWaFlow('UI_UPDATED', { source: 'whatsapp_messages INSERT', conversationId: convId, direction: dir });
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          logWaFlow('MESSAGE_LISTENER_STARTED', {
+            channel: `whatsapp_messages_notify_${profile.company_id}`,
+            companyId: profile.company_id,
+          });
+        }
+      });
 
     return () => {
       supabaseZaptro.removeChannel(channel);
@@ -1110,11 +1207,14 @@ const WhatsAppPremiumContent: React.FC = () => {
     }
 
     const fetchMessages = async () => {
-      const { data } = await supabaseZaptro
+      const query = supabaseZaptro
         .from('whatsapp_messages')
         .select('*')
         .eq('conversation_id', selectedChat.id)
         .order('created_at', { ascending: true });
+        
+      const filteredQuery = connectionStartTime ? query.gt('created_at', connectionStartTime) : query;
+      const { data } = await filteredQuery;
       if (data) setMessages(data);
     };
 
@@ -1321,21 +1421,26 @@ const WhatsAppPremiumContent: React.FC = () => {
     setSending(true);
 
     try {
-      const instanceName = profile?.company_id ? `instance_${profile.company_id.substring(0, 8)}` : 'default';
-      const { data, error } = await supabaseZaptro.functions.invoke('evolution-gateway', {
-        body: { 
-          action: 'send-message',
-          number: selectedChat.sender_number,
-          text: text,
-          instanceName: instanceName,
-          companyId: profile?.company_id
-        }
+      const instanceName =
+        activeSession ||
+        (profile?.company_id
+          ? await resolveCompanyWhatsappInstance(profile.company_id, profile.id)
+          : 'zaptro');
+      await sendEvolutionMessage(selectedChat.sender_number, text, instanceName);
+      await supabaseZaptro.from('whatsapp_messages').insert({
+        conversation_id: selectedChat.id,
+        company_id: profile.company_id,
+        content: text,
+        direction: 'out',
+        to_number: selectedChat.sender_number,
+        role: 'assistant',
+        created_at: new Date().toISOString(),
       });
-
-      if (error || !data.success) throw new Error(error?.message || data.error || 'Erro no envio');
+      void refetchMessagesIfSelected(selectedChat.id);
+      void fetchConversationsFromDb({ manageLoading: false });
       toastSuccess('Mensagem enviada!');
-    } catch (error: any) {
-      toastError(error.message || 'Falha ao enviar.');
+    } catch (error: unknown) {
+      toastError(error instanceof Error ? error.message : 'Falha ao enviar.');
     } finally {
       setSending(false);
     }
@@ -1360,11 +1465,9 @@ const WhatsAppPremiumContent: React.FC = () => {
       const instanceId = `instance_${profile?.company_id?.substring(0, 8)}`;
       const check = await whatsapp.checkWhatsAppNumber(instanceId, cleanNumber);
       
-      if (!check.exists) {
-        setQuickCallChecking(false);
-        setQuickCallError('WhatsApp não instalado ou número inválido neste terminal.');
-        notifyZaptro('error', 'WhatsApp', 'O número informado não possui uma conta de WhatsApp ativa.');
-        return;
+      if (!check?.exists) {
+        // Show warning but do NOT block the flow – the number may still be reachable via Evolution.
+        notifyZaptro('warning', 'WhatsApp', 'Número não reconhecido como WhatsApp ativo, mas tentaremos abrir a conversa.');
       }
     } catch (err) {
       console.error('Check error:', err);
@@ -1449,16 +1552,10 @@ const WhatsAppPremiumContent: React.FC = () => {
     const menuText = `Olá! Bem-vindo ao atendimento Zaptro.\n\nPor favor, escolha uma opção para direcionarmos seu contato:\n\n1 - COMERCIAL\n2 - SUPORTE\n3 - FINANCEIRO\n4 - LOGÍSTICA\n\nResponda apenas o número da opção desejada.`;
 
     try {
-      const instanceName = profile?.company_id ? `instance_${profile.company_id.substring(0, 8)}` : 'default';
-      await supabaseZaptro.functions.invoke('evolution-gateway', {
-        body: { 
-          action: 'send-message',
-          number: selectedChat.sender_number,
-          text: menuText,
-          instanceName: instanceName,
-          companyId: profile?.company_id
-        }
-      });
+      const instanceName =
+        activeSession ||
+        (await resolveCompanyWhatsappInstance(profile.company_id, profile.id));
+      await sendEvolutionMessage(selectedChat.sender_number, menuText, instanceName);
       notifyZaptro('info', 'WhatsApp', 'Menu de automação enviado ao cliente.');
     } catch (err) {
       console.error('Error sending automation menu:', err);
@@ -2061,21 +2158,21 @@ const WhatsAppPremiumContent: React.FC = () => {
     }
 
     try {
-      const instanceName = profile?.company_id ? `instance_${profile.company_id.substring(0, 8)}` : 'default';
-      await supabaseZaptro.functions.invoke('evolution-gateway', {
-        body: { 
-          action: 'send-message',
-          number: selectedChat.sender_number,
-          text: text,
-          instanceName: instanceName
-        }
-      });
-      setMessages(prev => [...prev, {
-        id: `system-handover-${Date.now()}`,
-        content: text,
-        direction: 'out',
-        created_at: new Date().toISOString()
-      }]);
+      const instanceName =
+        activeSession ||
+        (profile?.company_id
+          ? await resolveCompanyWhatsappInstance(profile.company_id, profile.id)
+          : 'zaptro');
+      await sendEvolutionMessage(selectedChat.sender_number, text, instanceName);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `system-handover-${Date.now()}`,
+          content: text,
+          direction: 'out',
+          created_at: new Date().toISOString(),
+        },
+      ]);
     } catch (err) {
       console.error('Erro ao enviar mensagem de handover:', err);
     }
@@ -2225,46 +2322,37 @@ const WhatsAppPremiumContent: React.FC = () => {
           <div style={{ flex: 1, overflowY: 'auto' }}>
             <div style={{ padding: '8px 0' }}>
               <button 
+                className="hub-premium-pill dark"
                 style={{
-                  ...styles.newChatOption,
-                  backgroundColor: '#f4f4f4',
                   margin: '0 30px 12px',
                   width: 'calc(100% - 60px)',
-                  borderRadius: 16,
                   padding: '16px 24px',
-                  boxShadow: 'none'
+                  justifyContent: 'flex-start'
                 }}
                 onClick={() => {
                   setNewContactModalOpen(true);
                   setNewChatPanelOpen(false);
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.filter = 'brightness(0.95)')}
-                onMouseLeave={(e) => (e.currentTarget.style.filter = 'none')}
               >
                 <div style={{ ...styles.newChatIconWrap, backgroundColor: '#000', border: 'none' }}><UserPlus size={22} color={LIME} /></div>
-                <span style={{ fontWeight: 800, color: '#000', fontSize: 16 }}>Novo contato</span>
+                <span style={{ fontWeight: 800, color: '#FFF', fontSize: 16 }}>Novo contato</span>
               </button>
 
               <button 
+                className="hub-premium-pill whatsapp"
                 style={{
-                  ...styles.newChatOption,
-                  backgroundColor: 'rgba(217, 255, 0, 0.1)',
                   margin: '0 30px',
                   width: 'calc(100% - 60px)',
-                  borderRadius: 16,
                   padding: '16px 24px',
-                  boxShadow: 'none',
-                  border: `1px solid ${LIME}`
+                  justifyContent: 'flex-start'
                 }}
                 onClick={() => {
                   setQuickCallModalOpen(true);
                   setNewChatPanelOpen(false);
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.filter = 'brightness(1.1)')}
-                onMouseLeave={(e) => (e.currentTarget.style.filter = 'none')}
               >
-                <div style={{ ...styles.newChatIconWrap, backgroundColor: LIME, border: 'none' }}><Phone size={22} color="#000" /></div>
-                <span style={{ fontWeight: 800, color: '#000', fontSize: 16 }}>Chamar</span>
+                <div style={{ ...styles.newChatIconWrap, backgroundColor: '#FFF', border: 'none' }}><Phone size={22} color="#25D366" /></div>
+                <span style={{ fontWeight: 800, fontSize: 16 }}>Chamar</span>
               </button>
             </div>
 
@@ -3223,16 +3311,8 @@ const WhatsAppPremiumContent: React.FC = () => {
                     </p>
                     <button
                       onClick={() => void handleClaimConversation()}
-                      style={{
-                        width: '100%',
-                        padding: '14px',
-                        borderRadius: 14,
-                        backgroundColor: 'rgba(217, 255, 0, 0.14)',
-                        color: '#000',
-                        border: '1px solid rgba(217, 255, 0, 1)',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
+                      className="hub-premium-pill whatsapp"
+                      style={{ width: '100%' }}
                     >
                       {claiming ? 'A processar...' : 'Assumir Atendimento'}
                     </button>
@@ -3248,7 +3328,11 @@ const WhatsAppPremiumContent: React.FC = () => {
                   <div style={{ padding: '10px 16px', borderRadius: 12, backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                     <Lock size={16} color="#ef4444" />
                     <span style={{ fontSize: 12, fontWeight: 600, color: palette.text, flex: 1 }}>Conversa atribuída a outro agente. Como Admin, você pode intervir ou assumir o controle total.</span>
-                    <button onClick={handleInterruptConversation} style={{ padding: '6px 12px', borderRadius: 8, backgroundColor: '#ef4444', color: '#fff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                    <button 
+                      onClick={handleInterruptConversation} 
+                      className="hub-premium-pill dark"
+                      style={{ fontSize: 11, padding: '8px 16px' }}
+                    >
                       {interrupting ? '...' : 'Assumir agora'}
                     </button>
                   </div>
@@ -4630,7 +4714,7 @@ const WhatsAppPremiumContent: React.FC = () => {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ position: 'relative', marginBottom: 8 }}>
-            <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} />
+            <Search size={16} color="#949494" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} />
             <input 
               type="text" 
               placeholder="Pesquisar por nome ou telefone..."
@@ -4678,7 +4762,7 @@ const WhatsAppPremiumContent: React.FC = () => {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: '#000' }}>{contact.name}</div>
-                <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>{contact.phone} • {contact.role}</div>
+                <div style={{ fontSize: 12, color: '#949494', fontWeight: 600 }}>{contact.phone} • {contact.role}</div>
               </div>
             </button>
           ))}
@@ -4809,7 +4893,7 @@ const WhatsAppPremiumContent: React.FC = () => {
         width="500px"
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <p style={{ margin: 0, fontSize: 13, color: '#64748b', fontWeight: 600 }}>
+          <p style={{ margin: 0, fontSize: 13, color: '#949494', fontWeight: 600 }}>
             Selecione um orçamento ativo para enviar ao cliente.
           </p>
           {[
@@ -4844,7 +4928,7 @@ const WhatsAppPremiumContent: React.FC = () => {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: '#000' }}>{quote.id} • {quote.destiny}</div>
-                <div style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>{quote.value} • <span style={{ color: quote.status === 'Aprovado' ? '#10b981' : '#f59e0b' }}>{quote.status}</span></div>
+                <div style={{ fontSize: 13, color: '#949494', fontWeight: 600 }}>{quote.value} • <span style={{ color: quote.status === 'Aprovado' ? '#10b981' : '#f59e0b' }}>{quote.status}</span></div>
               </div>
             </button>
           ))}
@@ -5083,7 +5167,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px dashed',
     fontSize: 12,
     fontWeight: 700,
-    color: '#64748B',
+    color: '#949494',
   },
   newChatOption: {
     width: '100%',

@@ -92,14 +92,14 @@ const CompanySubscription: React.FC = () => {
 
            <div style={styles.details}>
               <div style={styles.detailItem}>
-                 <Calendar size={18} color="#94a3b8" />
+                 <Calendar size={18} color="#949494" />
                  <div>
                     <label style={styles.dL}>Próximo Vencimento</label>
                     <p style={styles.dV}>{sub?.next_due_date ? new Date(sub.next_due_date).toLocaleDateString() : 'A definir'}</p>
                  </div>
               </div>
               <div style={styles.detailItem}>
-                 <CreditCard size={18} color="#94a3b8" />
+                 <CreditCard size={18} color="#949494" />
                  <div>
                     <label style={styles.dL}>Método de Pagamento</label>
                     <p style={styles.dV}>PIX / Boleto Bancário via Asaas</p>
@@ -156,19 +156,19 @@ const styles = {
   container: { padding: '40px', backgroundColor: '#f4f4f4', minHeight: '100vh' },
   header: { marginBottom: '40px' },
   title: { fontSize: '28px', fontWeight: '700', color: '#1e293b' },
-  subtitle: { fontSize: '15px', color: '#64748b' },
+  subtitle: { fontSize: '15px', color: '#949494' },
   main: { display: 'grid', gridTemplateColumns: '1fr 340px', gap: '32px' },
   planCard: { backgroundColor: 'white', padding: '40px', borderRadius: '32px', border: '1px solid #e2e8f0', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.05)' },
   planHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
   planBadge: { padding: '6px 14px', backgroundColor: '#ebebeb', color: '#475569', borderRadius: '10px', fontSize: '11px', fontWeight: '600', letterSpacing: '1px' },
   planPrice: { fontSize: '32px', fontWeight: '700', color: '#1e293b' },
-  perMonth: { fontSize: '14px', color: '#94a3b8', fontWeight: '500' },
+  perMonth: { fontSize: '14px', color: '#949494', fontWeight: '500' },
   statusBox: { marginBottom: '32px' },
   statusOk: { display: 'flex', alignItems: 'center', gap: '8px', padding: '16px', backgroundColor: '#ecfdf5', color: '#10b981', borderRadius: '16px', fontSize: '14px', fontWeight: '700' },
   statusAlert: { display: 'flex', alignItems: 'center', gap: '8px', padding: '16px', backgroundColor: '#fff1f2', color: '#f43f5e', borderRadius: '16px', fontSize: '14px', fontWeight: '700' },
   details: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '40px' },
   detailItem: { display: 'flex', alignItems: 'center', gap: '16px' },
-  dL: { fontSize: '12px', color: '#94a3b8', fontWeight: '600', display: 'block' },
+  dL: { fontSize: '12px', color: '#949494', fontWeight: '600', display: 'block' },
   dV: { fontSize: '15px', color: '#1e293b', fontWeight: '600' },
   payBtn: { width: '100%', padding: '18px', backgroundColor: '#1e293b', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '600', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', transition: 'all 0.2s' },
   paymentSelector: { display: 'flex', gap: '12px', marginBottom: '20px' },
@@ -177,7 +177,7 @@ const styles = {
   infoSide: { display: 'flex', flexDirection: 'column' as const, gap: '24px' },
   infoCard: { padding: '24px', backgroundColor: 'white', borderRadius: '24px', border: '1px solid #e2e8f0' },
   infoTitle: { fontSize: '16px', fontWeight: '600', color: '#1e293b', marginTop: '16px', marginBottom: '8px' },
-  infoText: { fontSize: '13px', color: '#64748b', lineHeight: '1.5' }
+  infoText: { fontSize: '13px', color: '#949494', lineHeight: '1.5' }
 };
 
 export default CompanySubscription;

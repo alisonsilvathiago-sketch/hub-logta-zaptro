@@ -72,9 +72,9 @@ const ZaptroFuelCenter: React.FC = () => {
   }, [displayRows]);
 
   const cardBg = isDark ? '#0F172A' : '#FFFFFF';
-  const cardBorder = isDark ? '#334155' : '#E5E7EB';
+  const cardBorder = isDark ? '#6B6B6B' : '#E5E7EB';
   const textMain = isDark ? '#F8FAFC' : '#0F172A';
-  const textSub = isDark ? '#94A3B8' : '#64748B';
+  const textSub = isDark ? '#949494' : '#949494';
 
   return (
     <ZaptroLayout>
@@ -104,7 +104,7 @@ const ZaptroFuelCenter: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px' }}>
             <div style={{ borderRadius: '24px', padding: '20px', background: '#000000', display: 'grid', gap: '12px' }}>
               <div style={{ borderRadius: '16px', border: '1px solid rgba(148,163,184,0.35)', background: '#111827', padding: '14px' }}>
-                <div style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 700 }}>Média nacional</div>
+                <div style={{ fontSize: '11px', color: '#949494', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 700 }}>Média nacional</div>
                 <div style={{ fontSize: '34px', color: '#FFFFFF', fontWeight: 800, marginTop: '4px' }}>R$ {averageBrazil.toFixed(2)}</div>
                 <div style={{ fontSize: '12px', color: '#CBD5E1', marginTop: '5px' }}>
                   {latestFuelUpdate ? `Atualizado às ${new Date(latestFuelUpdate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : 'Sem atualização recente'}
@@ -157,7 +157,7 @@ const ZaptroFuelCenter: React.FC = () => {
           <div style={{ width: '100%', height: 280 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={displayRows.map((item) => ({ name: item.meta.label, value: Number(item.data?.price || 0), color: item.meta.color }))}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#E2E8F0'} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#6B6B6B' : '#E2E8F0'} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />
                 <YAxis axisLine={false} tickLine={false} />
                 <Tooltip />

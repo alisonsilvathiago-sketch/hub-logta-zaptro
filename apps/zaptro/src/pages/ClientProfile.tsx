@@ -108,25 +108,6 @@ const ClientProfile: React.FC = () => {
       setAuditLogs(logs || []);
 
       if (data) setClient(data);
-      else {
-        // Fallback mock para demonstração
-        setClient({
-          id,
-          name: 'Indústria Metalúrgica Precision S.A.',
-          handle: '@precision_sa',
-          cnpj: '12.345.678/0001-99',
-          email: 'contato@precision.com.br',
-          phone: '(11) 98765-4321',
-          address: 'Av. Industrial, 450 - São Paulo, SP',
-          website: 'www.precision.com.br',
-          status: 'ACTIVE',
-          since: '12/05/2023',
-          totalSpent: 452800.00,
-          pending: 12500.00,
-          ordersCount: 142,
-          company_id: profile?.company_id || 'demo'
-        });
-      }
 
       // Carregar Arquivos do Cliente no Drive
       const { data: driveFiles } = await supabase
@@ -147,14 +128,29 @@ const ClientProfile: React.FC = () => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   };
 
-  const chartData = [
-    { name: 'Jan', value: 32000 },
-    { name: 'Fev', value: 45000 },
-    { name: 'Mar', value: 42000 },
-    { name: 'Abr', value: 58000 },
-    { name: 'Mai', value: 51200 },
-    { name: 'Jun', value: 64000 },
-  ];
+  const [chartData, setChartData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchFinance = async () => {
+      const { data } = await supabase
+        .from('transacoes')
+        .select('valor, created_at')
+        .eq('status', 'pago')
+        .order('created_at', { ascending: true });
+      
+      if (data) {
+        // Group by month
+        const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+        const grouped = months.map(m => ({ name: m, value: 0 }));
+        data.forEach(t => {
+          const m = new Date(t.created_at).getMonth();
+          if (m < 6) grouped[m].value += Number(t.valor);
+        });
+        setChartData(grouped);
+      }
+    };
+    fetchFinance();
+  }, [id]);
 
   const handleShare = () => {
     const url = window.location.href;
@@ -262,7 +258,7 @@ const ClientProfile: React.FC = () => {
                           <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 700, fill: '#94a3b8'}} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 700, fill: '#949494'}} />
                       <YAxis hide />
                       <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} />
                       <Area type="monotone" dataKey="value" stroke="var(--primary)" strokeWidth={4} fillOpacity={1} fill="url(#colorVal)" />
@@ -294,7 +290,7 @@ const ClientProfile: React.FC = () => {
 
           <div style={{...styles.actionRow, marginBottom: '24px', display: 'flex', gap: '16px', alignItems: 'center'}}>
              <div style={{flex: 1, position: 'relative'}}>
-                <Search size={16} style={{position: 'absolute', left: '16px', top: '16px', color: '#94a3b8'}} />
+                <Search size={16} style={{position: 'absolute', left: '16px', top: '16px', color: '#949494'}} />
                 <input placeholder="Filtrar pedidos, produtos ou motoristas..." style={{...styles.btnAction, width: '100%', paddingLeft: '48px', height: '48px', textAlign: 'left'}} />
              </div>
              <div style={{display: 'flex', gap: '12px', height: '48px'}}>
@@ -304,40 +300,12 @@ const ClientProfile: React.FC = () => {
           </div>
 
           <div className="animate-fade-in" style={styles.historyList}>
-            {activeTab === 'overview' && [
-              { id: '10254', date: '09/04/2026', items: '45x Bobinas de Aço', status: 'ENTREGUE', val: 'R$ 12.400', driver: 'Carlos Oliveira', vehicle: 'Volvo FH 540 (ABC-1234)', arrival: '14:35', notes: 'Entrega realizada sem avarias.' },
-              { id: '10248', date: '07/04/2026', items: '12x Motores Elétricos', status: 'ENTREGUE', val: 'R$ 8.900', driver: 'Ricardo Lima', vehicle: 'Scania R450 (XYZ-9988)', arrival: '09:20', notes: 'Cliente solicitou descarga prioritária.' }
-            ].map((item, idx) => (
-              <div key={idx} style={{...styles.historyItem, gridTemplateColumns: 'min-content 1.5fr 1fr 1fr min-content', gap: '32px'}}>
-                <div style={styles.histIcon}>
-                   {item.status === 'ENTREGUE' ? <CheckCircle2 size={24} color="#10b981" /> : <AlertTriangle size={24} color="#ef4444" />}
-                </div>
-                <div style={styles.histMain}>
-                   <h4 style={{margin: 0, fontSize: '15px', fontWeight: '600'}}>Pedido #{item.id} — {item.items}</h4>
-                   <p style={{margin: 0, fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px'}}>
-                      <span style={{fontWeight: '700', color: 'var(--primary)'}}>Motorista:</span> {item.driver} 
-                      <span style={{margin: '0 8px', color: '#cbd5e1'}}>|</span>
-                      <span style={{fontWeight: '700', color: 'var(--primary)'}}>Veículo:</span> {item.vehicle}
-                   </p>
-                </div>
-                <div>
-                   <p style={{margin: 0, fontSize: '11px', color: '#94a3b8', fontWeight: '600'}}>CHEGADA / LOCAL</p>
-                   <p style={{margin: 0, fontSize: '13px', fontWeight: '700', color: '#1e293b', marginTop: '4px'}}>{item.date} às {item.arrival}</p>
-                </div>
-                <div>
-                   <p style={{margin: 0, fontSize: '11px', color: '#94a3b8', fontWeight: '600'}}>VALOR PAGO</p>
-                   <p style={{margin: 0, fontSize: '13px', fontWeight: '700', color: '#10b981', marginTop: '4px'}}>{formatCurrency(parseFloat(item.val.replace('R$ ', '').replace('.', '')))}</p>
-                </div>
-                <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
-                    <span style={{
-                      ...styles.histStatus,
-                      backgroundColor: item.status === 'ENTREGUE' ? '#ecfdf5' : '#fef2f2',
-                      color: item.status === 'ENTREGUE' ? '#10b981' : '#ef4444',
-                      textAlign: 'center'
-                    }}>{item.status}</span>
-                </div>
+            {activeTab === 'overview' && (
+              <div style={{ padding: '40px', textAlign: 'center', backgroundColor: 'white', borderRadius: '24px', border: '1px dashed var(--border)' }}>
+                 <History size={48} color="var(--text-muted)" style={{ opacity: 0.2, marginBottom: '16px' }} />
+                 <p style={{ color: 'var(--text-muted)', margin: 0 }}>Nenhum pedido recente encontrado para este cliente.</p>
               </div>
-            ))}
+            )}
           </div>
 
             {activeTab === 'finance' && (
@@ -351,24 +319,7 @@ const ClientProfile: React.FC = () => {
                <div style={styles.historyList}>
                   <div style={{...styles.featureCard, padding: '24px', backgroundColor: '#fcfcfc', border: '1px dashed var(--border)', borderRadius: '16px', marginBottom: '20px'}}>
                      <h4 style={{margin: 0, fontSize: '14px'}}>Sincronização com WhatsApp Intelligence</h4>
-                     <p style={{fontSize: '12px', color: 'var(--text-muted)'}}>Abaixo estão as últimas mensagens trocadas com este cliente via Zaptro.</p>
-                  </div>
-                  {/* Espaço para o histórico de chat filtrado por telefone */}
-                  <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
-                     <div style={{padding: '20px', backgroundColor: '#f4f4f4', borderRadius: '16px', border: '1px solid #E2E8F0', display: 'flex', gap: '12px'}}>
-                        <div style={{width: '32px', height: '32px', backgroundColor: 'var(--primary)', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', fontWeight: '700'}}>Z</div>
-                        <div>
-                           <p style={{margin: 0, fontSize: '13px', fontWeight: '700'}}>Zaptro Automação</p>
-                           <p style={{margin: '4px 0 0 0', fontSize: '13px', color: '#475569'}}>Contrato enviado e aguardando assinatura.</p>
-                        </div>
-                     </div>
-                     <div style={{padding: '20px', backgroundColor: 'white', borderRadius: '16px', border: '1px solid #E2E8F0', display: 'flex', gap: '12px', alignSelf: 'flex-start'}}>
-                        <div style={{width: '32px', height: '32px', backgroundColor: '#E2E8F0', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: '700'}}>{client?.name?.[0]}</div>
-                        <div>
-                           <p style={{margin: 0, fontSize: '13px', fontWeight: '700'}}>{client?.name}</p>
-                           <p style={{margin: '4px 0 0 0', fontSize: '13px', color: '#475569'}}>Ok, vou verificar e retorno.</p>
-                        </div>
-                     </div>
+                     <p style={{fontSize: '12px', color: 'var(--text-muted)'}}>As mensagens trocadas com este cliente aparecerão aqui após a primeira integração.</p>
                   </div>
                </div>
             )}
@@ -411,7 +362,7 @@ const ClientProfile: React.FC = () => {
                             </div>
                             <div>
                                <p style={{margin: 0, fontSize: '14px', fontWeight: '600'}}>{file.name}</p>
-                               <p style={{margin: 0, fontSize: '11px', color: '#94a3b8'}}>
+                               <p style={{margin: 0, fontSize: '11px', color: '#949494'}}>
                                   {file.metadata?.entity_type || 'Documento'} · {(file.size / 1024).toFixed(1)} KB
                                </p>
                             </div>

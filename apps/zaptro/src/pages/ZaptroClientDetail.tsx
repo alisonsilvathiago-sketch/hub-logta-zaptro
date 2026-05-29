@@ -16,7 +16,7 @@ import { supabaseZaptro } from '../lib/supabase-zaptro';
 import { notifyZaptro } from '../components/Zaptro/ZaptroNotificationSystem';
 import { ZAPTRO_SHADOW } from '../constants/zaptroShadows';
 import { ZAPTRO_ROUTES } from '../constants/zaptroRoutes';
-import { getZaptroDemoClientById } from './ZaptroClients';
+
 
 type ActivityKind = 'whatsapp' | 'crm' | 'system';
 
@@ -94,43 +94,7 @@ function whatsappRowsToActivities(messages: any[], clientName: string): Activity
   }));
 }
 
-function demoMessagesForClient(demoId: string, senderName: string): any[] {
-  const t0 = Date.now() - 86400_000;
-  const lines: { user: string; agent: string }[] = [
-    { user: 'Olá, preciso de uma cotação de frete.', agent: 'Olá! Pode enviar origem, destino e tipo de carga?' },
-    { user: 'Segue no e-mail o volume da semana.', agent: 'Recebido. Vou encaminhar ao comercial e volto com proposta.' },
-  ];
-  if (demoId.endsWith('1')) {
-    return lines.flatMap((pair, i) => [
-      {
-        id: `${demoId}-u-${i}`,
-        role: 'user',
-        content: pair.user,
-        created_at: new Date(t0 + i * 120_000).toISOString(),
-      },
-      {
-        id: `${demoId}-a-${i}`,
-        role: 'assistant',
-        content: pair.agent,
-        created_at: new Date(t0 + i * 120_000 + 60_000).toISOString(),
-      },
-    ]);
-  }
-  return [
-    {
-      id: `${demoId}-m1`,
-      role: 'user',
-      content: `Mensagem de exemplo de ${senderName} (modo demonstração).`,
-      created_at: new Date(t0).toISOString(),
-    },
-    {
-      id: `${demoId}-m2`,
-      role: 'assistant',
-      content: 'Resposta de exemplo da equipa Zaptro.',
-      created_at: new Date(t0 + 90_000).toISOString(),
-    },
-  ];
-}
+
 
 const ZaptroClientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -144,16 +108,7 @@ const ZaptroClientDetail: React.FC = () => {
     setLoading(true);
     const decodedId = decodeURIComponent(id);
 
-    const demo = getZaptroDemoClientById(decodedId);
-    if (demo) {
-      setClient({
-        ...demo,
-        created_at: demo.created_at || demo.updated_at,
-      });
-      setMessages(demoMessagesForClient(decodedId, demo.sender_name || 'Cliente'));
-      setLoading(false);
-      return;
-    }
+
 
     try {
       const { data: conv, error: convError } = await supabaseZaptro
@@ -223,7 +178,7 @@ const ZaptroClientDetail: React.FC = () => {
     return (
       <ZaptroLayout>
         <div style={{ ...styles.loadingArea, flexDirection: 'column', gap: 16 }}>
-          <p style={{ fontWeight: 600, color: '#64748B' }}>Cliente não encontrado.</p>
+          <p style={{ fontWeight: 600, color: '#949494' }}>Cliente não encontrado.</p>
           <button type="button" style={styles.backBtn} onClick={() => navigate(ZAPTRO_ROUTES.CLIENTS)}>
             <ArrowLeft size={20} /> Voltar a Clientes
           </button>
@@ -245,7 +200,7 @@ const ZaptroClientDetail: React.FC = () => {
                 style={styles.kickerBackBtn}
                 onClick={() => navigate(ZAPTRO_ROUTES.CLIENTS)}
               >
-                <ArrowLeft size={14} color="#64748B" strokeWidth={2.4} />
+                <ArrowLeft size={14} color="#949494" strokeWidth={2.4} />
               </button>
               <p style={styles.kicker}>CLIENTES · PERFIL</p>
             </div>
@@ -270,20 +225,20 @@ const ZaptroClientDetail: React.FC = () => {
               <div style={styles.avatarLarge}>{client.sender_name?.[0] || 'C'}</div>
               <h2 style={styles.clientName}>{client.sender_name || 'Contatado'}</h2>
               <span style={styles.clientStatus}>
-                <span style={{ ...styles.statusDot, backgroundColor: client.status === 'open' ? '#10B981' : '#64748B' }} />
+                <span style={{ ...styles.statusDot, backgroundColor: client.status === 'open' ? '#10B981' : '#949494' }} />
                 {client.status === 'open' ? 'Em acompanhamento' : 'Arquivado'}
               </span>
 
               <div style={styles.infoList}>
                 <div style={styles.infoItem}>
-                  <Phone size={16} color="#94A3B8" />
+                  <Phone size={16} color="#949494" />
                   <div style={styles.infoText}>
                     <span style={styles.infoLabel}>TELEFONE / WHATSAPP</span>
                     <span style={styles.infoValue}>{client.sender_number}</span>
                   </div>
                 </div>
                 <div style={styles.infoItem}>
-                  <Calendar size={16} color="#94A3B8" />
+                  <Calendar size={16} color="#949494" />
                   <div style={styles.infoText}>
                     <span style={styles.infoLabel}>ID NA BASE</span>
                     <span style={styles.infoValue} title={client.id}>
@@ -292,7 +247,7 @@ const ZaptroClientDetail: React.FC = () => {
                   </div>
                 </div>
                 <div style={styles.infoItem}>
-                  <Calendar size={16} color="#94A3B8" />
+                  <Calendar size={16} color="#949494" />
                   <div style={styles.infoText}>
                     <span style={styles.infoLabel}>PRIMEIRO REGISTO</span>
                     <span style={styles.infoValue}>{new Date(client.created_at || client.updated_at).toLocaleString('pt-BR')}</span>
@@ -408,15 +363,15 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     fontWeight: 700,
     letterSpacing: '0.14em',
-    color: '#64748B',
+    color: '#949494',
   },
   pageTitle: { margin: '6px 0 0', fontSize: 32, fontWeight: 700, letterSpacing: '-1px', color: '#000' },
-  pageSub: { margin: '10px 0 0', maxWidth: 640, fontSize: 15, fontWeight: 600, color: '#64748B', lineHeight: 1.5 },
+  pageSub: { margin: '10px 0 0', maxWidth: 640, fontSize: 15, fontWeight: 600, color: '#949494', lineHeight: 1.5 },
   headerActions: { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
   backBtn: {
     background: '#ebebeb',
     border: 'none',
-    color: '#334155',
+    color: '#6B6B6B',
     display: 'flex',
     alignItems: 'center',
     gap: 8,
@@ -477,7 +432,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
     fontSize: 11,
     fontWeight: 700,
-    color: '#94A3B8',
+    color: '#949494',
     textTransform: 'uppercase',
     marginBottom: 28,
   },
@@ -485,13 +440,13 @@ const styles: Record<string, React.CSSProperties> = {
   infoList: { width: '100%', display: 'flex', flexDirection: 'column', gap: 20 },
   infoItem: { display: 'flex', alignItems: 'flex-start', gap: 14 },
   infoText: { display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 },
-  infoLabel: { fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.02em' },
-  infoValue: { fontSize: 14, fontWeight: 700, color: '#334155', wordBreak: 'break-word' },
+  infoLabel: { fontSize: 9, fontWeight: 700, color: '#949494', letterSpacing: '0.02em' },
+  infoValue: { fontSize: 14, fontWeight: 700, color: '#6B6B6B', wordBreak: 'break-word' },
   divider: { width: '100%', height: 1, backgroundColor: '#ebebeb', margin: '24px 0' },
   crmStats: { width: '100%', display: 'flex', justifyContent: 'space-around' },
   crmStatItem: { textAlign: 'center' },
   crmStatVal: { display: 'block', fontSize: 20, fontWeight: 700, color: '#000' },
-  crmStatLab: { fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' },
+  crmStatLab: { fontSize: 10, fontWeight: 700, color: '#949494', textTransform: 'uppercase' },
   secureBadge: {
     display: 'flex',
     alignItems: 'center',
@@ -514,8 +469,8 @@ const styles: Record<string, React.CSSProperties> = {
     paddingBottom: 16,
   },
   sectionTitle: { fontSize: 20, fontWeight: 700, color: '#000', margin: 0 },
-  sectionHint: { margin: '6px 0 0', fontSize: 13, fontWeight: 600, color: '#64748B', maxWidth: 720, lineHeight: 1.45 },
-  msgCount: { fontSize: 12, fontWeight: 600, color: '#94A3B8' },
+  sectionHint: { margin: '6px 0 0', fontSize: 13, fontWeight: 600, color: '#949494', maxWidth: 720, lineHeight: 1.45 },
+  msgCount: { fontSize: 12, fontWeight: 600, color: '#949494' },
   feedList: { display: 'flex', flexDirection: 'column', gap: 14 },
   feedRow: {
     display: 'grid',
@@ -538,8 +493,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   feedBody: { minWidth: 0 },
   feedMeta: { display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8, marginBottom: 6 },
-  feedChannel: { fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: '#64748B', textTransform: 'uppercase' },
-  feedTime: { fontSize: 11, fontWeight: 700, color: '#94A3B8' },
+  feedChannel: { fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: '#949494', textTransform: 'uppercase' },
+  feedTime: { fontSize: 11, fontWeight: 700, color: '#949494' },
   feedTitle: { margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' },
   feedText: { margin: '8px 0 0', fontSize: 14, lineHeight: 1.55, color: '#475569', fontWeight: 600, whiteSpace: 'pre-wrap' },
   loadingArea: { height: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center' },

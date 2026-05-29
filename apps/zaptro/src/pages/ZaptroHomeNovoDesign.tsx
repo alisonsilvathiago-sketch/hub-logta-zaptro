@@ -15,7 +15,7 @@ import { notifyZaptro } from '../components/Zaptro/ZaptroNotificationSystem';
 import NotificationCenter from '../components/NotificationCenter';
 import HubGuard from '../components/HubGuard';
 import { ZAPTRO_ROUTES } from '../constants/zaptroRoutes';
-import { ZAPTRO_FIELD_BG } from '../constants/zaptroUi';
+import { ZAPTRO_AUX_TEXT, ZAPTRO_FIELD_BG } from '../constants/zaptroUi';
 import { ZAPTRO_SHADOW } from '../constants/zaptroShadows';
 import { useAuth } from '../context/AuthContext';
 import { useTenant } from '../context/TenantContext';
@@ -83,7 +83,7 @@ const ZaptroHomeInicio: React.FC = () => {
   return (
     <HubGuard companyId={company?.id || ''}>
       <ZaptroLayout hideTopbar contentFullWidth>
-        <div style={{ padding: '20px 0', boxSizing: 'border-box', width: '100%', minHeight: '100dvh', display: 'flex' }}>
+        <div style={{ padding: '0 0 20px', boxSizing: 'border-box', width: '100%', minHeight: '100dvh', display: 'flex' }}>
           <div
             style={{
               boxSizing: 'border-box',
@@ -95,7 +95,7 @@ const ZaptroHomeInicio: React.FC = () => {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              padding: '24px 32px 0',
+              padding: '0 32px 0',
               position: 'relative',
             }}
           >
@@ -227,7 +227,7 @@ const ZaptroHomeInicio: React.FC = () => {
                       <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: palette.text, letterSpacing: '-0.02em' }}>
                         Ambiente Seguro
                       </h4>
-                      <p style={{ margin: '2px 0 0 0', fontSize: 12, color: palette.textMuted, fontWeight: 500 }}>
+                      <p style={{ margin: '2px 0 0 0', ...ZAPTRO_AUX_TEXT.label, fontWeight: 500 }}>
                         Criptografia de nível militar ativa
                       </p>
                     </div>
@@ -397,7 +397,10 @@ const ZaptroHomeInicio: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: 0,
+              paddingTop: 0,
+              paddingRight: 0,
+              paddingBottom: 0,
+              paddingLeft: 0,
               width: '100%',
               minHeight: 0,
               marginTop: 0,
@@ -420,7 +423,6 @@ const ZaptroHomeInicio: React.FC = () => {
                 style={{
                   width: '100%',
                   marginBottom: 48,
-                  paddingTop: 'clamp(20px, 4vw, 40px)',
                   boxSizing: 'border-box',
                   borderRadius: 24,
                   minHeight: 0,
@@ -479,7 +481,7 @@ const ZaptroHomeInicio: React.FC = () => {
                     margin: '0 0 16px',
                     width: '100%',
                     maxWidth: 880,
-                    fontSize: 'clamp(48px, 9vw, 92px)',
+                    fontSize: 60,
                     fontWeight: 900,
                     letterSpacing: '-0.04em',
                     lineHeight: 0.95,

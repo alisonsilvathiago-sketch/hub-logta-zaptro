@@ -1,0 +1,375 @@
+/* Header — família Log (Zaptro / Logta) · LogStoka laranja */
+.lsdash-topbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  min-height: 72px;
+  box-sizing: border-box;
+  background: transparent;
+  border-bottom: none;
+}
+
+.lsdash-topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.lsdash-topbar-brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: #111827;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.lsdash-topbar-brand-text {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #111827;
+}
+
+.lsdash-topbar--inicio .lsdash-topbar-brand-text {
+  color: #fff;
+}
+
+.lsdash-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1;
+}
+
+.lsdash-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.lsdash-topbar-right .lsdash-topbar-sep {
+  width: 1px;
+  height: 32px;
+  flex-shrink: 0;
+  background: rgba(15, 23, 42, 0.1);
+}
+
+.lsdash-topbar--inicio .lsdash-topbar-right .lsdash-topbar-sep {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.lsdash-integrations-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.lsdash-integrations-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.lsdash-integration-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.lsdash-integration-logo:hover {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.lsdash-integration-logo--active {
+  background: var(--ls-brand-soft, rgba(234, 88, 12, 0.12));
+  border-color: var(--ls-brand, #ea580c);
+  box-shadow: 0 0 0 1px var(--ls-brand-soft, rgba(234, 88, 12, 0.12));
+}
+
+.lsdash-topbar--inicio .lsdash-integrations-strip {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.lsdash-topbar--inicio .lsdash-integration-logo:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.lsdash-crumbs {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.lsdash-crumb-strong {
+  color: #111827;
+  font-weight: 800;
+}
+
+.lsdash-crumb-muted {
+  color: #8c8c8c;
+  font-weight: 600;
+  font-size: 10px;
+}
+
+.lsdash-topbar--inicio .lsdash-crumb-strong {
+  color: #fff;
+}
+
+.lsdash-topbar--inicio .lsdash-crumb-muted {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.lsdash-topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lsdash-icon-btn {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+  cursor: pointer;
+  color: #111827;
+  padding: 0;
+  text-decoration: none;
+}
+
+.lsdash-icon-btn:hover {
+  background: #f4f4f4;
+}
+
+.lsdash-topbar--inicio .lsdash-icon-btn {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.lsdash-topbar--inicio .lsdash-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.lsdash-icon-btn.active {
+  background: rgba(234, 88, 12, 0.12);
+  border-color: rgba(234, 88, 12, 0.25);
+  color: #ea580c;
+}
+
+.lsdash-icon-btn--notify {
+  position: relative;
+}
+
+.lsdash-notify-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #ef4444;
+  border: 2px solid #fff;
+}
+
+.lsdash-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.lsdash-pill--ok {
+  background: rgba(234, 88, 12, 0.12);
+  color: #c2410c;
+  border: 1px solid rgba(234, 88, 12, 0.2);
+}
+
+.lsdash-topbar--inicio .lsdash-pill--ok {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.lsdash-profile-wrap {
+  position: relative;
+}
+
+.lsdash-avatar-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+}
+
+.lsdash-topbar--inicio .lsdash-avatar-btn {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lsdash-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+}
+
+.lsdash-menu {
+  position: absolute;
+  right: 0;
+  top: 48px;
+  width: 320px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  z-index: 60;
+}
+
+.lsdash-menu-hero {
+  width: 100%;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.lsdash-menu-hero:hover {
+  background: #f4f4f4;
+}
+
+.lsdash-menu-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.lsdash-menu-hero-text strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 900;
+  color: #111827;
+}
+
+.lsdash-menu-hero-text em {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  color: #949494;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 230px;
+}
+
+.lsdash-menu-items {
+  padding: 4px 10px 10px;
+}
+
+.lsdash-menu-items button,
+.lsdash-menu-items a {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 12px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #949494;
+  text-align: left;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.lsdash-menu-items button:hover,
+.lsdash-menu-items a:hover {
+  background: rgba(15, 23, 42, 0.04);
+  color: #111827;
+}
+
+.lsdash-menu-sep {
+  height: 1px;
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.lsdash-menu-link--logout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 14px 18px;
+  font-size: 13px;
+  font-weight: 900;
+  font-family: inherit;
+  color: #ef4444;
+  text-align: left;
+}
+
+.lsdash-menu-link--logout:hover {
+  background: #fef2f2;
+}

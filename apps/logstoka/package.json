@@ -7,7 +7,10 @@
     "dev": "vite --host localhost --port 5177 --strictPort",
     "dev:server": "npm run dev --prefix server",
     "dev:all": "npm run dev:server & npm run dev",
-    "build": "vite build",
+    "dev:logstoka": "npm run dev",
+    "dev:logstoka:all": "npm run dev:all",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview --host localhost --port 4177 --strictPort"
   },
   "dependencies": {

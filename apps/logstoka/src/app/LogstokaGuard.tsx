@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '@shared/context/AuthContext';
+import { useAuth } from '@/context/LogstokaAuthProvider';
 import { canAccessRoute } from '@/lib/permissions';
 import { profileHasLogstokaEntitlement } from '@/lib/authProductGate';
 
@@ -10,10 +10,10 @@ const LogstokaGuard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
+      <div className="flex min-h-screen items-center justify-center bg-[#f4f4f4]">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
-          <p className="text-sm font-semibold text-slate-300">Carregando LogStoka…</p>
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-orange-600 border-t-transparent" />
+          <p className="text-sm font-semibold text-slate-600">Carregando LogStoka…</p>
         </div>
       </div>
     );

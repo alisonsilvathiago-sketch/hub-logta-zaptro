@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Wrench } from 'lucide-react';
+import { Wrench, ChevronDown } from 'lucide-react';
 import { LogtaModalHeader } from '../../../components/LogtaModalHeader';
 import { showToast } from '../../../components/Toast';
 import { createDespesaFromManutencao } from '../frotaManutencaoFinanceBridge';
@@ -124,7 +124,7 @@ export function NovoManutencaoModal({
 
         <form className="mt-6 space-y-4 text-left" onSubmit={handleSubmit}>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase text-neutral-400">Placa do veículo</label>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">PLACA DO VEÍCULO</label>
             <input
               list="frota-placas-manutencao"
               value={placaInput}
@@ -150,23 +150,28 @@ export function NovoManutencaoModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase text-neutral-400">Tipo de manutenção</label>
-            <select
-              value={tipo}
-              onChange={(e) => setTipo(e.target.value as FrotaManutencaoTipo)}
-              className="w-full rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-sm font-semibold text-white outline-none focus:border-primary"
-            >
-              {FROTA_MANUTENCAO_TIPOS.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">TIPO DE MANUTENÇÃO</label>
+            <div className="relative">
+              <select
+                value={tipo}
+                onChange={(e) => setTipo(e.target.value as FrotaManutencaoTipo)}
+                className="w-full appearance-none rounded-xl border border-neutral-800 bg-neutral-900 p-3 pr-10 text-sm font-semibold text-white outline-none focus:border-primary"
+              >
+                {FROTA_MANUTENCAO_TIPOS.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <ChevronDown size={16} className="text-white" />
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase text-neutral-400">Valor (R$)</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">VALOR (R$)</label>
               <input
                 type="text"
                 inputMode="decimal"
@@ -178,7 +183,7 @@ export function NovoManutencaoModal({
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase text-neutral-400">Data</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">DATA</label>
               <input
                 type="date"
                 value={data}
@@ -190,8 +195,8 @@ export function NovoManutencaoModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase text-neutral-400">
-              Problema / motivo da manutenção
+            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+              PROBLEMA / MOTIVO DA MANUTENÇÃO
             </label>
             <textarea
               value={motivo}
@@ -203,7 +208,7 @@ export function NovoManutencaoModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase text-neutral-400">Quem realizou?</label>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">QUEM REALIZOU?</label>
             <input
               value={responsavel}
               onChange={(e) => setResponsavel(e.target.value)}
@@ -214,7 +219,7 @@ export function NovoManutencaoModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase text-neutral-400">Observações (opcional)</label>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">OBSERVAÇÕES (OPCIONAL)</label>
             <textarea
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}

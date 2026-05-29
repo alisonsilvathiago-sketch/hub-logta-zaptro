@@ -1,0 +1,138 @@
+.hub-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  white-space: nowrap;
+  outline: none;
+  position: relative;
+  letter-spacing: -0.2px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.hub-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Variants */
+.hub-button--primary {
+  background-color: #EFF6FF;
+  color: #0061FF !important;
+  border-color: #0061FF;
+  box-shadow: none;
+}
+
+/* MasterLayout aplica `span { color: var(--text-body) }` — força cor no primário */
+.hub-button--primary .hub-button__label,
+.hub-button--primary .hub-button__icon {
+  color: #0061FF !important;
+}
+
+.hub-button--primary .hub-button__icon svg {
+  stroke: #0061FF;
+}
+
+.hub-button--primary:hover:not(:disabled) {
+  background-color: #DBEAFE;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 97, 255, 0.15);
+}
+
+.hub-button--secondary {
+  background-color: #F1F5F9;
+  color: #1E293B;
+}
+
+.hub-button--secondary:hover:not(:disabled) {
+  background-color: #E2E8F0;
+}
+
+.hub-button--outline {
+  background-color: transparent;
+  border-color: #E2E8F0;
+  color: #64748B;
+}
+
+.hub-button--outline:hover:not(:disabled) {
+  border-color: #0061FF;
+  color: #0061FF;
+  background-color: rgba(0, 97, 255, 0.05);
+}
+
+.hub-button--danger {
+  background-color: #EF4444;
+  color: #FFFFFF;
+}
+
+/* MasterLayout aplica `span { color: var(--text-body) }` — label + Lucide em branco */
+.hub-button--danger .hub-button__label,
+.hub-button--danger .hub-button__icon {
+  color: #FFFFFF !important;
+}
+
+.hub-button--danger .hub-button__icon svg {
+  stroke: #FFFFFF;
+  width: 18px;
+  height: 18px;
+}
+
+.hub-button--danger:hover:not(:disabled) {
+  background-color: #DC2626;
+}
+
+/* Sizes */
+.hub-button--sm {
+  padding: 8px 16px;
+  font-size: 12px;
+  gap: 6px;
+}
+
+.hub-button--md {
+  padding: 12px 24px;
+}
+
+.hub-button--primary.hub-button--md {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 14px;
+}
+
+.hub-button--primary.hub-button--md .hub-button__label > div > span:first-of-type {
+  color: #0061FF !important;
+  font-size: 17px;
+}
+
+.hub-button--lg {
+  padding: 16px 32px;
+  font-size: 16px;
+}
+
+.hub-button--full {
+  width: 100%;
+}
+
+.hub-button__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hub-button__loader {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 97, 255, 0.2);
+  border-radius: 50%;
+  border-top-color: #0061FF;
+  animation: hub-spin 0.6s linear infinite;
+}
+
+@keyframes hub-spin {
+  to { transform: rotate(360deg); }
+}

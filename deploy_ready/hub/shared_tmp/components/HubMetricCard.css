@@ -1,0 +1,83 @@
+/* Sem text-shadow nos KPIs (rótulos, valores, chips à direita). */
+div.hub-metric-card,
+div.hub-metric-card span,
+div.hub-metric-card div {
+  text-shadow: none !important;
+}
+
+/* Neutraliza tema global `[class*="card"]` / `.hover-scale:hover` em @shared/index.css (borda + sombra no hover). */
+div.hub-metric-card:not(.hub-metric-card--elevated) {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+div.hub-metric-card:not(.hub-metric-card--elevated):hover {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/** Elevação leve (referência dashboards CRM) — borda + sombra discreta */
+div.hub-metric-card.hub-metric-card--elevated {
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow:
+    0 4px 6px -1px rgba(15, 23, 42, 0.07),
+    0 2px 4px -2px rgba(15, 23, 42, 0.05) !important;
+}
+
+div.hub-metric-card.hub-metric-card--elevated:hover {
+  border-color: rgba(226, 232, 240, 0.95) !important;
+  box-shadow:
+    0 6px 14px -4px rgba(15, 23, 42, 0.08),
+    0 2px 6px -2px rgba(15, 23, 42, 0.05) !important;
+}
+
+div.hub-metric-card .hub-metric-card__value {
+  color: var(--primary, var(--accent, #0061FF)) !important;
+}
+
+/* KPI master: espaçamento e label alinhados ao preview (evita conflitos com [class*="card"]) */
+div.hub-metric-card.premium-card {
+  gap: 19px;
+  justify-content: flex-start;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Rótulos e chips internos: nunca herdar "[class*="card"]" de substring em hub-metric-card__* */
+div.hub-metric-card span.hub-metric-card__label,
+.hub-metric-card span.hub-metric-card__label {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.35px;
+  text-shadow: none;
+  border: none !important;
+  border-width: 0 !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  border-image: none !important;
+  background: unset !important;
+  background-color: unset !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Metadados do card: canto superior direito — alinha com label 9px */
+.hub-metric-card span.hub-metric-card__topRight,
+.hub-metric-card__topRight {
+  border: none !important;
+  border-width: 0 !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  border-image: none !important;
+  background: unset !important;
+  background-color: unset !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.hub-metric-card__topRight,
+.hub-metric-card__topRight * {
+  font-size: 11px !important;
+}

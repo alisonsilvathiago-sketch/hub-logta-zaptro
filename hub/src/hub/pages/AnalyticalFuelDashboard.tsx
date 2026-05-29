@@ -106,7 +106,7 @@ const AnalyticalFuelDashboard: React.FC = () => {
               icon={stat.icon}
               iconVariant={i % 2 === 1 ? 'solid' : 'soft'}
               accent="#0061FF"
-              topRight={<span style={{ color: '#10B981' }}>{stat.trend}</span>}
+              topRight={<span style={{ color: '#0061FF' }}>{stat.trend}</span>}
             />
           ))}
         </div>
@@ -140,7 +140,7 @@ const AnalyticalFuelDashboard: React.FC = () => {
             <div style={styles.fuelShowcase}>
               {['Gasolina', 'Etanol', 'Diesel'].map((type, i) => (
                 <div key={type} style={styles.fuelCard}>
-                  <div style={{ ...styles.fuelIcon, backgroundColor: i === 0 ? '#F5F3FF' : (i === 1 ? '#F0FDF4' : '#FEF2F2'), color: i === 0 ? '#0061FF' : (i === 1 ? '#22C55E' : '#EF4444') }}>
+                  <div style={{ ...styles.fuelIcon, backgroundColor: i === 0 ? '#F5F3FF' : (i === 1 ? '#EFF6FF' : '#FEF2F2'), color: i === 0 ? '#0061FF' : (i === 1 ? '#0061FF' : '#EF4444') }}>
                     <Droplets size={24} />
                   </div>
                   <div>
@@ -170,7 +170,7 @@ const AnalyticalFuelDashboard: React.FC = () => {
                       <div style={styles.regionName}>{reg.name}</div>
                       <div style={styles.regionPrice}>{reg.price}</div>
                     </div>
-                    <div style={{ ...styles.impactTag, backgroundColor: reg.impact === 'BAIXO' ? '#DCFCE7' : (reg.impact === 'ALTO' ? '#FEE2E2' : '#FEF3C7'), color: reg.impact === 'BAIXO' ? '#166534' : (reg.impact === 'ALTO' ? '#991B1B' : '#92400E') }}>
+                    <div style={{ ...styles.impactTag, backgroundColor: reg.impact === 'BAIXO' ? '#DBEAFE' : (reg.impact === 'ALTO' ? '#FEE2E2' : '#FEF3C7'), color: reg.impact === 'BAIXO' ? '#1E3A8A' : (reg.impact === 'ALTO' ? '#991B1B' : '#92400E') }}>
                       {reg.impact}
                     </div>
                   </div>
@@ -228,7 +228,7 @@ const styles = {
   headerLeft: { display: 'flex', alignItems: 'center', gap: '24px' },
   backBtn: { border: '1px solid #E2E8F0', background: 'none', padding: '10px', borderRadius: '12px', cursor: 'pointer', color: '#64748B' },
   logoBox: { display: 'flex', alignItems: 'center', gap: '16px' },
-  title: { fontSize: '29px', fontWeight: '900', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '900', color: '#000000', margin: 0, letterSpacing: 0 },
   subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', alignItems: 'center', gap: '16px' },
   searchBox: { display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#F1F5F9', padding: '10px 16px', borderRadius: '12px', width: '320px' },

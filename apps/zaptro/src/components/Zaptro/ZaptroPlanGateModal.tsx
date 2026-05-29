@@ -64,13 +64,13 @@ const ZaptroPlanGateModal: React.FC<Props> = ({ open, email, onGoToBilling, onRe
             <h2 id="zaptro-plan-gate-title" style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
               Ative seu plano
             </h2>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b', fontWeight: 600 }}>
+            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#949494', fontWeight: 600 }}>
               Contratação segura vinculada ao seu acesso
             </p>
           </div>
         </div>
 
-        <p style={{ fontSize: 14, color: '#334155', lineHeight: 1.6, margin: '0 0 16px' }}>
+        <p style={{ fontSize: 14, color: '#6B6B6B', lineHeight: 1.6, margin: '0 0 16px' }}>
           Sua transportadora já está cadastrada, mas o sistema ainda não encontrou <strong>plano pago em dia</strong> (período de teste
           encerrado, fatura em atraso ou conta bloqueada no hub). O pagamento é associado ao <strong>mesmo e-mail do login</strong> — quando
           a API de cobrança confirmar, atualize o cadastro e use o botão abaixo para recarregar o status.
@@ -88,14 +88,14 @@ const ZaptroPlanGateModal: React.FC<Props> = ({ open, email, onGoToBilling, onRe
             marginBottom: 20,
           }}
         >
-          <Mail size={18} color="#64748b" />
+          <Mail size={18} color="#949494" />
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>Conta (login)</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#949494', textTransform: 'uppercase' }}>Conta (login)</div>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', wordBreak: 'break-all' }}>{email || '—'}</div>
           </div>
         </div>
 
-        <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.55, margin: '0 0 20px' }}>
+        <p style={{ fontSize: 13, color: '#949494', lineHeight: 1.55, margin: '0 0 20px' }}>
           Você pode trocar o <strong>WhatsApp</strong> (um número por vez) ou os <strong>dados da empresa</strong> depois, sem perder o
           plano — o que vale para a cobrança é este e-mail e a senha da conta.
         </p>

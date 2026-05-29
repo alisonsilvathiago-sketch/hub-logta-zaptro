@@ -190,7 +190,7 @@ const ZaptroHistory: React.FC = () => {
 
         <div style={styles.filterBar}>
           <div style={styles.searchBox}>
-            <Search size={18} color="#94A3B8" />
+            <Search size={18} color="#949494" />
             <input
               placeholder="Filtrar por colaborador, acção, cliente ou tipo…"
               style={styles.input}
@@ -237,7 +237,7 @@ const ZaptroHistory: React.FC = () => {
 
         <div style={styles.tableCard}>
           {filtered.length === 0 ? (
-            <div style={{ padding: 48, textAlign: 'center', color: '#64748B', fontWeight: 600, fontSize: 15 }}>
+            <div style={{ padding: 48, textAlign: 'center', color: '#949494', fontWeight: 600, fontSize: 15 }}>
               {rawLog.length === 0
                 ? 'Ainda não há registos. Quando alguém da equipa iniciar sessão, mexer no CRM ou nas rotas, as entradas aparecem aqui em tempo real.'
                 : 'Nenhum resultado para o filtro actual.'}
@@ -335,14 +335,14 @@ const ZaptroHistory: React.FC = () => {
 
             <div style={styles.modalBody}>
               <div style={styles.modalRow}>
-                <MessageSquare size={16} color="#94A3B8" />
+                <MessageSquare size={16} color="#949494" />
                 <div>
                   <span style={styles.modalLabel}>DESTINO / CONTEXTO</span>
                   <strong style={styles.modalVal}>{selectedItem.clientLabel}</strong>
                 </div>
               </div>
               <div style={styles.modalRow}>
-                <Clock size={16} color="#94A3B8" />
+                <Clock size={16} color="#949494" />
                 <div>
                   <span style={styles.modalLabel}>DATA E HORA (ISO)</span>
                   <strong style={styles.modalVal}>{formatActivityTime(selectedItem.at)}</strong>
@@ -387,7 +387,7 @@ const styles: Record<string, React.CSSProperties> = {
   container: { padding: 0, boxSizing: 'border-box', width: '100%', maxWidth: 1360, margin: '0 auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
   title: { fontSize: '28px', fontWeight: '700', color: '#000000', letterSpacing: '-1px', margin: 0 },
-  subtitle: { color: '#64748B', fontSize: '15px', marginTop: '4px', fontWeight: '500' },
+  subtitle: { color: '#949494', fontSize: '15px', marginTop: '4px', fontWeight: '500' },
   exportBtn: {
     display: 'flex',
     alignItems: 'center',
@@ -424,7 +424,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '8px',
     fontWeight: '700',
-    color: '#64748B',
+    color: '#949494',
     cursor: 'pointer',
     fontSize: '14px',
     fontFamily: 'inherit',
@@ -444,7 +444,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '28px',
     borderRadius: '8px',
     backgroundColor: '#ebebeb',
-    color: '#64748B',
+    color: '#949494',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -452,7 +452,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: '700',
   },
   actionText: { display: 'block' },
-  timeInfo: { display: 'flex', alignItems: 'center', gap: '6px', color: '#94A3B8', fontWeight: '600' },
+  timeInfo: { display: 'flex', alignItems: 'center', gap: '6px', color: '#949494', fontWeight: '600' },
   occBtn: {
     padding: '8px 16px',
     backgroundColor: '#000',
@@ -481,10 +481,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: '700',
   },
   modalName: { margin: '0 0 4px 0', fontSize: '18px', fontWeight: '700', color: '#0F172A', letterSpacing: '-0.5px' },
-  modalRole: { fontSize: '12px', color: '#94A3B8', fontWeight: '700' },
+  modalRole: { fontSize: '12px', color: '#949494', fontWeight: '700' },
   modalBody: { display: 'flex', flexDirection: 'column', gap: '24px', padding: '0 10px' },
   modalRow: { display: 'flex', gap: '16px', alignItems: 'center' },
-  modalLabel: { fontSize: '10px', fontWeight: '700', color: '#94A3B8', display: 'block', marginBottom: '4px' },
+  modalLabel: { fontSize: '10px', fontWeight: '700', color: '#949494', display: 'block', marginBottom: '4px' },
   modalVal: { fontSize: '14px', fontWeight: '700', color: '#0F172A' },
   detailsBox: { backgroundColor: '#FBFBFC', padding: '24px', borderRadius: '20px', border: '1px solid #EBEBEC', marginTop: '8px' },
   detailsHeader: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: '700', color: '#0F172A', marginBottom: '16px', textTransform: 'uppercase' },

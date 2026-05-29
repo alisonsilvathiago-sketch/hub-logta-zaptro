@@ -30,6 +30,8 @@ interface FlowOption {
 
 interface ZaptroAutomationProps {
   hideLayout?: boolean;
+  /** Em Configurações: desbloqueia o editor e liga automação + IA por defeito. */
+  activateAllOnMount?: boolean;
 }
 
 /** Colunas no editor (grelha); o número total de opções é livre — novas linhas de 3 em 3. */
@@ -127,6 +129,7 @@ function readAutomationLocal(companyId: string): {
   welcome_message: string;
   options: FlowOption[];
   flowId: string | null;
+  is_active: boolean;
 } | null {
   if (typeof localStorage === 'undefined' || !companyId) return null;
   try {
@@ -136,12 +139,14 @@ function readAutomationLocal(companyId: string): {
       welcome_message?: string;
       options?: unknown;
       flowId?: string | null;
+      is_active?: boolean;
     };
     if (typeof j.welcome_message !== 'string' || !Array.isArray(j.options)) return null;
     return {
       welcome_message: j.welcome_message,
       options: normalizeFlowOptions(j.options),
       flowId: typeof j.flowId === 'string' ? j.flowId : null,
+      is_active: typeof j.is_active === 'boolean' ? j.is_active : true,
     };
   } catch {
     return null;
@@ -173,6 +178,7 @@ function writeAutomationLocal(
   welcome: string,
   opts: FlowOption[],
   fid: string | null,
+  isActive = true,
 ) {
   if (typeof localStorage === 'undefined' || !companyId) return;
   try {
@@ -182,6 +188,7 @@ function writeAutomationLocal(
         welcome_message: welcome,
         options: opts,
         flowId: fid,
+        is_active: isActive,
         updatedAt: new Date().toISOString(),
       }),
     );
@@ -317,12 +324,12 @@ function AutomationLandingIllustration({ accent }: { accent: string }) {
   );
 }
 
-const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false }) => {
+const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false, activateAllOnMount = false }) => {
   const { profile } = useAuth();
   const { palette } = useZaptroTheme();
   const [loading, setLoading] = useState(true);
   const [flowId, setFlowId] = useState<string | null>(null);
-  const [isActive, setIsActive] = useState(false);
+  const [isActive, setIsActive] = useState(true);
   /** Incrementa ao concluir a landing (CTA); força releitura do LS e evita depender só do efeito. */
   const [landingNonce, setLandingNonce] = useState(0);
 
@@ -356,7 +363,7 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
     () => readLandingDismissed(companyKey),
     [companyKey, landingNonce],
   );
-  const editorUnlocked = !!flowId || landingDismissedStore || landingNonce > 0;
+  const editorUnlocked = hideLayout || !!flowId || landingDismissedStore || landingNonce > 0;
   const showLanding = !loading && !editorUnlocked;
 
   const openAutomationEditor = useCallback(() => {
@@ -376,8 +383,10 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
         setFlowId(localOnly.flowId);
         setWelcomeMessage(wm);
         setOptions(opts);
+        setIsActive(localOnly.is_active);
         setSyncedFingerprint(flowFingerprint(wm, opts));
       } else {
+        setIsActive(true);
         setSyncedFingerprint(flowFingerprint(DEFAULT_WELCOME_MESSAGE, DEFAULT_FLOW_OPTIONS));
       }
       setLoading(false);
@@ -405,7 +414,7 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
         const { welcome: wm, options: opts } = parseFlowFromDbRow(data);
         setWelcomeMessage(wm);
         setOptions(opts);
-        writeAutomationLocal(cid, wm, opts, data.id);
+        writeAutomationLocal(cid, wm, opts, data.id, !!data.is_active);
         setSyncedFingerprint(flowFingerprint(wm, opts));
       } else {
         const local = readAutomationLocal(cid);
@@ -415,8 +424,10 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
           setFlowId(local.flowId);
           setWelcomeMessage(wm);
           setOptions(opts);
+          setIsActive(local.is_active);
           setSyncedFingerprint(flowFingerprint(wm, opts));
         } else {
+          setIsActive(true);
           setSyncedFingerprint(flowFingerprint(DEFAULT_WELCOME_MESSAGE, DEFAULT_FLOW_OPTIONS));
         }
       }
@@ -429,8 +440,10 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
         setFlowId(local.flowId);
         setWelcomeMessage(wm);
         setOptions(opts);
+        setIsActive(local.is_active);
         setSyncedFingerprint(flowFingerprint(wm, opts));
       } else {
+        setIsActive(true);
         setSyncedFingerprint(flowFingerprint(DEFAULT_WELCOME_MESSAGE, DEFAULT_FLOW_OPTIONS));
       }
     } finally {
@@ -452,14 +465,14 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
     const cid = profile?.company_id || 'local-demo';
     setLocalDraftBusy(true);
     const t = window.setTimeout(() => {
-      writeAutomationLocal(cid, welcomeMessage, options, flowIdRef.current);
+      writeAutomationLocal(cid, welcomeMessage, options, flowIdRef.current, isActive);
       setLocalDraftBusy(false);
     }, 500);
     return () => {
       window.clearTimeout(t);
       setLocalDraftBusy(false);
     };
-  }, [welcomeMessage, options, loading, profile?.company_id, editorUnlocked]);
+  }, [welcomeMessage, options, loading, profile?.company_id, editorUnlocked, isActive]);
 
   const addOption = () => {
     setOptions((prev) => {
@@ -489,17 +502,18 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
       const next = prev.filter((o) => String(o.id) !== String(id));
       const cid = profile?.company_id || 'local-demo';
       if (persistReadyRef.current && !loading) {
-        writeAutomationLocal(cid, welcomeMessageRef.current, next, flowIdRef.current);
+        writeAutomationLocal(cid, welcomeMessageRef.current, next, flowIdRef.current, isActive);
       }
       return next;
     });
   };
 
-  const handleSave = async () => {
+  const handleSave = async (opts?: { forceActive?: boolean }) => {
     if (!profile?.company_id) {
       toastError('Faça login com uma conta Zaptro para salvar a automação.');
       return;
     }
+    const activeFlag = opts?.forceActive ?? isActive;
     const tId = toastLoading('Salvando automação...');
     let resolvedFlowId = flowId;
     try {
@@ -508,7 +522,7 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
         name: 'Padrao',
         welcome_message: welcomeMessage,
         options: options,
-        is_active: isActive,
+        is_active: activeFlag,
       };
       const payloadLegacyWelcome = {
         company_id: profile.company_id,
@@ -546,11 +560,12 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
       }
 
       if (error) throw error;
-      writeAutomationLocal(profile.company_id, welcomeMessage, options, resolvedFlowId);
+      writeAutomationLocal(profile.company_id, welcomeMessage, options, resolvedFlowId, activeFlag);
+      if (opts?.forceActive) setIsActive(true);
       setSyncedFingerprint(flowFingerprint(welcomeMessage, options));
       toastSuccess('Automação Zaptro salva com sucesso! 🚀');
     } catch (err: any) {
-      writeAutomationLocal(profile.company_id, welcomeMessage, options, resolvedFlowId);
+      writeAutomationLocal(profile.company_id, welcomeMessage, options, resolvedFlowId, activeFlag);
       const msg = typeof err?.message === 'string' ? err.message : String(err);
       const missingOptionsColumn = supabaseMissingColumnError(msg, 'options');
       const missingWelcomeColumn = supabaseMissingColumnError(msg, 'welcome_message');
@@ -596,6 +611,46 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
       /* ignore */
     }
   }, [profile?.company_id]);
+
+  const persistAiConfig = useCallback(
+    (cfg: { detectNf: boolean; naturalLanguageStatus: boolean; aiModel: string }) => {
+      const cid = profile?.company_id || companyKey;
+      if (!cid) return;
+      try {
+        localStorage.setItem(`zaptro_automation_ai_${cid}`, JSON.stringify(cfg));
+      } catch {
+        /* ignore */
+      }
+    },
+    [profile?.company_id, companyKey],
+  );
+
+  const handleActivateAll = useCallback(() => {
+    openAutomationEditor();
+    setIsActive(true);
+    const nextAi = {
+      detectNf: true,
+      naturalLanguageStatus: true,
+      aiModel: aiConfig.aiModel,
+    };
+    setAiConfig(nextAi);
+    persistAiConfig(nextAi);
+    const cid = profile?.company_id || companyKey;
+    writeAutomationLocal(cid, welcomeMessageRef.current, options, flowIdRef.current, true);
+    notifyZaptro('success', 'Tudo activado', 'Automação, menu e motor de IA ligados neste browser.');
+  }, [openAutomationEditor, aiConfig.aiModel, persistAiConfig, profile?.company_id, companyKey, options]);
+
+  useEffect(() => {
+    if (!activateAllOnMount || loading) return;
+    writeLandingDismissed(companyKey);
+    setLandingNonce((n) => n + 1);
+    setIsActive(true);
+    setAiConfig((c) => {
+      const next = { ...c, detectNf: true, naturalLanguageStatus: true };
+      persistAiConfig(next);
+      return next;
+    });
+  }, [activateAllOnMount, loading, companyKey, persistAiConfig]);
 
   const handleSimInput = (opt: FlowOption) => {
     const demoLink = 'https://app.zaptro.com.br/acompanhar/demo-token';
@@ -689,12 +744,20 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
               <h1 style={styles.title}>Automação & Fluxos Inteligentes</h1>
            </div>
            <div style={styles.headerActions}>
+              <button
+                type="button"
+                style={{ ...styles.secondaryBtn, marginRight: 4 }}
+                onClick={handleActivateAll}
+                title="Ligar automação, todas as opções do menu e motor de IA"
+              >
+                <Zap size={16} /> Ativar todas
+              </button>
               <button 
                 type="button" 
                 style={{
                   ...styles.secondaryBtn, 
                   backgroundColor: isActive ? '#D9FF00' : 'transparent',
-                  color: isActive ? '#000' : '#64748B',
+                  color: isActive ? '#000' : '#949494',
                   borderColor: isActive ? '#D9FF00' : '#E2E8F0',
                   marginRight: 4
                 }} 
@@ -705,9 +768,40 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
               <button type="button" style={styles.secondaryBtn} onClick={() => { setIsSimulatorOpen(true); setSimMessages([{ from: 'bot', text: welcomeMessage }]); }}>
                  <Play size={16} /> Testar Simulador
               </button>
-              <button type="button" style={styles.primaryBtn} onClick={handleSave}><Save size={18} /> Salvar Fluxo</button>
+              <button
+                type="button"
+                style={styles.primaryBtn}
+                onClick={() => void handleSave(isActive ? undefined : { forceActive: true })}
+              >
+                <Save size={18} /> Salvar Fluxo
+              </button>
            </div>
         </header>
+
+        {hideLayout ? (
+          <div style={styles.firstContactsCard}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div style={styles.firstContactsIcon} aria-hidden>
+                <MessageSquare size={18} strokeWidth={2.2} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={styles.firstContactsTitle}>Primeiros contatos (Conversas)</div>
+                <div style={styles.firstContactsDesc}>
+                  Com o fluxo ativo, o sistema usa este menu para triagem automática no primeiro atendimento. Para ver os primeiros contatos e testar em tempo real, abra a Central de Conversas.
+                </div>
+              </div>
+              <button
+                type="button"
+                style={styles.firstContactsBtn}
+                onClick={() => {
+                  window.location.href = '/app/conversas';
+                }}
+              >
+                Abrir conversas
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {isSimulatorOpen && (
           <div style={styles.simulatorOverlay} onClick={() => setIsSimulatorOpen(false)}>
@@ -725,7 +819,7 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
                    ))}
                 </div>
                 <div style={styles.simFooter}>
-                   <p style={{fontSize: '11px', color: '#94A3B8', marginBottom: '12px', fontWeight: '700'}}>Selecione uma opção para testar:</p>
+                   <p style={{fontSize: '11px', color: '#949494', marginBottom: '12px', fontWeight: '700'}}>Selecione uma opção para testar:</p>
                    <div style={styles.simOptions}>
                       {options.map(o => (
                         <button key={o.id} style={styles.simOptBtn} onClick={() => handleSimInput(o)}>{o.keyword}. {o.label}</button>
@@ -960,7 +1054,7 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
                             {opt.action === 'tracking_public' && (
                               <div style={styles.settingRow}>
                                 <label style={styles.miniLabel}>QUANDO ENCONTRAR CARGA (opcional)</label>
-                                <p style={{ margin: '0 0 8px', fontSize: 11, color: '#64748B', fontWeight: 600, lineHeight: 1.45 }}>
+                                <p style={{ margin: '0 0 8px', fontSize: 11, color: '#949494', fontWeight: 600, lineHeight: 1.45 }}>
                                   Use <code>{'{{link}}'}</code> ou <code>{'{{tracking_link}}'}</code> no texto. Se ficar vazio, o servidor envia uma mensagem padrão com o URL.
                                 </p>
                                 <textarea
@@ -1043,14 +1137,7 @@ const ZaptroAutomation: React.FC<ZaptroAutomationProps> = ({ hideLayout = false 
                 type="button"
                 style={styles.aiSaveBtn}
                 onClick={() => {
-                  const cid = profile?.company_id;
-                  if (cid) {
-                    try {
-                      localStorage.setItem(`zaptro_automation_ai_${cid}`, JSON.stringify(aiConfig));
-                    } catch {
-                      /* ignore */
-                    }
-                  }
+                  persistAiConfig(aiConfig);
                   toastSuccess('Motor de inteligência guardado neste browser.');
                   setIsAiModalOpen(false);
                 }}
@@ -1153,8 +1240,8 @@ const styles: Record<string, any> = {
   container: { padding: '0px' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
   headerInfo: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  title: { fontSize: '24px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: '-0.8px' },
-  headerActions: { display: 'flex', gap: '12px', width: '390px' },
+  title: { fontSize: '14px', fontWeight: '600', color: '#000000', margin: 0, letterSpacing: '0px' },
+  headerActions: { display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' },
   primaryBtn: {
     backgroundColor: '#0F172A',
     color: 'white',
@@ -1184,6 +1271,52 @@ const styles: Record<string, any> = {
     justifyContent: 'center',
     gap: '8px',
   },
+  firstContactsCard: {
+    marginTop: 14,
+    marginBottom: 16,
+    padding: '14px 16px',
+    borderRadius: 18,
+    border: '1px solid rgba(15, 23, 42, 0.08)',
+    background: 'rgba(15, 23, 42, 0.02)',
+  },
+  firstContactsIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 14,
+    border: '1px solid rgba(15, 23, 42, 0.08)',
+    background: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#0f172a',
+    flexShrink: 0,
+  },
+  firstContactsTitle: {
+    fontSize: 13,
+    fontWeight: 800,
+    color: '#0f172a',
+    letterSpacing: '-0.01em',
+  },
+  firstContactsDesc: {
+    marginTop: 2,
+    fontSize: 12,
+    fontWeight: 650,
+    color: '#949494',
+    lineHeight: 1.35,
+  },
+  firstContactsBtn: {
+    height: 38,
+    padding: '0 14px',
+    borderRadius: 14,
+    border: '1px solid rgba(15, 23, 42, 0.10)',
+    background: '#0f172a',
+    color: '#d9ff00',
+    fontSize: 12,
+    fontWeight: 800,
+    cursor: 'pointer',
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
+  },
   editorMain: { display: 'flex', flexDirection: 'column', gap: '32px', width: '100%', minWidth: 0, boxSizing: 'border-box' },
   card: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #EBEBEC', overflow: 'hidden' },
   cardHeader: { padding: '28px 36px', borderBottom: '1px solid #EBEBEC', display: 'flex', alignItems: 'center', gap: '16px' },
@@ -1211,7 +1344,7 @@ const styles: Record<string, any> = {
     fontSize: 11,
     fontWeight: 700,
     letterSpacing: '0.1em',
-    color: '#64748B',
+    color: '#949494',
     textTransform: 'uppercase',
   },
   previewHint: {
@@ -1266,7 +1399,7 @@ const styles: Record<string, any> = {
     margin: '6px 0 0',
     fontSize: '12px',
     fontWeight: 600,
-    color: '#64748B',
+    color: '#949494',
     lineHeight: 1.45,
     maxWidth: '520px',
   },
@@ -1302,7 +1435,7 @@ const styles: Record<string, any> = {
   },
   flowDraftMuted: {
     display: 'block',
-    color: '#64748B',
+    color: '#949494',
     fontWeight: 600,
   },
   addBtn: { backgroundColor: '#CCFF00', color: '#0F172A', border: 'none', padding: '10px 20px', borderRadius: '12px', fontWeight: '700', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 },
@@ -1358,18 +1491,18 @@ const styles: Record<string, any> = {
   },
   sideCard: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', border: '1px solid #EBEBEC' },
   sideTitle: { margin: '0 0 12px', fontSize: '14px', fontWeight: '700', color: '#000000', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  sideDesc: { fontSize: '13px', color: '#94A3B8', lineHeight: 1.65, fontWeight: '600', marginBottom: '24px' },
+  sideDesc: { fontSize: '13px', color: '#949494', lineHeight: 1.65, fontWeight: '600', marginBottom: '24px' },
   configItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
   configInfo: { display: 'flex', flexDirection: 'column' },
   configLabel: { fontSize: '13px', fontWeight: '700', color: '#0F172A' },
-  configDesc: { fontSize: '11px', color: '#94A3B8', fontWeight: '600' },
+  configDesc: { fontSize: '11px', color: '#949494', fontWeight: '600' },
   tinySelect: { padding: '8px 10px', borderRadius: '10px', border: '1px solid #E4E4E7', fontSize: '11px', fontWeight: '700', accentColor: '#000', backgroundColor: '#fff', color: '#0F172A', boxSizing: 'border-box' },
   proBtn: { width: '100%', padding: '16px 14px', borderRadius: '14px', border: 'none', backgroundColor: '#CCFF00', color: '#0F172A', fontWeight: '700', fontSize: '13px', cursor: 'pointer', marginTop: 4 },
   simulatorOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 },
   simulatorCard: { width: '400px', height: '600px', backgroundColor: 'white', borderRadius: '40px', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
   simHeader: { padding: '24px 32px', backgroundColor: '#FBFBFC', borderBottom: '1px solid #EBEBEC', display: 'flex', alignItems: 'center', gap: '16px' },
   simAvatar: { width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#0F172A', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  closeBtn: { border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#64748B' },
+  closeBtn: { border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#949494' },
   simBody: { flex: 1, padding: '32px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' },
   simMsg: { padding: '14px 20px', borderRadius: '18px', maxWidth: '85%', fontSize: '14px', fontWeight: '700', lineHeight: '1.5' },
   simFooter: { padding: '24px 32px', backgroundColor: '#FBFBFC', borderTop: '1px solid #EBEBEC' },
@@ -1377,11 +1510,11 @@ const styles: Record<string, any> = {
   simOptBtn: { width: '100%', padding: '14px 24px', backgroundColor: 'white', border: '1px solid #EBEBEC', borderRadius: '16px', fontSize: '13px', fontWeight: '700', color: '#0F172A', textAlign: 'left', cursor: 'pointer' },
   aiModal: { padding: '20px 10px' },
   aiHeader: { textAlign: 'center', marginBottom: '32px' },
-  aiSubtitle: { fontSize: '14px', color: '#64748B', fontWeight: '500', marginTop: '12px', lineHeight: '1.5' },
+  aiSubtitle: { fontSize: '14px', color: '#949494', fontWeight: '500', marginTop: '12px', lineHeight: '1.5' },
   aiGrid: { display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' },
   aiOption: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FBFBFC', padding: '20px', borderRadius: '20px', border: '1px solid #EBEBEC' },
   aiLabel: { fontSize: '15px', fontWeight: '700', color: '#0F172A', display: 'block', marginBottom: '4px' },
-  aiDesc: { fontSize: '12px', color: '#94A3B8', fontWeight: '600', maxWidth: '300px', lineHeight: '1.4' },
+  aiDesc: { fontSize: '12px', color: '#949494', fontWeight: '600', maxWidth: '300px', lineHeight: '1.4' },
   aiToggle: { width: '48px', height: '24px', borderRadius: '24px', border: 'none', cursor: 'pointer', transition: '0.3s' },
   aiToggleOff: { backgroundColor: '#d4d4d8' },
   aiSaveBtn: { width: '100%', padding: '18px', borderRadius: '16px', border: 'none', backgroundColor: '#0F172A', color: 'white', fontWeight: '700', fontSize: '15px', cursor: 'pointer' }

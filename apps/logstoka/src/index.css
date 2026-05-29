@@ -2,17 +2,22 @@
 @import "tailwindcss";
 @import "@shared/index.css";
 
+@theme {
+  --color-primary: #EA580C;
+}
+
 :root {
-  --ls-brand: #059669;
-  --ls-brand-dark: #047857;
-  --ls-surface: #0f172a;
-  --ls-panel: #111827;
-  --ls-border: rgba(255, 255, 255, 0.08);
+  --ls-brand: #EA580C;
+  --ls-brand-dark: #C2410C;
+  --ls-brand-soft: rgba(234, 88, 12, 0.12);
+  --ls-surface: #ffffff;
+  --ls-shell-bg: #fefefe;
+  --ls-border: rgba(15, 23, 42, 0.08);
 }
 
 body {
   font-family: Inter, system-ui, sans-serif;
-  background: #f8fafc;
+  background: var(--ls-shell-bg);
   color: #0f172a;
 }
 
@@ -25,7 +30,7 @@ body {
 }
 
 .ls-btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-orange-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-orange-800 disabled:opacity-50;
 }
 
 .ls-btn-secondary {
@@ -33,7 +38,7 @@ body {
 }
 
 .ls-input {
-  @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none ring-emerald-500 focus:ring-2;
+  @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none ring-orange-500 focus:ring-2;
 }
 
 .ls-label {
@@ -53,11 +58,168 @@ body {
 }
 
 .ls-table th {
-  @apply border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500;
+  @apply border-b border-slate-100 bg-slate-50 text-xs font-bold uppercase tracking-wide;
+  color: rgba(107, 107, 107, 1);
+  padding-left: 28px;
+  padding-right: 28px;
+  height: 75px;
+  min-height: 75px;
+  vertical-align: middle;
 }
 
 .ls-table td {
-  @apply border-b border-slate-100 px-4 py-3 text-slate-700;
+  @apply border-b border-slate-100;
+  color: rgba(61, 61, 61, 1);
+  font-weight: 600;
+  font-size: 13px;
+  padding-left: 28px;
+  padding-right: 28px;
+  height: 75px;
+  min-height: 75px;
+  vertical-align: middle;
+}
+
+.ls-table-row-link {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.ls-table-row-link:hover {
+  background: rgba(234, 88, 12, 0.06);
+}
+
+.ls-table-row-link:focus-visible {
+  outline: 2px solid rgba(234, 88, 12, 0.35);
+  outline-offset: -2px;
+}
+
+.ls-table-row-link:last-child td {
+  border-bottom: none;
+}
+
+.ls-product-thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fafafa;
+}
+
+.ls-product-thumb__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ls-product-thumb--empty {
+  color: #a3a3a3;
+}
+
+.ls-product-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.ls-product-cell__sku {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3d3d3d;
+  white-space: nowrap;
+}
+
+.ls-product-mp-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ls-products-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.ls-products-nav__item {
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #a3a3a3;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ls-products-nav__item:hover {
+  background: rgba(15, 23, 42, 0.04);
+  color: #525252;
+}
+
+.ls-products-nav__item--active {
+  background: rgba(234, 88, 12, 0.1);
+  color: #c2410c;
+}
+
+/* Hub de configurações — nav lateral interna */
+.ls-settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ls-settings-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ls-settings-nav-item:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.ls-settings-nav-item--active {
+  background: #111827;
+  color: #ffffff;
+}
+
+.ls-settings-nav-item--active svg {
+  stroke: #ffffff;
+}
+
+.ls-settings-panel {
+  min-height: 480px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 28px 32px;
+  border-radius: 24px;
 }
 
 @media (max-width: 768px) {
@@ -65,3 +227,313 @@ body {
     display: none;
   }
 }
+
+/* IA operacional — drawer global */
+.ls-ai-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ls-ai-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  border: 0;
+  cursor: pointer;
+}
+
+.ls-ai-drawer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(100%, 420px);
+  flex-direction: column;
+  background: #fff;
+  box-shadow: -8px 0 40px rgba(15, 23, 42, 0.12);
+}
+
+.ls-ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1rem 1.25rem;
+}
+
+.ls-ai-close {
+  display: flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+}
+
+.ls-ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  max-height: min(60vh, 520px);
+}
+
+.ls-ai-msg {
+  margin-bottom: 0.75rem;
+  max-width: 92%;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.ls-ai-msg-user {
+  margin-left: auto;
+  background: #EA580C;
+  color: #fff;
+}
+
+.ls-ai-msg-bot {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.ls-ai-quick {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0 1rem 0.75rem;
+}
+
+.ls-ai-chip {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.ls-ai-footer {
+  display: flex;
+  gap: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.ls-ai-input {
+  flex: 1;
+  resize: none;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.ls-ai-input:focus {
+  ring: 2px;
+  ring-color: #EA580C;
+}
+
+.ls-ai-send {
+  display: flex;
+  height: 2.75rem;
+  width: 2.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 0;
+  background: #EA580C;
+  color: #fff;
+}
+
+.ls-ai-send:disabled {
+  opacity: 0.5;
+}
+
+.ls-ai-fab {
+  position: fixed;
+  right: 1rem;
+  bottom: 5rem;
+  z-index: 45;
+  display: flex;
+  height: 3.25rem;
+  width: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 0;
+  background: #EA580C;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(234, 88, 12, 0.35);
+}
+
+/* Landing /vendas — mesmo padrão Logta */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.logstoka-vendas-page #demo {
+  position: relative;
+  isolation: isolate;
+}
+
+.logstoka-vendas-page #recursos {
+  position: relative;
+  isolation: isolate;
+}
+
+.logstoka-vendas-page #recursos .grid {
+  display: grid;
+}
+
+.logstoka-vendas-page #recursos .grid > * {
+  position: relative;
+  min-width: 0;
+}
+
+/* Login público — mesmo padrão Logta */
+body.logstoka-public-auth {
+  overflow: auto !important;
+  background: #ffffff;
+}
+
+/* Layout interno padrão (família Log / Zaptro) */
+.ls-stat-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid #f3f4f6;
+  background: #ffffff;
+  padding: 1.5rem 1.75rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ls-stat-card__label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.ls-stat-card__label--spaced {
+  margin-bottom: 0.75rem;
+}
+
+.ls-stat-card__value {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #111827;
+}
+
+.ls-stat-card__value--primary {
+  color: #ea580c;
+}
+
+.ls-kpi-strip .ls-stat-card__value {
+  font-size: 2.25rem;
+}
+
+/* KPI strip — página Produtos */
+.ls-products-kpi {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .ls-products-kpi {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+.ls-products-kpi__card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  background: #ffffff;
+  padding: 1.25rem 1.375rem 1.125rem;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+}
+
+.ls-products-kpi__card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ea580c 0%, #fdba74 100%);
+  opacity: 0.85;
+}
+
+.ls-products-kpi__card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+}
+
+.ls-products-kpi__label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  line-height: 1.3;
+}
+
+.ls-products-kpi__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  background: rgba(234, 88, 12, 0.08);
+  color: #ea580c;
+}
+
+.ls-products-kpi__value {
+  font-size: 1.75rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #111827;
+}
+
+@media (min-width: 1280px) {
+  .ls-products-kpi__value {
+    font-size: 2rem;
+  }
+}
+
+.ls-products-kpi__value--accent {
+  color: #ea580c;
+}
+
+.ls-products-kpi__hint {
+  margin-top: 0.5rem;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a3a3a3;
+  line-height: 1.35;
+}
+

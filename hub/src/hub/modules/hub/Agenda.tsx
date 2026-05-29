@@ -42,7 +42,7 @@ interface Event {
 }
 
 const COLLABORATOR_COLORS = [
-  '#0061FF', '#10B981', '#F59E0B', '#EF4444', 
+  '#0061FF', '#0061FF', '#F59E0B', '#EF4444', 
   '#8B5CF6', '#EC4899', '#06B6D4', '#F43F5E'
 ];
 
@@ -443,7 +443,7 @@ const Agenda: React.FC = () => {
           <div style={styles.categoryList}>
             {[
               { id: 'reuniao', label: 'Reuniões', color: '#3B82F6', icon: <Video size={14} /> },
-              { id: 'rota', label: 'Rotas / Logística', color: '#10B981', icon: <CalendarDays size={14} /> },
+              { id: 'rota', label: 'Rotas / Logística', color: '#0061FF', icon: <CalendarDays size={14} /> },
               { id: 'tarefa', label: 'Tarefas Internas', color: '#F59E0B', icon: <CheckCircle2 size={14} /> },
               { id: 'crm', label: 'Follow-ups CRM', color: '#8B5CF6', icon: <User size={14} /> },
             ].map(cat => (
@@ -470,7 +470,7 @@ const Agenda: React.FC = () => {
               <div key={c.id} style={styles.teamItem}>
                 <div style={{...styles.teamAvatar, backgroundColor: c.color}}>{(c.full_name || 'U')[0]}</div>
                 <span style={styles.teamName}>{c.full_name}</span>
-                <div style={{...styles.statusDot, backgroundColor: '#10B981'}} />
+                <div style={{...styles.statusDot, backgroundColor: '#0061FF'}} />
               </div>
             ))}
           </div>
@@ -666,7 +666,7 @@ const Agenda: React.FC = () => {
                     <span style={styles.docName}>Proposta Comercial.docs</span>
                   </div>
                   <div style={styles.docItem}>
-                    <div style={{...styles.docIcon, color: '#16A34A'}}><List size={14} /></div>
+                    <div style={{...styles.docIcon, color: '#1D4ED8'}}><List size={14} /></div>
                     <span style={styles.docName}>Planilha de Custos.sheets</span>
                   </div>
                 </div>
@@ -709,7 +709,7 @@ const Agenda: React.FC = () => {
             {[
               { id: 'reuniao', label: 'Evento', color: '#3B82F6' },
               { id: 'tarefa', label: 'Tarefa', color: '#F59E0B' },
-              { id: 'rota', label: 'Rota', color: '#10B981' },
+              { id: 'rota', label: 'Rota', color: '#0061FF' },
               { id: 'crm', label: 'CRM', color: '#8B5CF6' }
             ].map(tab => (
               <button 
@@ -802,9 +802,16 @@ const Agenda: React.FC = () => {
 };
 
 const styles: Record<string, any> = {
-  container: { display: 'flex', minHeight: 'calc(100vh - 100px)', padding: '20px 0' },
+  container: {
+    display: 'flex',
+    minHeight: 'calc(100vh - 100px)',
+    padding: '20px var(--hub-master-page-pad-x, 32px)',
+    marginLeft: 0,
+    marginRight: 0,
+    boxSizing: 'border-box' as const,
+  },
   headerTitleRow: { marginBottom: '32px' },
-  pageTitle: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  pageTitle: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0 },
   pageSub: { ...HUB_PAGE_SUBTITLE },
   loading: { height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0061FF', fontWeight: '800' },
   topBar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
@@ -889,7 +896,7 @@ const styles: Record<string, any> = {
   descText: { fontSize: '14px', color: '#475569', margin: 0, lineHeight: '1.5' },
   modalFooter: { display: 'flex', gap: '12px', marginTop: '12px' },
   actionBtn: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', borderRadius: '24px', border: '1px solid #E2E8F0', backgroundColor: 'white', fontSize: '13px', fontWeight: '700', color: '#64748B', cursor: 'pointer' },
-  completeBtn: { flex: 2, backgroundColor: '#10B981', color: 'white', border: 'none', borderRadius: '24px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' },
+  completeBtn: { flex: 2, backgroundColor: '#0061FF', color: 'white', border: 'none', borderRadius: '24px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' },
 
   form: { display: 'flex', flexDirection: 'column', gap: '16px' },
   row: { display: 'flex', gap: '16px' },

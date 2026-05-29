@@ -220,7 +220,7 @@ const styles = {
   backBtn: { background: 'none', border: 'none', color: '#64748b', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', width: 'fit-content' },
   cHeaderInfo: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', border: '1px solid #e2e8f0' },
   badge: { display: 'inline-block', padding: '6px 14px', backgroundColor: '#ebebeb', color: '#1e293b', fontSize: '10px', fontWeight: '700', borderRadius: '24px', marginBottom: '16px', letterSpacing: '0.5px' },
-  title: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: '0 0 12px 0', letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: '0 0 12px 0', letterSpacing: 0 },
   subtitle: { ...HUB_PAGE_SUBTITLE },
 
   content: { display: 'flex', flexDirection: 'column' as const, gap: '24px' },

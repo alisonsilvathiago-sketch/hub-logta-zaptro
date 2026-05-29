@@ -106,9 +106,6 @@ export function FinanceiroCentralOperacional() {
           <button type="button" onClick={refreshIntelligence} className="rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white hover:opacity-90">
             Reanalisar agora
           </button>
-          <Link to="/financeiro/assistente" className="rounded-xl border border-primary/30 px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary/10">
-            Assistente IA
-          </Link>
           {lastScanAt ? (
             <span className="flex items-center gap-1 self-center text-[10px] font-medium text-gray-500">
               <Clock size={12} /> Última varredura: {lastScanAt.toLocaleTimeString('pt-BR')}
@@ -160,7 +157,7 @@ export function FinanceiroCentralOperacional() {
             <>
               {pendentes.length > 0 && (
                 <section>
-                  <h3 className="logta-panel-section-title mb-4">Pagamentos & fornecedores</h3>
+                  <h3 className="logta-panel-section-title">Pagamentos & fornecedores</h3>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {pendentes.map((a) => (
                       <AlertCard key={a.id} alert={a} />
@@ -170,7 +167,7 @@ export function FinanceiroCentralOperacional() {
               )}
               {recebimentos.length > 0 && (
                 <section>
-                  <h3 className="logta-panel-section-title mb-4">Recebimentos & clientes</h3>
+                  <h3 className="logta-panel-section-title">Recebimentos & clientes</h3>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {recebimentos.map((a) => (
                       <AlertCard key={a.id} alert={a} />
@@ -180,7 +177,7 @@ export function FinanceiroCentralOperacional() {
               )}
               {operacional.length > 0 && (
                 <section>
-                  <h3 className="logta-panel-section-title mb-4">Operação logística</h3>
+                  <h3 className="logta-panel-section-title">Operação logística</h3>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {operacional.map((a) => (
                       <AlertCard key={a.id} alert={a} />
@@ -190,7 +187,7 @@ export function FinanceiroCentralOperacional() {
               )}
               {iaAlerts.length > 0 && (
                 <section>
-                  <h3 className="logta-panel-section-title mb-4">IA & fluxo de caixa</h3>
+                  <h3 className="logta-panel-section-title">IA & fluxo de caixa</h3>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {iaAlerts.map((a) => (
                       <AlertCard key={a.id} alert={a} />

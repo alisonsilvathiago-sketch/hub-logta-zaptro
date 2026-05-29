@@ -1,6 +1,9 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { getFinanceiroModule } from '../financeiroModules';
+import { FinanceiroControleDiariasView } from './FinanceiroControleDiariasView';
+import { FinanceiroControleMultasView } from './FinanceiroControleMultasView';
+import { FinanceiroMargemOperacionalView } from './FinanceiroMargemOperacionalView';
 import { FinanceiroFeatureWorkspace } from './FinanceiroFeatureWorkspace';
 import type { FinanceiroModuleCategory } from '../types';
 
@@ -41,6 +44,18 @@ export function FinanceiroFeatureRoute({
 
   const hubPath = category === 'operacional' ? '/financeiro/operacional' : '/financeiro/gestao';
   const hubLabel = category === 'operacional' ? 'Financeiro Operacional' : 'Gestão Financeira';
+
+  if (slug === 'controle-diarias') {
+    return <FinanceiroControleDiariasView module={module} hubPath={hubPath} hubLabel={hubLabel} />;
+  }
+
+  if (slug === 'margem-operacional') {
+    return <FinanceiroMargemOperacionalView module={module} hubPath={hubPath} hubLabel={hubLabel} />;
+  }
+
+  if (slug === 'controle-multas') {
+    return <FinanceiroControleMultasView module={module} hubPath={hubPath} hubLabel={hubLabel} />;
+  }
 
   return (
     <FinanceiroFeatureWorkspace

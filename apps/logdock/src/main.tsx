@@ -5,6 +5,7 @@ import App from './App.tsx'
 import { AuthProvider } from '@shared/context/AuthContext'
 import { Toaster } from 'react-hot-toast'
 import './index.css'
+import '@shared/index.css'
 
 // Error Boundary para evitar tela branca total
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {

@@ -58,7 +58,7 @@ export const FINANCEIRO_GESTAO_SECTIONS: FinanceiroModuleSection[] = [
 const operacional: FinanceiroModuleDef[] = [
   { slug: 'custos-por-viagem', title: 'Custos por Viagem', description: 'Lucro, diesel, pedágio, diária, manutenção, motorista e margem real.', category: 'operacional', sectionId: 'viagem', icon: Route, iaEnabled: true },
   { slug: 'lucro-viagem', title: 'Lucro da Viagem', description: 'Margem líquida por CT-e / viagem com breakdown de custos.', category: 'operacional', sectionId: 'viagem', icon: TrendingUp, iaEnabled: true },
-  { slug: 'custo-diesel', title: 'Custo do Diesel', description: 'Consumo e custo de combustível por viagem e período.', category: 'operacional', sectionId: 'viagem', icon: Fuel, integrations: ['frota'] },
+  { slug: 'custos-combustivel', title: 'Custos de Combustível', description: 'Consumo e custo de combustível por viagem e período.', category: 'operacional', sectionId: 'viagem', icon: Fuel, integrations: ['frota'] },
   { slug: 'controle-pedagios', title: 'Controle de Pedágios', description: 'Pedágios por rota, tag e viagem.', category: 'operacional', sectionId: 'viagem', icon: Receipt },
   { slug: 'controle-diarias', title: 'Controle de Diárias', description: 'Diárias de motorista e ajudante por viagem.', category: 'operacional', sectionId: 'viagem', icon: Wallet, integrations: ['rh'] },
   { slug: 'margem-operacional', title: 'Margem Operacional', description: 'Margem bruta e líquida da operação logística.', category: 'operacional', sectionId: 'viagem', icon: Percent, iaEnabled: true },
@@ -69,9 +69,9 @@ const operacional: FinanceiroModuleDef[] = [
   { slug: 'controle-multas', title: 'Controle de Multas', description: 'Multas de trânsito e impacto financeiro.', category: 'operacional', sectionId: 'custos-op', icon: AlertTriangle },
   { slug: 'controle-comissoes', title: 'Controle de Comissões', description: 'Comissões de frete, agenciador e representante.', category: 'operacional', sectionId: 'custos-op', icon: BadgeCheck },
   { slug: 'controle-fretes', title: 'Controle de Fretes', description: 'Receita e custo por frete contratado.', category: 'operacional', sectionId: 'fretes', icon: Truck, integrations: ['logistica'], externalPath: '/logistica' },
-  { slug: 'simulador-frete', title: 'Simulador de Frete', description: 'Precificação de frete com margem e custos operacionais.', category: 'operacional', sectionId: 'fretes', icon: Calculator, iaEnabled: true, externalPath: '/financeiro/assistente?tab=frete' },
-  { slug: 'simulador-lucro', title: 'Simulador de Lucro', description: 'Simule lucro líquido por viagem ou período.', category: 'operacional', sectionId: 'fretes', icon: LineChart, iaEnabled: true, externalPath: '/financeiro/assistente?tab=lucro' },
-  { slug: 'simulador-operacional', title: 'Simulador Operacional', description: 'Cenários de custo operacional e capacidade.', category: 'operacional', sectionId: 'fretes', icon: Gauge, iaEnabled: true, externalPath: '/financeiro/assistente?tab=operacional' },
+  { slug: 'simulador-frete', title: 'Simulador de Frete', description: 'Precificação de frete com margem e custos operacionais.', category: 'operacional', sectionId: 'fretes', icon: Calculator, iaEnabled: true, externalPath: '/financeiro/dashboard' },
+  { slug: 'simulador-lucro', title: 'Simulador de Lucro', description: 'Simule lucro líquido por viagem ou período.', category: 'operacional', sectionId: 'fretes', icon: LineChart, iaEnabled: true, externalPath: '/financeiro/dashboard' },
+  { slug: 'simulador-operacional', title: 'Simulador Operacional', description: 'Cenários de custo operacional e capacidade.', category: 'operacional', sectionId: 'fretes', icon: Gauge, iaEnabled: true, externalPath: '/financeiro/dashboard' },
   { slug: 'integracao-logistica', title: 'Integração Logística', description: 'Viagens, entregas e CT-e no financeiro.', category: 'operacional', sectionId: 'integracoes-op', icon: Link2, integrations: ['logistica'], externalPath: '/logistica' },
   { slug: 'integracao-frota', title: 'Integração Frota', description: 'Custos de frota sincronizados ao financeiro.', category: 'operacional', sectionId: 'integracoes-op', icon: Truck, integrations: ['frota'], externalPath: '/frota' },
   { slug: 'integracao-rh', title: 'Integração RH', description: 'Folha, diárias e custos de pessoal.', category: 'operacional', sectionId: 'integracoes-op', icon: Users, integrations: ['rh'], externalPath: '/rh' },
@@ -118,7 +118,7 @@ const gestao: FinanceiroModuleDef[] = [
   { slug: 'ia-previsao-caixa', title: 'IA Previsão de Caixa', description: 'Predição de saldo e risco de caixa.', category: 'gestao', sectionId: 'governanca', icon: Sparkles, iaEnabled: true },
   { slug: 'ia-risco-financeiro', title: 'IA Risco Financeiro', description: 'Score de risco e inadimplência.', category: 'gestao', sectionId: 'governanca', icon: Sparkles, iaEnabled: true },
   { slug: 'ia-gastos-excessivos', title: 'IA Gastos Excessivos', description: 'Detecção de anomalias de despesa.', category: 'gestao', sectionId: 'governanca', icon: Sparkles, iaEnabled: true },
-  { slug: 'calculadora-inteligente', title: 'Central Inteligente Financeira', description: 'Frete, lucro, combustível, margem e projeção com IA.', category: 'gestao', sectionId: 'governanca', icon: Calculator, iaEnabled: true, externalPath: '/financeiro/assistente' },
+  { slug: 'calculadora-inteligente', title: 'Central Inteligente Financeira', description: 'Frete, lucro, combustível, margem e projeção com IA.', category: 'gestao', sectionId: 'governanca', icon: Calculator, iaEnabled: true, externalPath: '/financeiro/central' },
 ];
 
 export const FINANCEIRO_MODULES: FinanceiroModuleDef[] = [...operacional, ...gestao];

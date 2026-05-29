@@ -17,16 +17,9 @@ interface Vehicle {
   lastMaintenance: string;
 }
 
-const mockVehicles: Vehicle[] = [
-  { id: '1', plate: 'ABC-1234', model: 'Scania R450', brand: 'Scania', year: 2022, mileage: 125000, status: 'operational', health: 95, lastMaintenance: '2024-03-15' },
-  { id: '2', plate: 'XYZ-5678', model: 'Volvo FH540', brand: 'Volvo', year: 2021, mileage: 210000, status: 'maintenance', health: 70, lastMaintenance: '2024-04-20' },
-  { id: '3', plate: 'KJH-9012', model: 'Mercedes-Benz Actros', brand: 'Mercedes', year: 2023, mileage: 45000, status: 'operational', health: 98, lastMaintenance: '2024-02-10' },
-  { id: '4', plate: 'LMN-3456', model: 'Scania G410', brand: 'Scania', year: 2020, mileage: 340000, status: 'critical', health: 45, lastMaintenance: '2023-11-05' },
-];
-
 const FleetPage: React.FC = () => {
   const { profile } = useAuth();
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,11 +44,16 @@ const FleetPage: React.FC = () => {
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.from('vehicles').insert({
-        ...newVehicle,
-        company_id: profile.company_id,
+      const { error } = await supabase.from('veiculos').insert({
+        placa: newVehicle.plate,
+        modelo: newVehicle.model,
+        marca: newVehicle.brand,
+        ano: newVehicle.year,
+        tipo: newVehicle.type,
+        quilometragem: newVehicle.mileage,
+        empresa_id: profile.company_id,
         health_score: 100,
-        status: 'operational'
+        status: 'disponivel'
       });
 
       if (error) throw error;
@@ -77,21 +75,16 @@ const FleetPage: React.FC = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('vehicles')
+        .from('veiculos')
         .select('*')
-        .eq('company_id', profile.company_id)
+        .eq('empresa_id', profile.company_id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.warn('Tabela vehicles ainda não existe. Usando dados mockados.', error);
-        setVehicles(mockVehicles);
-      } else if (data && data.length > 0) {
-        setVehicles(data);
-      } else {
-        setVehicles(mockVehicles); // Fallback para demonstração
-      }
+      if (error) throw error;
+      setVehicles(data || []);
     } catch (err) {
-      setVehicles(mockVehicles);
+      console.error('Erro ao buscar veículos:', err);
+      toast.error('Erro ao carregar frota.');
     } finally {
       setLoading(false);
     }
@@ -117,19 +110,19 @@ const FleetPage: React.FC = () => {
       <div style={styles.statsGrid}>
         <div style={styles.statCard}>
           <span style={styles.statLabel}>Total de Veículos</span>
-          <span style={styles.statValue}>{mockVehicles.length}</span>
+          <span style={styles.statValue}>{vehicles.length}</span>
         </div>
         <div style={styles.statCard}>
           <span style={styles.statLabel}>Em Operação</span>
-          <span style={{ ...styles.statValue, color: '#10B981' }}>{mockVehicles.filter(v => v.status === 'operational').length}</span>
+          <span style={{ ...styles.statValue, color: '#10B981' }}>{vehicles.filter(v => v.status === 'disponivel' || v.status === 'em_viagem').length}</span>
         </div>
         <div style={styles.statCard}>
           <span style={styles.statLabel}>Em Manutenção</span>
-          <span style={{ ...styles.statValue, color: '#F59E0B' }}>{mockVehicles.filter(v => v.status === 'maintenance').length}</span>
+          <span style={{ ...styles.statValue, color: '#F59E0B' }}>{vehicles.filter(v => v.status === 'manutencao').length}</span>
         </div>
         <div style={styles.statCard}>
           <span style={styles.statLabel}>Risco Crítico</span>
-          <span style={{ ...styles.statValue, color: '#EF4444' }}>{mockVehicles.filter(v => v.status === 'critical').length}</span>
+          <span style={{ ...styles.statValue, color: '#EF4444' }}>{vehicles.filter(v => v.status === 'inativo').length}</span>
         </div>
       </div>
 
@@ -165,8 +158,8 @@ const FleetPage: React.FC = () => {
             </thead>
             <tbody>
               {vehicles.filter(v => 
-                v.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                v.model.toLowerCase().includes(searchTerm.toLowerCase())
+                (v.placa || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (v.modelo || '').toLowerCase().includes(searchTerm.toLowerCase())
               ).map(vehicle => (
                 <tr key={vehicle.id} style={styles.tr}>
                   <td style={styles.td}>
@@ -175,38 +168,38 @@ const FleetPage: React.FC = () => {
                         <Truck size={20} color="#0061FF" />
                       </div>
                       <div>
-                        <div style={styles.vehicleModel}>{vehicle.model}</div>
-                        <div style={styles.vehicleBrand}>{vehicle.brand}</div>
+                        <div style={styles.vehicleModel}>{vehicle.modelo}</div>
+                        <div style={styles.vehicleBrand}>{vehicle.marca}</div>
                       </div>
                     </div>
                   </td>
-                  <td style={styles.td}><span style={styles.plate}>{vehicle.plate}</span></td>
+                  <td style={styles.td}><span style={styles.plate}>{vehicle.placa}</span></td>
                   <td style={styles.td}>
                     <div style={styles.mileageBox}>
-                      <span style={styles.mileageVal}>{vehicle.mileage.toLocaleString()}</span>
+                      <span style={styles.mileageVal}>{(vehicle.quilometragem || 0).toLocaleString()}</span>
                       <span style={styles.mileageUnit}>km</span>
                     </div>
                   </td>
                   <td style={styles.td}>
                     <div style={styles.scoreIndicator}>
-                      <div style={{ ...styles.scoreCircle, borderColor: (vehicle.health || vehicle.health_score) > 80 ? '#10B981' : '#EF4444' }}>
-                        {vehicle.health || vehicle.health_score}%
+                      <div style={{ ...styles.scoreCircle, borderColor: (vehicle.health_score || 0) > 80 ? '#10B981' : '#EF4444' }}>
+                        {vehicle.health_score || 0}%
                       </div>
                     </div>
                   </td>
                   <td style={styles.td}>
                     <div style={{ 
                       ...styles.statusBadge,
-                      backgroundColor: vehicle.status === 'operational' ? '#E1FCEF' : vehicle.status === 'maintenance' ? '#FEF3C7' : '#FEE2E2',
-                      color: vehicle.status === 'operational' ? '#065F46' : vehicle.status === 'maintenance' ? '#92400E' : '#991B1B'
+                      backgroundColor: (vehicle.status === 'disponivel' || vehicle.status === 'em_viagem') ? '#E1FCEF' : vehicle.status === 'manutencao' ? '#FEF3C7' : '#FEE2E2',
+                      color: (vehicle.status === 'disponivel' || vehicle.status === 'em_viagem') ? '#065F46' : vehicle.status === 'manutencao' ? '#92400E' : '#991B1B'
                     }}>
-                      {vehicle.status === 'operational' && <CheckCircle2 size={14} />}
-                      {vehicle.status === 'maintenance' && <Clock size={14} />}
-                      {vehicle.status === 'critical' && <AlertTriangle size={14} />}
+                      {(vehicle.status === 'disponivel' || vehicle.status === 'em_viagem') && <CheckCircle2 size={14} />}
+                      {vehicle.status === 'manutencao' && <Clock size={14} />}
+                      {vehicle.status === 'inativo' && <AlertTriangle size={14} />}
                       {(vehicle.status || '').charAt(0).toUpperCase() + (vehicle.status || '').slice(1)}
                     </div>
                   </td>
-                  <td style={styles.td}>{vehicle.lastMaintenance ? new Date(vehicle.lastMaintenance).toLocaleDateString('pt-BR') : vehicle.last_maintenance_date ? new Date(vehicle.last_maintenance_date).toLocaleDateString('pt-BR') : 'N/A'}</td>
+                  <td style={styles.td}>{vehicle.ultima_manutencao ? new Date(vehicle.ultima_manutencao).toLocaleDateString('pt-BR') : 'N/A'}</td>
                   <td style={styles.td}>
                     <button style={styles.moreBtn}><MoreHorizontal size={20} /></button>
                   </td>

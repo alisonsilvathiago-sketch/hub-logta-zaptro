@@ -514,7 +514,7 @@ const OpenStreetRouteMap: React.FC<OpenStreetRouteMapProps> = ({
           transition: 'all 0.3s ease'
         }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#D9FF00', boxShadow: '0 0 8px #D9FF00' }} />
-          <span style={{ fontSize: 11, fontWeight: 900, color: '#64748B', letterSpacing: '0.05em' }}>ROTAS DE HOJE</span>
+          <span style={{ fontSize: 11, fontWeight: 900, color: '#949494', letterSpacing: '0.05em' }}>ROTAS DE HOJE</span>
           <span style={{ fontSize: 14, fontWeight: 900, color: '#000' }}>{vehicles.length}</span>
         </div>
 
@@ -565,13 +565,13 @@ const OpenStreetRouteMap: React.FC<OpenStreetRouteMapProps> = ({
             >
               <Popup>
                 <div style={{ padding: '4px', minWidth: 160 }}>
-                  <div style={{ fontSize: '9px', fontWeight: 800, color: '#94A3B8', marginBottom: '4px', textTransform: 'uppercase' }}>
+                  <div style={{ fontSize: '9px', fontWeight: 800, color: '#949494', marginBottom: '4px', textTransform: 'uppercase' }}>
                     MONITORAMENTO ZAPTRO
                   </div>
                   <div style={{ fontSize: '15px', fontWeight: 900, color: '#000', marginBottom: 2 }}>
                     {v.driverName || 'Motorista'}
                   </div>
-                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748B' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#949494' }}>
                     {v.label}
                   </div>
                   <div style={{ 
@@ -581,7 +581,7 @@ const OpenStreetRouteMap: React.FC<OpenStreetRouteMapProps> = ({
                     marginTop: '10px',
                     fontSize: '10px',
                     fontWeight: 900,
-                    color: v.status === 'moving' ? '#10B981' : '#64748B',
+                    color: v.status === 'moving' ? '#10B981' : '#949494',
                     padding: '6px 10px',
                     background: v.status === 'moving' ? '#ecfdf5' : '#f1f5f9',
                     borderRadius: 8
@@ -590,7 +590,7 @@ const OpenStreetRouteMap: React.FC<OpenStreetRouteMapProps> = ({
                       width: '6px', 
                       height: '6px', 
                       borderRadius: '50%', 
-                      backgroundColor: v.status === 'moving' ? '#10B981' : '#64748B',
+                      backgroundColor: v.status === 'moving' ? '#10B981' : '#949494',
                       animation: v.status === 'moving' ? 'pulse 2s infinite' : 'none'
                     }} />
                     {v.status === 'moving' ? 'EM MOVIMENTO' : 'PARADO'}

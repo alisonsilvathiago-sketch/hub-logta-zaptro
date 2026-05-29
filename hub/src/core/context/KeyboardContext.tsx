@@ -57,7 +57,7 @@ export const KeyboardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       key: 'b',
       ctrl: true,
       description: 'Ir para Backup',
-      action: () => navigate('/master/infrastructure/backup')
+      action: () => navigate('/master/settings')
     });
 
     registerShortcut({

@@ -15,13 +15,7 @@ interface Driver {
   compliance: number;
 }
 
-const mockDrivers: Driver[] = [
-  { id: '1', name: 'João Silva', cnh: '12345678900', cnhExpiration: '2026-05-15', vehicle: 'ABC-1234 (Scania R450)', status: 'active', compliance: 100 },
-  { id: '2', name: 'Maria Santos', cnh: '98765432100', cnhExpiration: '2024-05-20', vehicle: 'XYZ-5678 (Volvo FH540)', status: 'blocked', compliance: 65 },
-  { id: '3', name: 'Pedro Oliveira', cnh: '55566677788', cnhExpiration: '2025-10-10', vehicle: 'KJH-9012 (Mercedes-Benz Actros)', status: 'active', compliance: 90 },
-  { id: '4', name: 'Ricardo Souza', cnh: '11122233344', cnhExpiration: '2024-06-05', vehicle: 'LMN-3456 (Scania G410)', status: 'vacation', compliance: 85 },
-];
-
+// mockDrivers removed
 const DriversPage: React.FC = () => {
   const { profile } = useAuth();
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -79,15 +73,15 @@ const DriversPage: React.FC = () => {
         .order('full_name', { ascending: true });
 
       if (error) {
-        console.warn('Tabela drivers ainda não existe. Usando dados mockados.');
-        setDrivers(mockDrivers);
-      } else if (data && data.length > 0) {
+        console.warn('Erro ao buscar motoristas:', error);
+        setDrivers([]);
+      } else if (data) {
         setDrivers(data);
       } else {
-        setDrivers(mockDrivers);
+        setDrivers([]);
       }
     } catch (err) {
-      setDrivers(mockDrivers);
+      setDrivers([]);
     } finally {
       setLoading(false);
     }
@@ -113,19 +107,21 @@ const DriversPage: React.FC = () => {
       <div style={styles.statsGrid}>
         <div style={styles.statCard}>
           <span style={styles.statLabel}>Total de Motoristas</span>
-          <span style={styles.statValue}>{mockDrivers.length}</span>
+          <span style={styles.statValue}>{drivers.length}</span>
         </div>
         <div style={styles.statCard}>
           <span style={styles.statLabel}>Ativos</span>
-          <span style={{ ...styles.statValue, color: '#10B981' }}>{mockDrivers.filter(d => d.status === 'active').length}</span>
+          <span style={{ ...styles.statValue, color: '#10B981' }}>{drivers.filter(d => d.status === 'active').length}</span>
         </div>
         <div style={styles.statCard}>
           <span style={styles.statLabel}>Vencimento Próximo</span>
-          <span style={{ ...styles.statValue, color: '#F59E0B' }}>1</span>
+          <span style={{ ...styles.statValue, color: '#F59E0B' }}>
+            {drivers.filter(d => new Date(d.cnhExpiration || d.cnh_expiration) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)).length}
+          </span>
         </div>
         <div style={styles.statCard}>
           <span style={styles.statLabel}>Bloqueados</span>
-          <span style={{ ...styles.statValue, color: '#EF4444' }}>{mockDrivers.filter(d => d.status === 'blocked').length}</span>
+          <span style={{ ...styles.statValue, color: '#EF4444' }}>{drivers.filter(d => d.status === 'blocked').length}</span>
         </div>
       </div>
 

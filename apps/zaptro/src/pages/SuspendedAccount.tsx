@@ -104,7 +104,7 @@ const styles = {
     fontWeight: '600', color: 'var(--primary)', marginBottom: '12px'
   },
   infoText: {
-    fontSize: '14px', color: '#64748b', marginBottom: '24px', lineHeight: '1.5'
+    fontSize: '14px', color: '#949494', marginBottom: '24px', lineHeight: '1.5'
   },
   contactSection: {
     borderTop: '1px solid #e2e8f0', paddingTop: '24px', fontSize: '14px'

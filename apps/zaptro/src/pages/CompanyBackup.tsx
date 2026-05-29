@@ -151,7 +151,7 @@ const CompanyBackup: React.FC = () => {
                {backups.map(b => (
                  <div key={b.id} style={styles.backupItem}>
                     <div style={styles.itemDate}>
-                       <Clock size={16} color="#94a3b8" />
+                       <Clock size={16} color="#949494" />
                        <div style={styles.dateInfo}>
                           <span style={styles.dateText}>{new Date(b.created_at).toLocaleDateString()}</span>
                           <span style={styles.timeText}>{new Date(b.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -159,7 +159,7 @@ const CompanyBackup: React.FC = () => {
                     </div>
 
                     <div style={styles.itemMeta}>
-                       <span style={{...styles.typeBadge, backgroundColor: b.type === 'AUTO' ? '#f1f5f9' : '#e0f2fe', color: b.type === 'AUTO' ? '#64748b' : '#0284c7'}}>
+                       <span style={{...styles.typeBadge, backgroundColor: b.type === 'AUTO' ? '#f1f5f9' : '#e0f2fe', color: b.type === 'AUTO' ? '#949494' : '#0284c7'}}>
                           {b.type === 'AUTO' ? 'Automático' : 'Manual'}
                        </span>
                        <span style={styles.sizeText}>{formatSize(b.file_size)}</span>
@@ -203,27 +203,27 @@ const styles = {
   infoCard: { backgroundColor: '#f4f4f4', padding: '40px', borderRadius: '32px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' as const, gap: '20px' },
   infoIcon: { marginBottom: '8px' },
   infoTitle: { fontSize: '20px', fontWeight: '700', color: '#000000', margin: 0 },
-  infoText: { fontSize: '15px', color: '#64748b', lineHeight: '1.6', margin: 0 },
+  infoText: { fontSize: '15px', color: '#949494', lineHeight: '1.6', margin: 0 },
   infoSpecs: { marginTop: '12px', display: 'flex', flexDirection: 'column' as const, gap: '12px' },
-  specItem: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: '600', color: '#334155' },
+  specItem: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: '600', color: '#6B6B6B' },
 
   listCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #e2e8f0', overflow: 'hidden' },
   cardHeader: { padding: '32px', borderBottom: '1px solid #e8e8e8', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   cardTitle: { fontSize: '18px', fontWeight: '700', color: '#000000', margin: 0 },
-  refreshBtn: { width: '40px', height: '40px', borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' },
+  refreshBtn: { width: '40px', height: '40px', borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#949494' },
 
   backupList: { display: 'flex', flexDirection: 'column' as const },
   backupItem: { padding: '24px 32px', borderBottom: '1px solid #e8e8e8', display: 'grid', gridTemplateColumns: 'minmax(150px, 1fr) 1.5fr auto', alignItems: 'center', gap: '24px', transition: 'background-color 0.2s' },
   itemDate: { display: 'flex', gap: '14px', alignItems: 'center' },
   dateInfo: { display: 'flex', flexDirection: 'column' as const },
   dateText: { fontSize: '15px', fontWeight: '600', color: '#000000' },
-  timeText: { fontSize: '11px', fontWeight: '700', color: '#94a3b8' },
+  timeText: { fontSize: '11px', fontWeight: '700', color: '#949494' },
   itemMeta: { display: 'flex', alignItems: 'center', gap: '16px' },
   typeBadge: { padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase' as const },
-  sizeText: { fontSize: '13px', fontWeight: '600', color: '#64748b' },
-  restoreBtn: { padding: '10px 18px', borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: 'white', color: '#334155', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' },
+  sizeText: { fontSize: '13px', fontWeight: '600', color: '#949494' },
+  restoreBtn: { padding: '10px 18px', borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: 'white', color: '#6B6B6B', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' },
   
-  emptyState: { padding: '80px 40px', textAlign: 'center' as const, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '16px', color: '#94a3b8' },
+  emptyState: { padding: '80px 40px', textAlign: 'center' as const, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '16px', color: '#949494' },
   loading: { padding: '100px', textAlign: 'center' as const, color: 'var(--primary)', fontWeight: '600' }
 };
 

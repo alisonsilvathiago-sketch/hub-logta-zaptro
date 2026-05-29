@@ -274,7 +274,7 @@ const styles = {
   tabBtnCompact: { 
     display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '4px', 
     padding: '10px 16px', borderRadius: '14px', border: 'none', backgroundColor: 'transparent', 
-    fontWeight: '700', color: '#94A3B8', cursor: 'pointer', transition: 'all 0.2s', 
+    fontWeight: '700', color: '#949494', cursor: 'pointer', transition: 'all 0.2s', 
     minWidth: '80px', fontSize: '11px' 
   },
   tabBtnActive: { backgroundColor: 'white', color: 'var(--primary)', boxShadow: 'var(--shadow-md)', border: '1px solid var(--border)' },
@@ -312,7 +312,7 @@ const styles = {
   meta: { fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' },
   playBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', width: '100%', justifyContent: 'center', backgroundColor: '#f4f4f4', border: '1px solid #e2e8f0', borderRadius: '12px', color: 'var(--primary)', fontWeight: '600', cursor: 'pointer', marginTop: '10px' },
   upgradeCard: { textAlign: 'center' as const, padding: '80px', backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '20px' },
-  emptyView: { textAlign: 'center' as const, padding: '100px', backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', color: '#94a3b8' },
+  emptyView: { textAlign: 'center' as const, padding: '100px', backgroundColor: 'white', borderRadius: '32px', border: '1px solid var(--border)', color: '#949494' },
   empty: { textAlign: 'center' as const, padding: '40px', color: 'var(--text-muted)', gridColumn: '1 / -1' }
 };
 

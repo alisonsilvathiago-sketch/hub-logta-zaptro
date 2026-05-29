@@ -13,7 +13,7 @@ interface FileUploaderProps {
 const COLORS = {
   primary: '#1E293B',
   accent: '#0061FF',
-  muted: '#64748B',
+  muted: '#949494',
   danger: '#EF4444'
 };
 

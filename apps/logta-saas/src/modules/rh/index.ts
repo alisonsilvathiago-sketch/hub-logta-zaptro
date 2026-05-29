@@ -7,6 +7,20 @@ export { RhDocumentosView } from './views/RhDocumentosView';
 export { ControlePontoView } from './ponto/views/ControlePontoView';
 export { PontoPublicView } from './ponto/views/PontoPublicView';
 export { ColaboradorJornadaView } from './ponto/views/ColaboradorJornadaView';
+export { EquipeInteligenteView } from './views/EquipeInteligenteView';
+export { ColaboradorEquipePerfilView } from './views/ColaboradorEquipePerfilView';
+export { mergeRhColaboradores } from './lib/mergeRhColaboradores';
+export {
+  buildEquipeRouteId,
+  equipeProfileUrl,
+  formatEquipeDisplayId,
+  normalizeEquipeRouteId,
+  resolveEquipeListRouteId,
+} from './lib/equipeRouteId';
+export type { RhColaboradorListItem } from './lib/mergeRhColaboradores';
+export { canManageRhEquipe } from './lib/rhEquipePermissions';
+export { registerRhColaborador } from './lib/registerRhColaborador';
+export { NovoColaboradorModal } from './components/NovoColaboradorModal';
 export { JornadaPontoLiveFeed } from './ponto/components/JornadaPontoLiveFeed';
 export {
   getRhModule,

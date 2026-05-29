@@ -28,6 +28,7 @@ import ZaptroLayout from '../components/Zaptro/ZaptroLayout';
 import { ZaptroWhatsappQrConnectPanel } from '../components/Zaptro/ZaptroWhatsappQrConnectPanel';
 import { getZaptroPostLoginLandingUrl } from '../utils/domains';
 import { fireTransactionalEmailNonBlocking } from '../lib/fireTransactionalEmail';
+import { getDevRegisterPrefill } from '../utils/zaptroRegisterDevPrefill';
 
 const DRAFT_STORAGE_KEY = 'zaptro_onboarding_draft_v1';
 const TOTAL_STEPS = 7;
@@ -113,18 +114,21 @@ const ZaptroRegister: React.FC = () => {
     const urlName = searchParams.get('name') || '';
     const urlPhone = searchParams.get('phone') || '';
     
+    const dev = getDevRegisterPrefill();
     const nameParts = urlName.trim().split(/\s+/);
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
+    const draft = d?.formData ?? {};
 
-    return { 
-      ...defaultFormData(), 
-      ...(d?.formData ?? {}), 
-      email: urlEmail || (d?.formData?.email ?? ''),
-      first_name: firstName || (d?.formData?.first_name ?? ''),
-      last_name: lastName || (d?.formData?.last_name ?? ''),
-      phone: urlPhone || (d?.formData?.phone ?? ''),
-      logo: null 
+    return {
+      ...defaultFormData(),
+      ...draft,
+      email: urlEmail || draft.email || dev?.email || '',
+      password: draft.password || dev?.password || '',
+      first_name: firstName || draft.first_name || dev?.first_name || '',
+      last_name: lastName || draft.last_name || dev?.last_name || '',
+      phone: urlPhone || draft.phone || '',
+      logo: null,
     };
   });
 
@@ -332,6 +336,9 @@ const ZaptroRegister: React.FC = () => {
           full_name: fullName || 'Administrador',
           role: 'ADMIN',
           company_id: companyData.id,
+          tem_zaptro: true,
+          status_zaptro: 'ativo',
+          metadata: { modules: { whatsapp: true } },
         },
         { onConflict: 'id' }
       );
@@ -368,12 +375,23 @@ const ZaptroRegister: React.FC = () => {
       }
 
       if (!authData.session) {
+        const { data: signInData, error: signInError } = await supabaseZaptro.auth.signInWithPassword({
+          email: formData.email.trim(),
+          password: formData.password,
+        });
+        if (signInData.session) {
+          setPostRegCompanyId(companyData.id);
+          notifyZaptro('success', 'Conta criada', 'A gerar o código do WhatsApp…');
+          return;
+        }
         notifyZaptro(
           'info',
           'Confirme seu e-mail',
-          'Enviamos um link de confirmação. Depois entre em /login para acessar o Zaptro.'
+          signInError?.message?.includes('Email not confirmed')
+            ? 'Abra o link no e-mail e volte aqui, ou desative confirmação de e-mail no Supabase (dev).'
+            : 'Enviamos um link de confirmação. Depois entre em /login para ligar o WhatsApp.',
         );
-        setTimeout(() => navigate('/login'), 4000);
+        setPostRegCompanyId(companyData.id);
         return;
       }
     } catch (err: unknown) {
@@ -688,7 +706,9 @@ const ZaptroRegister: React.FC = () => {
             <ZaptroWhatsappQrConnectPanel
               key={postRegCompanyId ?? 'awaiting-account'}
               companyId={postRegCompanyId}
-              autoStartWhenReady={!!postRegCompanyId}
+              autoStartWhenReady
+              allowPreAuthQr
+              awaitingAccount={!postRegCompanyId}
               compact
               onConnected={handleWaConnected}
             />
@@ -894,18 +914,18 @@ const styles: Record<string, any> = {
   formWrapper: { width: '100%', maxWidth: '420px' },
   mobileHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 },
   mobileProgress: { display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' },
-  stepPillMobile: { fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' },
+  stepPillMobile: { fontSize: 11, fontWeight: 700, color: '#949494', textTransform: 'uppercase' },
   progressTrackMobile: { width: 80, height: 4, backgroundColor: '#f1f5f9', borderRadius: 999, overflow: 'hidden' },
   stepHeader: { marginBottom: 32 },
-  greeting: { fontSize: 13, fontWeight: 700, color: '#64748b', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.02em' },
+  greeting: { fontSize: 13, fontWeight: 700, color: '#949494', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.02em' },
   cardTitle: { fontSize: 28, fontWeight: 700, color: '#0f172a', margin: '0 0 8px 0', letterSpacing: '-1px' },
-  stepDesc: { fontSize: 14, color: '#64748b', fontWeight: 600, lineHeight: 1.5 },
+  stepDesc: { fontSize: 14, color: '#949494', fontWeight: 600, lineHeight: 1.5 },
   formContainer: { display: 'flex', flexDirection: 'column', gap: '24px' },
   inputStack: { display: 'flex', flexDirection: 'column', gap: '16px' },
   twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
   fieldGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
   inputWrapper: { position: 'relative', display: 'flex', alignItems: 'center' },
-  fieldIcon: { position: 'absolute', left: '16px', color: '#94a3b8', display: 'flex', alignItems: 'center' },
+  fieldIcon: { position: 'absolute', left: '16px', color: '#949494', display: 'flex', alignItems: 'center' },
   input: {
     width: '100%',
     padding: '14px 16px 14px 44px',
@@ -932,12 +952,12 @@ const styles: Record<string, any> = {
     fontFamily: 'inherit',
     backgroundColor: '#FFF',
   },
-  eyeBtn: { position: 'absolute', right: '12px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' },
+  eyeBtn: { position: 'absolute', right: '12px', background: 'none', border: 'none', color: '#949494', cursor: 'pointer', display: 'flex', alignItems: 'center' },
   footerActions: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px', gap: 16 },
   backBtn: {
     background: 'none',
     border: 'none',
-    color: '#64748b',
+    color: '#949494',
     fontSize: '14px',
     fontWeight: 700,
     cursor: 'pointer',
@@ -1004,11 +1024,11 @@ const styles: Record<string, any> = {
   logoPreviewCircle: { width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #FFF', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
   logoBadge: { position: 'absolute', bottom: -4, right: -4, width: 28, height: 28, borderRadius: 999, backgroundColor: '#D9FF00', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #FFF' },
   qrArea: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  connectLead: { fontSize: 13, color: '#64748b', fontWeight: 600, lineHeight: 1.6, textAlign: 'center', margin: 0 },
-  autosaveNote: { marginTop: 8, fontSize: 11, color: '#94a3b8', textAlign: 'center', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' },
-  hintMuted: { margin: 0, fontSize: 12, color: '#94a3b8', fontWeight: 600 },
+  connectLead: { fontSize: 13, color: '#949494', fontWeight: 600, lineHeight: 1.6, textAlign: 'center', margin: 0 },
+  autosaveNote: { marginTop: 8, fontSize: 11, color: '#949494', textAlign: 'center', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' },
+  hintMuted: { margin: 0, fontSize: 12, color: '#949494', fontWeight: 600 },
   skipWaWrap: { display: 'flex', justifyContent: 'center' },
-  skipWaBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#64748b', textDecoration: 'underline', padding: '8px' },
+  skipWaBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#949494', textDecoration: 'underline', padding: '8px' },
 };
 
 export default ZaptroRegister;

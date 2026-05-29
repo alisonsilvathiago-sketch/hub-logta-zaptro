@@ -1,29 +1,123 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useZaptroTheme } from '../context/ZaptroThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { Search, Plus, Truck, Edit2, Trash2, Navigation, User, RefreshCw, X } from 'lucide-react';
 import { ZAPTRO_SHADOW } from '../constants/zaptroShadows';
 import { notifyZaptro } from '../components/Zaptro/ZaptroNotificationSystem';
-import { zaptroVehicleProfilePath } from '../constants/zaptroRoutes';
+import { ZAPTRO_APP_ROUTES } from '../app/zaptroAppRoutes';
+import {
+  getVisibleDemoVehicles,
+  isZaptroVehiclesDemoEnabled,
+  type ZaptroVehicleDemo,
+} from '../constants/zaptroVehiclesDemo';
+import { supabaseZaptro } from '../lib/supabase-zaptro';
+import { Activity } from 'lucide-react';
+import { ZaptroListImportToolbar } from '../components/Zaptro/ZaptroListImportToolbar';
+import { exportToExcel } from '../lib/exportToExcel';
+import { downloadCsvTemplate } from '../lib/downloadCsvTemplate';
+import {
+  importVehiclesCsvRows,
+  parseVehiclesCsv,
+  VEHICLE_CSV_TEMPLATE_EXAMPLE,
+  VEHICLE_CSV_TEMPLATE_HEADERS,
+} from '../lib/zaptroVehiclesImport';
 
-export const ZaptroVehiclesTab: React.FC = () => {
+type VehicleRow = ZaptroVehicleDemo & { isDemo?: boolean };
+
+type Props = {
+  registerOpen?: boolean;
+  onRegisterClose?: () => void;
+};
+
+export const ZaptroVehiclesTab: React.FC<Props> = ({ registerOpen, onRegisterClose }) => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const { palette } = useZaptroTheme();
   const d = palette.mode === 'dark';
   const border = palette.sidebarBorder;
   const surface = d ? 'rgba(255,255,255,0.04)' : '#FFFFFF';
   const surface2 = d ? 'rgba(255,255,255,0.06)' : palette.searchBg;
 
-  // Mock data for UI demonstration
-  const [vehicles, setVehicles] = useState([
-    { id: 'v1', plate: 'ABC-1234', type: 'Caminhão', model: 'Volvo FH', brand: 'Volvo', year: '2022', status: 'disponivel', driver: 'João Silva' },
-    { id: 'v2', plate: 'XYZ-9876', type: 'Van', model: 'Sprinter', brand: 'Mercedes', year: '2023', status: 'em_rota', driver: 'Alison Silva' },
-    { id: 'v3', plate: 'DEF-5678', type: 'Carro', model: 'Fiorino', brand: 'Fiat', year: '2020', status: 'inativo', driver: null }
-  ]);
+  const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  const filtered = vehicles.filter(v => v.plate.toLowerCase().includes(searchTerm.toLowerCase()) || v.model.toLowerCase().includes(searchTerm.toLowerCase()));
+  React.useEffect(() => {
+    if (registerOpen) setShowModal(true);
+  }, [registerOpen]);
+
+  const closeModal = () => {
+    setShowModal(false);
+    onRegisterClose?.();
+  };
+  const [showingDemo, setShowingDemo] = useState(false);
+
+  const fetchVehicles = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabaseZaptro
+        .from('veiculos')
+        .select(`
+          *,
+          motorista:motoristas(nome)
+        `)
+        .order('placa');
+
+      if (error) throw error;
+      const mapped =
+        data?.map((v) => ({
+          id: String(v.id),
+          plate: String(v.placa ?? ''),
+          type: String(v.tipo || 'Caminhão'),
+          model: String(v.modelo || '---'),
+          brand: String(v.marca || '---'),
+          year: String(v.ano || '---'),
+          status: (v.status || 'disponivel') as VehicleRow['status'],
+          driver: (v.motorista as { nome?: string } | null)?.nome || null,
+          isDemo: false,
+        })) ?? [];
+
+      if (mapped.length === 0 && isZaptroVehiclesDemoEnabled()) {
+        setVehicles(getVisibleDemoVehicles().map((v) => ({ ...v, isDemo: true })));
+        setShowingDemo(true);
+      } else {
+        setVehicles(mapped);
+        setShowingDemo(false);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar veículos:', err);
+      if (isZaptroVehiclesDemoEnabled()) {
+        setVehicles(getVisibleDemoVehicles().map((v) => ({ ...v, isDemo: true })));
+        setShowingDemo(true);
+      } else {
+        setVehicles([]);
+        setShowingDemo(false);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchVehicles();
+  }, [fetchVehicles]);
+
+  const filtered = useMemo(
+    () =>
+      vehicles.filter(
+        (v) =>
+          v.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          v.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          v.brand.toLowerCase().includes(searchTerm.toLowerCase()),
+      ),
+    [vehicles, searchTerm],
+  );
+
+  const openVehicle = (v: VehicleRow) => {
+    navigate(ZAPTRO_APP_ROUTES.vehicleProfile(v.id));
+  };
 
   const getStatusColor = (s: string) => {
     if (s === 'disponivel') return '#22c55e';
@@ -37,35 +131,127 @@ export const ZaptroVehiclesTab: React.FC = () => {
     return 'Inativo';
   };
 
+  const handleExportVehicles = () => {
+    if (!filtered.length) {
+      notifyZaptro('warning', 'Exportação', 'Nenhum veículo para exportar.');
+      return;
+    }
+    exportToExcel(
+      filtered.map((v) => ({
+        placa: v.plate,
+        tipo: v.type,
+        marca: v.brand,
+        modelo: v.model,
+        ano: v.year,
+        status: v.status,
+        motorista: v.driver ?? '',
+      })),
+      'veiculos_frota',
+      {
+        placa: 'Placa',
+        tipo: 'Tipo',
+        marca: 'Marca',
+        modelo: 'Modelo',
+        ano: 'Ano',
+        status: 'Status',
+        motorista: 'Motorista',
+      },
+    );
+    notifyZaptro('success', 'Exportado', `${filtered.length} veículo(s) exportado(s).`);
+  };
+
+  const handleDownloadTemplate = () => {
+    downloadCsvTemplate(
+      'modelo_veiculos_zaptro.csv',
+      VEHICLE_CSV_TEMPLATE_HEADERS,
+      VEHICLE_CSV_TEMPLATE_EXAMPLE,
+      'Preencha o modelo e use «Importar veículos» na barra da frota.',
+    );
+  };
+
+  const handleImportVehicles = async (file: File) => {
+    try {
+      const text = await file.text();
+      const rows = parseVehiclesCsv(text);
+      if (!rows.length) {
+        notifyZaptro('error', 'Importação', 'Nenhuma linha válida. Use o modelo CSV com coluna «placa».');
+        return;
+      }
+      notifyZaptro('info', 'Importação', `A importar ${rows.length} veículo(s)...`);
+      const result = await importVehiclesCsvRows(rows, { demo: showingDemo || !profile?.company_id });
+      await fetchVehicles();
+      notifyZaptro(
+        'success',
+        'Importação concluída',
+        `${result.imported} veículo(s) importado(s)${result.failed ? `, ${result.failed} falharam` : ''}.`,
+      );
+    } catch (err: unknown) {
+      notifyZaptro('error', 'Importação', err instanceof Error ? err.message : 'Falha ao importar.');
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', flex: 1, minHeight: 0 }}>
+      {showingDemo ? (
+        <div className="zaptro-fleet-demo-banner">
+          Pré-visualização — {vehicles.length} veículos de exemplo (design da frota). Cadastre veículos reais com
+          &quot;Novo Veículo&quot; quando a tabela <code>veiculos</code> estiver disponível no Supabase.
+        </div>
+      ) : null}
       {/* Toolbar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ display: 'flex', flex: '1 1 320px', gap: 10, flexWrap: 'wrap', minWidth: 0 }}>
-          <div style={{ flex: '1 1 200px', display: 'flex', alignItems: 'center', gap: 12, backgroundColor: surface2, padding: '12px 18px', borderRadius: 16, border: `1px solid ${border}` }}>
-            <Search size={18} color={palette.textMuted} />
+          <div
+            className="zaptro-field-wrap"
+            style={{ flex: '1 1 200px', backgroundColor: surface2, borderColor: border }}
+          >
+            <Search size={16} color={palette.textMuted} />
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar placa, modelo..."
-              style={{ border: 'none', outline: 'none', fontSize: 14, fontWeight: 700, width: '100%', color: palette.text, backgroundColor: 'transparent', fontFamily: 'inherit' }}
             />
           </div>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 18px', borderRadius: 16, backgroundColor: palette.lime, color: '#000', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
-        >
-          <Plus size={18} strokeWidth={2.5} /> Novo Veículo
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <ZaptroListImportToolbar
+            inputId="zaptro-vehicles-import-input"
+            exportLabel="Baixar veículos"
+            importLabel="Importar veículos"
+            templateLabel="Modelo"
+            exportTitle="Exportar frota visível para Excel/CSV"
+            importTitle="Importar veículos de CSV ou Excel"
+            onExport={handleExportVehicles}
+            onImport={handleImportVehicles}
+            onDownloadTemplate={handleDownloadTemplate}
+            exportDisabled={filtered.length === 0}
+          />
+          <button
+            type="button"
+            className="zaptro-btn-toolbar"
+            onClick={() => setShowModal(true)}
+            style={{ backgroundColor: palette.lime, color: '#000' }}
+          >
+            <Plus size={16} strokeWidth={2.5} /> Novo Veículo
+          </button>
+        </div>
       </div>
 
       {/* Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 18 }}>
-        {filtered.map(v => (
+        {loading ? (
+          <div style={{ gridColumn: '1 / -1', padding: '60px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <Activity className="animate-spin" size={32} color={palette.lime} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: palette.textMuted }}>CARREGANDO FROTA...</span>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ gridColumn: '1 / -1', padding: '60px 0', textAlign: 'center', color: palette.textMuted, fontWeight: 600 }}>
+            Nenhum veículo encontrado.
+          </div>
+        ) : filtered.map(v => (
           <div 
             key={v.id} 
-            onClick={() => navigate(zaptroVehicleProfilePath(v.id))}
+            onClick={() => openVehicle(v)}
             style={{ 
               backgroundColor: surface, 
               border: `1px solid ${border}`, 
@@ -136,7 +322,7 @@ export const ZaptroVehiclesTab: React.FC = () => {
           <div style={{ width: 'min(500px, 100%)', backgroundColor: surface, borderRadius: 22, border: `1px solid ${border}`, padding: 28, boxShadow: ZAPTRO_SHADOW.lg }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: palette.text, letterSpacing: '-0.02em' }}>Cadastrar Veículo</h3>
-              <button onClick={() => setShowModal(false)} style={{ background: 'transparent', border: 'none', color: palette.textMuted, cursor: 'pointer' }}>
+              <button onClick={closeModal} style={{ background: 'transparent', border: 'none', color: palette.textMuted, cursor: 'pointer' }}>
                 <X size={20} />
               </button>
             </div>
@@ -179,10 +365,10 @@ export const ZaptroVehiclesTab: React.FC = () => {
               </div>
 
               <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: 14, borderRadius: 12, border: `1px solid ${border}`, backgroundColor: 'transparent', color: palette.text, fontWeight: 600, cursor: 'pointer' }}>
+                <button onClick={closeModal} style={{ flex: 1, padding: 14, borderRadius: 12, border: `1px solid ${border}`, backgroundColor: 'transparent', color: palette.text, fontWeight: 600, cursor: 'pointer' }}>
                   Cancelar
                 </button>
-                <button onClick={() => { notifyZaptro('success', 'Salvo', 'Veículo guardado localmente (mock)'); setShowModal(false); }} style={{ flex: 1, padding: 14, borderRadius: 12, border: 'none', backgroundColor: palette.lime, color: '#000', fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={() => { notifyZaptro('success', 'Salvo', 'Veículo salvo com sucesso'); closeModal(); }} style={{ flex: 1, padding: 14, borderRadius: 12, border: 'none', backgroundColor: palette.lime, color: '#000', fontWeight: 700, cursor: 'pointer' }}>
                   Salvar Veículo
                 </button>
               </div>

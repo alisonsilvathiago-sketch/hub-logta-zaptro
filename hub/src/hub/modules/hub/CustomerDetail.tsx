@@ -126,7 +126,7 @@ const CustomerDetail: React.FC = () => {
   const handleToggleBackup = async () => {
     if (!client || !company) return;
     const newStatus = !company.backup_enabled;
-    const toastId = toast.loading(newStatus ? 'Ativando Zaptro Backup Cloud...' : 'Desativando Zaptro Backup Cloud...');
+    const toastId = toast.loading(newStatus ? 'Ativando backup cloud Logta…' : 'Desativando backup cloud Logta…');
     
     try {
       const { error } = await supabase
@@ -145,7 +145,7 @@ const CustomerDetail: React.FC = () => {
         }
       }));
 
-      toast.success(newStatus ? 'Zaptro Backup Cloud ativado com sucesso!' : 'Zaptro Backup Cloud desativado.');
+      toast.success(newStatus ? 'Backup cloud Logta ativado com sucesso!' : 'Backup cloud Logta desativado.');
     } catch (err) {
       console.error(err);
       setClient((prev: any) => ({
@@ -156,7 +156,7 @@ const CustomerDetail: React.FC = () => {
           storage_limit_gb: prev.companies.storage_limit_gb || 5
         }
       }));
-      toast.success(newStatus ? 'Zaptro Backup Cloud ativado!' : 'Zaptro Backup Cloud desativado.');
+      toast.success(newStatus ? 'Backup cloud Logta ativado!' : 'Backup cloud Logta desativado.');
     } finally {
       toast.dismiss(toastId);
     }
@@ -182,28 +182,13 @@ const CustomerDetail: React.FC = () => {
         .single();
 
       if (clientError || !clientData) {
-        console.warn('Using mock fallback for client data');
-        setClient({
-          id: id,
-          name: 'Transportadora Falcão S.A.',
-          email: 'diretoria@falcao.com.br',
-          phone: '(11) 98765-4321',
-          document: '12.345.678/0001-90',
-          address: 'Av. das Nações Unidas, 12551 - São Paulo, SP',
-          created_at: new Date().toISOString(),
-          companies: {
-            status: 'active',
-            backup_enabled: true,
-            storage_limit_gb: 50,
-            plans: { name: 'Logta Enterprise', price: '1.240,00' }
-          }
-        });
+        setClient(null);
         setFormData({
-          name: 'Transportadora Falcão S.A.',
-          email: 'diretoria@falcao.com.br',
-          phone: '(11) 98765-4321',
-          document: '12.345.678/0001-90',
-          address: 'Av. das Nações Unidas, 12551 - São Paulo, SP'
+          name: '',
+          email: '',
+          phone: '',
+          document: '',
+          address: ''
         });
       } else {
         setClient(clientData);
@@ -216,12 +201,7 @@ const CustomerDetail: React.FC = () => {
         });
       }
 
-      // Mock team if DB fails
-      setTeam([
-        { full_name: 'Alison Silva Thiago', email: 'alison@logta.com', role: 'Administrador Master', is_active: true },
-        { full_name: 'Beatriz Oliveira', email: 'beatriz@logta.com', role: 'Operacional', is_active: true },
-        { full_name: 'Carlos Mendes', email: 'carlos@logta.com', role: 'Financeiro', is_active: false },
-      ]);
+      setTeam([]);
     } catch (err) {
       console.error('Fetch error:', err);
     } finally {
@@ -348,7 +328,7 @@ const CustomerDetail: React.FC = () => {
             <div style={styles.titleGroup}>
               <h1 style={styles.title}>{client.name}</h1>
               <div style={styles.badgeRow}>
-                <span style={{...styles.statusBadge, backgroundColor: company?.status === 'active' ? '#ECFDF5' : '#FEF2F2', color: company?.status === 'active' ? '#10B981' : '#EF4444'}}>
+                <span style={{...styles.statusBadge, backgroundColor: company?.status === 'active' ? '#EFF6FF' : '#FEF2F2', color: company?.status === 'active' ? '#0061FF' : '#EF4444'}}>
                   {company?.status === 'active' ? '● Ativo' : '● Bloqueado'}
                 </span>
                 <span style={{...styles.productBadge, backgroundColor: '#F0F7FF', color: '#0061FF'}}>
@@ -383,7 +363,7 @@ const CustomerDetail: React.FC = () => {
           icon={DollarSign}
           accent="#0061FF"
           topRight={
-            <span style={{ color: '#10B981', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ color: '#0061FF', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               +12% <TrendingUp size={12} />
             </span>
           }
@@ -392,7 +372,7 @@ const CustomerDetail: React.FC = () => {
           label="Total de Pedidos"
           value="1.240"
           icon={Package}
-          accent="#10B981"
+          accent="#0061FF"
         />
         <HubMetricCard
           label="Rotas Realizadas"
@@ -486,12 +466,12 @@ const CustomerDetail: React.FC = () => {
                 </div>
                 <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
                    <div style={styles.integrationItem}>
-                      <div style={{...styles.dot, backgroundColor: '#10B981', marginRight: '8px'}} />
+                      <div style={{...styles.dot, backgroundColor: '#0061FF', marginRight: '8px'}} />
                       <span>Zapto API</span>
                       <ExternalLink size={14} style={{marginLeft: 'auto'}} />
                    </div>
                    <div style={styles.integrationItem}>
-                      <div style={{...styles.dot, backgroundColor: '#10B981', marginRight: '8px'}} />
+                      <div style={{...styles.dot, backgroundColor: '#0061FF', marginRight: '8px'}} />
                       <span>Google Maps</span>
                    </div>
                    <div style={styles.integrationItem}>
@@ -499,7 +479,7 @@ const CustomerDetail: React.FC = () => {
                       <span>Bling ERP</span>
                    </div>
                    <div style={styles.integrationItem}>
-                      <div style={{...styles.dot, backgroundColor: '#10B981', marginRight: '8px'}} />
+                      <div style={{...styles.dot, backgroundColor: '#0061FF', marginRight: '8px'}} />
                       <span>S3 Storage</span>
                    </div>
                 </div>
@@ -531,25 +511,25 @@ const CustomerDetail: React.FC = () => {
                       opacity: company?.backup_enabled ? 1 : 0.6,
                       cursor: 'pointer',
                       transition: 'all 0.2s',
-                      border: company?.backup_enabled ? '2px solid #10B981' : '1px solid #E2E8F0',
+                      border: company?.backup_enabled ? '2px solid #0061FF' : '1px solid #E2E8F0',
                     }}
                     className="hover-scale"
                   >
                     <div style={styles.productMain}>
-                      <div style={styles.prodIcon}><HardDrive size={18} color="#10B981" /></div>
+                      <div style={styles.prodIcon}><HardDrive size={18} color="#0061FF" /></div>
                       <div>
-                        <h4 style={styles.prodName}>Zaptro Backup Cloud</h4>
+                        <h4 style={styles.prodName}>Backup cloud Logta</h4>
                         <p style={styles.prodSub}>{company?.storage_limit_gb || 5}GB Contratados</p>
                       </div>
                       <span style={{
                         ...styles.statusTag,
-                        backgroundColor: company?.backup_enabled ? '#ECFDF5' : '#F1F5F9',
-                        color: company?.backup_enabled ? '#10B981' : '#64748B'
+                        backgroundColor: company?.backup_enabled ? '#EFF6FF' : '#F1F5F9',
+                        color: company?.backup_enabled ? '#0061FF' : '#64748B'
                       }}>{company?.backup_enabled ? 'ATIVO' : 'DESATIVADO'}</span>
                     </div>
                     {company?.backup_enabled && (
                       <div style={styles.usageRow}>
-                        <div style={styles.usageBar}><div style={{...styles.usageFill, width: '45%', backgroundColor: '#10B981'}} /></div>
+                        <div style={styles.usageBar}><div style={{...styles.usageFill, width: '45%', backgroundColor: '#0061FF'}} /></div>
                         <span style={styles.usageText}>2.2GB / {company?.storage_limit_gb || 5}GB</span>
                       </div>
                     )}
@@ -596,7 +576,7 @@ const CustomerDetail: React.FC = () => {
                   <h2 style={styles.cardTitle}>Torre de Controle Ativa (Localizador)</h2>
                   <p style={{ ...styles.infoLabel, textTransform: 'none', letterSpacing: 'normal', margin: '4px 0 0 0' }}>Sincronização GPS em tempo real de frotas e geofences.</p>
                 </div>
-                <span style={{ marginLeft: 'auto', backgroundColor: '#ECFDF5', color: '#10B981', padding: '6px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '800' }}>
+                <span style={{ marginLeft: 'auto', backgroundColor: '#EFF6FF', color: '#0061FF', padding: '6px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '800' }}>
                   IA GUARDIAN ACTIVE
                 </span>
               </div>
@@ -628,7 +608,7 @@ const CustomerDetail: React.FC = () => {
               <div style={styles.cardHeader}>
                 <div style={styles.cardIconBox}><Truck size={20} color="#0061FF" /></div>
                 <h2 style={styles.cardTitle}>Frota e Atividades Operacionais (Logta)</h2>
-                <span style={{backgroundColor: '#ECFDF5', color: '#10B981', padding: '6px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '800'}}>
+                <span style={{backgroundColor: '#EFF6FF', color: '#0061FF', padding: '6px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '800'}}>
                   5 Veículos Ativos
                 </span>
               </div>
@@ -647,10 +627,10 @@ const CustomerDetail: React.FC = () => {
                   </thead>
                   <tbody>
                     {[
-                      { v: 'Scania R450 Heavy', p: 'BRA-3D12', m: 'Ricardo Santos', a: 'Entrega realizada em São Paulo', s: 'Em trânsito', c: '#10B981' },
+                      { v: 'Scania R450 Heavy', p: 'BRA-3D12', m: 'Ricardo Santos', a: 'Entrega realizada em São Paulo', s: 'Em trânsito', c: '#0061FF' },
                       { v: 'Mercedes-Benz Axor', p: 'LOG-7721', m: 'Claudio Ferreira', a: 'Carga em andamento no armazém', s: 'Carregando', c: '#F59E0B' },
                       { v: 'Volvo FH 540', p: 'ZAP-9908', m: 'Eduardo Lima', a: 'Parada para descanso', s: 'Pausa', c: '#64748B' },
-                      { v: 'Scania R500', p: 'MTR-1022', m: 'Carlos Augusto', a: 'Retorno para filiais', s: 'Em trânsito', c: '#10B981' },
+                      { v: 'Scania R500', p: 'MTR-1022', m: 'Carlos Augusto', a: 'Retorno para filiais', s: 'Em trânsito', c: '#0061FF' },
                       { v: 'Ford Cargo 2429', p: 'LOG-1445', m: 'Fabio Junior', a: 'Manutenção periódica de pneus', s: 'Manutenção', c: '#EF4444' }
                     ].map((row, idx) => (
                       <tr 
@@ -686,7 +666,7 @@ const CustomerDetail: React.FC = () => {
                             }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              const link = `${window.location.origin}/rastreamento-publico?veiculo=${encodeURIComponent(row.v)}&motorista=${encodeURIComponent(row.m)}&origem=CD São Paulo&destino=Base Curitiba&status=${encodeURIComponent(row.s)}&empresa=${encodeURIComponent(client?.name || 'Zaptro Logística')}`;
+                              const link = `${window.location.origin}/rastreamento-publico?veiculo=${encodeURIComponent(row.v)}&motorista=${encodeURIComponent(row.m)}&origem=CD São Paulo&destino=Base Curitiba&status=${encodeURIComponent(row.s)}&empresa=${encodeURIComponent(client?.name || 'Logta Logística')}`;
                               navigator.clipboard.writeText(link);
                               toast.success('Link de rastreamento copiado com sucesso!');
                             }}
@@ -715,7 +695,7 @@ const CustomerDetail: React.FC = () => {
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
                   <div style={{border: '1px solid #E2E8F0', borderRadius: '24px', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px'}}>
-                    <div style={{width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#10B981'}} />
+                    <div style={{width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#0061FF'}} />
                     <div>
                       <strong style={{fontSize: '15px', color: '#0F172A'}}>Suporte Comercial</strong>
                       <p style={{fontSize: '12px', color: '#94A3B8', margin: '4px 0 0'}}>Instância: zap-prod-01 (Conectado)</p>
@@ -723,7 +703,7 @@ const CustomerDetail: React.FC = () => {
                     <span style={{marginLeft: 'auto', fontSize: '13px', fontWeight: '700', color: '#64748B'}}>55 (11) 98765-4321</span>
                   </div>
                   <div style={{border: '1px solid #E2E8F0', borderRadius: '24px', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px'}}>
-                    <div style={{width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#10B981'}} />
+                    <div style={{width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#0061FF'}} />
                     <div>
                       <strong style={{fontSize: '15px', color: '#0F172A'}}>Financeiro & Cobrança</strong>
                       <p style={{fontSize: '12px', color: '#94A3B8', margin: '4px 0 0'}}>Instância: zap-prod-02 (Conectado)</p>
@@ -775,13 +755,13 @@ const CustomerDetail: React.FC = () => {
               <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px'}}>
                 {team.length > 0 ? team.map((member, i) => (
                   <div key={i} style={{border: '1px solid #E2E8F0', padding: '20px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '12px'}}>
-                    <div style={{...styles.avatarSmall, backgroundColor: i % 2 === 0 ? '#0061FF' : '#10B981'}}>{(member.full_name || 'U')[0]}</div>
+                    <div style={{...styles.avatarSmall, backgroundColor: i % 2 === 0 ? '#0061FF' : '#0061FF'}}>{(member.full_name || 'U')[0]}</div>
                     <div style={{flex: 1}}>
                       <p style={{fontSize: '15px', fontWeight: '800', color: '#1E293B', margin: 0}}>{member.full_name}</p>
                       <p style={{fontSize: '12px', color: '#64748B', margin: '2px 0 0', fontWeight: '500'}}>{member.email || 'colaborador@empresa.com'}</p>
                       <p style={{fontSize: '11px', color: '#94A3B8', margin: '4px 0 0', fontWeight: '700'}}>{member.role.toUpperCase()}</p>
                     </div>
-                    <div style={{...styles.dot, backgroundColor: member.is_active ? '#10B981' : '#94A3B8'}} />
+                    <div style={{...styles.dot, backgroundColor: member.is_active ? '#0061FF' : '#94A3B8'}} />
                   </div>
                 )) : <p style={styles.emptyText}>Nenhum colaborador cadastrado.</p>}
               </div>
@@ -811,12 +791,12 @@ const CustomerDetail: React.FC = () => {
                       <tr style={styles.tr}>
                         <td style={{ ...styles.td, fontSize: '13px' }}>Mensalidade Plano Ouro (Logta + Zapto)</td>
                         <td style={{ ...styles.td, fontSize: '13px', fontWeight: '600' }}>R$ 497,00</td>
-                        <td style={styles.td}><span style={{backgroundColor: '#ECFDF5', color: '#10B981', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800'}}>PAGO</span></td>
+                        <td style={styles.td}><span style={{backgroundColor: '#EFF6FF', color: '#0061FF', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800'}}>PAGO</span></td>
                       </tr>
                       <tr style={styles.tr}>
                         <td style={{ ...styles.td, fontSize: '13px' }}>Mensalidade Plano Ouro (Logta + Zapto)</td>
                         <td style={{ ...styles.td, fontSize: '13px', fontWeight: '600' }}>R$ 497,00</td>
-                        <td style={styles.td}><span style={{backgroundColor: '#ECFDF5', color: '#10B981', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800'}}>PAGO</span></td>
+                        <td style={styles.td}><span style={{backgroundColor: '#EFF6FF', color: '#0061FF', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800'}}>PAGO</span></td>
                       </tr>
                     </tbody>
                   </table>
@@ -1212,7 +1192,7 @@ const styles: Record<string, any> = {
   backBtn: { background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B', fontWeight: '700', fontSize: '14px', cursor: 'pointer', marginBottom: '24px' },
   headerContent: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' },
   titleGroup: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  title: { fontSize: '29px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: 0 },
   badgeRow: { display: 'flex', gap: '8px' },
   statusBadge: { padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '800' },
   productBadge: { backgroundColor: 'var(--bg-overlay)', color: '#0061FF', padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '800' },

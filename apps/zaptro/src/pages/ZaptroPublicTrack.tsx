@@ -1,70 +1,60 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { MapPin, Package, Truck, CheckCircle2, Building2, AlertTriangle, Phone, Zap } from 'lucide-react';
+import { MapPin, Package, Truck, CheckCircle2, AlertTriangle, Phone, Zap, Clock, User } from 'lucide-react';
 import {
-  ROUTE_STATUS_LABEL,
+  ROUTE_CLIENT_STATUS_LABEL,
   type RouteExecutionSnapshot,
   type RouteExecutionStatus,
 } from '../constants/zaptroRouteExecution';
 import {
+  patchRouteLive,
   readRouteLive,
   ZAPTRO_ROUTE_LIVE_STORAGE_KEY,
   type RouteLiveBucket,
   type RouteLiveTrailPoint,
 } from '../constants/zaptroRouteLiveStore';
+import { buildRouteLiveNavigationPatch } from '../lib/zaptroRouteNavigation';
+import {
+  ZAPTRO_MAP_DEST_ICON,
+  ZAPTRO_MAP_ROUTE_COLORS,
+  ZAPTRO_MAP_VEHICLE_ICON,
+} from '../constants/zaptroMapStyles';
+import { ZAPTRO_COMPANY_PROFILE_EVENT } from '../hooks/useZaptroCompanyBusinessProfile';
+import { resolveRouteCompanyBranding } from '../lib/zaptroRouteCompanyBranding';
+import { employmentTypeLabel, resolveFleetDriverForRoute } from '../lib/zaptroFleetDriverResolve';
+import { zaptroProfileInitials } from '../utils/zaptroDriverSelfProfile';
 
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const LIME = '#D9FF00';
+const LIME = ZAPTRO_MAP_ROUTE_COLORS.accent;
+/** Mesmo centro da Central Logística (`ZaptroRoutes`). */
+const SP_MAP_CENTER: [number, number] = [-23.5505, -46.6333];
+const SP_MAP_DEST: [number, number] = [-23.5612, -46.6555];
 
-const vehicleIconHtml = (type: 'truck' | 'car' = 'truck') => {
-  const isTruck = type === 'truck';
-  return `
-    <div style="width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));">
-      <div style="position: relative; width: ${isTruck ? '22px' : '20px'}; height: ${isTruck ? '42px' : '34px'}; background: #000; border-radius: ${isTruck ? '4px' : '6px'}; border: 2px solid #fff; display: flex; flex-direction: column; align-items: center;">
-        <!-- Cabine / Frente -->
-        <div style="width: 100%; height: ${isTruck ? '14px' : '12px'}; background: ${LIME}; border-radius: ${isTruck ? '2px' : '4px'} ${isTruck ? '2px' : '4px'} 0 0; border-bottom: 2px solid #fff;"></div>
-        <!-- Vidro frontal -->
-        <div style="position: absolute; top: 4px; left: 3px; right: 3px; height: 4px; background: rgba(255,255,255,0.3); border-radius: 1px;"></div>
-        ${isTruck ? `
-          <!-- Carga / Baú -->
-          <div style="width: 100%; flex: 1; background: #000; display: flex; align-items: center; justify-content: center;">
-            <div style="width: 70%; height: 2px; background: rgba(255,255,255,0.1); margin-bottom: 4px;"></div>
-            <div style="width: 70%; height: 2px; background: rgba(255,255,255,0.1);"></div>
-          </div>
-        ` : `
-          <!-- Teto do carro -->
-          <div style="width: 70%; height: 12px; background: #111; margin-top: 4px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.1);"></div>
-        `}
-        <!-- Lanternas traseiras -->
-        <div style="position: absolute; bottom: 1px; left: 2px; width: 4px; height: 1.5px; background: #ef4444; border-radius: 1px;"></div>
-        <div style="position: absolute; bottom: 1px; right: 2px; width: 4px; height: 1.5px; background: #ef4444; border-radius: 1px;"></div>
-      </div>
-    </div>
-  `;
-};
-
-const truckIcon = L.divIcon({
-  html: vehicleIconHtml('truck'),
-  className: '',
-  iconSize: [54, 54],
-  iconAnchor: [27, 27]
-});
-
-const carIcon = L.divIcon({
-  html: vehicleIconHtml('car'),
-  className: '',
-  iconSize: [54, 54],
-  iconAnchor: [27, 27]
-});
+/** Posição estável por token — igual à simulação em `/app/rotas`. */
+function tokenMapPosition(token: string, idx = 0): [number, number] {
+  const seed = token.length;
+  const lat = -23.5505 + idx * 0.01 - 0.02;
+  const lng = -46.6333 + (seed % 10) * 0.005;
+  return [lat, lng];
+}
 
 function LiveMapCenter({ center }: { center: [number, number] }) {
   const map = useMap();
   useEffect(() => {
     map.panTo(center, { animate: true, duration: 1.5 });
   }, [center, map]);
+  return null;
+}
+
+function LiveMapFitRoute({ positions }: { positions: [number, number][] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (positions.length < 2) return;
+    map.fitBounds(L.latLngBounds(positions), { padding: [48, 48], maxZoom: 15, animate: true });
+  }, [map, positions]);
   return null;
 }
 
@@ -126,6 +116,8 @@ const ZaptroPublicTrack: React.FC = () => {
 
   const [live, setLive] = useState<RouteLiveBucket | null>(() => readRouteLive(decoded));
   const [isExpired, setIsExpired] = useState(false);
+  const [brandTick, setBrandTick] = useState(0);
+  const [driverPhotoFail, setDriverPhotoFail] = useState(false);
 
   const refreshLive = useCallback(() => {
     const data = readRouteLive(decoded);
@@ -156,15 +148,56 @@ const ZaptroPublicTrack: React.FC = () => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === ZAPTRO_ROUTE_LIVE_STORAGE_KEY) refreshLive();
     };
+    const onCompanyBrand = () => setBrandTick((n) => n + 1);
     window.addEventListener('zaptro-route-live', onLive);
     window.addEventListener('storage', onStorage);
+    window.addEventListener(ZAPTRO_COMPANY_PROFILE_EVENT, onCompanyBrand);
     const t = window.setInterval(refreshLive, 2000);
     return () => {
       window.removeEventListener('zaptro-route-live', onLive);
       window.removeEventListener('storage', onStorage);
+      window.removeEventListener(ZAPTRO_COMPANY_PROFILE_EVENT, onCompanyBrand);
       window.clearInterval(t);
     };
   }, [decoded, refreshLive]);
+
+  useEffect(() => {
+    if (!live || isExpired || live.status === 'delivered') return;
+    const ac = new AbortController();
+    let cancelled = false;
+
+    void (async () => {
+      const patch = await buildRouteLiveNavigationPatch(live, {
+        destinationFallback: baseSnap.deliveryAddress,
+        signal: ac.signal,
+        preferDriverPosition: live.lastLat != null && live.lastLng != null,
+      });
+      if (patch && Object.keys(patch).length > 0) {
+        patchRouteLive(decoded, patch);
+        if (!cancelled) refreshLive();
+      }
+    })().catch(() => {
+      /* ignore */
+    });
+
+    return () => {
+      cancelled = true;
+      ac.abort();
+    };
+  }, [
+    decoded,
+    isExpired,
+    baseSnap.deliveryAddress,
+    refreshLive,
+    live?.status,
+    live?.originLabel,
+    live?.destLabel,
+    live?.lastLat,
+    live?.lastLng,
+    live?.navigationRouteFromLat,
+    live?.navigationRouteFromLng,
+    live?.navigationPolyline?.length,
+  ]);
 
   /** Evita `#root` / `body` brancos à volta da coluna centrada. */
   useEffect(() => {
@@ -199,19 +232,60 @@ const ZaptroPublicTrack: React.FC = () => {
 
   const snap = mergeLive(baseSnap, live);
   const status: RouteExecutionStatus = snap.status;
-  const carrierTitle = resolveCarrierDisplayName(snap);
-  const premiumBranding = snap.publicTrackPremiumBranding === true;
-  const headerLogoUrl = snap.publicHeaderLogoUrl?.trim();
+  const companyBrand = useMemo(() => resolveRouteCompanyBranding(live), [live, brandTick]);
+  const carrierTitle = companyBrand.name || resolveCarrierDisplayName(snap);
+  const headerLogoUrl = companyBrand.logoUrl;
+
+  const fleetDriver = useMemo(
+    () =>
+      resolveFleetDriverForRoute({
+        fleetDriverId: live?.fleetDriverId,
+        driverPhone: live?.driverPhone,
+        driverDisplayName: live?.driverDisplayName,
+        driverVehicle: live?.driverVehicle,
+        driverAvatarUrl: live?.driverAvatarUrl,
+      }),
+    [
+      live?.fleetDriverId,
+      live?.driverPhone,
+      live?.driverDisplayName,
+      live?.driverVehicle,
+      live?.driverAvatarUrl,
+    ],
+  );
+
+  const driverName = (
+    fleetDriver?.name ||
+    live?.driverDisplayName?.trim() ||
+    snap.driverDisplayName
+  ).trim();
+  const driverAvatar = fleetDriver?.photoUrl || live?.driverAvatarUrl || null;
+  const driverTypeLabel =
+    fleetDriver?.employmentType != null
+      ? employmentTypeLabel(fleetDriver.employmentType)
+      : live?.driverEmploymentType != null
+        ? employmentTypeLabel(live.driverEmploymentType)
+        : null;
+  const driverInitials = zaptroProfileInitials(driverName);
+  const deliveryAddress = live?.destLabel?.trim() || snap.deliveryAddress;
+
+  useEffect(() => {
+    setDriverPhotoFail(false);
+  }, [driverAvatar]);
 
   const steps: { key: RouteExecutionStatus; label: string }[] = [
-    { key: 'assigned', label: 'Preparado' },
-    { key: 'started', label: 'Em rota' },
-    { key: 'arrived', label: 'Chegou' },
+    { key: 'assigned', label: 'Confirmado' },
+    { key: 'en_route', label: 'A caminho' },
+    { key: 'started', label: 'Saiu' },
+    { key: 'arrived', label: 'Chegando' },
     { key: 'delivered', label: 'Entregue' },
   ];
 
-  const idx = steps.findIndex((s) => s.key === status);
-  const activeIdx = idx === -1 ? (status === 'delivered' ? 3 : status === 'issue' ? 1 : 0) : idx;
+  const statusStepKey =
+    status === 'draft' ? 'assigned' : status === 'issue' ? 'started' : status;
+  const idx = steps.findIndex((s) => s.key === statusStepKey);
+  const activeIdx = idx === -1 ? 0 : idx;
+  const clientStatusLabel = ROUTE_CLIENT_STATUS_LABEL[status] ?? ROUTE_CLIENT_STATUS_LABEL.assigned;
 
   const mapsUrl =
     live?.lastLat != null && live?.lastLng != null
@@ -227,6 +301,51 @@ const ZaptroPublicTrack: React.FC = () => {
     }
     return [];
   }, [live]);
+
+  const routeInProgress = Boolean(
+    live && !['assigned', 'draft', 'delivered'].includes(live.status),
+  );
+
+  const vehiclePosition = useMemo((): [number, number] | null => {
+    if (displayTrail.length > 0) {
+      const last = displayTrail[displayTrail.length - 1];
+      return [last.lat, last.lng];
+    }
+    if (routeInProgress) return tokenMapPosition(decoded);
+    return null;
+  }, [displayTrail, routeInProgress, decoded]);
+
+  const mapCenter = vehiclePosition ?? (live?.destLat != null && live?.destLng != null ? [live.destLat, live.destLng] as [number, number] : SP_MAP_CENTER);
+  const mapZoom = vehiclePosition ? 14 : 12;
+
+  const plannedRoute = useMemo((): [number, number][] => {
+    const pts = live?.navigationPolyline;
+    if (!pts?.length) return [];
+    return pts.map((p) => [p.lat, p.lng] as [number, number]);
+  }, [live?.navigationPolyline]);
+
+  const destPosition = useMemo((): [number, number] | null => {
+    if (live?.destLat != null && live?.destLng != null) return [live.destLat, live.destLng];
+    if (routeInProgress && status !== 'delivered') return SP_MAP_DEST;
+    return null;
+  }, [live?.destLat, live?.destLng, routeInProgress, status]);
+
+  const mapFitPositions = useMemo((): [number, number][] => {
+    const pts: [number, number][] = [];
+    if (plannedRoute.length >= 2) pts.push(...plannedRoute);
+    if (vehiclePosition) pts.push(vehiclePosition);
+    if (destPosition) pts.push(destPosition);
+    return pts;
+  }, [plannedRoute, vehiclePosition, destPosition]);
+
+  const vehicleIconType =
+    live && 'vehicleType' in live && (live as { vehicleType?: string }).vehicleType === 'car'
+      ? 'car'
+      : 'truck';
+  const vehicleMoving = Boolean(
+    live && ['en_route', 'started', 'arrived'].includes(live.status),
+  );
+  const waitingGps = routeInProgress && displayTrail.length === 0;
 
   const fmtTime = (iso?: string | null) => {
     if (!iso) return '';
@@ -267,7 +386,10 @@ const ZaptroPublicTrack: React.FC = () => {
           z-index: 1;
         }
         .public-track-map .leaflet-container {
-          background: #0f172a;
+          background: #ebebeb;
+        }
+        .public-track-map .zaptro-grayscale-map .leaflet-tile-container {
+          filter: none !important;
         }
         @media (max-width: 768px) {
           .public-track-layout {
@@ -293,15 +415,15 @@ const ZaptroPublicTrack: React.FC = () => {
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: PUBLIC_TRACK_NEUTRAL_SURFACE, padding: 30 }}>
           <div style={{ maxWidth: 400, textAlign: 'center', backgroundColor: '#fff', padding: 40, borderRadius: 32, boxShadow: '0 20px 60px rgba(0,0,0,0.08)' }}>
             <div style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-              <Clock size={32} color="#94a3b8" />
+              <Clock size={32} color="#949494" />
             </div>
             <h2 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', margin: '0 0 12px' }}>Link Expirado</h2>
-            <p style={{ fontSize: 15, color: '#64748b', lineHeight: 1.6, margin: 0 }}>
+            <p style={{ fontSize: 15, color: '#949494', lineHeight: 1.6, margin: 0 }}>
               Este link de rastreamento já não está disponível por questões de segurança. 
               Links de entrega expiram 24h após a conclusão do serviço.
             </p>
             <div style={{ marginTop: 32, borderTop: '1px solid #f1f5f9', paddingTop: 24 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>ZAPTRO LOGÍSTICA</p>
+              <p style={{ fontSize: 12, fontWeight: 700, color: '#949494', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>ZAPTRO LOGÍSTICA</p>
               <Zap size={24} color={LIME} style={{ margin: '0 auto' }} />
             </div>
           </div>
@@ -312,34 +434,66 @@ const ZaptroPublicTrack: React.FC = () => {
       <div style={pageInner}>
       <header style={{ textAlign: 'center', marginBottom: 24 }}>
         <p style={{ margin: 0, fontSize: 12, fontWeight: 700, letterSpacing: '0.2em', color: '#a1a1aa' }}>RASTREIO</p>
-        <h1
+        <div
           style={{
-            margin: '10px 0 0',
-            fontSize: 32,
-            fontWeight: 700,
-            color: '#0f172a',
-            letterSpacing: '-0.04em',
+            marginTop: 12,
             display: 'flex',
-            justifyContent: 'center',
             alignItems: 'center',
-            lineHeight: 1.15,
-            minHeight: 40,
+            justifyContent: 'center',
+            gap: 14,
+            flexWrap: 'wrap',
           }}
         >
-          {premiumBranding && headerLogoUrl ? (
+          {headerLogoUrl ? (
             <img
               src={headerLogoUrl}
               alt={carrierTitle}
-              style={{ maxHeight: 44, maxWidth: 'min(100%, 280px)', width: 'auto', objectFit: 'contain' }}
+              style={{
+                height: 52,
+                width: 52,
+                borderRadius: 14,
+                objectFit: 'cover',
+                border: '1px solid #e2e8f0',
+                flexShrink: 0,
+              }}
             />
           ) : (
-            carrierTitle
+            <div
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 14,
+                background: '#0f172a',
+                color: LIME,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 22,
+                fontWeight: 800,
+                flexShrink: 0,
+              }}
+            >
+              {carrierTitle[0]?.toUpperCase() || 'E'}
+            </div>
           )}
-        </h1>
-        <p style={{ margin: '8px 0 0', fontSize: 14, color: '#a1a1aa', fontWeight: 600 }}>{snap.deliveryLabel}</p>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 28,
+              fontWeight: 800,
+              color: '#0f172a',
+              letterSpacing: '-0.03em',
+              lineHeight: 1.15,
+              textAlign: 'left',
+            }}
+          >
+            {carrierTitle}
+          </h1>
+        </div>
+        <p style={{ margin: '10px 0 0', fontSize: 14, color: '#a1a1aa', fontWeight: 600 }}>{snap.deliveryLabel}</p>
       </header>
 
-      {status === 'issue' || live?.issueReportedAt ? (
+      {status === 'issue' || (live?.issueReportedAt && !live?.opsIncidentAt) ? (
         <section
           style={{
             ...card,
@@ -386,22 +540,56 @@ const ZaptroPublicTrack: React.FC = () => {
       ) : null}
 
       <section style={card}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <Building2 size={20} color="#0f172a" />
-          <div>
-            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.02em' }}>MOTORISTA</p>
-            <p style={{ margin: '4px 0 0', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>{snap.driverDisplayName}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 16,
+              border: '1px solid #e2e8f0',
+              overflow: 'hidden',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: PUBLIC_TRACK_NEUTRAL_SURFACE,
+            }}
+          >
+            {driverAvatar && !driverPhotoFail ? (
+              <img
+                src={driverAvatar}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={() => setDriverPhotoFail(true)}
+              />
+            ) : driverInitials && driverInitials !== '·' ? (
+              <span style={{ fontSize: 16, fontWeight: 800, color: '#0f172a' }}>{driverInitials}</span>
+            ) : (
+              <User size={24} color="#949494" strokeWidth={2} />
+            )}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: '#949494', letterSpacing: '0.08em' }}>MOTORISTA</p>
+            {driverTypeLabel ? (
+              <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 600, color: '#949494' }}>{driverTypeLabel}</p>
+            ) : null}
+            <p style={{ margin: '4px 0 0', fontSize: 17, fontWeight: 800, color: '#0f172a', lineHeight: 1.25 }}>{driverName}</p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-          <MapPin size={20} color={LIME} style={{ flexShrink: 0 }} />
-          <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#334155', lineHeight: 1.45 }}>{snap.deliveryAddress}</p>
+        <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
+          <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: '#949494', letterSpacing: '0.08em' }}>
+            ENDEREÇO DE ENTREGA
+          </p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <MapPin size={20} color={LIME} style={{ flexShrink: 0, marginTop: 2 }} />
+            <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#6B6B6B', lineHeight: 1.45 }}>{deliveryAddress}</p>
+          </div>
         </div>
       </section>
 
       {mapsUrl ? (
         <section style={card}>
-          <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.1em' }}>ÚLTIMA POSIÇÃO</p>
+          <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#949494', letterSpacing: '0.1em' }}>ÚLTIMA POSIÇÃO</p>
           <a
             href={mapsUrl}
             target="_blank"
@@ -419,14 +607,14 @@ const ZaptroPublicTrack: React.FC = () => {
             Abrir no Google Maps
           </a>
           {live?.lastLocAt ? (
-            <p style={{ margin: '10px 0 0', fontSize: 12, fontWeight: 600, color: '#94a3b8' }}>Actualizado: {fmtTime(live.lastLocAt)}</p>
+            <p style={{ margin: '10px 0 0', fontSize: 12, fontWeight: 600, color: '#949494' }}>Actualizado: {fmtTime(live.lastLocAt)}</p>
           ) : null}
         </section>
       ) : null}
 
       <section style={card}>
-        <p style={{ margin: '0 0 14px', fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.1em' }}>ESTADO ATUAL</p>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#0f172a', marginBottom: 20 }}>{ROUTE_STATUS_LABEL[status]}</div>
+        <p style={{ margin: '0 0 14px', fontSize: 12, fontWeight: 700, color: '#949494', letterSpacing: '0.1em' }}>ESTADO ATUAL</p>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#0f172a', marginBottom: 20 }}>{clientStatusLabel}</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
           {steps.map((s, i) => {
             const done = i <= activeIdx;
@@ -445,17 +633,17 @@ const ZaptroPublicTrack: React.FC = () => {
                   }}
                 >
                   {i === steps.length - 1 ? (
-                    <CheckCircle2 size={20} color={done ? '#000' : '#94a3b8'} />
+                    <CheckCircle2 size={20} color={done ? '#000' : '#949494'} />
                   ) : (
-                    <Truck size={20} color={done ? '#000' : '#94a3b8'} />
+                    <Truck size={20} color={done ? '#000' : '#949494'} />
                   )}
                 </div>
-                <span style={{ fontSize: 10, fontWeight: 700, color: done ? '#0f172a' : '#94a3b8' }}>{s.label}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: done ? '#0f172a' : '#949494' }}>{s.label}</span>
               </div>
             );
           })}
         </div>
-        <p style={{ margin: '18px 0 0', fontSize: 12, fontWeight: 600, color: '#94a3b8', lineHeight: 1.5 }}>
+        <p style={{ margin: '18px 0 0', fontSize: 12, fontWeight: 600, color: '#949494', lineHeight: 1.5 }}>
           Neste ambiente de demonstração, o estado e a posição vêm do mesmo browser em que o motorista usa o link da rota (mesmo token). Em produção, isto viria do servidor.
         </p>
       </section>
@@ -467,8 +655,7 @@ const ZaptroPublicTrack: React.FC = () => {
         </p>
       </section>
 
-      {!premiumBranding ? (
-        <section
+      <section
           style={{
             ...card,
             padding: 0,
@@ -480,43 +667,37 @@ const ZaptroPublicTrack: React.FC = () => {
         >
           <div
             style={{
-              textAlign: 'center',
-              padding: '18px 16px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 12,
+              padding: '18px 16px',
               borderBottom: '1px solid rgba(226,232,240,0.9)',
               backgroundColor: PUBLIC_TRACK_NEUTRAL_SURFACE,
               boxSizing: 'border-box',
             }}
           >
             <div
+              title="Zaptro"
               style={{
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                backgroundColor: '#000000',
+                border: `2px solid ${LIME}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginBottom: 10,
+                flexShrink: 0,
               }}
             >
-              <div
-                title="Zaptro"
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 14,
-                  backgroundColor: '#000000',
-                  border: `2px solid ${LIME}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Zap size={24} color={LIME} strokeWidth={2.4} aria-hidden />
-              </div>
+              <Zap size={22} color={LIME} strokeWidth={2.4} aria-hidden />
             </div>
             <Link
               to="/"
               style={{
                 fontSize: 20,
-                fontWeight: 700,
+                fontWeight: 800,
                 color: '#000000',
                 letterSpacing: '-0.03em',
                 textDecoration: 'none',
@@ -544,57 +725,128 @@ const ZaptroPublicTrack: React.FC = () => {
             >
               Do Zap ao fechamento
             </p>
-            <p style={{ margin: '12px 0 0', fontSize: 14, fontWeight: 600, color: '#64748b', lineHeight: 1.5 }}>
+            <p style={{ margin: '12px 0 0', fontSize: 14, fontWeight: 600, color: '#949494', lineHeight: 1.5 }}>
               Uma transportadora, um comando.
             </p>
           </div>
         </section>
-      ) : null}
       
       </div>
       </div>
 
       <div className="public-track-map">
-        {displayTrail.length > 0 ? (
-          <div style={{ height: '100%', width: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
-            <MapContainer 
-              center={[displayTrail[displayTrail.length - 1].lat, displayTrail[displayTrail.length - 1].lng]} 
-              zoom={14} 
-              style={{ height: '100%', width: '100%', background: '#ebebeb' }}
-              zoomControl={false}
+        <div style={{ height: '100%', width: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
+          <MapContainer
+            center={mapCenter}
+            zoom={mapZoom}
+            style={{ height: '100%', width: '100%', background: '#ebebeb' }}
+            className="zaptro-grayscale-map"
+            zoomControl={false}
+          >
+            <TileLayer
+              attribution="&copy; Google Maps"
+              url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+            />
+
+            {plannedRoute.length > 1 ? (
+              <>
+                <Polyline
+                  positions={plannedRoute}
+                  color={LIME}
+                  weight={9}
+                  opacity={0.2}
+                  lineCap="round"
+                  lineJoin="round"
+                />
+                <Polyline
+                  positions={plannedRoute}
+                  color={LIME}
+                  weight={5}
+                  opacity={1}
+                  lineCap="round"
+                  lineJoin="round"
+                />
+                <LiveMapFitRoute positions={mapFitPositions.length >= 2 ? mapFitPositions : plannedRoute} />
+              </>
+            ) : null}
+
+            {vehiclePosition ? <LiveMapCenter center={vehiclePosition} /> : null}
+
+            {destPosition && routeInProgress && status !== 'delivered' ? (
+              <Marker position={destPosition} icon={ZAPTRO_MAP_DEST_ICON}>
+                <Popup>{deliveryAddress}</Popup>
+              </Marker>
+            ) : null}
+
+            {vehiclePosition ? (
+              <Marker
+                position={vehiclePosition}
+                icon={ZAPTRO_MAP_VEHICLE_ICON(vehicleIconType, vehicleMoving ? 'moving' : 'stopped')}
+              >
+                <Popup>
+                  {driverName}
+                  {waitingGps ? ' · aguardando GPS' : ''}
+                </Popup>
+              </Marker>
+            ) : null}
+
+          </MapContainer>
+
+          {waitingGps ? (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 24,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 1000,
+                padding: '12px 20px',
+                borderRadius: 20,
+                background: '#fff',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+              }}
             >
-              <TileLayer
-                attribution="&copy; Google Maps"
-                url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+              <div
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  background: LIME,
+                  boxShadow: `0 0 12px ${LIME}`,
+                }}
               />
-              <Polyline 
-                positions={displayTrail.map(p => [p.lat, p.lng])} 
-                color={LIME} 
-                weight={8} 
-                opacity={0.3}
-                lineCap="round"
-                lineJoin="round"
-              />
-              <Polyline 
-                positions={displayTrail.map(p => [p.lat, p.lng])} 
-                color={LIME} 
-                weight={4} 
-                opacity={1}
-                lineCap="round"
-                lineJoin="round"
-              />
-              <Marker 
-                position={[displayTrail[displayTrail.length - 1].lat, displayTrail[displayTrail.length - 1].lng]} 
-                icon={live?.vehicleType === 'car' ? carIcon : truckIcon}
-              />
-              <LiveMapCenter center={[displayTrail[displayTrail.length - 1].lat, displayTrail[displayTrail.length - 1].lng]} />
-            </MapContainer>
-          </div>
-        ) : (
-          <div style={{ height: '100%', width: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ebebeb' }}>
-            <p style={{ fontWeight: 700, color: '#a1a1aa' }}>Aguardando primeira localização...</p>
-          </div>
-        )}
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>
+                Aguardando GPS do motorista — mapa já activo
+              </span>
+            </div>
+          ) : null}
+
+          {!live ? (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 24,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 1000,
+                padding: '12px 20px',
+                borderRadius: 20,
+                background: '#fff',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#949494',
+              }}
+            >
+              Rota ainda não iniciada — mesmo mapa da operação
+            </div>
+          ) : null}
+        </div>
       </div>
         </>
       )}

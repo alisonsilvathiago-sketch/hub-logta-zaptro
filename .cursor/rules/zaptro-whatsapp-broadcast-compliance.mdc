@@ -1,0 +1,29 @@
+---
+description: Conformidade Meta/WhatsApp para listas de transmissão Zaptro
+alwaysApply: true
+---
+
+# REGRAS DE CONFORMIDADE — WHATSAPP / META (Transmissão)
+
+Toda lista de transmissão e campanha deve respeitar políticas da Meta e boas práticas WhatsApp.
+
+## Obrigatório
+
+- Enviar **apenas** para contactos que **já interagiram** com a empresa.
+- Permitir **opt-out** a qualquer momento.
+- **Sem spam** nem bases frias.
+- **Segmentação inteligente** — conteúdo relevante por grupo.
+- **Fila gradual** — controlar velocidade e evitar picos simultâneos.
+- Monitorar bloqueios, denúncias e falhas.
+- **Suspender** campanhas com alto índice de falhas/reclamações.
+- Priorizar mensagens informativas, operacionais e de relacionamento.
+- Manter histórico de consentimento e interacção.
+
+## Implementação
+
+- Módulo: `apps/zaptro/src/modules/wa-link/WaLinkBroadcasts.tsx`
+- Fila: `runBroadcastSendQueue` em `waLinkBroadcastModule.ts` (delay + jitter)
+- Contactos: origem `whatsapp_conversations` (interacção prévia)
+- IA campanhas: Llama 3.2 via Ollama — textos conformes, variáveis `{nome}`, etc.
+
+**Objetivo:** comunicação segura, profissional e compatível com Meta; reduzir risco de bloqueio do número.

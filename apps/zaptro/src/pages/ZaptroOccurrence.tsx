@@ -121,14 +121,14 @@ const ZaptroOccurrence: React.FC = () => {
 
               <div style={styles.metricsGrid}>
                  <div style={styles.metricCard}>
-                    <Clock size={18} color="#94A3B8" />
+                    <Clock size={18} color="#949494" />
                     <div>
                        <span style={styles.mLabel}>DURAÇÃO</span>
                        <strong style={styles.mVal}>{occurrence.summary.duration}</strong>
                     </div>
                  </div>
                  <div style={styles.metricCard}>
-                    <MessageSquare size={18} color="#94A3B8" />
+                    <MessageSquare size={18} color="#949494" />
                     <div>
                        <span style={styles.mLabel}>MENSAGENS</span>
                        <strong style={styles.mVal}>{occurrence.summary.messages}</strong>
@@ -223,7 +223,7 @@ const ZaptroOccurrence: React.FC = () => {
 const styles: Record<string, any> = {
   container: { padding: '40px' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
-  backBtn: { background: 'none', border: 'none', color: '#64748B', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: '600', cursor: 'pointer' },
+  backBtn: { background: 'none', border: 'none', color: '#949494', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: '600', cursor: 'pointer' },
   headerActions: { display: 'flex', gap: '12px' },
   printBtn: { padding: '10px 20px', borderRadius: '12px', border: '1px solid #E2E8F0', background: 'white', color: '#0F172A', fontWeight: '600', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
   deleteBtn: { padding: '10px 20px', borderRadius: '12px', border: 'none', background: '#FEE2E2', color: '#EF4444', fontWeight: '600', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
@@ -232,16 +232,16 @@ const styles: Record<string, any> = {
   
   infoCol: { display: 'flex', flexDirection: 'column', gap: '24px' },
   summaryCard: { backgroundColor: 'white', borderRadius: '32px', padding: '40px', border: '1px solid #F2F4F7' },
-  badge: { fontSize: '10px', fontWeight: '700', color: '#94A3B8', letterSpacing: '1px', marginBottom: '16px' },
+  badge: { fontSize: '10px', fontWeight: '700', color: '#949494', letterSpacing: '1px', marginBottom: '16px' },
   clientName: { fontSize: '24px', fontWeight: '700', color: '#000', margin: '0 0 8px 0', letterSpacing: '-1px' },
-  clientMeta: { fontSize: '14px', color: '#64748B', fontWeight: '600', margin: '2px 0' },
+  clientMeta: { fontSize: '14px', color: '#949494', fontWeight: '600', margin: '2px 0' },
   divider: { height: '1px', backgroundColor: '#ebebeb', margin: '32px 0' },
   agentBox: { display: 'flex', alignItems: 'center', gap: '16px' },
   agentAvatar: { width: '42px', height: '42px', borderRadius: '12px', backgroundColor: '#000', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700' },
   agentAvatarImg: { width: '42px', height: '42px', borderRadius: '12px', objectFit: 'cover', display: 'block', flexShrink: 0 },
-  label: { fontSize: '10px', fontWeight: '700', color: '#94A3B8', display: 'block', marginBottom: '4px' },
+  label: { fontSize: '10px', fontWeight: '700', color: '#949494', display: 'block', marginBottom: '4px' },
   val: { fontSize: '15px', fontWeight: '700', color: '#000' },
-  sub: { fontSize: '12px', color: '#64748B', margin: '2px 0', fontWeight: '500' },
+  sub: { fontSize: '12px', color: '#949494', margin: '2px 0', fontWeight: '500' },
 
   notesSection: { backgroundColor: 'white', borderRadius: '28px', padding: '32px', border: '1px solid #e8e8e8' },
   notesTitle: { margin: '0 0 20px 0', fontSize: '13px', fontWeight: '700', color: '#000', display: 'flex', alignItems: 'center', gap: '10px' },
@@ -249,19 +249,19 @@ const styles: Record<string, any> = {
   noteCard: { padding: '16px', backgroundColor: '#F8F9FA', borderRadius: '16px', borderLeft: '4px solid #D9FF00' },
   noteHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '8px' },
   noteAuthor: { fontSize: '11px', fontWeight: '700', color: '#000' },
-  noteDate: { fontSize: '10px', color: '#94A3B8', fontWeight: '600' },
+  noteDate: { fontSize: '10px', color: '#949494', fontWeight: '600' },
   noteText: { margin: 0, fontSize: '13px', color: '#475569', fontWeight: '500', lineHeight: '1.5' },
-  noNotes: { fontSize: '12px', color: '#94A3B8', margin: 0, textAlign: 'center', padding: '10px 0' },
+  noNotes: { fontSize: '12px', color: '#949494', margin: 0, textAlign: 'center', padding: '10px 0' },
 
   metricsGrid: { display: 'grid', gridTemplateColumns: '1fr', gap: '12px' },
   metricCard: { backgroundColor: 'white', padding: '20px 24px', borderRadius: '24px', border: '1px solid #F2F4F7', display: 'flex', alignItems: 'center', gap: '20px' },
-  mLabel: { fontSize: '10px', fontWeight: '700', color: '#94A3B8', display: 'block' },
+  mLabel: { fontSize: '10px', fontWeight: '700', color: '#949494', display: 'block' },
   mVal: { fontSize: '18px', fontWeight: '700', color: '#0F172A' },
   
   timelineCol: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #F2F4F7', padding: '48px' },
   timelineHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
   sectionTitle: { fontSize: '22px', fontWeight: '700', color: '#000', margin: 0, letterSpacing: '-0.5px' },
-  idBadge: { padding: '6px 14px', backgroundColor: '#FBFBFC', borderRadius: '10px', fontSize: '11px', fontWeight: '700', color: '#64748B' },
+  idBadge: { padding: '6px 14px', backgroundColor: '#FBFBFC', borderRadius: '10px', fontSize: '11px', fontWeight: '700', color: '#949494' },
 
   timelineList: { display: 'flex', flexDirection: 'column', gap: '24px', position: 'relative' },
   timelineItem: { display: 'flex', gap: '24px' },
@@ -271,7 +271,7 @@ const styles: Record<string, any> = {
   
   timelineBubble: { flex: 1, padding: '20px', borderRadius: '24px' },
   bubbleHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '8px' },
-  sender: { fontSize: '10px', fontWeight: '700', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px' },
+  sender: { fontSize: '10px', fontWeight: '700', color: '#949494', display: 'flex', alignItems: 'center', gap: '6px' },
   bubbleText: { fontSize: '14px', color: '#1E293B', fontWeight: '500', lineHeight: '1.6', margin: 0 },
 
   observationArea: { marginTop: '56px', paddingTop: '40px', borderTop: '1px solid #e8e8e8' },
@@ -287,7 +287,7 @@ const styles: Record<string, any> = {
     fontSize: '10px',
     fontWeight: 700,
     letterSpacing: '0.02em',
-    color: '#64748B',
+    color: '#949494',
     textTransform: 'uppercase',
   },
   obsCollaboratorRow: { display: 'flex', alignItems: 'center', gap: '14px' },
@@ -313,10 +313,10 @@ const styles: Record<string, any> = {
     letterSpacing: '-0.03em',
     lineHeight: 1.15,
   },
-  obsCollaboratorRole: { fontSize: '12px', fontWeight: 700, color: '#64748B' },
-  obsCollaboratorHint: { margin: '14px 0 0', fontSize: '12px', color: '#64748B', fontWeight: 600, lineHeight: 1.5 },
+  obsCollaboratorRole: { fontSize: '12px', fontWeight: 700, color: '#949494' },
+  obsCollaboratorHint: { margin: '14px 0 0', fontSize: '12px', color: '#949494', fontWeight: 600, lineHeight: 1.5 },
   obsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' },
-  obsTip: { fontSize: '10px', color: '#94A3B8', fontWeight: '600' },
+  obsTip: { fontSize: '10px', color: '#949494', fontWeight: '600' },
   textarea: { width: '100%', minHeight: '120px', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '20px', fontSize: '14px', fontWeight: '500', outline: 'none', marginBottom: '20px', '&:focus': { borderColor: '#D9FF00' } },
   saveNoteBtn: { padding: '16px 32px', backgroundColor: '#000', color: 'white', border: 'none', borderRadius: '18px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }
 };

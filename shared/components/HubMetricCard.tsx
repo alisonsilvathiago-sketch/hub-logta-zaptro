@@ -17,8 +17,8 @@ const cardBase: React.CSSProperties = {
   boxSizing: 'border-box',
   padding: '0 14px',
   minHeight: '108px',
-  borderRadius: '28px',
-  border: 'none',
+  borderRadius: '12px',
+  border: '1px solid #E2E8F0',
   boxShadow: 'none',
   display: 'flex',
   alignItems: 'center',
@@ -46,9 +46,11 @@ const metaRow: React.CSSProperties = {
 };
 
 const valueStyle: React.CSSProperties = {
-  fontSize: '23px',
+  fontSize: '14px',
   fontWeight: 800,
-  marginTop: '4px',
+  marginTop: 0,
+  paddingTop: 0,
+  paddingBottom: 0,
   lineHeight: 1.1,
   letterSpacing: 0,
   textShadow: 'none',
@@ -64,6 +66,9 @@ export interface HubMetricCardProps {
   label: string;
   value: React.ReactNode;
   icon: LucideIcon;
+  /** Foto/logo no lugar do ícone (ex.: logo da empresa). */
+  imageUrl?: string | null;
+  imageAlt?: string;
   iconVariant?: HubMetricIconVariant;
   /** Cor de destaque do ícone (variante soft: ícone + fundo derivado; solid: fundo + ícone branco). */
   accent?: string;
@@ -83,6 +88,8 @@ export function HubMetricCard({
   label,
   value,
   icon: Icon,
+  imageUrl,
+  imageAlt,
   iconVariant = 'soft',
   accent = '#0061FF',
   softBg,
@@ -93,6 +100,8 @@ export function HubMetricCard({
   style,
   hover = true,
 }: HubMetricCardProps) {
+  const [imageFailed, setImageFailed] = React.useState(false);
+  const showImage = Boolean(imageUrl) && !imageFailed;
   const wrapBg =
     iconVariant === 'solid' ? accent : softIconBackground(accent, softBg);
   const iconColor = iconVariant === 'solid' ? '#FFFFFF' : accent;
@@ -112,8 +121,24 @@ export function HubMetricCard({
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      <div style={{ ...iconShell, background: wrapBg }}>
-        <Icon size={iconSize} color={iconColor} strokeWidth={2} aria-hidden />
+      <div
+        style={{
+          ...iconShell,
+          background: showImage ? '#F8FAFC' : wrapBg,
+          border: showImage ? '1.5px solid #E2E8F0' : 'none',
+          overflow: 'hidden',
+        }}
+      >
+        {showImage ? (
+          <img
+            src={imageUrl!}
+            alt={imageAlt || (typeof label === 'string' ? label : '')}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <Icon size={iconSize} color={iconColor} strokeWidth={2} aria-hidden />
+        )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={metaRow}>

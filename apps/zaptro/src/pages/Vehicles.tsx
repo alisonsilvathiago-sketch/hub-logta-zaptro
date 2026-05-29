@@ -94,7 +94,7 @@ const Vehicles: React.FC = () => {
           <h1 style={styles.title}>Gestão de Frota</h1>
           <p style={styles.subtitle}>Gerencie os veículos e caminhões da {company?.name}</p>
         </div>
-        <button style={styles.primaryBtn} onClick={() => setIsModalOpen(true)}>
+        <button className="hub-premium-pill primary" onClick={() => setIsModalOpen(true)}>
           <Plus size={18} /> Novo Veículo
         </button>
       </header>
@@ -105,7 +105,7 @@ const Vehicles: React.FC = () => {
             <Search size={18} color="var(--text-muted)" />
             <input type="text" placeholder="Filtrar por placa ou modelo..." style={styles.input} />
           </div>
-          <button style={styles.filterBtn}><Filter size={18} /> Todos os Tipos</button>
+          <button className="hub-premium-pill secondary"><Filter size={18} /> Todos os Tipos</button>
         </div>
 
         {loading ? (
@@ -208,7 +208,7 @@ const Vehicles: React.FC = () => {
             </div>
           </div>
 
-          <button type="submit" style={styles.saveBtn} disabled={saving}>
+          <button type="submit" className="hub-premium-pill primary" style={{ width: '100%', marginTop: '10px' }} disabled={saving}>
             {saving ? <Loader2 className="animate-spin" size={20} /> : 'Cadastrar na Frota'}
           </button>
         </form>

@@ -1,0 +1,1325 @@
+.zaptro-agenda {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(168, 168, 168, 1);
+  padding: 0;
+  display: flex;
+  gap: 0;
+  background: #ffffff;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.zaptro-agenda__sidebar {
+  width: 397px;
+  flex-shrink: 0;
+  padding: 30px 20px 30px 0;
+  border-right: 1px solid rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.zaptro-agenda__create {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 140px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow:
+    0 1px 2px rgba(60, 64, 67, 0.3),
+    0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  color: #3c4043;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.zaptro-agenda__create:hover {
+  background: #f8f9fa;
+}
+
+.zaptro-agenda__mini {
+  user-select: none;
+}
+
+.zaptro-agenda__mini-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3c4043;
+  text-transform: capitalize;
+}
+
+.zaptro-agenda__mini-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+
+.zaptro-agenda__mini-w {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(168, 168, 168, 1);
+  padding: 4px 0;
+}
+
+.zaptro-agenda__mini-day {
+  border: none;
+  background: transparent;
+  width: 28px;
+  height: 28px;
+  margin: 0 auto;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(168, 168, 168, 1);
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+}
+
+.zaptro-agenda__mini-day:hover {
+  background: rgba(60, 64, 67, 0.08);
+}
+
+.zaptro-agenda__mini-day--muted {
+  color: rgba(168, 168, 168, 0.55);
+}
+
+.zaptro-agenda__mini-day--today {
+  background: #1a73e8;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.zaptro-agenda__mini-day--selected {
+  background: rgba(26, 115, 232, 0.12);
+  color: #1a73e8;
+  font-weight: 600;
+}
+
+.zaptro-agenda__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.zaptro-agenda__filter-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(168, 168, 168, 1);
+  margin: 0 0 4px;
+}
+
+.zaptro-agenda__filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #3c4043;
+}
+
+.zaptro-agenda__filter-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.zaptro-agenda__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-top: 20px;
+}
+
+.zaptro-agenda__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: nowrap;
+  padding: 12px 10px 8px 20px;
+  margin: 0 20px 5px;
+}
+
+.zaptro-agenda__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.zaptro-agenda__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.zaptro-agenda__month-title {
+  margin: 0 0 0 8px;
+  font-size: 20px;
+  font-weight: 500;
+  color: #3c4043;
+  text-transform: capitalize;
+  letter-spacing: 0;
+}
+
+.zaptro-agenda__btn-icon {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #5f6368;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+.zaptro-agenda__btn-icon:hover {
+  background: rgba(60, 64, 67, 0.08);
+}
+
+.zaptro-agenda__btn-ghost {
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(15, 23, 42, 0.04);
+  border-radius: 18px;
+  padding: 0 14px;
+  height: 40px;
+  min-height: 40px;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 12px;
+  color: rgba(46, 46, 46, 1);
+  font-family: inherit;
+}
+
+.zaptro-agenda__btn-ghost svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.zaptro-agenda__btn-ghost-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+  color: rgba(54, 54, 54, 1);
+}
+
+.zaptro-agenda__btn-ghost:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.zaptro-agenda__btn-ghost:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.zaptro-agenda__search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  height: 40px;
+  min-height: 40px;
+  box-sizing: border-box;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fbfbfc;
+  width: 220px;
+  min-width: 200px;
+  max-width: 240px;
+  flex: 0 0 auto;
+}
+
+.zaptro-agenda__search input {
+  border: none;
+  outline: none;
+  font-weight: 600;
+  font-size: 12px;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  font-family: inherit;
+  color: rgba(117, 117, 117, 1);
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.zaptro-agenda__select {
+  appearance: none;
+  padding: 0 34px 0 14px;
+  height: 40px;
+  min-height: 40px;
+  box-sizing: border-box;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fbfbfc;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 40px;
+  cursor: pointer;
+  font-family: inherit;
+  color: rgba(117, 117, 117, 1);
+  width: auto;
+  min-width: 108px;
+  max-width: 140px;
+  flex: 0 0 auto;
+}
+
+.zaptro-agenda__toolbar-right .zaptro-agenda__btn-ghost {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Modal de criar evento/tarefa (estilo Google Calendar, paleta Zaptro) */
+.zaptro-agenda-modal {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+}
+
+.zaptro-agenda-modal__body {
+  padding: 16px 20px 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.zaptro-agenda-modal__title {
+  border: none;
+  outline: none;
+  border-bottom: 2px solid rgba(15, 23, 42, 0.14);
+  padding: 10px 2px 12px;
+  font-size: 20px;
+  font-weight: 800;
+  font-family: inherit;
+  color: #0f172a;
+}
+
+.zaptro-agenda-modal__title::placeholder {
+  color: rgba(148, 163, 184, 1);
+  font-weight: 700;
+}
+
+.zaptro-agenda-modal__tabs {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.zaptro-agenda-modal__tab {
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(15, 23, 42, 0.04);
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(117, 117, 117, 1);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.zaptro-agenda-modal__tab.is-active {
+  background: rgba(217, 255, 0, 0.20);
+  border-color: rgba(217, 255, 0, 0.55);
+  color: #0f172a;
+}
+
+.zaptro-agenda-modal__rows {
+  display: grid;
+  gap: 10px;
+}
+
+.zaptro-agenda-modal__row {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.zaptro-agenda-modal__row-ico {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(117, 117, 117, 1);
+}
+
+.zaptro-agenda-modal__row-main {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.zaptro-agenda-modal__row-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.zaptro-agenda-modal__row-strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: capitalize;
+}
+
+.zaptro-agenda-modal__row-sep {
+  font-weight: 800;
+  color: rgba(148, 163, 184, 1);
+}
+
+.zaptro-agenda-modal__link {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(117, 117, 117, 1);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.zaptro-agenda-modal__link:hover {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.zaptro-agenda-modal__time-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.zaptro-agenda-modal__label {
+  display: grid;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(135, 135, 135, 1);
+}
+
+.zaptro-agenda-modal__input {
+  width: 100%;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: #fbfbfc;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: inherit;
+  outline: none;
+}
+
+.zaptro-agenda-modal__input:disabled {
+  opacity: 1;
+  color: rgba(117, 117, 117, 1);
+  background: #fbfbfc;
+}
+
+.zaptro-agenda-modal__textarea {
+  width: 100%;
+  min-height: 90px;
+  resize: none;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: #fbfbfc;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: inherit;
+  outline: none;
+}
+
+.zaptro-agenda-modal__textarea:disabled {
+  opacity: 1;
+  color: rgba(117, 117, 117, 1);
+  background: #fbfbfc;
+}
+
+.zaptro-agenda-modal__chip {
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: rgba(15, 23, 42, 0.02);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(117, 117, 117, 1);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.zaptro-agenda-modal__chip:disabled {
+  cursor: default;
+  opacity: 0.9;
+}
+
+.zaptro-agenda-modal__select {
+  width: fit-content;
+  max-width: 100%;
+  text-align: left;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: #fbfbfc;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(117, 117, 117, 1);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.zaptro-agenda-modal__select:disabled {
+  cursor: default;
+  opacity: 0.95;
+}
+
+.zaptro-agenda-modal__foot {
+  padding: 14px 20px 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.zaptro-agenda-modal__btn {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.zaptro-agenda-modal__btn--ghost {
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  color: rgba(117, 117, 117, 1);
+}
+
+.zaptro-agenda-modal__btn--primary {
+  background: #0f172a;
+  color: #d9ff00;
+}
+
+.zaptro-agenda-modal__btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.zaptro-agenda__grid-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  padding-right: 20px;
+  box-sizing: border-box;
+}
+
+.zaptro-agenda__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+}
+
+.zaptro-agenda__weekday {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: rgba(168, 168, 168, 1);
+  text-transform: uppercase;
+}
+
+.zaptro-agenda__month-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-rows: minmax(100px, 1fr);
+  background: #fff;
+}
+
+.zaptro-agenda__day {
+  border: none;
+  border-right: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+  padding: 6px 8px 8px;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  font-family: inherit;
+  min-height: 100px;
+}
+
+.zaptro-agenda__day:nth-child(7n) {
+  border-right: none;
+}
+
+.zaptro-agenda__day:hover {
+  background: #f8f9fa;
+}
+
+.zaptro-agenda__day-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  margin-bottom: 5px;
+  padding: 0;
+}
+
+.zaptro-agenda__day-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #3c4043;
+  padding: 0;
+  margin: 0 0 5px 0;
+  background: transparent;
+}
+
+.zaptro-agenda__day-num--muted {
+  color: rgba(168, 168, 168, 0.65);
+}
+
+.zaptro-agenda__day-num--today {
+  background: #1a73e8;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.zaptro-agenda__events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.zaptro-agenda__event {
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: #0b8043;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  line-height: 1.35;
+}
+
+.zaptro-agenda__event--crm {
+  background: #039be5;
+}
+
+.zaptro-agenda__event--custom {
+  color: #fff;
+}
+
+.zaptro-agenda__event.is-done {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+.zaptro-agenda__global-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(217, 255, 0, 0.2);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  font-size: 11px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.zaptro-agenda__team-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.zaptro-agenda__team-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #949494;
+}
+
+.zaptro-agenda__team-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.zaptro-agenda-mentions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.zaptro-agenda-mentions__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: #f4f4f4;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.zaptro-agenda-mentions__chip.is-on {
+  background: rgba(15, 23, 42, 0.06);
+  border-color: #0f172a;
+}
+
+.zaptro-agenda-mentions__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.zaptro-agenda-mentions__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.zaptro-agenda-color-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.zaptro-agenda-color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.zaptro-agenda-color-swatch.is-active {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #0f172a;
+}
+
+/* Pop-up estilo Google Calendar */
+.zaptro-agenda-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5999;
+  background: rgba(15, 23, 42, 0.25);
+  backdrop-filter: blur(2px);
+}
+
+.zaptro-agenda-popover {
+  width: min(380px, calc(100vw - 24px));
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+  font-family: inherit;
+}
+
+.zaptro-agenda-popover__head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px 14px 12px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.zaptro-agenda-popover__color {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.zaptro-agenda-popover__head-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.zaptro-agenda-popover__head-text h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.zaptro-agenda-popover__head-text h2.is-done {
+  text-decoration: line-through;
+  color: #949494;
+}
+
+.zaptro-agenda-popover__head-text p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #949494;
+}
+
+.zaptro-agenda-popover__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.zaptro-agenda-popover__icon-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #949494;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+.zaptro-agenda-popover__icon-btn:hover {
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+}
+
+.zaptro-agenda-popover__menu-wrap {
+  position: relative;
+}
+
+.zaptro-agenda-popover__menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  min-width: 200px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 6px;
+  z-index: 10;
+}
+
+.zaptro-agenda-popover__menu button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 10px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.zaptro-agenda-popover__menu button:hover {
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.zaptro-agenda-popover__body {
+  padding: 8px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.zaptro-agenda-popover__row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 0;
+  color: #949494;
+}
+
+.zaptro-agenda-popover__row .lab {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #949494;
+  margin-bottom: 2px;
+}
+
+.zaptro-agenda-popover__row strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.zaptro-agenda-popover__meet {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #00832d;
+  text-decoration: none;
+}
+
+.zaptro-agenda-popover__foot {
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.zaptro-agenda-popover__btn-ghost,
+.zaptro-agenda-popover__btn-primary {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zaptro-agenda-popover__btn-ghost {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  color: #0f172a;
+}
+
+.zaptro-agenda-popover__btn-primary {
+  border: none;
+  background: #0f172a;
+  color: #d9ff00;
+}
+
+/* Menu botão direito */
+.zaptro-agenda-ctx {
+  min-width: 200px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 6px;
+  font-family: inherit;
+}
+
+.zaptro-agenda-ctx__item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 10px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.zaptro-agenda-ctx__item:hover {
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.zaptro-agenda-ctx__item.is-danger {
+  color: #dc2626;
+}
+
+.zaptro-agenda__event--rota {
+  background: #7986cb;
+}
+
+.zaptro-agenda__more {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(168, 168, 168, 1);
+  padding: 2px 4px;
+}
+
+.zaptro-agenda__google {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #f4f4f4;
+}
+
+.zaptro-agenda__google-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #3c4043;
+}
+
+.zaptro-agenda__google-email {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #949494;
+  word-break: break-all;
+}
+
+.zaptro-agenda__google-connect {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  color: #3c4043;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.zaptro-agenda__google-connect:hover {
+  background: #f1f5f9;
+}
+
+.zaptro-agenda__google-connect:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.zaptro-agenda__google-disconnect {
+  border: none;
+  background: transparent;
+  color: #949494;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font-family: inherit;
+}
+
+.zaptro-agenda-modal__meet-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: #f4f4f4;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.zaptro-agenda-modal__meet-toggle.is-on {
+  border-color: #00832d;
+  background: rgba(0, 131, 45, 0.08);
+}
+
+@keyframes zaptro-agenda-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.zaptro-agenda .animate-spin {
+  animation: zaptro-agenda-spin 0.9s linear infinite;
+}
+
+/* Modal de detalhes do evento (clique no pill do calendário) */
+.zaptro-agenda-detail {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.zaptro-agenda-detail__body {
+  padding: 16px 20px 8px;
+}
+
+.zaptro-agenda-detail__hero {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.zaptro-agenda-detail__pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.zaptro-agenda-detail__pill--crm {
+  background: #039be5;
+}
+
+.zaptro-agenda-detail__pill--rota {
+  background: #7986cb;
+}
+
+.zaptro-agenda-detail__pill--default {
+  background: #0b8043;
+}
+
+.zaptro-agenda-detail__action {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #949494;
+}
+
+.zaptro-agenda-detail__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.zaptro-agenda-detail__row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.zaptro-agenda-detail__row:last-child {
+  border-bottom: none;
+}
+
+.zaptro-agenda-detail__ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.04);
+  color: #949494;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.zaptro-agenda-detail__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.zaptro-agenda-detail__lab {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #949494;
+}
+
+.zaptro-agenda-detail__main strong {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.zaptro-agenda-detail__sub {
+  font-size: 13px;
+  font-weight: 700;
+  color: #949494;
+}
+
+.zaptro-agenda-detail__person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.zaptro-agenda-detail__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0f172a, #6B6B6B);
+  color: #d9ff00;
+  font-size: 13px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.zaptro-agenda-detail__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #00832d;
+  text-decoration: none;
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(0, 131, 45, 0.08);
+  border: 1px solid rgba(0, 131, 45, 0.2);
+}
+
+.zaptro-agenda-detail__link:hover {
+  background: rgba(0, 131, 45, 0.14);
+}
+
+.zaptro-agenda-detail__foot {
+  padding: 14px 20px 18px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.zaptro-agenda-detail__btn {
+  border: none;
+  cursor: pointer;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  background: #0f172a;
+  color: #d9ff00;
+}
+
+@media (max-width: 960px) {
+  .zaptro-agenda {
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .zaptro-agenda__toolbar {
+    flex-wrap: wrap;
+    padding-right: 12px;
+  }
+
+  .zaptro-agenda__toolbar-left,
+  .zaptro-agenda__toolbar-right {
+    flex-wrap: wrap;
+  }
+
+  .zaptro-agenda__grid-wrap {
+    padding-right: 12px;
+  }
+
+  .zaptro-agenda__sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 12px 0;
+  }
+}

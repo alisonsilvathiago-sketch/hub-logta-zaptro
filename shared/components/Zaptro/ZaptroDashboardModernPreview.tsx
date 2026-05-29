@@ -88,7 +88,7 @@ function ShipmentDonut({ isDark, accent }: { isDark: boolean; accent: string }) 
           <span style={{ width: 8, height: 8, borderRadius: 999, background: accent }} /> Taxa de sucesso
         </span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: 999, background: isDark ? '#94a3b8' : '#000000' }} /> Taxa sem sucesso
+          <span style={{ width: 8, height: 8, borderRadius: 999, background: isDark ? '#949494' : '#000000' }} /> Taxa sem sucesso
         </span>
       </div>
       <div style={{ width: 200, height: 200, position: 'relative' }}>
@@ -121,7 +121,7 @@ function ShipmentDonut({ isDark, accent }: { isDark: boolean; accent: string }) 
 }
 
 function subText(isDark: boolean) {
-  return isDark ? '#94a3b8' : MUTED;
+  return isDark ? '#949494' : MUTED;
 }
 
 function formatDashHeaderDate(isoYmd: string): string {

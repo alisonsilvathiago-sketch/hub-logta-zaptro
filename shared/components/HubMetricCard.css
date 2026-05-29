@@ -5,14 +5,14 @@ div.hub-metric-card div {
   text-shadow: none !important;
 }
 
-/* Neutraliza tema global `[class*="card"]` / `.hover-scale:hover` em @shared/index.css (borda + sombra no hover). */
+/* Contorno alinhado aos cards do Master (ZS.card / 1px #E2E8F0). */
 div.hub-metric-card:not(.hub-metric-card--elevated) {
-  border: none !important;
+  border: 1px solid #e2e8f0 !important;
   box-shadow: none !important;
 }
 
 div.hub-metric-card:not(.hub-metric-card--elevated):hover {
-  border: none !important;
+  border-color: #cbd5e1 !important;
   box-shadow: none !important;
 }
 
@@ -32,7 +32,14 @@ div.hub-metric-card.hub-metric-card--elevated:hover {
 }
 
 div.hub-metric-card .hub-metric-card__value {
-  color: var(--primary, var(--accent, #0061FF)) !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  max-height: 500px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  color: #0f172a !important;
 }
 
 /* KPI master: espaçamento e label alinhados ao preview (evita conflitos com [class*="card"]) */

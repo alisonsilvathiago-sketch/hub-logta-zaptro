@@ -1,3 +1,5 @@
+import { getLogtaAppOrigin } from '../../../lib/logtaApp';
+import { resolveDemoCompanyId, shouldUseLogtaSandbox } from '../../../lib/seed';
 import type { PontoConfig, PontoRecord } from './types';
 
 const CONFIG_PREFIX = 'logta-ponto-config';
@@ -35,6 +37,7 @@ export function createDefaultPontoConfig(companyId: string, unitName = 'Unidade 
   return {
     id: `ponto-${companyId}`,
     companyId,
+    isActive: false,
     unitName,
     operationalHoursStart: '08:00',
     operationalHoursEnd: '18:00',
@@ -68,14 +71,75 @@ export function createDefaultPontoConfig(companyId: string, unitName = 'Unidade 
   };
 }
 
+function ensurePontoRegistrationChannels(cfg: PontoConfig): PontoConfig {
+  const mode = cfg.registrationMode;
+  return {
+    ...cfg,
+    qrEnabled: mode === 'qr' || mode === 'both',
+    linkEnabled: mode === 'link' || mode === 'both',
+  };
+}
+
+/** Ativa ponto inteligente da unidade (link + QR liberados). */
+export function activatePontoConfig(companyId: string, unitName?: string): PontoConfig {
+  const cid = resolveDemoCompanyId(companyId);
+  const base = loadPontoConfig(cid);
+  const next = ensurePontoRegistrationChannels({
+    ...base,
+    unitName: unitName || base.unitName,
+    isActive: true,
+    activatedAt: new Date().toISOString(),
+  });
+  return savePontoConfig(next);
+}
+
+function finalizeLoadedConfig(
+  companyId: string,
+  merged: PontoConfig,
+  legacyWithoutActiveFlag: boolean,
+): PontoConfig {
+  if (legacyWithoutActiveFlag) {
+    return savePontoConfig({
+      ...ensurePontoRegistrationChannels(merged),
+      isActive: true,
+      activatedAt: merged.activatedAt ?? new Date().toISOString(),
+    });
+  }
+  if (shouldUseLogtaSandbox() && !merged.isActive) {
+    return savePontoConfig({
+      ...ensurePontoRegistrationChannels(merged),
+      isActive: true,
+      activatedAt: merged.activatedAt ?? new Date().toISOString(),
+    });
+  }
+  return merged;
+}
+
 export function loadPontoConfig(companyId: string): PontoConfig {
+  const cid = resolveDemoCompanyId(companyId);
   try {
-    const raw = localStorage.getItem(configKey(companyId));
-    if (!raw) return createDefaultPontoConfig(companyId);
-    const parsed = JSON.parse(raw) as PontoConfig;
-    return { ...createDefaultPontoConfig(companyId, parsed.unitName), ...parsed };
+    const raw = localStorage.getItem(configKey(cid));
+    if (!raw) {
+      const created = createDefaultPontoConfig(cid);
+      if (shouldUseLogtaSandbox()) {
+        return activatePontoConfig(cid, created.unitName);
+      }
+      return created;
+    }
+    const parsed = JSON.parse(raw) as Partial<PontoConfig>;
+    const legacyWithoutActiveFlag = !Object.prototype.hasOwnProperty.call(parsed, 'isActive');
+    const merged = {
+      ...createDefaultPontoConfig(cid, parsed.unitName),
+      ...parsed,
+      companyId: cid,
+    } as PontoConfig;
+    return finalizeLoadedConfig(cid, merged, legacyWithoutActiveFlag);
   } catch {
-    return createDefaultPontoConfig(companyId);
+    const created = createDefaultPontoConfig(cid);
+    if (shouldUseLogtaSandbox()) {
+      return activatePontoConfig(cid, created.unitName);
+    }
+    return created;
   }
 }
 
@@ -124,9 +188,23 @@ export function buildPublicPontoPath(config: PontoConfig) {
   return `/ponto/${config.publicSlug}/${config.publicToken}`;
 }
 
+export const LOCALHOST_PONTO_ORIGIN = 'http://localhost:5173';
+
+function isLocalDevHost(): boolean {
+  if (typeof window === 'undefined') return import.meta.env.DEV;
+  const h = window.location.hostname;
+  return h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || import.meta.env.DEV;
+}
+
+/** Origem pública do link/QR — em localhost sempre `http://localhost:5173`. */
+export function resolvePontoPublicOrigin(): string {
+  if (isLocalDevHost()) return LOCALHOST_PONTO_ORIGIN;
+  if (typeof window !== 'undefined') return window.location.origin;
+  return getLogtaAppOrigin();
+}
+
 export function buildPublicPontoUrl(config: PontoConfig) {
-  if (typeof window === 'undefined') return buildPublicPontoPath(config);
-  return `${window.location.origin}${buildPublicPontoPath(config)}`;
+  return `${resolvePontoPublicOrigin()}${buildPublicPontoPath(config)}`;
 }
 
 export function buildSectorQrPath(config: PontoConfig, sectorToken: string) {

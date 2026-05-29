@@ -187,13 +187,13 @@ const Finance: React.FC = () => {
           <option value="PENDING">Pendente</option>
           <option value="OVERDUE">Atrasado</option>
         </select>
-        <button style={styles.btnSecondary} title="Baixar PDF" onClick={() => toastSuccess('Exportando PDF...')}>
+        <button className="hub-premium-pill secondary" title="Baixar PDF" onClick={() => toastSuccess('Exportando PDF...')} style={{ padding: '10px 14px' }}>
           <Download size={16} />
         </button>
-        <button style={styles.btnSecondary} title="Baixar Excel" onClick={() => toastSuccess('Exportando Excel...')}>
+        <button className="hub-premium-pill secondary" title="Baixar Excel" onClick={() => toastSuccess('Exportando Excel...')} style={{ padding: '10px 14px' }}>
           <FileText size={16} />
         </button>
-        <button style={styles.btnPrimary} onClick={() => setIsAddModalOpen(true)}>
+        <button className="hub-premium-pill primary" onClick={() => setIsAddModalOpen(true)} style={{ padding: '10px 18px' }}>
           <Plus size={16} /> Novo Lançamento
         </button>
       </div>
@@ -246,7 +246,7 @@ const Finance: React.FC = () => {
               </tr>
             )) : (
               <tr>
-                <td colSpan={6} style={{ padding: '80px', textAlign: 'center', color: '#94a3b8' }}>
+                <td colSpan={6} style={{ padding: '80px', textAlign: 'center', color: '#949494' }}>
                   <Layers size={40} style={{ margin: '0 auto 16px', display: 'block', opacity: 0.2 }} />
                   <p style={{ fontWeight: '600', margin: 0 }}>Nenhum lançamento encontrado.</p>
                   <p style={{ fontSize: '13px', marginTop: '8px' }}>Clique em "Novo Lançamento" para começar.</p>
@@ -281,8 +281,8 @@ const Finance: React.FC = () => {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#949494' }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#949494' }} />
               <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.1)' }} />
               <Area type="monotone" dataKey="receita" stroke="#10b981" strokeWidth={3} fill="url(#colorReceita)" name="Receita" />
               <Area type="monotone" dataKey="despesa" stroke="#ef4444" strokeWidth={3} fill="url(#colorDespesa)" name="Despesa" />
@@ -341,8 +341,8 @@ const Finance: React.FC = () => {
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#949494' }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#949494' }} />
               <Tooltip contentStyle={{ borderRadius: '16px', border: 'none' }} />
               <Bar dataKey="receita" fill="#10b981" radius={[8, 8, 0, 0]} name="Receita" />
               <Bar dataKey="despesa" fill="#ef4444" radius={[8, 8, 0, 0]} name="Despesa" />
@@ -373,7 +373,7 @@ const Finance: React.FC = () => {
           </ResponsiveContainer>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
             {['Operacional', 'Pessoal', 'Manutenção', 'Outros'].map((label, i) => (
-              <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '700', color: '#64748b' }}>
+              <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '700', color: '#949494' }}>
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: COLORS[i], display: 'inline-block' }} />
                 {label}
               </span>
@@ -403,7 +403,7 @@ const Finance: React.FC = () => {
   );
 
   const headerActions = (
-    <button style={styles.calcBtn} onClick={() => setIsCalcOpen(true)}>
+    <button className="hub-premium-pill primary" onClick={() => setIsCalcOpen(true)} style={{ padding: '10px 18px' }}>
       <CalcIcon size={16} /> Calculadora
     </button>
   );
@@ -542,7 +542,7 @@ const styles: Record<string, any> = {
   kpiIcon: { width: '44px', height: '44px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   kpiTrend: { fontSize: '12px', fontWeight: '600' },
   kpiValue: { fontSize: '26px', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 4px 0', letterSpacing: '-0.5px' },
-  kpiLabel: { fontSize: '12px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', margin: 0 },
+  kpiLabel: { fontSize: '12px', color: '#949494', fontWeight: '700', textTransform: 'uppercase', margin: 0 },
 
   filterBar: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -554,7 +554,7 @@ const styles: Record<string, any> = {
     flex: 1, minWidth: '220px', backgroundColor: '#f4f4f4',
     borderRadius: '12px', padding: '10px 16px', border: '1px solid #e8e8e8'
   },
-  searchIcon: { color: '#94a3b8', flexShrink: 0 },
+  searchIcon: { color: '#949494', flexShrink: 0 },
   searchInput: { border: 'none', outline: 'none', fontSize: '14px', backgroundColor: 'transparent', flex: 1, color: 'var(--text-main)' },
   filterActions: { display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' },
   selectFilter: {
@@ -563,7 +563,7 @@ const styles: Record<string, any> = {
   },
   btnSecondary: {
     padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0',
-    backgroundColor: 'white', cursor: 'pointer', color: '#64748b',
+    backgroundColor: 'white', cursor: 'pointer', color: '#949494',
     display: 'flex', alignItems: 'center', gap: '6px'
   },
   btnPrimary: {
@@ -581,7 +581,7 @@ const styles: Record<string, any> = {
   chartCard: { backgroundColor: 'white', padding: '28px', borderRadius: '24px', border: '1px solid #e8e8e8' },
   chartHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' },
   chartTitle: { fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 20px 0' },
-  refreshBtn: { background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px' },
+  refreshBtn: { background: 'none', border: 'none', cursor: 'pointer', color: '#949494', padding: '4px' },
 
   alertItem: {
     display: 'flex', alignItems: 'center', gap: '12px',
@@ -593,12 +593,12 @@ const styles: Record<string, any> = {
 
   tableCard: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid #e8e8e8', overflow: 'hidden' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  th: { textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', borderBottom: '1px solid #e8e8e8', backgroundColor: '#fcfdfe' },
+  th: { textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '600', color: '#949494', textTransform: 'uppercase', borderBottom: '1px solid #e8e8e8', backgroundColor: '#fcfdfe' },
   td: { padding: '16px 24px', fontSize: '14px', borderBottom: '1px solid #e8e8e8', color: '#475569' },
   tr: { transition: 'background-color 0.2s' },
   statusTag: { padding: '5px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase' },
-  categoryBadge: { padding: '4px 8px', backgroundColor: '#f4f4f4', borderRadius: '8px', fontSize: '11px', color: '#64748b', fontWeight: '700', border: '1px solid #e8e8e8' },
-  iconBtn: { padding: '6px', color: '#94a3b8', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '6px' },
+  categoryBadge: { padding: '4px 8px', backgroundColor: '#f4f4f4', borderRadius: '8px', fontSize: '11px', color: '#949494', fontWeight: '700', border: '1px solid #e8e8e8' },
+  iconBtn: { padding: '6px', color: '#949494', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '6px' },
 
   intelBanner: { position: 'relative', borderRadius: '24px', overflow: 'hidden', height: '220px' },
   intelBannerImg: { width: '100%', height: '100%', objectFit: 'cover' },

@@ -39,7 +39,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   return (
     <div className="ls-card space-y-3">
       <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-        <ScanLine size={18} className="text-emerald-600" />
+        <ScanLine size={18} className="text-orange-600" />
         Leitor de código de barras
       </div>
       <div className="flex gap-2">

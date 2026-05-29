@@ -16,11 +16,11 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess } from '@core/lib/toast';
-import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 import MasterCredentialsVault from './MasterCredentialsVault';
-import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
+import { HUB_PAGE_SUBTITLE, HUB_SIDEBAR_NAV_LABEL } from '@hub/styles/hubPageTypography';
+import { HUB_MASTER_SECTION_NAV } from '@hub/styles/hubMasterSectionNavStyles';
 
-const INTEGRATION_TABS = [
+export const INTEGRATION_TABS = [
   { id: 'google' as const, label: 'Google Cloud', icon: Cloud },
   { id: 'asaas' as const, label: 'Gateway Asaas', icon: DollarSign },
   { id: 'whatsapp' as const, label: 'WhatsApp API', icon: Smartphone },
@@ -36,19 +36,30 @@ function normalizeTab(param: string | undefined): IntegrationTabId {
   return 'google';
 }
 
-const IntegrationsPage: React.FC = () => {
+type IntegrationsPageProps = {
+  embedded?: boolean;
+  activeSubTab?: string;
+  onSubTabChange?: (id: IntegrationTabId) => void;
+};
+
+const IntegrationsPage: React.FC<IntegrationsPageProps> = ({
+  embedded = false,
+  activeSubTab,
+  onSubTabChange,
+}) => {
   const { tab: tabParam } = useParams<{ tab?: string }>();
   const navigate = useNavigate();
-  const activeTab = normalizeTab(tabParam);
+  const activeTab = embedded ? normalizeTab(activeSubTab) : normalizeTab(tabParam);
 
   const [googleConfig, setGoogleConfig] = useState<any>(null);
   const [govBannerExpanded, setGovBannerExpanded] = useState(false);
 
   useEffect(() => {
+    if (embedded) return;
     if (tabParam && !INTEGRATION_TABS.some((t) => t.id === tabParam)) {
-      navigate('/master/integracoes', { replace: true });
+      navigate('/master/settings?tab=integracoes', { replace: true });
     }
-  }, [tabParam, navigate]);
+  }, [tabParam, navigate, embedded]);
 
   useEffect(() => {
     const fetchConfigs = async () => {
@@ -63,10 +74,14 @@ const IntegrationsPage: React.FC = () => {
   }, []);
 
   const setActiveTab = (id: IntegrationTabId) => {
+    if (embedded && onSubTabChange) {
+      onSubTabChange(id);
+      return;
+    }
     if (id === 'google') {
-      navigate('/master/integracoes');
+      navigate('/master/settings?tab=integracoes');
     } else {
-      navigate(`/master/integracoes/${id}`);
+      navigate(`/master/settings?tab=integracoes&sub=${id}`);
     }
   };
 
@@ -75,15 +90,16 @@ const IntegrationsPage: React.FC = () => {
     toastSuccess('Endpoint copiado para a área de transferência.');
   };
 
-  const goCredenciais = () => navigate('/master/integracoes/credenciais');
+  const goCredenciais = () => setActiveTab('credenciais');
   const goEvolution = () => navigate('/master/settings/evolution');
-  const goAutomacoes = () => navigate('/master/automacoes');
+  const goAutomacoes = () => navigate('/master/settings?tab=automacoes');
 
   return (
-    <div style={styles.container} className="animate-fade-in">
-      <header style={styles.header}>
+    <div style={{ ...styles.container, padding: embedded ? 0 : styles.container.padding }} className="animate-fade-in">
+      <div style={HUB_MASTER_SECTION_NAV.mainInner}>
+      <header style={{ ...styles.header, marginBottom: embedded ? 24 : 32 }}>
         <div>
-          <h1 style={styles.title}>Integrações & Conectores Master</h1>
+          <h1 style={{ ...styles.title, fontSize: embedded ? 22 : 29 }}>Integrações & Conectores Master</h1>
           <p style={styles.subtitle}>Gerencie a conectividade global do ecossistema, tokens de API e credenciais externas.</p>
         </div>
         <div style={styles.headerActions}>
@@ -97,23 +113,6 @@ const IntegrationsPage: React.FC = () => {
           </button>
         </div>
       </header>
-
-      <div style={hubPillTabStripStyles.container}>
-        {INTEGRATION_TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            style={{
-              ...hubPillTabStripStyles.button,
-              ...(activeTab === t.id ? hubPillTabStripStyles.buttonActive : {}),
-            }}
-            onClick={() => setActiveTab(t.id)}
-          >
-            <t.icon size={15} color={activeTab === t.id ? 'var(--accent)' : 'var(--text-secondary)'} />
-            {t.label}
-          </button>
-        ))}
-      </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
         <div
@@ -171,8 +170,8 @@ const IntegrationsPage: React.FC = () => {
                 <span
                   style={{
                     ...styles.statusBadge,
-                    backgroundColor: googleConfig ? '#ecfdf5' : '#fff7ed',
-                    color: googleConfig ? '#10b981' : '#f97316',
+                    backgroundColor: googleConfig ? '#EFF6FF' : '#fff7ed',
+                    color: googleConfig ? '#0061FF' : '#f97316',
                   }}
                 >
                   {googleConfig ? 'ATIVO' : 'PENDENTE'}
@@ -208,7 +207,7 @@ const IntegrationsPage: React.FC = () => {
                 <p style={styles.cardSub}>Fluxos financeiros master.</p>
               </div>
               <div style={{ marginLeft: 'auto' }}>
-                <span style={{ ...styles.statusBadge, backgroundColor: '#ecfdf5', color: '#10b981' }}>CONECTADO</span>
+                <span style={{ ...styles.statusBadge, backgroundColor: '#EFF6FF', color: '#0061FF' }}>CONECTADO</span>
               </div>
             </div>
             <div style={styles.cardActionsRow}>
@@ -233,7 +232,7 @@ const IntegrationsPage: React.FC = () => {
         {activeTab === 'whatsapp' && (
           <div style={styles.card}>
             <div style={styles.cardHeader}>
-              <div style={{ ...styles.planIcon, backgroundColor: '#f0fdf4', color: '#10b981' }}>
+              <div style={{ ...styles.planIcon, backgroundColor: '#EFF6FF', color: '#0061FF' }}>
                 <Smartphone size={24} />
               </div>
               <div>
@@ -241,7 +240,7 @@ const IntegrationsPage: React.FC = () => {
                 <p style={styles.cardSub}>Status do conector Evolution API Hub para alertas e mensagens transacionais.</p>
               </div>
               <div style={{ marginLeft: 'auto' }}>
-                <span style={{ ...styles.statusBadge, backgroundColor: '#ecfdf5', color: '#10b981' }}>CONECTADO</span>
+                <span style={{ ...styles.statusBadge, backgroundColor: '#EFF6FF', color: '#0061FF' }}>CONECTADO</span>
               </div>
             </div>
             <div style={styles.cardActionsRow}>
@@ -311,6 +310,7 @@ const IntegrationsPage: React.FC = () => {
           </div>
         )}
       </div>
+      </div>
     </div>
   );
 };
@@ -360,7 +360,7 @@ const styles: Record<string, any> = {
     fontSize: '14px',
     cursor: 'pointer',
   },
-  title: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0 },
   subtitle: { ...HUB_PAGE_SUBTITLE },
   cardActionsRow: {
     display: 'flex',
@@ -439,17 +439,17 @@ const styles: Record<string, any> = {
   },
   guardLabel: { fontSize: '10px', fontWeight: '700', marginBottom: '6px', letterSpacing: '1px', color: 'var(--accent)' },
   guardBadge: {
-    color: '#10b981',
+    color: '#0061FF',
     fontWeight: '600',
     fontSize: '12px',
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    backgroundColor: 'rgba(0, 97, 255, 0.1)',
     padding: '6px 14px',
     borderRadius: '20px',
   },
-  statusDot: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' },
+  statusDot: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0061FF' },
   card: {
     backgroundColor: 'white',
     padding: '32px',

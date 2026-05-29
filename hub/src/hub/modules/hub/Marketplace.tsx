@@ -76,8 +76,8 @@ const MasterMarketplace: React.FC = () => {
             label="Instalações Totais"
             value="1,254"
             icon={Activity}
-            accent="#10b981"
-            softBg="#f0fdf4"
+            accent="#0061FF"
+            softBg="#EFF6FF"
          />
          <HubMetricCard
             label="Receita Add-ons (Mês)"
@@ -139,7 +139,7 @@ const MasterMarketplace: React.FC = () => {
                     <td style={styles.td}>
                        <button 
                          onClick={() => toggleStatus(app.id, app.is_active)}
-                         style={{...styles.statusBtn, color: app.is_active ? '#10b981' : '#64748b'}}
+                         style={{...styles.statusBtn, color: app.is_active ? '#0061FF' : '#64748b'}}
                        >
                           {app.is_active ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
                           {app.is_active ? 'Ativo' : 'Pausado'}
@@ -165,7 +165,7 @@ const styles = {
   container: { padding: '0', display: 'flex', flexDirection: 'column' as const, gap: '32px' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   headerInfo: { display: 'flex', flexDirection: 'column' as const, gap: '4px' },
-  title: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: 0 },
   subtitle: { ...HUB_PAGE_SUBTITLE },
   primaryBtn: { backgroundColor: 'var(--primary)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '24px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)' },
   

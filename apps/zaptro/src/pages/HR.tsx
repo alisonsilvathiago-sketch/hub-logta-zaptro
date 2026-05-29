@@ -188,7 +188,7 @@ const HR: React.FC = () => {
                    <div style={styles.noteCard}>
                       <div style={{display: 'flex', gap: '12px'}}>
                          <div style={styles.avatarMini}>L</div>
-                         <div><p style={{margin: 0, fontWeight: '700'}}>Feedback Positivo: Carlos A.</p><p style={{margin: 0, fontSize: '12px', color: '#94a3b8'}}>Excelente conduta na rota sul.</p></div>
+                         <div><p style={{margin: 0, fontWeight: '700'}}>Feedback Positivo: Carlos A.</p><p style={{margin: 0, fontSize: '12px', color: '#949494'}}>Excelente conduta na rota sul.</p></div>
                       </div>
                    </div>
                 </div>
@@ -202,7 +202,7 @@ const HR: React.FC = () => {
     <div style={styles.tabContent}>
        <div style={styles.filterBar}>
           <div style={styles.searchBox}>
-             <Search size={18} color="#94a3b8" />
+             <Search size={18} color="#949494" />
              <input placeholder="Buscar por nome, cargo ou CPF..." style={styles.searchInput} />
           </div>
           <div style={styles.exportGroup}>
@@ -287,7 +287,7 @@ const HR: React.FC = () => {
           <div style={{padding: '24px'}}>
             <div style={{display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '32px'}}>
                <div style={{...styles.avatar, width: '64px', height: '64px', fontSize: '24px'}}>{selectedEmployee.full_name[0]}</div>
-               <div><h2 style={{margin: 0}}>{selectedEmployee.full_name}</h2><p style={{margin: 0, color: '#64748b'}}>{selectedEmployee.position}</p></div>
+               <div><h2 style={{margin: 0}}>{selectedEmployee.full_name}</h2><p style={{margin: 0, color: '#949494'}}>{selectedEmployee.position}</p></div>
             </div>
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px'}}>
                <div><label style={styles.labelSmall}>Email</label><strong>{selectedEmployee.email}</strong></div>
@@ -322,7 +322,7 @@ const styles: Record<string, any> = {
   kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' },
   kpiCard: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   kpiInfo: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  kpiLabel: { fontSize: '12px', fontWeight: '700', color: '#94a3b8', margin: 0 },
+  kpiLabel: { fontSize: '12px', fontWeight: '700', color: '#949494', margin: 0 },
   kpiValue: { fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: 0 },
   kpiIconWrapper: { width: '48px', height: '48px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   dashboardMainGrid: { display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' },
@@ -335,24 +335,24 @@ const styles: Record<string, any> = {
   searchBox: { display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'white', padding: '12px 20px', borderRadius: '14px', border: '1px solid #e2e8f0', width: '400px' },
   searchInput: { border: 'none', outline: 'none', backgroundColor: 'transparent', width: '100%', fontSize: '14px' },
   exportGroup: { display: 'flex', gap: '12px' },
-  exportBtn: { padding: '10px 16px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#64748b', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
+  exportBtn: { padding: '10px 16px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#949494', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
   btnPrimary: { padding: '10px 20px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
   tableCard: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid #e2e8f0', overflow: 'hidden' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  th: { textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', borderBottom: '1px solid #e8e8e8' },
+  th: { textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '600', color: '#949494', textTransform: 'uppercase', borderBottom: '1px solid #e8e8e8' },
   td: { padding: '16px 24px', fontSize: '14px', borderBottom: '1px solid #e8e8e8', color: '#475569' },
   userCell: { display: 'flex', alignItems: 'center', gap: '12px' },
   avatar: { width: '40px', height: '40px', borderRadius: '12px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700' },
   uName: { fontWeight: '600', color: '#1e293b', margin: 0 },
-  uSub: { fontSize: '12px', color: '#94a3b8', margin: 0 },
-  iconBtn: { padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#94a3b8' },
+  uSub: { fontSize: '12px', color: '#949494', margin: 0 },
+  iconBtn: { padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#949494' },
   checkinPopup: { position: 'fixed', bottom: '32px', right: '32px', width: '300px', backgroundColor: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', zIndex: 1000 },
   emojiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' },
   emojiBtn: { padding: '12px', borderRadius: '12px', border: '1px solid #e8e8e8', backgroundColor: '#f4f4f4', cursor: 'pointer', fontSize: '20px' },
   input: { padding: '14px', borderRadius: '14px', border: '1px solid var(--border)', fontSize: '14px', outline: 'none' },
   btnPrimaryLarge: { padding: '16px', borderRadius: '16px', border: 'none', backgroundColor: 'var(--primary)', color: 'white', fontWeight: '600', cursor: 'pointer' },
   btnPrimaryFull: { width: '100%', padding: '14px', borderRadius: '14px', border: 'none', backgroundColor: 'var(--primary)', color: 'white', fontWeight: '600', cursor: 'pointer' },
-  labelSmall: { fontSize: '11px', fontWeight: '700', color: '#94a3b8', display: 'block', marginBottom: '4px' }
+  labelSmall: { fontSize: '11px', fontWeight: '700', color: '#949494', display: 'block', marginBottom: '4px' }
 };
 
 export default HR;

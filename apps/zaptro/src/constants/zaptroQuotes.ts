@@ -173,7 +173,7 @@ export function quoteStatusBadgeStyle(
         textDecorationColor: 'rgba(185, 28, 28, 0.45)',
       };
     default:
-      return { ...base, backgroundColor: '#f1f5f9', color: '#334155', borderColor: 'rgba(148, 163, 184, 0.45)' };
+      return { ...base, backgroundColor: '#f1f5f9', color: '#6B6B6B', borderColor: 'rgba(148, 163, 184, 0.45)' };
   }
 }
 
@@ -345,6 +345,45 @@ export function applyPublicQuoteDecision(token: string, decision: 'aprovar' | 'r
   } catch {
     /* ignore */
   }
+
+  try {
+    window.dispatchEvent(new Event('zaptro-quotes-updated'));
+  } catch {
+    /* ignore */
+  }
+
+  return { ok: true };
+}
+
+export function applyPublicQuoteObservation(token: string, observation: string): { ok: boolean } {
+  const found = findQuoteByToken(token);
+  if (!found) return { ok: false };
+  const { crmStorageId, leadId, quote } = found;
+
+  const obs = observation.trim();
+  if (!obs) return { ok: false };
+
+  const map = readQuotesMap(crmStorageId);
+  const arr = [...(map[leadId] || [])];
+  const idx = arr.findIndex((q) => q.id === quote.id);
+  if (idx === -1) return { ok: false };
+
+  const now = new Date().toISOString();
+  const nextQ: FreightQuote = {
+    ...arr[idx],
+    updatedAt: now,
+    history: [
+      ...(arr[idx].history || []),
+      {
+        at: now,
+        action: 'Cliente enviou observação',
+        detail: obs.slice(0, 1600),
+      },
+    ],
+  };
+  arr[idx] = nextQ;
+  map[leadId] = arr;
+  writeQuotesMap(crmStorageId, map);
 
   try {
     window.dispatchEvent(new Event('zaptro-quotes-updated'));

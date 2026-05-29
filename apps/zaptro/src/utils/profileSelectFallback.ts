@@ -1,13 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-/** Do mais compatível ao mais completo — evita pedir colunas que ainda não existem no Supabase. */
+/** Do mais completo ao mínimo — prioriza flags de produto (tem_zaptro) para o gate de login. */
 const SLICE_SELECTS = [
-  'role',
-  'role,metadata',
-  'role,permissions',
+  'role,company_id,metadata,permissions,tem_zaptro,tem_logta,status_zaptro,status_empresa',
+  'role,company_id,metadata,permissions,tem_zaptro,status_zaptro',
+  'role,company_id,tem_zaptro,status_zaptro',
+  'role,company_id,metadata,permissions',
+  'role,company_id',
   'role,metadata,permissions',
-  'role,metadata,permissions,tem_zaptro,tem_logta,status_zaptro',
-  'role,metadata,permissions,tem_zaptro,status_zaptro',
+  'role',
 ] as const;
 
 /** Lê `profiles` com colunas opcionais (migração Zaptro pode ainda não existir no Supabase). */

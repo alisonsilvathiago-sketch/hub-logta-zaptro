@@ -18,15 +18,6 @@ const MasterConnect: React.FC = () => {
       // Ativa a impersonação no context/localStorage
       localStorage.setItem('hub-impersonate-tenant', tenantId);
 
-      // Se for ambiente de dev, emulamos a sessão do master no Zaptro também
-      if (isDev) {
-        localStorage.setItem('hub-dev-session', JSON.stringify({
-          email: 'admin@zaptro.com.br',
-          full_name: 'Master Admin (Bypass)',
-          role: 'MASTER'
-        }));
-      }
-
       // Redireciona para o dashboard do Zaptro
       const timer = setTimeout(() => {
         window.location.href = '/inicio';

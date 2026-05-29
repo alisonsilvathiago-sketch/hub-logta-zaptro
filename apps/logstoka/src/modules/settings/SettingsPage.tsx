@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { useCategories, useStores, useSuppliers, useWarehouses } from '@/hooks/useCatalog';
 import { DEFAULT_STORES, MARKETPLACE_LABELS } from '@/types';
+import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import type { Marketplace } from '@/types';
 import Modal from '@/components/ui/Modal';
 
@@ -21,6 +23,10 @@ const SettingsPage: React.FC = () => {
 
   const seedStores = async () => {
     if (!companyId) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      toast.success('[Demo] Lojas demo já carregadas');
+      return;
+    }
     const rows = DEFAULT_STORES.map((s) => ({ ...s, company_id: companyId, is_active: true }));
     const { error } = await supabase.from('ls_stores').upsert(rows, {
       onConflict: 'company_id,marketplace,name',
@@ -35,6 +41,11 @@ const SettingsPage: React.FC = () => {
 
   const save = async () => {
     if (!companyId) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      toast.success('[Demo] Cadastro salvo');
+      setModal(null);
+      return;
+    }
     try {
       if (modal === 'store') {
         const { error } = await supabase.from('ls_stores').insert({
@@ -84,7 +95,7 @@ const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-black">Configurações</h2>
+        <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Configurações</h2>
         <p className="text-sm text-slate-500">Lojas, categorias, fornecedores e papéis</p>
       </div>
 
@@ -94,7 +105,7 @@ const SettingsPage: React.FC = () => {
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
-            className={`rounded-xl px-4 py-2 text-sm font-bold ${tab === t.id ? 'bg-emerald-600 text-white' : 'bg-white ring-1 ring-slate-200'}`}
+            className={`rounded-xl px-4 py-2 text-sm font-bold ${tab === t.id ? 'bg-orange-600 text-white' : 'bg-white ring-1 ring-slate-200'}`}
           >
             {t.label}
           </button>

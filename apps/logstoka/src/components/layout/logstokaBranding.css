@@ -1,0 +1,130 @@
+/**
+ * White Label — variáveis de marca aplicadas SOMENTE dentro de .logstoka-app-shell
+ * (não afeta landing /vendas, login público nem páginas fora do app autenticado)
+ */
+
+.logstoka-app-shell {
+  --ls-brand: #EA580C;
+  --ls-brand-dark: #C2410C;
+  --ls-brand-soft: rgba(234, 88, 12, 0.12);
+  --ls-brand-hover: rgba(234, 88, 12, 0.06);
+  --ls-brand-ring: rgba(234, 88, 12, 0.35);
+  --ls-brand-shadow: rgba(234, 88, 12, 0.35);
+}
+
+.logstoka-app-shell .ls-btn-primary {
+  background-color: var(--ls-brand-dark) !important;
+}
+
+.logstoka-app-shell .ls-btn-primary:hover {
+  filter: brightness(0.92);
+}
+
+.logstoka-app-shell .ls-input:focus {
+  --tw-ring-color: var(--ls-brand);
+  border-color: var(--ls-brand);
+}
+
+.logstoka-app-shell .ls-table-row-link:hover {
+  background: var(--ls-brand-hover) !important;
+}
+
+.logstoka-app-shell .ls-table-row-link:focus-visible {
+  outline-color: var(--ls-brand-ring) !important;
+}
+
+.logstoka-app-shell .logstoka-app-nav-item.active {
+  background: var(--ls-brand-soft) !important;
+  color: var(--ls-brand-dark) !important;
+}
+
+.logstoka-app-shell .logstoka-app-nav-item.active svg {
+  stroke: var(--ls-brand-dark) !important;
+}
+
+.logstoka-app-shell .logstoka-app-nav-item--ai.active,
+.logstoka-app-shell .logstoka-app-nav-item--ai:hover {
+  background: var(--ls-brand-dark) !important;
+}
+
+.logstoka-app-shell .logstoka-app-nav-profile {
+  color: var(--ls-brand) !important;
+  border-color: var(--ls-brand-soft) !important;
+  background: var(--ls-brand-soft) !important;
+}
+
+.logstoka-app-shell .lsdash-icon-btn.active {
+  border-color: var(--ls-brand-soft) !important;
+  color: var(--ls-brand-dark) !important;
+}
+
+.logstoka-app-shell .ls-ai-msg-user,
+.logstoka-app-shell .ls-ai-send,
+.logstoka-app-shell .ls-ai-fab {
+  background: var(--ls-brand) !important;
+  box-shadow: 0 8px 24px var(--ls-brand-shadow) !important;
+}
+
+.logstoka-app-shell .ls-stat-card__value--primary {
+  color: var(--ls-brand) !important;
+}
+
+.logstoka-app-shell [class*='bg-orange-50'] {
+  background-color: var(--ls-brand-soft) !important;
+}
+
+.logstoka-app-shell [class*='bg-orange-100'] {
+  background-color: var(--ls-brand-soft) !important;
+}
+
+.logstoka-app-shell [class*='bg-orange-600'],
+.logstoka-app-shell [class*='bg-orange-700'],
+.logstoka-app-shell [class*='bg-orange-800'] {
+  background-color: var(--ls-brand-dark) !important;
+}
+
+.logstoka-app-shell [class*='text-orange-600'],
+.logstoka-app-shell [class*='text-orange-700'],
+.logstoka-app-shell [class*='text-orange-800'] {
+  color: var(--ls-brand-dark) !important;
+}
+
+.logstoka-app-shell [class*='border-orange-200'],
+.logstoka-app-shell [class*='border-orange-100'] {
+  border-color: var(--ls-brand-soft) !important;
+}
+
+.logstoka-app-shell [class*='from-orange-600'] {
+  --tw-gradient-from: var(--ls-brand-dark) !important;
+}
+
+.logstoka-app-shell .ls-settings-tab-active {
+  background-color: var(--ls-brand-dark) !important;
+  color: #fff !important;
+}
+
+.logstoka-app-shell .logstoka-app-brand--custom {
+  background: #fff !important;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 4px;
+}
+
+.logstoka-app-shell .logstoka-app-brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.logstoka-app-shell .lsdash-topbar-brand-mark--custom {
+  background: #fff !important;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 3px;
+}
+
+.logstoka-app-shell .lsdash-topbar-brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}

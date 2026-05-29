@@ -102,7 +102,7 @@ const styles: Record<string, any> = {
   },
   paginationInfo: {
     fontSize: '13px',
-    color: '#64748B',
+    color: '#949494',
     letterSpacing: '0.2px',
   },
   paginationControls: {
@@ -141,7 +141,7 @@ const styles: Record<string, any> = {
     borderRadius: '10px',
     border: '1px solid #E2E8F0',
     backgroundColor: 'white',
-    color: '#64748B',
+    color: '#949494',
     cursor: 'pointer',
     transition: 'all 0.2s',
   },
@@ -152,7 +152,7 @@ const styles: Record<string, any> = {
   },
   pageNum: {
     fontSize: '12px',
-    color: '#64748B',
+    color: '#949494',
     padding: '0 8px',
     fontWeight: '500',
   },

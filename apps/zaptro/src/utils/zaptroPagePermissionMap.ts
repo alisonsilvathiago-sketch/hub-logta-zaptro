@@ -134,6 +134,10 @@ export function pathnameToZaptroPageId(pathname: string, search: string): Zaptro
   if (p === '/ocorrencia' || p.startsWith('/ocorrencia/')) return 'historico';
   if (p === ZAPTRO_ROUTES.CLIENTS || p.startsWith(`${ZAPTRO_ROUTES.CLIENTS}/`)) return 'clientes';
   if (p === ZAPTRO_ROUTES.DRIVER_PROFILE || p.startsWith(`${ZAPTRO_ROUTES.DRIVER_PROFILE}/`)) return 'motoristas';
+  if (p.startsWith('/app/motoristas/perfil/')) return 'motoristas';
+  if (p === '/app/motoristas/frota' || p.startsWith('/app/motoristas/frota/')) return 'motoristas';
+  if (p === '/app/motoristas/ajudantes' || p.startsWith('/app/motoristas/ajudantes/')) return 'motoristas';
+  if (p === ZAPTRO_ROUTES.FLEET || p.startsWith(`${ZAPTRO_ROUTES.FLEET}/`)) return 'motoristas';
   if (p === ZAPTRO_ROUTES.PROFILE || p === ZAPTRO_ROUTES.LEGACY_PROFILE) return null;
   if (p === ZAPTRO_ROUTES.SALES || p === '/') return null;
   if (p.startsWith(`${ZAPTRO_ROUTES.COMPANY_LOGIN}/`)) return null;

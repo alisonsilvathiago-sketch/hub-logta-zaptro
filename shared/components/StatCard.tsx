@@ -13,10 +13,10 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ label, value, icon: Icon, trend, color = '#0061FF', style, isFeatured }) => {
   const textColor = isFeatured ? '#fff' : color;
-  const labelColor = isFeatured ? 'rgba(255,255,255,0.8)' : '#64748B';
+  const labelColor = isFeatured ? 'rgba(255,255,255,0.8)' : '#949494';
   const iconBg = isFeatured ? 'rgba(255,255,255,0.2)' : `${color}10`;
-  const trendBg = isFeatured ? 'rgba(255,255,255,0.2)' : (trend?.includes('%') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)');
-  const trendColor = isFeatured ? '#fff' : (trend?.includes('%') ? '#10B981' : '#EF4444');
+  const trendBg = isFeatured ? 'rgba(255,255,255,0.2)' : (trend?.includes('%') ? 'rgba(0, 97, 255, 0.1)' : 'rgba(239, 68, 68, 0.1)');
+  const trendColor = isFeatured ? '#fff' : (trend?.includes('%') ? '#0061FF' : '#EF4444');
 
   return (
     <div className="hover-scale" style={{ 

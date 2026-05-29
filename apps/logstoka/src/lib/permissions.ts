@@ -40,7 +40,7 @@ const ROLE_PERMISSIONS: Record<LogstokaRoleCode, PermissionCode[]> = {
 };
 
 export function resolveRole(profileRole?: string | null): LogstokaRoleCode {
-  if (profileRole === 'MASTER' || profileRole === 'MASTER_ADMIN') return 'master_admin';
+  if (profileRole === 'MASTER' || profileRole === 'MASTER_ADMIN' || profileRole === 'admin') return 'master_admin';
   if (profileRole === 'LOGISTICS_MANAGER') return 'logistics_manager';
   return 'operator';
 }
@@ -51,7 +51,7 @@ export function can(permission: PermissionCode, profileRole?: string | null): bo
 }
 
 export function canAccessRoute(path: string, profileRole?: string | null): boolean {
-  if (path.startsWith('/app/settings') || path.startsWith('/app/integrations')) {
+  if (path.startsWith('/app/configuracoes') || path.startsWith('/app/settings') || path.startsWith('/app/integrations')) {
     return can('settings.read', profileRole) || can('integrations.read', profileRole);
   }
   if (path.startsWith('/app/reports')) return can('reports.read', profileRole);

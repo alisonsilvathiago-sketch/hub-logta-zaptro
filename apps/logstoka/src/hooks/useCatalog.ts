@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
+import {
+  DEMO_CATEGORIES,
+  DEMO_STORES,
+  DEMO_SUPPLIERS,
+  DEMO_WAREHOUSES,
+} from '@/lib/logstokaDemoSeed';
 import type { LsStore, LsWarehouse } from '@/types';
 
 export interface LsCategory {
@@ -24,6 +31,10 @@ export function useWarehouses() {
   const [warehouses, setWarehouses] = useState<LsWarehouse[]>([]);
   const reload = useCallback(async () => {
     if (!companyId) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      setWarehouses(DEMO_WAREHOUSES);
+      return;
+    }
     const { data } = await supabase
       .from('ls_warehouses')
       .select('*')
@@ -43,6 +54,10 @@ export function useCategories() {
   const [categories, setCategories] = useState<LsCategory[]>([]);
   const reload = useCallback(async () => {
     if (!companyId) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      setCategories(DEMO_CATEGORIES);
+      return;
+    }
     const { data } = await supabase
       .from('ls_categories')
       .select('*')
@@ -61,6 +76,10 @@ export function useStores() {
   const [stores, setStores] = useState<LsStore[]>([]);
   const reload = useCallback(async () => {
     if (!companyId) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      setStores(DEMO_STORES);
+      return;
+    }
     const { data } = await supabase
       .from('ls_stores')
       .select('*')
@@ -80,6 +99,10 @@ export function useSuppliers() {
   const [suppliers, setSuppliers] = useState<LsSupplier[]>([]);
   const reload = useCallback(async () => {
     if (!companyId) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      setSuppliers(DEMO_SUPPLIERS);
+      return;
+    }
     const { data } = await supabase
       .from('ls_suppliers')
       .select('*')

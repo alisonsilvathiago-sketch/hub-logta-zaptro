@@ -145,7 +145,7 @@ COMPORTAMENTO:
              <button 
                onClick={() => navigate('/zaptro/resultados')}
                style={{ 
-                 color: '#10B981', 
+                 color: '#0061FF', 
                  fontWeight: 600, 
                  background: 'transparent', 
                  border: 'none', 

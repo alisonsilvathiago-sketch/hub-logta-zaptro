@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Database, Activity, Search, Clock, AlertTriangle, CheckCircle2,
@@ -9,16 +9,32 @@ import { toastSuccess } from '@core/lib/toast';
 import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 
-const MOCK_CLIENTS = [
-  { id: 1, name: 'Transportadora Falcão', size: '12.4 GB', frequency: 'Diário', last: 'Há 2h', status: 'ok', backup: true },
-  { id: 2, name: 'Logística Express XPTO', size: '240.8 GB', frequency: '6h em 6h', last: 'Há 15 min', status: 'ok', backup: true },
-  { id: 3, name: 'Cargas Rápidas BR', size: '2.1 GB', frequency: 'Semanal', last: 'Há 5 dias', status: 'warning', backup: false },
-  { id: 4, name: 'Transcontinental S.A.', size: '1.2 TB', frequency: 'Tempo Real', last: 'Há 2 min', status: 'ok', backup: true },
-];
+import { supabase } from '@core/lib/supabase';
 
 const BackupsAdmin: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'politicas' | 'logs'>('dashboard');
+
+  const [clients, setClients] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchBackupsClients() {
+      const { data } = await supabase.from('companies').select('*');
+      if (data) {
+        const mapped = data.map((c: any) => ({
+          id: c.id,
+          name: c.name || 'Empresa sem nome',
+          size: '0 GB',
+          frequency: 'Diário',
+          last: '-',
+          status: 'ok',
+        }));
+        setClients(mapped);
+      }
+    }
+    fetchBackupsClients();
+  }, []);
 
   return (
     <div style={s.container}>
@@ -53,7 +69,7 @@ const BackupsAdmin: React.FC = () => {
           <div style={s.tabContent}>
             <div style={HUB_METRIC_GRID_STYLE}>
               <HubMetricCard label="Total Armazenado" value="2.8 TB" icon={HardDrive} accent="#0061FF" softBg="#EFF6FF" />
-              <HubMetricCard label="Backups Hoje" value="1,240" icon={CheckCircle2} accent="#10B981" softBg="#F0FDF4" />
+              <HubMetricCard label="Backups Hoje" value="1,240" icon={CheckCircle2} accent="#0061FF" softBg="#EFF6FF" />
               <HubMetricCard label="Falhas Detectadas" value="0" icon={AlertTriangle} accent="#EF4444" softBg="#FEF2F2" />
               <HubMetricCard label="Nodes Ativos" value="3 (AWS/GCP/Azure)" icon={Lock} accent="#8B5CF6" softBg="#F5F3FF" />
             </div>
@@ -66,13 +82,13 @@ const BackupsAdmin: React.FC = () => {
               <table style={s.table}>
                 <thead><tr><th style={s.th}>Cliente</th><th style={s.th}>Espaço</th><th style={s.th}>Frequência</th><th style={s.th}>Último Backup</th><th style={s.th}>Status</th><th style={s.th}>Ações</th></tr></thead>
                 <tbody>
-                  {MOCK_CLIENTS.map(c => (
+                  {clients.map(c => (
                     <tr key={c.id} style={{ ...s.tr, cursor: 'pointer' }} onClick={() => navigate(`/master/backups/${c.id}`)}>
                       <td style={s.td}><span style={s.clientName}>{c.name}</span></td>
                       <td style={s.td}><span style={s.stat}>{c.size}</span></td>
                       <td style={s.td}><span style={s.stat}>{c.frequency}</span></td>
                       <td style={s.td}><span style={s.stat}>{c.last}</span></td>
-                      <td style={s.td}><span style={{ ...s.badge, color: c.status === 'ok' ? '#10B981' : '#F59E0B', backgroundColor: c.status === 'ok' ? '#F0FDF4' : '#FFFBEB' }}>{c.status === 'ok' ? 'Protegido' : 'Desatualizado'}</span></td>
+                      <td style={s.td}><span style={{ ...s.badge, color: c.status === 'ok' ? '#0061FF' : '#F59E0B', backgroundColor: c.status === 'ok' ? '#EFF6FF' : '#FFFBEB' }}>{c.status === 'ok' ? 'Protegido' : 'Desatualizado'}</span></td>
                       <td style={s.td} onClick={e => e.stopPropagation()}>
                         <button style={s.actionBtn} onClick={() => navigate(`/master/backups/${c.id}`)}>Ver Detalhes</button>
                       </td>
@@ -114,14 +130,9 @@ const BackupsAdmin: React.FC = () => {
             <div style={s.card}>
               <div style={s.cardHeader}>
                 <h3 style={s.cardTitle}>Histórico de Snapshots & Verificações</h3>
-                <span style={{ fontSize: '12px', fontWeight: '700', color: '#10B981', backgroundColor: '#F0FDF4', padding: '6px 14px', borderRadius: '20px' }}>● AO VIVO</span>
+                <span style={{ fontSize: '12px', fontWeight: '700', color: '#0061FF', backgroundColor: '#EFF6FF', padding: '6px 14px', borderRadius: '20px' }}>● AO VIVO</span>
               </div>
-              {[
-                { event: 'Snapshot Diferencial Concluído', client: 'Transcontinental S.A.', time: '15:10', size: '1.2 GB', status: 'Success' },
-                { event: 'Integrity Check: OK', client: 'Transportadora Falcão', time: '14:55', size: '—', status: 'Success' },
-                { event: 'Full Backup Created', client: 'Logística Express XPTO', time: '12:00', size: '42.8 GB', status: 'Success' },
-                { event: 'Cleanup: Snapshots Antigos Removidos', client: 'Sistema Master', time: '04:00', size: '-120 GB', status: 'Success' },
-              ].map((log, i) => (
+              {logs.map((log, i) => (
                 <div key={i} style={s.auditRow}>
                   <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Archive size={18} color="#0061FF" />
@@ -130,7 +141,7 @@ const BackupsAdmin: React.FC = () => {
                     <p style={s.snapTitle}>{log.event} · <span style={{ color: '#64748B' }}>{log.client}</span></p>
                     <p style={s.snapSub}>{log.time} · Volume: {log.size}</p>
                   </div>
-                  <CheckCircle2 size={16} color="#10B981" />
+                  <CheckCircle2 size={16} color="#0061FF" />
                 </div>
               ))}
             </div>
@@ -145,7 +156,7 @@ const s: Record<string, React.CSSProperties> = {
   container: { flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#F8FAFC', minHeight: '100vh', overflowY: 'auto' },
   header: { padding: '40px 40px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '16px' },
-  title: { margin: 0, fontSize: '29px', fontWeight: '900', color: '#000000', letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { margin: 0, fontSize: '29px', fontWeight: '900', color: '#000000', letterSpacing: 0 },
   subtitle: { ...HUB_PAGE_SUBTITLE },
   addBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '999px', border: '2px solid #0061FF', backgroundColor: '#EFF6FF', color: '#0061FF', fontSize: '14px', fontWeight: '800', cursor: 'pointer' },
   content: { padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px' },

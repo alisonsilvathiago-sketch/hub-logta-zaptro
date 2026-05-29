@@ -5,7 +5,6 @@ import {
   FinanceiroFeatureRoute,
   FinanceiroExecutiveDashboard,
   FinanceiroAlertasView,
-  FinanceiroCalculadoraView,
   FinanceiroCentralOperacional,
   FinanceiroIntelligenceProvider,
   FinanceiroAlertsInlinePanel,
@@ -39,9 +38,14 @@ import {
   Loader2,
   Calculator,
   Bell,
+  Search,
+  Repeat,
+  Sparkles,
+  X,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useTenant } from '../contexts/TenantContext';
+import { downloadExcelCsv, downloadPdfTable } from '../lib/reportExport';
 import { useOperationalData } from '../contexts/OperationalDataContext';
 import { LogtaEmptyState } from '../components/EmptyState';
 import { LogtaWaveTabStrip } from '../components/LogtaWaveTabStrip';
@@ -60,6 +64,15 @@ const Financeiro = () => {
   const [transactionModalMode, setTransactionModalMode] = useState<'pagar' | 'receber' | 'view'>('pagar');
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [lancamentoSuccess, setLancamentoSuccess] = useState(false);
+  const [categoryVal, setCategoryVal] = useState('');
+  const [detectedCategory, setDetectedCategory] = useState('');
+
+  useEffect(() => {
+    if (!isNovoLancamentoOpen) {
+      setCategoryVal('');
+      setDetectedCategory('');
+    }
+  }, [isNovoLancamentoOpen]);
   
   const {
     transactions: rawTransactions,
@@ -160,12 +173,11 @@ const Financeiro = () => {
   const tabs = [
     { id: 'dashboard', label: 'Painel', shortLabel: 'Painel', icon: Activity, path: '/financeiro/dashboard' },
     { id: 'operacional', label: 'Operacional', shortLabel: 'Oper.', icon: Truck, path: '/financeiro/operacional' },
-    { id: 'gestao', label: 'Gestão', shortLabel: 'Gestão', icon: Briefcase, path: '/financeiro/gestao' },
     { id: 'receber', label: 'Receber', shortLabel: 'Receber', icon: TrendingUp, path: '/financeiro/receber' },
     { id: 'pagar', label: 'Pagar', shortLabel: 'Pagar', icon: TrendingDown, path: '/financeiro/pagar' },
     { id: 'fluxo', label: 'Fluxo', shortLabel: 'Fluxo', icon: PieChart, path: '/financeiro/fluxo' },
     { id: 'central', label: 'Central', shortLabel: 'Central', icon: Bell, path: '/financeiro/central' },
-    { id: 'assistente', label: 'Assistente IA', shortLabel: 'IA', icon: Calculator, path: '/financeiro/assistente' },
+    { id: 'gestao', label: 'Gestão', shortLabel: 'Gestão', icon: Briefcase, path: '/financeiro/gestao' },
   ];
 
   return (
@@ -229,7 +241,6 @@ const Financeiro = () => {
               <FinanceiroGestaoFeaturePage transactionCount={analytics.transacoes} saldo={analytics.saldo} />
             }
           />
-          <Route path="assistente" element={<FinanceiroCalculadoraView />} />
           <Route path="central" element={<FinanceiroCentralOperacional />} />
           <Route path="alertas" element={<FinanceiroAlertasView />} />
           <Route
@@ -239,6 +250,7 @@ const Financeiro = () => {
                 transactions={transactions}
                 loading={loading}
                 refresh={fetchFinanceiroData}
+                onAddClick={() => setIsNovoLancamentoOpen(true)}
                 onTransfer={() => setIsTransferOpen(true)}
                 onDetailClick={(t: any) => {
                   setTransactionModalMode('receber');
@@ -254,6 +266,8 @@ const Financeiro = () => {
               <ContasPagarView
                 transactions={transactions}
                 loading={loading}
+                refresh={fetchFinanceiroData}
+                onAddClick={() => setIsNovoLancamentoOpen(true)}
                 onPayClick={(p: any) => {
                   setTransactionModalMode('pagar');
                   setSelectedPayment(p);
@@ -269,6 +283,7 @@ const Financeiro = () => {
                 transactions={transactions}
                 loading={loading}
                 refresh={fetchFinanceiroData}
+                onAddClick={() => setIsNovoLancamentoOpen(true)}
                 onTransactionClick={(t: any) => {
                   setTransactionModalMode(t.tipo === 'receita' ? 'receber' : 'pagar');
                   setSelectedPayment(t);
@@ -302,16 +317,41 @@ const Financeiro = () => {
               <form onSubmit={(e: any) => {
                 e.preventDefault();
                 const formData = {
-                  descricao: e.target.descricao.value,
+                  descricao: e.target.descricao.value + (e.target.recorrente.checked ? ' [Recorrente]' : ''),
                   tipo: e.target.tipo.value,
                   valor: e.target.valor.value,
-                  categoria: e.target.categoria.value,
+                  categoria: categoryVal,
                 };
                 handleCreateLancamento(formData);
               }} className="p-8 space-y-5 text-left">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-neutral-400 uppercase">Descrição</label>
-                  <input name="descricao" required placeholder="Ex: Pagamento Frete Agregado" className="w-full bg-neutral-900 border border-neutral-800 p-3 rounded-xl outline-none focus:border-primary text-sm font-semibold text-white placeholder-neutral-500" />
+                  <input
+                    name="descricao"
+                    required
+                    placeholder="Ex: Pagamento Frete Agregado"
+                    onChange={(e: any) => {
+                      const desc = e.target.value.toLowerCase();
+                      let cat = '';
+                      if (desc.includes('energia') || desc.includes('luz') || desc.includes('enel') || desc.includes('celpe') || desc.includes('copel')) {
+                        cat = 'Contas de Consumo (Energia)';
+                      } else if (desc.includes('aluguel') || desc.includes('locaç') || desc.includes('sala')) {
+                        cat = 'Instalações (Aluguel)';
+                      } else if (desc.includes('internet') || desc.includes('wifi') || desc.includes('provedor') || desc.includes('fibra')) {
+                        cat = 'Telecom (Internet)';
+                      } else if (desc.includes('combustivel') || desc.includes('diesel') || desc.includes('gasolina') || desc.includes('posto')) {
+                        cat = 'Combustível';
+                      }
+                      
+                      if (cat) {
+                        setDetectedCategory(cat);
+                        setCategoryVal(cat);
+                      } else {
+                        setDetectedCategory('');
+                      }
+                    }}
+                    className="w-full bg-neutral-900 border border-neutral-800 p-3 rounded-xl outline-none focus:border-primary text-sm font-semibold text-white placeholder-neutral-500"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
@@ -328,8 +368,36 @@ const Financeiro = () => {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-neutral-400 uppercase">Categoria</label>
-                  <input name="categoria" placeholder="Ex: Combustível, Manutenção" className="w-full bg-neutral-900 border border-neutral-800 p-3 rounded-xl outline-none focus:border-primary text-sm font-semibold text-white placeholder-neutral-500" />
+                  <input
+                    name="categoria"
+                    value={categoryVal}
+                    onChange={(e) => setCategoryVal(e.target.value)}
+                    placeholder="Ex: Combustível, Manutenção"
+                    className="w-full bg-neutral-900 border border-neutral-800 p-3 rounded-xl outline-none focus:border-primary text-sm font-semibold text-white placeholder-neutral-500"
+                  />
                 </div>
+
+                {detectedCategory && (
+                  <div className="bg-primary/10 border border-primary/20 p-3 rounded-xl flex items-center gap-2 animate-in fade-in duration-300">
+                    <Sparkles className="text-primary shrink-0 animate-pulse" size={14} />
+                    <span className="text-[10px] font-bold text-primary uppercase">
+                      IA Inteligente: Categoria sugerida como "{detectedCategory}"!
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2.5 pt-2">
+                  <input
+                    type="checkbox"
+                    name="recorrente"
+                    id="recorrente"
+                    className="w-4 h-4 rounded bg-neutral-900 border border-neutral-800 text-primary focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                  />
+                  <label htmlFor="recorrente" className="text-[10px] font-black uppercase tracking-wider text-neutral-400 select-none cursor-pointer">
+                    Lançamento Recorrente (Contrato / Mensal)
+                  </label>
+                </div>
+
                 <button type="submit" className="w-full py-4 bg-primary text-white rounded-xl text-xs font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20 cursor-pointer">
                   Confirmar Lançamento Real
                 </button>
@@ -420,9 +488,13 @@ function FinanceiroGestaoFeaturePage({ transactionCount, saldo }: { transactionC
   return <FinanceiroFeatureRoute category="gestao" slug={slug ?? ""} transactionCount={transactionCount} saldo={saldo} />;
 }
 
-const ContasReceberView = ({ transactions, loading, refresh, onTransfer, onDetailClick }: any) => {
+const ContasReceberView = ({ transactions, loading, refresh, onTransfer, onDetailClick, onAddClick }: any) => {
   const navigate = useNavigate();
   const { getRoute, goToTransaction } = useFinanceiroTransactionNavigation();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [period, setPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano' | 'todos'>('todos');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   const invoices = transactions.filter((t: any) => t.tipo === 'receita');
 
   const handleDelete = async (id: string) => {
@@ -433,8 +505,162 @@ const ContasReceberView = ({ transactions, loading, refresh, onTransfer, onDetai
     }
   };
 
+  const filteredInvoices = invoices.filter((item: any) => {
+    const term = searchTerm.toLowerCase();
+    const matchesSearch =
+      item.descricao.toLowerCase().includes(term) ||
+      item.categoria.toLowerCase().includes(term);
+    if (!matchesSearch) return false;
+
+    if (period === 'todos') return true;
+
+    const dateVal = item.data_vencimento || item.paid_at || item.created_at;
+    if (!dateVal) return true;
+
+    const itemDate = new Date(dateVal);
+    const today = new Date();
+    const itemTime = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate()).getTime();
+    const todayTime = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const diffDays = Math.abs((itemTime - todayTime) / (1000 * 60 * 60 * 24));
+
+    if (period === 'dia') return diffDays === 0;
+    if (period === 'semana') return diffDays <= 7;
+    if (period === 'mes') return diffDays <= 30;
+    if (period === 'ano') return diffDays <= 365;
+    return true;
+  });
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.length === filteredInvoices.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredInvoices.map((item: any) => item.id));
+    }
+  };
+
+  const handleExcelExport = () => {
+    const itemsToExport = selectedIds.length > 0
+      ? filteredInvoices.filter((item: any) => selectedIds.includes(item.id))
+      : filteredInvoices;
+
+    const columns = ['Descrição', 'Categoria', 'Vencimento', 'Valor (R$)'];
+    const rows = itemsToExport.map((item: any) => [
+      item.descricao,
+      item.categoria,
+      new Date(item.data_vencimento).toLocaleDateString('pt-BR'),
+      item.valor
+    ]);
+    downloadExcelCsv({
+      title: 'Contas a Receber',
+      filenameBase: 'contas-a-receber',
+      columns,
+      rows,
+      meta: {
+        companyName: 'Logta SaaS',
+        filtersSummary: `Busca: "${searchTerm}", Período: ${period}, Itens: ${itemsToExport.length}`
+      }
+    });
+  };
+
+  const handlePdfExport = () => {
+    const itemsToExport = selectedIds.length > 0
+      ? filteredInvoices.filter((item: any) => selectedIds.includes(item.id))
+      : filteredInvoices;
+
+    const columns = ['Descrição', 'Categoria', 'Vencimento', 'Valor (R$)'];
+    const rows = itemsToExport.map((item: any) => [
+      item.descricao,
+      item.categoria,
+      new Date(item.data_vencimento).toLocaleDateString('pt-BR'),
+      `R$ ${item.valor.toLocaleString('pt-BR')}`
+    ]);
+    downloadPdfTable({
+      title: 'Contas a Receber',
+      filenameBase: 'contas-a-receber',
+      columns,
+      rows,
+      meta: {
+        companyName: 'Logta SaaS',
+        filtersSummary: `Busca: "${searchTerm}", Período: ${period}, Itens: ${itemsToExport.length}`
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
+      {/* Premium Filter & Search Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-[28px] border border-gray-200 shadow-sm">
+        <div className="flex flex-wrap items-center gap-4 flex-1">
+          <div className="relative min-w-[280px] flex-1 sm:flex-initial">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              type="text"
+              placeholder="Buscar por descrição ou categoria..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-gray-50/50 border border-gray-200 pl-11 pr-4 py-2.5 rounded-full text-xs font-bold text-gray-800 placeholder-gray-400 focus:border-primary outline-none transition-all shadow-inner focus:bg-white"
+            />
+          </div>
+
+          <div className="flex items-center gap-1 bg-gray-50/50 border border-gray-200 p-1 rounded-full">
+            {(['todos', 'dia', 'semana', 'mes', 'ano'] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
+                  period === p
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/50'
+                }`}
+              >
+                {p === 'todos' ? 'Todos' : p === 'dia' ? 'Hoje' : p === 'semana' ? '7d' : p === 'mes' ? 'Mês' : 'Ano'}
+              </button>
+            ))}
+          </div>
+          
+          {selectedIds.length > 0 && (
+            <span className="text-[10px] font-black uppercase text-primary animate-pulse bg-primary/5 border border-primary/10 px-3 py-1.5 rounded-full">
+              {selectedIds.length} selecionado(s) para baixar
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExcelExport}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 hover:text-emerald-600 hover:border-emerald-200 border border-gray-200 rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+          >
+            <FileText size={14} className="text-emerald-500" />
+            Excel
+          </button>
+          <button
+            type="button"
+            onClick={handlePdfExport}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 hover:text-rose-600 hover:border-rose-200 border border-gray-200 rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+          >
+            <Download size={14} className="text-rose-500" />
+            PDF
+          </button>
+          
+          <button
+            type="button"
+            onClick={onAddClick}
+            className="flex items-center justify-center w-9 h-9 bg-primary text-white hover:opacity-90 rounded-full transition-all shadow-md shadow-primary/20 cursor-pointer"
+            title="Novo Recebível"
+          >
+            <Plus size={16} />
+          </button>
+        </div>
+      </div>
+
       <div className="logta-panel-card overflow-hidden">
         {loading ? (
           <div className="p-20 flex flex-col items-center gap-4">
@@ -445,6 +671,14 @@ const ContasReceberView = ({ transactions, loading, refresh, onTransfer, onDetai
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50/50">
+                <th className="px-6 py-5 text-center w-12">
+                  <input
+                    type="checkbox"
+                    checked={filteredInvoices.length > 0 && selectedIds.length === filteredInvoices.length}
+                    onChange={toggleAll}
+                    className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                  />
+                </th>
                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-normal">Descrição</th>
                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-normal">Vencimento</th>
                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-normal text-right">Valor</th>
@@ -452,20 +686,60 @@ const ContasReceberView = ({ transactions, loading, refresh, onTransfer, onDetai
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {invoices.map((item: any) => {
+              {filteredInvoices.map((item: any) => {
                 const path = getRoute(item);
+                const isRecurring = item.descricao.toLowerCase().includes('recorrente') || item.categoria.toLowerCase().includes('recorrente') || item.descricao.toLowerCase().includes('contrato');
+                const isOverdue = !item.paid_at && item.data_vencimento && new Date(item.data_vencimento).getTime() < Date.now() - 12 * 60 * 60 * 1000;
+                
                 return (
                   <tr
                     key={item.id}
                     className="group cursor-pointer transition-colors hover:bg-gray-50"
                     onClick={() => {
-                      if (onDetailClick) onDetailClick(item);
-                      else if (path) goToTransaction(item);
+                      if (path) {
+                        goToTransaction(item);
+                      } else if (onDetailClick) {
+                        onDetailClick(item);
+                      }
                     }}
-                    title="Ver detalhes do recebível"
+                    title={path ? "Ir para página associada" : "Ver detalhes do recebível"}
                   >
+                    <td className="px-6 py-6 text-center w-12" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(item.id)}
+                        onChange={() => toggleSelect(item.id)}
+                        className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                      />
+                    </td>
                     <td className="px-8 py-6">
-                      <p className="font-bold text-gray-900">{item.descricao}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-bold text-gray-900">{item.descricao}</p>
+                        {isRecurring && (
+                          <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-black uppercase text-blue-600 border border-blue-100">
+                            <Repeat size={10} />
+                            Recorrente
+                          </span>
+                        )}
+                        {isOverdue && (
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if ((window as any).showToast) {
+                                (window as any).showToast(
+                                  'info',
+                                  'Esta fatura está atrasada e pendente. As faturas em atraso ficam listadas automaticamente na aba de Alertas e Inadimplência.',
+                                  'Inadimplência / Atraso'
+                                );
+                              }
+                            }}
+                            className="cursor-help flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[9px] font-black uppercase text-red-600 border border-red-100 hover:scale-105 transition-all"
+                            title="Fatura atrasada. Clique para ver onde fica."
+                          >
+                            ⚠️ Em Atraso
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] font-bold uppercase text-gray-400">{item.categoria}</p>
                     </td>
                     <td className="px-8 py-6 text-xs font-bold text-gray-600">
@@ -492,12 +766,12 @@ const ContasReceberView = ({ transactions, loading, refresh, onTransfer, onDetai
                   </tr>
                 );
               })}
-              {invoices.length === 0 && (
+              {filteredInvoices.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-8 py-20">
+                  <td colSpan={5} className="px-8 py-20">
                     <LogtaEmptyState
                       type="financeiro"
-                      onAction={() => navigate('/financeiro/fluxo')}
+                      onAction={onAddClick}
                     />
                   </td>
                 </tr>
@@ -510,50 +784,309 @@ const ContasReceberView = ({ transactions, loading, refresh, onTransfer, onDetai
   );
 };
 
-const ContasPagarView = ({ transactions, loading, onPayClick }: any) => {
+const ContasPagarView = ({ transactions, loading, refresh, onPayClick, onAddClick }: any) => {
+  const { getRoute, goToTransaction } = useFinanceiroTransactionNavigation();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [period, setPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano' | 'todos'>('todos');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   const bills = transactions.filter((t: any) => t.tipo === 'despesa');
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from('transactions').delete().eq('id', id);
+    if (!error) {
+      if (refresh) refresh();
+      if ((window as any).showToast) (window as any).showToast('success', 'Despesa removida do banco!', 'Sucesso');
+    }
+  };
+
+  const filteredBills = bills.filter((item: any) => {
+    const term = searchTerm.toLowerCase();
+    const matchesSearch =
+      item.descricao.toLowerCase().includes(term) ||
+      item.categoria.toLowerCase().includes(term);
+    if (!matchesSearch) return false;
+
+    if (period === 'todos') return true;
+
+    const dateVal = item.data_vencimento || item.paid_at || item.created_at;
+    if (!dateVal) return true;
+
+    const itemDate = new Date(dateVal);
+    const today = new Date();
+    const itemTime = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate()).getTime();
+    const todayTime = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const diffDays = Math.abs((itemTime - todayTime) / (1000 * 60 * 60 * 24));
+
+    if (period === 'dia') return diffDays === 0;
+    if (period === 'semana') return diffDays <= 7;
+    if (period === 'mes') return diffDays <= 30;
+    if (period === 'ano') return diffDays <= 365;
+    return true;
+  });
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.length === filteredBills.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredBills.map((item: any) => item.id));
+    }
+  };
+
+  const handleExcelExport = () => {
+    const itemsToExport = selectedIds.length > 0
+      ? filteredBills.filter((item: any) => selectedIds.includes(item.id))
+      : filteredBills;
+
+    const columns = ['Descrição', 'Categoria', 'Vencimento', 'Valor (R$)'];
+    const rows = itemsToExport.map((item: any) => [
+      item.descricao,
+      item.categoria,
+      new Date(item.data_vencimento).toLocaleDateString('pt-BR'),
+      item.valor
+    ]);
+    downloadExcelCsv({
+      title: 'Contas a Pagar',
+      filenameBase: 'contas-a-pagar',
+      columns,
+      rows,
+      meta: {
+        companyName: 'Logta SaaS',
+        filtersSummary: `Busca: "${searchTerm}", Período: ${period}, Itens: ${itemsToExport.length}`
+      }
+    });
+  };
+
+  const handlePdfExport = () => {
+    const itemsToExport = selectedIds.length > 0
+      ? filteredBills.filter((item: any) => selectedIds.includes(item.id))
+      : filteredBills;
+
+    const columns = ['Descrição', 'Categoria', 'Vencimento', 'Valor (R$)'];
+    const rows = itemsToExport.map((item: any) => [
+      item.descricao,
+      item.categoria,
+      new Date(item.data_vencimento).toLocaleDateString('pt-BR'),
+      `R$ ${item.valor.toLocaleString('pt-BR')}`
+    ]);
+    downloadPdfTable({
+      title: 'Contas a Pagar',
+      filenameBase: 'contas-a-pagar',
+      columns,
+      rows,
+      meta: {
+        companyName: 'Logta SaaS',
+        filtersSummary: `Busca: "${searchTerm}", Período: ${period}, Itens: ${itemsToExport.length}`
+      }
+    });
+  };
 
   return (
     <div className="space-y-6">
+      {/* Premium Filter & Search Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-[28px] border border-gray-200 shadow-sm">
+        <div className="flex flex-wrap items-center gap-4 flex-1">
+          <div className="relative min-w-[280px] flex-1 sm:flex-initial">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              type="text"
+              placeholder="Buscar por descrição ou categoria..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-gray-50/50 border border-gray-200 pl-11 pr-4 py-2.5 rounded-full text-xs font-bold text-gray-800 placeholder-gray-400 focus:border-primary outline-none transition-all shadow-inner focus:bg-white"
+            />
+          </div>
+
+          <div className="flex items-center gap-1 bg-gray-50/50 border border-gray-200 p-1 rounded-full">
+            {(['todos', 'dia', 'semana', 'mes', 'ano'] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
+                  period === p
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/50'
+                }`}
+              >
+                {p === 'todos' ? 'Todos' : p === 'dia' ? 'Hoje' : p === 'semana' ? '7d' : p === 'mes' ? 'Mês' : 'Ano'}
+              </button>
+            ))}
+          </div>
+          
+          {filteredBills.length > 0 && (
+            <label className="flex items-center gap-2 cursor-pointer bg-gray-50/50 border border-gray-200 px-4 py-2 rounded-full hover:bg-white transition-all text-xs font-bold text-gray-700">
+              <input
+                type="checkbox"
+                checked={filteredBills.length > 0 && selectedIds.length === filteredBills.length}
+                onChange={toggleAll}
+                className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+              />
+              <span className="text-[10px] uppercase font-black tracking-wider">Ticar Todos</span>
+            </label>
+          )}
+
+          {selectedIds.length > 0 && (
+            <span className="text-[10px] font-black uppercase text-primary animate-pulse bg-primary/5 border border-primary/10 px-3 py-1.5 rounded-full">
+              {selectedIds.length} selecionado(s) para baixar
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExcelExport}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 hover:text-emerald-600 hover:border-emerald-200 border border-gray-200 rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+          >
+            <FileText size={14} className="text-emerald-500" />
+            Excel
+          </button>
+          <button
+            type="button"
+            onClick={handlePdfExport}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 hover:text-rose-600 hover:border-rose-200 border border-gray-200 rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+          >
+            <Download size={14} className="text-rose-500" />
+            PDF
+          </button>
+          
+          <button
+            type="button"
+            onClick={onAddClick}
+            className="flex items-center justify-center w-9 h-9 bg-primary text-white hover:opacity-90 rounded-full transition-all shadow-md shadow-primary/20 cursor-pointer"
+            title="Nova Despesa"
+          >
+            <Plus size={16} />
+          </button>
+        </div>
+      </div>
+
       <div className="logta-panel-card p-8">
         <h3 className="logta-card-heading mb-8">Vencimentos Reais</h3>
-        <p className="text-xs text-gray-500 mb-6">Clique em uma despesa para registrar o pagamento.</p>
+        <p className="text-xs text-gray-500 mb-6 font-medium">Clique em uma despesa para registrar o pagamento.</p>
         <div className="space-y-4">
           {loading ? (
             <Loader2 className="animate-spin text-primary mx-auto block" />
           ) : (
-            bills.map((p: any) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => onPayClick?.(p)}
-                className="w-full p-6 bg-gray-50/50 border border-transparent hover:border-primary/30 hover:bg-white rounded-[32px] transition-all flex items-center justify-between group cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-6">
-                  <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-400 group-hover:text-red-500">
-                    <TrendingDown size={20} />
+            filteredBills.map((p: any) => {
+              const isRecurring = p.descricao.toLowerCase().includes('recorrente') || p.categoria.toLowerCase().includes('recorrente') || p.descricao.toLowerCase().includes('contrato');
+              const isOverdue = !p.paid_at && p.data_vencimento && new Date(p.data_vencimento).getTime() < Date.now() - 12 * 60 * 60 * 1000;
+              const path = getRoute(p);
+              
+              return (
+                <div
+                  key={p.id}
+                  className={`w-full p-6 bg-gray-50/50 border border-gray-100 hover:border-primary/30 hover:bg-white rounded-[32px] transition-all flex items-center justify-between group text-left ${
+                    path ? 'cursor-pointer' : ''
+                  }`}
+                  onClick={() => {
+                    if (path) {
+                      goToTransaction(p);
+                    } else if (onPayClick) {
+                      onPayClick(p);
+                    }
+                  }}
+                  title={path ? 'Ir para página associada' : 'Ver detalhes da despesa'}
+                >
+                  <div className="flex items-center gap-6">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(p.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(p.id);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPayClick?.(p);
+                      }}
+                      className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-400 group-hover:text-red-500 border border-gray-100 hover:scale-105 transition-all cursor-pointer shadow-inner"
+                      title="Registrar pagamento"
+                    >
+                      <TrendingDown size={20} />
+                    </button>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs font-bold text-gray-900">{p.descricao}</p>
+                        {isRecurring && (
+                          <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-black uppercase text-blue-600 border border-blue-100">
+                            <Repeat size={10} />
+                            Recorrente
+                          </span>
+                        )}
+                        {isOverdue && (
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if ((window as any).showToast) {
+                                (window as any).showToast(
+                                  'info',
+                                  'Esta despesa está vencida e pendente de pagamento. Despesas vencidas aparecem listadas na aba de Alertas e central de Custos.',
+                                  'Aviso de Vencimento'
+                                );
+                              }
+                            }}
+                            className="cursor-help flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[9px] font-black uppercase text-red-600 border border-red-100 hover:scale-105 transition-all"
+                            title="Despesa atrasada. Clique para ver onde fica."
+                          >
+                            ⚠️ Em Atraso
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">{p.categoria}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-900">{p.descricao}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase">{p.categoria}</p>
+                  <div className="flex items-center gap-12">
+                    <div className="text-right">
+                      <p className="text-xs font-black text-gray-900">R$ {p.valor.toLocaleString('pt-BR')}</p>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">
+                        {new Date(p.data_vencimento).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onPayClick?.(p);
+                        }}
+                        className="px-4 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-full text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer font-bold"
+                      >
+                        Pagar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(p.id);
+                        }}
+                        className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-150 transition-all cursor-pointer"
+                        title="Deletar despesa"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-12">
-                  <div className="text-right">
-                    <p className="text-xs font-black text-gray-900">R$ {p.valor.toLocaleString('pt-BR')}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase">
-                      {new Date(p.data_vencimento).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                  <span className="text-[10px] font-black uppercase text-primary">Pagar</span>
-                </div>
-              </button>
-            ))
+              );
+            })
           )}
-          {!loading && bills.length === 0 && (
+          {!loading && filteredBills.length === 0 && (
             <LogtaEmptyState
               type="financeiro"
-              onAction={() => (window as any).showToast?.('info', 'Cadastre uma despesa em Novo lançamento.', 'Contas a pagar')}
+              onAction={onAddClick}
             />
           )}
         </div>
@@ -562,9 +1095,13 @@ const ContasPagarView = ({ transactions, loading, onPayClick }: any) => {
   );
 };
 
-const FluxoCaixaView = ({ transactions, loading, refresh, onTransactionClick }: any) => {
+const FluxoCaixaView = ({ transactions, loading, refresh, onTransactionClick, onAddClick }: any) => {
   const navigate = useNavigate();
   const { getRoute, goToTransaction } = useFinanceiroTransactionNavigation();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [period, setPeriod] = useState<'dia' | 'semana' | 'mes' | 'ano' | 'todos'>('todos');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   const sorted = [...transactions].sort((a: any, b: any) => {
     const da = new Date(a.data_vencimento || 0).getTime();
     const db = new Date(b.data_vencimento || 0).getTime();
@@ -572,28 +1109,196 @@ const FluxoCaixaView = ({ transactions, loading, refresh, onTransactionClick }: 
   });
 
   let saldo = 0;
-  const rows = sorted.map((t: any) => {
+  const allRows = sorted.map((t: any) => {
     const delta = t.tipo === 'receita' ? Number(t.valor) || 0 : -(Number(t.valor) || 0);
     saldo += delta;
     return { ...t, delta, saldoAcum: saldo };
   });
 
+  const filteredRows = allRows.filter((item: any) => {
+    const term = searchTerm.toLowerCase();
+    const matchesSearch =
+      item.descricao.toLowerCase().includes(term) ||
+      item.categoria.toLowerCase().includes(term);
+    if (!matchesSearch) return false;
+
+    if (period === 'todos') return true;
+
+    const dateVal = item.data_vencimento || item.paid_at || item.created_at;
+    if (!dateVal) return true;
+
+    const itemDate = new Date(dateVal);
+    const today = new Date();
+    const itemTime = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate()).getTime();
+    const todayTime = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const diffDays = Math.abs((itemTime - todayTime) / (1000 * 60 * 60 * 24));
+
+    if (period === 'dia') return diffDays === 0;
+    if (period === 'semana') return diffDays <= 7;
+    if (period === 'mes') return diffDays <= 30;
+    if (period === 'ano') return diffDays <= 365;
+    return true;
+  });
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.length === filteredRows.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredRows.map((item: any) => item.id));
+    }
+  };
+
+  const handleExcelExport = () => {
+    const itemsToExport = selectedIds.length > 0
+      ? filteredRows.filter((item: any) => selectedIds.includes(item.id))
+      : filteredRows;
+
+    const columns = ['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor (R$)', 'Saldo Acumulado (R$)'];
+    const rows = itemsToExport.map((item: any) => [
+      item.data_vencimento ? new Date(item.data_vencimento).toLocaleDateString('pt-BR') : '—',
+      item.descricao,
+      item.categoria,
+      item.tipo === 'receita' ? 'Entrada' : 'Saída',
+      item.valor,
+      item.saldoAcum
+    ]);
+    downloadExcelCsv({
+      title: 'Fluxo de Caixa Projetado',
+      filenameBase: 'fluxo-de-caixa',
+      columns,
+      rows,
+      meta: {
+        companyName: 'Logta SaaS',
+        filtersSummary: `Busca: "${searchTerm}", Período: ${period}, Itens: ${itemsToExport.length}`
+      }
+    });
+  };
+
+  const handlePdfExport = () => {
+    const itemsToExport = selectedIds.length > 0
+      ? filteredRows.filter((item: any) => selectedIds.includes(item.id))
+      : filteredRows;
+
+    const columns = ['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor', 'Saldo Acum.'];
+    const rows = itemsToExport.map((item: any) => [
+      item.data_vencimento ? new Date(item.data_vencimento).toLocaleDateString('pt-BR') : '—',
+      item.descricao,
+      item.categoria,
+      item.tipo === 'receita' ? 'Entrada' : 'Saída',
+      `R$ ${item.valor.toLocaleString('pt-BR')}`,
+      `R$ ${item.saldoAcum.toLocaleString('pt-BR')}`
+    ]);
+    downloadPdfTable({
+      title: 'Fluxo de Caixa Projetado',
+      filenameBase: 'fluxo-de-caixa',
+      columns,
+      rows,
+      meta: {
+        companyName: 'Logta SaaS',
+        filtersSummary: `Busca: "${searchTerm}", Período: ${period}, Itens: ${itemsToExport.length}`
+      }
+    });
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from('transactions').delete().eq('id', id);
+    if (!error) {
+      if (refresh) refresh();
+      if ((window as any).showToast) (window as any).showToast('success', 'Movimentação excluída!', 'Sucesso');
+    }
+  };
+
+  const handleToggleUnpaid = async (item: any) => {
+    const newPaidAt = item.paid_at ? null : new Date().toISOString();
+    const { error } = await supabase
+      .from('transactions')
+      .update({ paid_at: newPaidAt })
+      .eq('id', item.id);
+    if (!error) {
+      if (refresh) refresh();
+      if ((window as any).showToast) {
+        (window as any).showToast(
+          'success',
+          newPaidAt ? 'Lançamento marcado como pago/recebido!' : 'Lançamento marcado como pendente (não pago).',
+          'Sucesso'
+        );
+      }
+    }
+  };
+
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h3 className="logta-card-heading">Fluxo de caixa</h3>
-          <p className="text-xs text-gray-500 mt-1">Movimentações ordenadas por data de vencimento (saldo simulado).</p>
+      {/* Premium Filter & Search Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-[28px] border border-gray-200 shadow-sm">
+        <div className="flex flex-wrap items-center gap-4 flex-1">
+          <div className="relative min-w-[280px] flex-1 sm:flex-initial">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              type="text"
+              placeholder="Buscar por descrição ou categoria..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-gray-50/50 border border-gray-200 pl-11 pr-4 py-2.5 rounded-full text-xs font-bold text-gray-800 placeholder-gray-400 focus:border-primary outline-none transition-all shadow-inner focus:bg-white"
+            />
+          </div>
+
+          <div className="flex items-center gap-1 bg-gray-50/50 border border-gray-200 p-1 rounded-full">
+            {(['todos', 'dia', 'semana', 'mes', 'ano'] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
+                  period === p
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/50'
+                }`}
+              >
+                {p === 'todos' ? 'Todos' : p === 'dia' ? 'Hoje' : p === 'semana' ? '7d' : p === 'mes' ? 'Mês' : 'Ano'}
+              </button>
+            ))}
+          </div>
+          
+          {selectedIds.length > 0 && (
+            <span className="text-[10px] font-black uppercase text-primary animate-pulse bg-primary/5 border border-primary/10 px-3 py-1.5 rounded-full">
+              {selectedIds.length} selecionado(s) para baixar
+            </span>
+          )}
         </div>
-        <button
-          type="button"
-          onClick={() => refresh?.()}
-          className="hub-premium-pill secondary"
-          style={{ padding: '8px 16px' }}
-        >
-          {loading ? <Loader2 className="animate-spin" size={16} /> : <Activity size={16} />}
-          Atualizar
-        </button>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExcelExport}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 hover:text-emerald-600 hover:border-emerald-200 border border-gray-200 rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+          >
+            <FileText size={14} className="text-emerald-500" />
+            Excel
+          </button>
+          <button
+            type="button"
+            onClick={handlePdfExport}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 hover:text-rose-600 hover:border-rose-200 border border-gray-200 rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+          >
+            <Download size={14} className="text-rose-500" />
+            PDF
+          </button>
+          
+          <button
+            type="button"
+            onClick={onAddClick}
+            className="flex items-center justify-center w-9 h-9 bg-primary text-white hover:opacity-90 rounded-full transition-all shadow-md shadow-primary/20 cursor-pointer"
+            title="Novo Lançamento"
+          >
+            <Plus size={16} />
+          </button>
+        </div>
       </div>
 
       <div className="logta-panel-card overflow-hidden">
@@ -606,6 +1311,14 @@ const FluxoCaixaView = ({ transactions, loading, refresh, onTransactionClick }: 
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50/50">
+                <th className="px-6 py-5 text-center w-12">
+                  <input
+                    type="checkbox"
+                    checked={filteredRows.length > 0 && selectedIds.length === filteredRows.length}
+                    onChange={toggleAll}
+                    className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                  />
+                </th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-normal text-gray-400">Data</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-normal text-gray-400">Descrição</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-normal text-gray-400">Tipo</th>
@@ -614,27 +1327,64 @@ const FluxoCaixaView = ({ transactions, loading, refresh, onTransactionClick }: 
                   Saldo após
                 </th>
                 <th className="px-8 py-5 text-center text-[10px] font-black uppercase tracking-normal text-gray-400">
-                  Ação
+                  Ação / Status
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {rows.map((item: any) => {
+              {filteredRows.map((item: any) => {
                 const path = getRoute(item);
+                const isRecurring = item.descricao.toLowerCase().includes('recorrente') || item.categoria.toLowerCase().includes('recorrente') || item.descricao.toLowerCase().includes('contrato');
+                const isOverdue = !item.paid_at && item.data_vencimento && new Date(item.data_vencimento).getTime() < Date.now() - 12 * 60 * 60 * 1000;
+                
                 return (
                   <tr
                     key={item.id}
-                    className={`hover:bg-gray-50/80 ${path ? 'cursor-pointer' : ''}`}
+                    className={`hover:bg-gray-50/80 group ${path ? 'cursor-pointer' : ''}`}
                     onClick={() => path && goToTransaction(item)}
                     title={path ? 'Abrir registro relacionado' : undefined}
                   >
+                    <td className="px-6 py-6 text-center w-12" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(item.id)}
+                        onChange={() => toggleSelect(item.id)}
+                        className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                      />
+                    </td>
                     <td className="px-8 py-4 text-xs font-bold text-gray-600">
                       {item.data_vencimento
                         ? new Date(item.data_vencimento).toLocaleDateString('pt-BR')
                         : '—'}
                     </td>
                     <td className="px-8 py-4">
-                      <p className="text-xs font-bold text-gray-900">{item.descricao}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs font-bold text-gray-900">{item.descricao}</p>
+                        {isRecurring && (
+                          <span className="flex items-center gap-0.5 rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-black uppercase text-blue-600 border border-blue-100">
+                            <Repeat size={9} />
+                            Recorrente
+                          </span>
+                        )}
+                        {isOverdue && (
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if ((window as any).showToast) {
+                                (window as any).showToast(
+                                  'info',
+                                  'Este lançamento está atrasado e pendente. As faturas em atraso ficam listadas automaticamente na aba de Alertas e Inadimplência.',
+                                  'Aviso de Atraso'
+                                );
+                              }
+                            }}
+                            className="cursor-help flex items-center gap-0.5 rounded-full bg-red-50 px-2 py-0.5 text-[9px] font-black uppercase text-red-600 border border-red-100 hover:scale-105 transition-all"
+                            title="Lançamento atrasado. Clique para saber mais."
+                          >
+                            ⚠️ Em Atraso
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] font-bold uppercase text-gray-400">{item.categoria}</p>
                     </td>
                     <td className="px-8 py-4">
@@ -653,30 +1403,42 @@ const FluxoCaixaView = ({ transactions, loading, refresh, onTransactionClick }: 
                       R$ {item.saldoAcum.toLocaleString('pt-BR')}
                     </td>
                     <td className="px-8 py-4 text-center">
-                      {item.tipo === 'despesa' ? (
+                      <div className="flex items-center justify-center gap-3">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onTransactionClick?.(item);
+                            void handleToggleUnpaid(item);
                           }}
-                          className="text-[10px] font-black uppercase text-primary hover:underline"
+                          className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase border transition-all cursor-pointer ${
+                            item.paid_at
+                              ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                              : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                          }`}
+                          title={item.paid_at ? 'Marcar como Pendente (Não Recebido/Pago)' : 'Marcar como Recebido/Pago'}
                         >
-                          Pagar
+                          {item.paid_at ? 'Pago/Recebido' : 'Pendente'}
                         </button>
-                      ) : path ? (
-                        <ChevronRight size={16} className="mx-auto text-gray-300" />
-                      ) : (
-                        <span className="text-[10px] text-gray-300">—</span>
-                      )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleDelete(item.id);
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition-all cursor-pointer"
+                          title="Excluir lançamento"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
               })}
-              {rows.length === 0 && (
+              {filteredRows.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-8 py-8">
-                    <LogtaEmptyState type="financeiro" onAction={() => navigate('/fretes/operacional')} />
+                  <td colSpan={7} className="px-8 py-8">
+                    <LogtaEmptyState type="financeiro" onAction={onAddClick} />
                   </td>
                 </tr>
               )}
@@ -689,7 +1451,7 @@ const FluxoCaixaView = ({ transactions, loading, refresh, onTransactionClick }: 
         <PieChart size={28} className="shrink-0 text-primary" />
         <p className="text-xs font-medium leading-relaxed text-gray-600">
           O saldo após cada linha é uma projeção sequencial (entradas somam, saídas subtraem). Use{' '}
-          <strong className="text-gray-900">Contas a pagar</strong> ou a coluna ação para marcar despesas como pagas
+          <strong className="text-gray-900">Contas a pagar/receber</strong> ou a coluna ação para marcar despesas/receitas como pagas/recebidas
           quando integrar o status no banco.
         </p>
       </div>

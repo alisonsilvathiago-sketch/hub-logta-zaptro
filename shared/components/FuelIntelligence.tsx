@@ -29,7 +29,7 @@ export const FuelPump: React.FC<{ data: FuelData }> = ({ data }) => {
     switch (type.toLowerCase()) {
       case 'gasolina': return '#0061FF';
       case 'diesel': return '#EF4444';
-      case 'etanol': return '#10B981';
+      case 'etanol': return '#0061FF';
       default: return '#94A3B8';
     }
   };
@@ -71,7 +71,7 @@ export const FuelPump: React.FC<{ data: FuelData }> = ({ data }) => {
       </div>
 
       <div style={styles.pumpFooter}>
-        <div style={{ ...styles.variation, color: data.variation_percentage > 0 ? '#EF4444' : '#10B981' }}>
+        <div style={{ ...styles.variation, color: data.variation_percentage > 0 ? '#EF4444' : '#0061FF' }}>
           {data.variation_percentage > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
           {Math.abs(data.variation_percentage).toFixed(1)}% variação diária
         </div>
@@ -105,7 +105,7 @@ export const FuelDashboardCard: React.FC<{ prices: FuelData[]; onClick?: () => v
           <div style={styles.cardItemLabel}>Gasolina (BR)</div>
           <div style={styles.cardItemValue}>
             R$ {gas ? Number(gas.price).toFixed(2) : '---'}
-            <span style={{ ...styles.cardTrend, color: (gas?.variation_percentage || 0) > 0 ? '#EF4444' : '#10B981' }}>
+            <span style={{ ...styles.cardTrend, color: (gas?.variation_percentage || 0) > 0 ? '#EF4444' : '#0061FF' }}>
               {(gas?.variation_percentage || 0) > 0 ? '↑' : '↓'}
               {Math.abs(gas?.variation_percentage || 0).toFixed(1)}%
             </span>
@@ -115,7 +115,7 @@ export const FuelDashboardCard: React.FC<{ prices: FuelData[]; onClick?: () => v
           <div style={styles.cardItemLabel}>Diesel S10</div>
           <div style={styles.cardItemValue}>
             R$ {diesel ? Number(diesel.price).toFixed(2) : '---'}
-            <span style={{ ...styles.cardTrend, color: (diesel?.variation_percentage || 0) > 0 ? '#EF4444' : '#10B981' }}>
+            <span style={{ ...styles.cardTrend, color: (diesel?.variation_percentage || 0) > 0 ? '#EF4444' : '#0061FF' }}>
               {(diesel?.variation_percentage || 0) > 0 ? '↑' : '↓'}
               {Math.abs(diesel?.variation_percentage || 0).toFixed(1)}%
             </span>

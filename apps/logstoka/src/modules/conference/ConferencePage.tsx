@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
+import { DEMO_CONFERENCE } from '@/lib/logstokaDemoSeed';
 import { MARKETPLACE_LABELS } from '@/types';
 import type { Marketplace } from '@/types';
+import { supabase } from '@/lib/supabase';
+import MarketplaceLogo from '@/components/marketplace/MarketplaceLogo';
 
 const ConferencePage: React.FC = () => {
   const { companyId } = useLogstokaTenant();
@@ -10,6 +14,10 @@ const ConferencePage: React.FC = () => {
 
   useEffect(() => {
     if (!companyId) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      setStats(DEMO_CONFERENCE);
+      return;
+    }
     const start = new Date();
     start.setHours(0, 0, 0, 0);
 
@@ -40,7 +48,7 @@ const ConferencePage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-black">Centro de Conferência</h2>
+        <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Centro de Conferência</h2>
         <p className="text-sm text-slate-500">Conferência diária com divergências automáticas</p>
       </div>
 
@@ -50,7 +58,10 @@ const ConferencePage: React.FC = () => {
           const divergence = s.sold - s.exit - s.returned - s.damaged;
           return (
             <div key={mp} className="ls-card">
-              <h3 className="mb-3 font-black">{MARKETPLACE_LABELS[mp]}</h3>
+              <h3 className="mb-3 flex items-center gap-2.5 font-black">
+                <MarketplaceLogo marketplace={mp} size={32} />
+                {MARKETPLACE_LABELS[mp]}
+              </h3>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {[
                   ['Vendido', s.sold],
@@ -59,7 +70,10 @@ const ConferencePage: React.FC = () => {
                   ['Avariado', s.damaged],
                   ['Divergência', divergence],
                 ].map(([label, value]) => (
-                  <div key={String(label)} className={`rounded-xl p-3 ${label === 'Divergência' && Number(value) !== 0 ? 'bg-rose-50' : 'bg-slate-50'}`}>
+                  <div
+                    key={String(label)}
+                    className={`rounded-xl p-3 ${label === 'Divergência' && Number(value) !== 0 ? 'bg-rose-50' : 'bg-slate-50'}`}
+                  >
                     <p className="text-xs font-bold text-slate-500">{label}</p>
                     <p className={`text-lg font-black ${label === 'Divergência' && Number(value) !== 0 ? 'text-rose-600' : ''}`}>{value}</p>
                   </div>

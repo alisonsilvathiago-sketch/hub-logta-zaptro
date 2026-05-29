@@ -1,32 +1,75 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
+import { useAuth } from '@/context/LogstokaAuthProvider';
+import { useLogstokaBranding } from '@/context/LogstokaBrandingContext';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
+import LogstokaAppTopbar from './LogstokaAppTopbar';
+import { LogstokaAiDrawer } from '@/modules/ai';
+import './logstokaAppShell.css';
+import './logstokaTopbar.css';
+import './logstokaBranding.css';
 
-const AppShell: React.FC = () => (
-  <div className="min-h-screen bg-slate-50">
-    <div className="mx-auto flex min-h-screen max-w-[1600px]">
-      <Sidebar />
-      <div className="flex min-h-screen flex-1 flex-col pb-20 lg:pb-0">
-        <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 px-4 py-4 backdrop-blur lg:px-8">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">Operação</p>
-              <h1 className="text-xl font-black text-slate-900">Centro Logístico</h1>
-            </div>
-            <div className="hidden items-center gap-2 md:flex">
-              <span className="ls-badge bg-emerald-50 text-emerald-700">Tempo real</span>
-              <span className="ls-badge bg-slate-100 text-slate-600">API v1</span>
-            </div>
-          </div>
-        </header>
-        <main className="flex-1 px-4 py-6 lg:px-8">
+const AppShell: React.FC = () => {
+  const { signOut } = useAuth();
+  const { cssVars } = useLogstokaBranding();
+  const location = useLocation();
+  const isInicio = location.pathname === '/app' || location.pathname === '/app/';
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiInitial, setAiInitial] = useState('');
+
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      const detail = (e as CustomEvent<{ message?: string }>).detail;
+      setAiInitial(detail?.message?.trim() ?? '');
+      setAiOpen(true);
+    };
+    window.addEventListener('logstoka:open-ai-drawer', onOpen);
+    return () => window.removeEventListener('logstoka:open-ai-drawer', onOpen);
+  }, []);
+
+  const openAi = useCallback(() => {
+    setAiInitial('');
+    setAiOpen(true);
+  }, []);
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  return (
+    <div className="logstoka-app-shell" style={cssVars as React.CSSProperties}>
+      <Sidebar onSignOut={() => void handleSignOut()} />
+
+      <div className="logstoka-app-main">
+        <LogstokaAppTopbar onOpenAi={openAi} onSignOut={() => void handleSignOut()} />
+        <div className={`logstoka-app-content-gutter${isInicio ? ' logstoka-app-content-gutter--inicio' : ''}`}>
           <Outlet />
-        </main>
+        </div>
       </div>
+
+      <MobileNav onOpenAi={openAi} hideAi={isInicio} />
+
+      {!isInicio && (
+        <button
+          type="button"
+          className="ls-ai-fab lg:hidden"
+          onClick={openAi}
+          aria-label="IA operacional"
+        >
+          <Sparkles size={22} />
+        </button>
+      )}
+
+      <LogstokaAiDrawer
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        initialMessage={aiInitial}
+        onInitialMessageConsumed={() => setAiInitial('')}
+      />
     </div>
-    <MobileNav />
-  </div>
-);
+  );
+};
 
 export default AppShell;

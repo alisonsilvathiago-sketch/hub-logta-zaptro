@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  Sparkles,
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError } from '@core/lib/toast';
@@ -43,7 +44,8 @@ const Login: React.FC = () => {
       localStorage.setItem('hub-dev-session', JSON.stringify({
         email: normalizedEmail,
         full_name: 'Master Developer',
-        role: 'MASTER'
+        role: 'MASTER',
+        avatar_url: '/assets/avatars/avatar1.jpg',
       }));
       toastSuccess('Bypass local ativo: Bem-vindo!');
       setTimeout(() => window.location.href = '/master', 500);
@@ -89,6 +91,9 @@ const Login: React.FC = () => {
   return (
     <div className="hub-login-split">
       <div className="hub-login-promo">
+        <div className="hub-login-promo__icon" style={styles.promoIcon} aria-hidden>
+          <Sparkles size={28} strokeWidth={2} color="rgba(255, 255, 255, 0.92)" />
+        </div>
         <div className="hub-login-promo__bottom" style={styles.promoBottom}>
           <p style={styles.promoKicker}>Hub Master</p>
           <h2 style={styles.promoTitle}>
@@ -224,6 +229,22 @@ const Login: React.FC = () => {
 const fontSans = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
 const styles: Record<string, React.CSSProperties> = {
+  promoIcon: {
+    position: 'absolute',
+    top: 'clamp(24px, 4vw, 40px)',
+    left: 'clamp(24px, 4vw, 52px)',
+    width: '48px',
+    height: '48px',
+    borderRadius: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(255, 255, 255, 0.08)',
+    border: '1px solid rgba(255, 255, 255, 0.12)',
+    boxSizing: 'border-box',
+    zIndex: 2,
+    pointerEvents: 'none',
+  },
   formPanel: {
     flex: 1,
     minWidth: 0,
@@ -253,7 +274,7 @@ const styles: Record<string, React.CSSProperties> = {
   promoTitle: {
     margin: '12px 0 0',
     fontSize: 'clamp(1.5rem, 2.8vw, 2.125rem)',
-    fontWeight: 700,
+    fontWeight: 800,
     color: '#FFFFFF',
     lineHeight: 1.2,
     letterSpacing: '-0.02em',

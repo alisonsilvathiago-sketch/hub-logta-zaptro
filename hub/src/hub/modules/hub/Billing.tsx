@@ -19,13 +19,14 @@ import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError } from '@core/lib/toast';
 import Modal from '@shared/components/Modal';
-import HubMetricCard from '@shared/components/HubMetricCard';
-import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
+import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
+import HubSupabaseChart from '@shared/components/HubSupabaseChart';
+import { HUB_MASTER_SECTION_NAV } from '@hub/styles/hubMasterSectionNavStyles';
 import Pagination from '@shared/components/Pagination';
 
 import MasterFinanceiro from './Financeiro';
 import ClientIaCredits from './ClientIaCredits';
-import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
+import { HUB_PAGE_SUBTITLE, HUB_SIDEBAR_NAV_LABEL } from '@hub/styles/hubPageTypography';
 import { HUB_TOP_CTA_PRIMARY, HUB_TOP_CTA_SECONDARY } from '@hub/styles/hubTopCta';
 import { maskCpfOrCnpj } from '@shared/lib/brDocuments';
 
@@ -404,8 +405,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
 
   const productData = [
     { name: 'Logta ERP', value: (companies || []).filter(c => c?.origin === 'logta' || c?.origin === 'LOGTA').length || 12, color: 'var(--accent)' },
-    { name: 'Zaptro CRM', value: (companies || []).filter(c => c?.origin === 'zaptro' || c?.origin === 'ZAPTRO').length || 8, color: 'var(--green)' },
-    { name: 'Backup/API', value: (companies || []).filter(c => !['logta', 'zaptro', 'LOGTA', 'ZAPTRO'].includes(c?.origin || '')).length || 5, color: 'var(--orange)' },
+    { name: 'Logta (outras origens)', value: (companies || []).filter(c => !['logta', 'LOGTA'].includes(c?.origin || '')).length || 0, color: 'var(--orange)' },
   ];
 
   const distributionTotal =
@@ -438,12 +438,28 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
     return { name: `g${i}`, value: 1, fill };
   });
 
-  const revenueChartData = [
-    { name: 'Jan', value: 4000 },
-    { name: 'Fev', value: 3000 },
-    { name: 'Mar', value: 2000 },
-    { name: 'Abr', value: Math.max(0, Number(metrics.mrr)) || 22400 },
-  ];
+  const generateRevenueChartData = () => {
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const currentMonth = new Date().getMonth();
+    const data = [];
+    
+    for (let i = 0; i <= currentMonth; i++) {
+      const monthName = months[i];
+      const monthMRR = (companies || []).reduce((acc, c) => {
+        const createdAt = new Date(c.created_at);
+        const plan = plans.find(p => p.id === c.plan_id);
+        if (c.status === 'active' && createdAt.getMonth() <= i && createdAt.getFullYear() === new Date().getFullYear()) {
+          return acc + (plan?.price || 0);
+        }
+        return acc;
+      }, 0);
+      
+      data.push({ name: monthName, value: monthMRR });
+    }
+    return data;
+  };
+
+  const revenueChartData = generateRevenueChartData();
 
   const tabs = [
     { id: 'dashboard', label: 'Estratégico', icon: Layout },
@@ -455,167 +471,113 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
 
   const getStatusColor = (status: string) => {
     switch(status?.toUpperCase()) {
-      case 'PAGO': case 'RECEIVED': case 'CONFIRMED': return { bg: '#ECFDF5', text: '#10B981' };
+      case 'PAGO': case 'RECEIVED': case 'CONFIRMED': return { bg: '#EFF6FF', text: '#0061FF' };
       case 'PENDENTE': return { bg: '#FFF7ED', text: '#F97316' };
       case 'VENCIDO': case 'OVERDUE': return { bg: '#FEF2F2', text: '#EF4444' };
       default: return { bg: '#F3F4F6', text: '#6B7280' };
     }
   };
 
-  const revenueData = [
-    { month: 'Jan', mrr: 12000, new: 2400 },
-    { month: 'Fev', mrr: 14500, new: 3100 },
-    { month: 'Mar', mrr: 18200, new: 4500 },
-    { month: 'Abr', mrr: 22400, new: 5200 },
-  ];
+  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  
+  const revenueData = (revenueChartData || []).map(d => ({
+    month: d.name,
+    mrr: d.value,
+    new: (companies || []).filter(c => {
+      const date = new Date(c.created_at);
+      return date.getMonth() === months.indexOf(d.name) && 
+             date.getFullYear() === new Date().getFullYear();
+    }).length
+  }));
 
   return (
-    <div style={styles.outerContainer} className="animate-fade-in">
-      <div style={styles.innerContainer}>
+    <div
+      className="animate-fade-in"
+      style={summaryOnly ? undefined : { width: '100%' }}
+    >
+      <div
+        className={summaryOnly ? undefined : 'hub-settings-layout'}
+        style={
+          summaryOnly
+            ? { display: 'flex', flexDirection: 'column', gap: '32px' }
+            : HUB_MASTER_SECTION_NAV.layout
+        }
+      >
         {!summaryOnly && (
-          <header style={styles.billingTopBar}>
-            <div style={styles.billingTopBarLead}>
-              <h1 style={styles.pageTitle}>Financeiro & Receita Master</h1>
-              <p style={styles.pageSub}>Governança de assinaturas, MRR e saúde financeira do ecossistema.</p>
-            </div>
-            <div style={styles.topActions}>
-              <button
-                type="button"
-                style={{ ...styles.secondaryBtn, whiteSpace: 'nowrap' }}
-                onClick={() => openChargeModal('charge')}
-              >
-                <DollarSign size={15} /> NOVA COBRANÇA
-              </button>
-              <button
-                type="button"
-                style={{
-                  ...styles.primaryBtn,
-                  whiteSpace: 'nowrap',
-                  boxShadow: 'none',
-                  border: 'none',
-                }}
-                onClick={() => openChargeModal('plan')}
-              >
-                <Zap size={15} color="#FACC15" strokeWidth={2} fill="none" aria-hidden />
-                NOVO PLANO
-              </button>
-            </div>
-          </header>
+          <aside style={HUB_MASTER_SECTION_NAV.sidebarWrapper}>
+            <nav style={HUB_MASTER_SECTION_NAV.sidebar} aria-label="Seções de financeiro">
+              <h2 style={HUB_MASTER_SECTION_NAV.sidebarHeading}>Financeiro</h2>
+              <div style={HUB_MASTER_SECTION_NAV.sidebarHeadingRule} aria-hidden />
+              <div style={HUB_MASTER_SECTION_NAV.sidebarSection}>
+                <div className="hub-settings-section-label" style={HUB_MASTER_SECTION_NAV.sidebarSectionLabel}>Áreas</div>
+                <div style={HUB_MASTER_SECTION_NAV.sidebarSectionItems}>
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`hub-sidebar-item expanded${activeTab === tab.id ? ' active' : ''}`}
+                      style={{
+                        textDecoration: 'none',
+                        border: 'none',
+                        background: 'none',
+                        cursor: 'pointer',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 18,
+                          height: 18,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <tab.icon size={18} strokeWidth={2} />
+                      </div>
+                      <span style={{ ...HUB_SIDEBAR_NAV_LABEL, marginLeft: 12, flex: 1, textAlign: 'left' }}>
+                        {tab.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </nav>
+          </aside>
         )}
+        <main style={summaryOnly ? undefined : HUB_MASTER_SECTION_NAV.main}>
+          <div style={HUB_MASTER_SECTION_NAV.mainInner}>
+            <div className="hub-page-header">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                <div>
+                  <h1 className="hub-page-title">Financeiro</h1>
+                </div>
 
-        {/* Abas principais — layout único em todas as seções */}
-        {!summaryOnly && (
-          <div style={hubPillTabStripStyles.container}>
-            {tabs.map(tab => (
-              <button 
-                key={tab.id}
-                type="button"
-                style={{
-                  ...hubPillTabStripStyles.button,
-                  ...(activeTab === tab.id ? hubPillTabStripStyles.buttonActive : {}),
-                }}
-                onClick={() => setActiveTab(tab.id as any)}
-              >
-                <tab.icon size={15} color={activeTab === tab.id ? 'var(--accent)' : 'var(--text-secondary)'} />
-                {tab.label}
-              </button>
-            ))}
+                {!summaryOnly && (
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button className="hub-premium-pill secondary" onClick={() => openChargeModal('charge')}>
+                      <DollarSign size={14} /> Nova Cobrança
+                    </button>
+                    <button className="hub-premium-pill primary" onClick={() => openChargeModal('plan')}>
+                      <Plus size={16} /> Novo Plano
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+      {activeTab === 'dashboard' && (
+        <>
+          {/* Metrics Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+            <HubSupabaseChart label="MRR TOTAL" value={`R$ ${metrics.mrr.toLocaleString('pt-BR')}`} data={[40, 50, 60, 50, 40, 50, 60, 50, 40, 50]} />
+            <HubSupabaseChart label="TENANTS ATIVOS" value={String(metrics.activeTenants)} data={[30, 40, 50, 60, 70, 80, 70, 60, 50, 40]} />
+            <HubSupabaseChart label="EM CARÊNCIA" value={String(metrics.graceTenants)} data={[5, 10, 8, 12, 10, 8, 6, 10, 12, 11]} />
+            <HubSupabaseChart label="CHURN / INATIVOS" value={String(metrics.blockedTenants)} data={[10, 8, 12, 5, 8, 10, 12, 8, 6, 5]} />
           </div>
-        )}
-
-        {!summaryOnly && activeTab === 'financeiro' && (
-          <div style={styles.financeiroContextBanner}>
-            <div style={styles.financeiroContextText}>
-              <span style={styles.financeiroContextKicker}>Área de foco · Financeiro</span>
-              <p style={styles.financeiroContextTitle}>Conciliação, NF-e e gateway Asaas</p>
-              <p style={styles.financeiroContextSub}>
-                O que aparece abaixo é só este módulo. Para MRR, cobranças manuais e planos, volte a <strong>Estratégico</strong> ou <strong>Faturamento</strong>.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {!summaryOnly && activeTab === 'creditos-ia' && (
-          <div style={styles.financeiroContextBanner}>
-            <div style={styles.financeiroContextText}>
-              <span style={styles.financeiroContextKicker}>Área de foco · Créditos IA</span>
-              <p style={styles.financeiroContextTitle}>Saldos por cliente e consumo de IA</p>
-              <p style={styles.financeiroContextSub}>
-                Os saldos ficam em <code style={{ fontSize: 13, background: '#F1F5F9', padding: '2px 8px', borderRadius: 6 }}>IA_CLIENT_CREDITS_BALANCE</code>. Ajuste na tabela abaixo ou abra o Gateway IA para provedores e políticas.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {!summaryOnly && activeTab === 'planos' && (
-          <div style={styles.financeiroContextBanner}>
-            <div style={styles.financeiroContextText}>
-              <span style={styles.financeiroContextKicker}>Área de foco · Planos ativos</span>
-              <p style={styles.financeiroContextTitle}>Catálogo e pacotes do checkout</p>
-              <p style={styles.financeiroContextSub}>
-                Edite nome, preço, ciclo, créditos WA/IA, slug do link e flags de backup/atividade. Clique em um cartão para abrir o editor ou use <strong>NOVO PLANO</strong> no topo.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'dashboard' && (
-          <>
-            <div style={styles.statsGrid}>
-              <HubMetricCard
-                label="MRR (Mensal Recorrente)"
-                icon={TrendingUp}
-                iconVariant="soft"
-                accent="#0061FF"
-                topRight={
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      fontSize: 15,
-                      fontWeight: 800,
-                      color: '#10B981',
-                    }}
-                  >
-                    +12.5% <TrendingUp size={14} />
-                  </span>
-                }
-                value={`R$ ${metrics.mrr.toLocaleString('pt-BR')}`}
-              />
-              <HubMetricCard
-                label="Tenants Ativos"
-                icon={Users}
-                iconVariant="solid"
-                accent="#0061FF"
-                topRight={
-                  <span style={{ fontSize: 15, fontWeight: 800, color: '#0061FF' }}>META: 50</span>
-                }
-                value={metrics.activeTenants}
-              />
-              <HubMetricCard
-                label="Em Carência (Buffer)"
-                icon={Clock}
-                iconVariant="soft"
-                accent="#F59E0B"
-                softBg="#F59E0B15"
-                topRight={
-                  <span style={{ fontSize: 15, fontWeight: 800, color: '#F59E0B' }}>3 DIAS</span>
-                }
-                value={metrics.graceTenants}
-              />
-              <HubMetricCard
-                label="Inativos / Bloqueados"
-                icon={Ban}
-                iconVariant="soft"
-                accent="#EF4444"
-                softBg="#EF444415"
-                topRight={
-                  <span style={{ fontSize: 15, fontWeight: 800, color: '#EF4444' }}>CHURN</span>
-                }
-                value={metrics.blockedTenants}
-              />
-            </div>
 
             <div
               className="billing-master-chart-grid"
@@ -767,7 +729,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                 </button>
               </div>
               <button 
-                style={{...styles.primaryBtn, backgroundColor: 'var(--bg-overlay)', color: 'var(--secondary)', border: '1px solid var(--border)', boxShadow: 'none'}} 
+                className="hub-premium-pill secondary"
                 onClick={() => {
                   toastSuccess('Sincronizando com gateway de pagamento...');
                   fetchData();
@@ -817,7 +779,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                                <div style={styles.rowActions}>
                                   <button style={{...styles.actionIconBtn, color: '#0061FF', backgroundColor: 'var(--bg-overlay)'}} title="Ver Fatura" onClick={(e) => { e.stopPropagation(); window.open(charge.invoice_url, '_blank'); }}><Eye size={16} /></button>
                                   <button 
-                                    style={{...styles.actionIconBtn, color: '#10B981', backgroundColor: '#ECFDF5'}} 
+                                    style={{...styles.actionIconBtn, color: '#0061FF', backgroundColor: '#EFF6FF'}} 
                                     title="Copiar Link"
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -888,9 +850,9 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                         <span style={styles.period}>/ {plan.contract_months} meses</span>
                      </div>
                      <div style={styles.planFeatures}>
-                        <div style={styles.featureItem}><CheckCircle size={14} color="#10B981" /> {plan.wa_credits} Créditos WhatsApp</div>
-                        <div style={styles.featureItem}><CheckCircle size={14} color="#10B981" /> {plan.ai_credits} Créditos IA</div>
-                        <div style={styles.featureItem}><CheckCircle size={14} color="#10B981" /> Backup {plan.backup_enabled ? 'Ativo' : 'Não incluso'}</div>
+                        <div style={styles.featureItem}><CheckCircle size={14} color="#0061FF" /> {plan.wa_credits} Créditos WhatsApp</div>
+                        <div style={styles.featureItem}><CheckCircle size={14} color="#0061FF" /> {plan.ai_credits} Créditos IA</div>
+                        <div style={styles.featureItem}><CheckCircle size={14} color="#0061FF" /> Backup {plan.backup_enabled ? 'Ativo' : 'Não incluso'}</div>
                      </div>
                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '20px' }}>
                         <button 
@@ -992,7 +954,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                              </div>
                           </td>
                           <td style={{...styles.td, textAlign: 'right'}}>
-                             <span style={{...styles.statusBadge, backgroundColor: '#ECFDF5', color: '#10B981'}}>ATIVO</span>
+                             <span style={{...styles.statusBadge, backgroundColor: '#EFF6FF', color: '#0061FF'}}>ATIVO</span>
                           </td>
                        </tr>
                        <tr style={styles.tr}>
@@ -1002,13 +964,13 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                                 <span style={styles.planBrand}>Cupom Automático de Entrada</span>
                              </div>
                           </td>
-                          <td style={styles.td}><span style={{...styles.cycleBadge, color: '#10B981', backgroundColor: '#ECFDF5'}}>R$ 100,00 FIXO</span></td>
+                          <td style={styles.td}><span style={{...styles.cycleBadge, color: '#0061FF', backgroundColor: '#EFF6FF'}}>R$ 100,00 FIXO</span></td>
                           <td style={styles.td}><span style={styles.creditsText}>SEM EXPIRAÇÃO</span></td>
                           <td style={styles.td}>
                              <div style={{ fontSize: '13px', fontWeight: '700' }}>128 <span style={{ color: '#94A3B8', fontSize: '11px' }}>(ILIMITADO)</span></div>
                           </td>
                           <td style={{...styles.td, textAlign: 'right'}}>
-                             <span style={{...styles.statusBadge, backgroundColor: '#ECFDF5', color: '#10B981'}}>ATIVO</span>
+                             <span style={{...styles.statusBadge, backgroundColor: '#EFF6FF', color: '#0061FF'}}>ATIVO</span>
                           </td>
                        </tr>
                     </tbody>
@@ -1016,6 +978,9 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
               </div>
            </div>
         )}
+          </div>
+        </main>
+      </div>
 
         {/* MODALS */}
         <Modal
@@ -1133,7 +1098,6 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                 <div style={styles.productGridModal}>
                   {[
                     { id: 'logta', label: 'Assinatura Logta', icon: Layout },
-                    { id: 'zaptro', label: 'Assinatura Zaptro', icon: Zap },
                     { id: 'wa', label: 'Créditos WhatsApp', icon: Mail },
                     { id: 'ai', label: 'Créditos IA', icon: Activity },
                     { id: 'backup', label: 'Backup Cloud', icon: ShieldCheck },
@@ -1239,8 +1203,8 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                   {newCharge.coupon === 'ZAPTRO20' && (
                     <div
                       style={{
-                        backgroundColor: '#ECFDF5',
-                        color: '#166534',
+                        backgroundColor: '#EFF6FF',
+                        color: '#1E3A8A',
                         padding: '8px 12px',
                         borderRadius: '10px',
                         fontSize: '11px',
@@ -1530,7 +1494,7 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
           onClose={() => setIsSuccessModalOpen(false)}
           title="Cobrança Gerada com Sucesso"
           subtitle="O link de pagamento já está disponível e pronto para envio."
-          icon={<CheckCircle color="#10B981" />}
+          icon={<CheckCircle color="#0061FF" />}
           primaryAction={{
             label: 'COPIAR LINK AGORA',
             onClick: () => {
@@ -1718,8 +1682,8 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
                                   ...styles.secondaryBtn,
                                   width: '100%',
                                   justifyContent: 'center',
-                                  borderColor: '#10B981',
-                                  color: '#10B981',
+                                  borderColor: '#0061FF',
+                                  color: '#0061FF',
                                   fontSize: '11px',
                                   gap: '8px',
                                 }}
@@ -1733,7 +1697,6 @@ const MasterBilling = ({ summaryOnly = false }: { summaryOnly?: boolean }) => {
             </div>
         </Modal>
       </div>
-    </div>
   );
 };
 
@@ -1749,7 +1712,7 @@ const styles: Record<string, any> = {
     flexWrap: 'nowrap',
   },
   billingTopBarLead: { flex: '1 1 auto', minWidth: 0 },
-  pageTitle: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  pageTitle: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: 0 },
   pageSub: { ...HUB_PAGE_SUBTITLE },
   topActions: { display: 'flex', gap: '16px', flexWrap: 'nowrap', flexShrink: 0, alignItems: 'center' },
   primaryBtn: { ...HUB_TOP_CTA_PRIMARY, boxShadow: 'none' },
@@ -1882,7 +1845,7 @@ const styles: Record<string, any> = {
   subTabBtn: { border: 'none', borderRadius: '10px', padding: '10px 16px', fontSize: '12px', fontWeight: '800', letterSpacing: '0.6px', backgroundColor: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' },
 
   plansGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' },
-  planCard: { backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px', display: 'flex', flexDirection: 'column', minHeight: '340px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
+  planCard: { backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', minHeight: '300px', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' },
   planCardHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' },
   planIcon: { width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--bg-active)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   planTypeTag: { fontSize: '10px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-secondary)', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px', padding: '5px 10px' },

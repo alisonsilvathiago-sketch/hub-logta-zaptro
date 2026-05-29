@@ -260,7 +260,7 @@ const styles = {
   container: { minHeight: '100vh', backgroundColor: '#f4f4f4', paddingBottom: '40px' },
   loader: { padding: '100px', textAlign: 'center' as const, color: 'var(--primary)', fontWeight: '700' },
   header: { backgroundColor: 'white', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', position: 'sticky' as const, top: 0, zIndex: 10 },
-  backBtn: { background: 'none', border: 'none', color: '#64748b' },
+  backBtn: { background: 'none', border: 'none', color: '#949494' },
   title: { fontSize: '16px', fontWeight: '700', color: '#000000', margin: 0 },
   
   infoSection: { padding: '24px' },
@@ -270,20 +270,20 @@ const styles = {
   addressText: { fontSize: '13px', color: 'rgba(255,255,255,0.8)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' },
 
   actionSection: { padding: '0 24px', display: 'flex', flexDirection: 'column' as const, gap: '24px' },
-  sectionTitle: { fontSize: '13px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
+  sectionTitle: { fontSize: '13px', fontWeight: '700', color: '#949494', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
   
   photoGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' },
   photoThumb: { width: '100%', height: '100px', borderRadius: '16px', overflow: 'hidden', backgroundColor: '#e2e8f0', position: 'relative' as const },
   img: { width: '100%', height: '100%', objectFit: 'cover' as const },
   removeBtn: { position: 'absolute' as const, top: '4px', right: '4px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   addPhotoBtn: { height: '100px', border: '2px dashed #e2e8f0', borderRadius: '16px', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer' },
-  btnLabel: { fontSize: '11px', fontWeight: '600', color: '#64748b' },
+  btnLabel: { fontSize: '11px', fontWeight: '600', color: '#949494' },
   
   signTrigger: { width: '100%', padding: '16px', borderRadius: '20px', border: '1px solid #e2e8f0', backgroundColor: 'white', color: '#475569', fontWeight: '600', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' },
   
   signatureArea: { display: 'flex', flexDirection: 'column' as const, gap: '12px' },
   sigHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  sigTitle: { fontSize: '12px', fontWeight: '600', color: '#64748b' },
+  sigTitle: { fontSize: '12px', fontWeight: '600', color: '#949494' },
   clearBtn: { background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', fontWeight: '700' },
   canvas: { backgroundColor: 'white', border: '2px solid #e2e8f0', borderRadius: '16px', touchAction: 'none' },
 

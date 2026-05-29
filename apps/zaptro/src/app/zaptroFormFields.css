@@ -1,0 +1,153 @@
+/**
+ * Campos de formulário Zaptro — modelo moderno (labels caps + input branco arredondado).
+ * Aplica em /app; exclui barras de busca (.zaptro-field-wrap) e paginação.
+ */
+.zaptro-app-shell,
+.zaptro-modal-landscape-panel {
+  --zaptro-form-stack-gap: 26px;
+  --zaptro-form-field-gap: 10px;
+  --zaptro-form-label-size: 10px;
+  --zaptro-form-label-weight: 700;
+  --zaptro-form-label-color: #949494;
+  --zaptro-form-label-spacing: 0.08em;
+  --zaptro-input-height: 50px;
+  --zaptro-input-radius: 14px;
+  --zaptro-input-border: #ebebec;
+  --zaptro-input-bg: #ffffff;
+  --zaptro-input-color: #000000;
+  --zaptro-input-font-size: 14px;
+  --zaptro-input-font-weight: 700;
+  --zaptro-input-padding-x: 18px;
+}
+
+.zaptro-form-stack,
+.zaptro-company-drawer-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zaptro-form-stack-gap);
+}
+
+.zaptro-form-field,
+.zaptro-company-drawer-field,
+.zaptro-profile-field,
+.zaptro-modal-landscape-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zaptro-form-field-gap);
+  min-width: 0;
+}
+
+.zaptro-form-label,
+.zaptro-form-field > label:first-child,
+.zaptro-company-drawer-field > label:first-child,
+.zaptro-modal-landscape-field__label {
+  font-size: var(--zaptro-form-label-size);
+  font-weight: var(--zaptro-form-label-weight);
+  letter-spacing: var(--zaptro-form-label-spacing);
+  text-transform: uppercase;
+  color: var(--zaptro-form-label-color);
+  line-height: 1.25;
+}
+
+.zaptro-app-shell .zaptro-form-control,
+.zaptro-app-shell .zaptro-company-drawer-field input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+.zaptro-app-shell .zaptro-company-drawer-field select,
+.zaptro-app-shell .zaptro-company-drawer-field textarea,
+.zaptro-app-shell .zaptro-profile-field input:not([type='checkbox']):not([type='radio']),
+.zaptro-app-shell .zaptro-profile-field select,
+.zaptro-app-shell .zaptro-profile-field textarea,
+.zaptro-modal-landscape-field__input,
+.zaptro-modal-landscape-field__select,
+.zaptro-modal-landscape-field__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: var(--zaptro-input-height);
+  padding: 0 var(--zaptro-input-padding-x);
+  border: 1px solid var(--zaptro-input-border);
+  border-radius: var(--zaptro-input-radius);
+  background: var(--zaptro-input-bg);
+  color: var(--zaptro-input-color);
+  font-family: inherit;
+  font-size: var(--zaptro-input-font-size);
+  font-weight: var(--zaptro-input-font-weight);
+  line-height: 1.25;
+  outline: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.zaptro-app-shell .zaptro-company-drawer-field textarea,
+.zaptro-app-shell .zaptro-profile-field textarea,
+.zaptro-modal-landscape-field__textarea {
+  min-height: 120px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.zaptro-app-shell .zaptro-company-drawer-field select,
+.zaptro-app-shell .zaptro-profile-field select,
+.zaptro-modal-landscape-field__select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 42px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 14px 14px;
+}
+
+.zaptro-app-shell .zaptro-form-control::placeholder,
+.zaptro-app-shell .zaptro-company-drawer-field input::placeholder,
+.zaptro-app-shell .zaptro-company-drawer-field textarea::placeholder,
+.zaptro-app-shell .zaptro-profile-field input::placeholder,
+.zaptro-modal-landscape-field__input::placeholder,
+.zaptro-modal-landscape-field__textarea::placeholder {
+  color: #c2c2c2;
+  font-weight: 600;
+}
+
+.zaptro-app-shell .zaptro-form-control:focus,
+.zaptro-app-shell .zaptro-company-drawer-field input:focus,
+.zaptro-app-shell .zaptro-company-drawer-field select:focus,
+.zaptro-app-shell .zaptro-company-drawer-field textarea:focus,
+.zaptro-app-shell .zaptro-profile-field input:focus,
+.zaptro-app-shell .zaptro-profile-field select:focus,
+.zaptro-app-shell .zaptro-profile-field textarea:focus,
+.zaptro-modal-landscape-field__input:focus,
+.zaptro-modal-landscape-field__select:focus,
+.zaptro-modal-landscape-field__textarea:focus {
+  border-color: rgba(0, 0, 0, 0.28);
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.zaptro-app-shell .zaptro-company-drawer-input-readonly,
+.zaptro-app-shell .zaptro-form-control:disabled,
+.zaptro-app-shell .zaptro-company-drawer-field input:disabled,
+.zaptro-app-shell .zaptro-company-drawer-field input[readonly]:not(:focus) {
+  background: #f8f8f8;
+  color: #0f172a;
+  cursor: default;
+  border-color: var(--zaptro-input-border);
+}
+
+.zaptro-company-drawer-field-hint {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #949494;
+  line-height: 1.45;
+}
+
+.zaptro-company-drawer-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--zaptro-form-stack-gap) 16px;
+}
+
+@media (max-width: 720px) {
+  .zaptro-company-drawer-field-row {
+    grid-template-columns: 1fr;
+  }
+}

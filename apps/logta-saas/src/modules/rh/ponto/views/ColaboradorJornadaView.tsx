@@ -23,9 +23,9 @@ import { usePontoConfig } from '../hooks/usePontoConfig';
 import {
   countAbsenceDays,
   enrichProfileFromSupabase,
+  findColaboradorRhProfileByRouteId,
   getPontoRecordsForCollaborator,
   isOnVacation,
-  loadColaboradorProfile,
   mergeProfileFromPontoRecord,
 } from '../colaboradorRhStorage';
 import type { ColaboradorRhProfile } from '../colaboradorRhStorage';
@@ -57,43 +57,40 @@ export function ColaboradorJornadaView({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'geral' | 'ponto' | 'ferias' | 'docs'>('geral');
 
-  const collaboratorId = decodeURIComponent(id ?? '');
+  const routeId = decodeURIComponent(id ?? '');
+  const isEquipePerfil = hubPath === '/rh/equipe';
 
   useEffect(() => {
-    if (!companyId || !collaboratorId) return;
+    if (!companyId || !routeId) return;
     refreshRecords();
-  }, [companyId, collaboratorId, refreshRecords]);
+  }, [companyId, routeId, refreshRecords]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      if (!companyId || !collaboratorId) {
+      if (!companyId || !routeId) {
         setLoading(false);
         return;
       }
 
       setLoading(true);
 
-      const pontoForColab = records.filter(
-        (r) =>
-          r.collaboratorId === collaboratorId ||
-          `colab-${r.collaboratorDocument.replace(/\D/g, '')}` === collaboratorId,
-      );
+      let rhProfile = findColaboradorRhProfileByRouteId(companyId, routeId);
+      const pontoCollabId = rhProfile?.id ?? routeId;
+      const pontoForColab = getPontoRecordsForCollaborator(records, pontoCollabId);
       const latest = pontoForColab[0];
-
-      let rhProfile = loadColaboradorProfile(companyId, collaboratorId);
 
       if (!rhProfile && latest) {
         rhProfile = mergeProfileFromPontoRecord(companyId, latest);
       }
 
-      if (!rhProfile && collaboratorId.startsWith('colab-')) {
+      if (!rhProfile && routeId.startsWith('colab-')) {
         rhProfile = {
-          id: collaboratorId,
+          id: routeId,
           companyId,
           fullName: 'Colaborador',
-          document: collaboratorId.replace('colab-', ''),
+          document: routeId.replace('colab-', ''),
           sector: 'Operação',
           role: 'Colaborador',
           absences: [],
@@ -102,18 +99,24 @@ export function ColaboradorJornadaView({
         };
       }
 
-      const isUuid = /^[0-9a-f-]{36}$/i.test(collaboratorId);
-      if (isUuid) {
-        const { data } = await supabase.from('profiles').select('*').eq('id', collaboratorId).maybeSingle();
+      const supabaseLookupId = rhProfile?.linkedProfileId || routeId;
+      const isUuid = /^[0-9a-f-]{36}$/i.test(supabaseLookupId);
+      const isProfSlug = supabaseLookupId.startsWith('prof-');
+      if (isUuid || isProfSlug) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', supabaseLookupId)
+          .maybeSingle();
         if (data && rhProfile) {
           rhProfile = enrichProfileFromSupabase(rhProfile, data);
         } else if (data) {
           rhProfile = enrichProfileFromSupabase(
             {
-              id: collaboratorId,
+              id: rhProfile?.id ?? routeId,
               companyId,
               fullName: data.full_name || data.email || 'Colaborador',
-              document: '',
+              document: rhProfile?.document ?? '',
               email: data.email,
               role: data.role,
               sector: data.department,
@@ -143,11 +146,11 @@ export function ColaboradorJornadaView({
     return () => {
       cancelled = true;
     };
-  }, [companyId, collaboratorId, records]);
+  }, [companyId, routeId, records]);
 
   const history = useMemo(
-    () => getPontoRecordsForCollaborator(records, collaboratorId),
-    [records, collaboratorId],
+    () => getPontoRecordsForCollaborator(records, profile?.id ?? routeId),
+    [records, profile?.id, routeId],
   );
 
   const faltas = profile ? countAbsenceDays(profile) : 0;
@@ -180,7 +183,7 @@ export function ColaboradorJornadaView({
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 text-left">
+    <div className="logta-page-content space-y-8 animate-in fade-in duration-500 text-left">
       <Link
         to={hubPath}
         className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 transition-colors hover:text-primary"
@@ -212,6 +215,12 @@ export function ColaboradorJornadaView({
             <p className="mt-1 text-sm font-medium text-gray-500">
               {profile.role || 'Colaborador'} · CPF/matrícula {profile.document || '—'}
             </p>
+            {isEquipePerfil ? (
+              <p className="mt-2 font-mono text-[10px] font-bold text-gray-400">
+                ID RH: {profile.id}
+                {profile.linkedProfileId ? ` · Perfil: ${profile.linkedProfileId}` : ''}
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -248,6 +257,27 @@ export function ColaboradorJornadaView({
           </button>
         ))}
       </div>
+
+      {isEquipePerfil ? (
+        <div className="flex flex-wrap gap-2">
+          <Link
+            to="/rh/jornada-ponto/controle-ponto"
+            className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-bold text-gray-700 shadow-sm hover:border-primary/30 hover:text-primary"
+          >
+            <Clock size={14} /> Controle de ponto
+          </Link>
+          {profile.linkedProfileId?.startsWith('prof-') ||
+          routeId.startsWith('prof-') ||
+          /comercial|vendas/i.test(profile.role || '') ? (
+            <Link
+              to={`/crm/comercial/${profile.linkedProfileId || routeId}`}
+              className="inline-flex items-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs font-bold text-primary shadow-sm hover:bg-primary/10"
+            >
+              Carteira comercial CRM
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
 
       {activeTab === 'geral' ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

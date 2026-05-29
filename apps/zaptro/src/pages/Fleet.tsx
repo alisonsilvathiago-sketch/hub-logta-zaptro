@@ -144,7 +144,7 @@ const Fleet: React.FC = () => {
                     <tbody>
                        {vehicles.map(v => (
                          <tr key={v.id}>
-                            <td style={styles.td}><strong>{v.model}</strong><br/><span style={{fontSize:'12px', color:'#64748b'}}>{v.plate}</span></td>
+                            <td style={styles.td}><strong>{v.model}</strong><br/><span style={{fontSize:'12px', color:'#949494'}}>{v.plate}</span></td>
                             <td style={styles.td}>{v.type}</td>
                             <td style={styles.td}>124.500 km</td>
                             <td style={styles.td}><span style={{...styles.statusBadge, ...(v.status === 'OPERACIONAL' ? {backgroundColor:'#ecfdf5', color:'#10b981'} : {backgroundColor:'#fef2f2', color:'#ef4444'})}}>{v.status}</span></td>
@@ -229,7 +229,7 @@ const Fleet: React.FC = () => {
             <div style={{padding: '24px'}}>
                <div style={{display:'flex', gap:'20px', alignItems:'center', marginBottom:'32px'}}>
                   <div style={{width:'64px', height:'64px', backgroundColor:'var(--primary-light)', borderRadius:'16px', display:'flex', alignItems:'center', justifyContent:'center'}}><Truck size={32} color="var(--primary)" /></div>
-                  <div><h2 style={{margin:0}}>{selectedVehicle.model}</h2><p style={{margin:0, color:'#64748b'}}>Placa: {selectedVehicle.plate}</p></div>
+                  <div><h2 style={{margin:0}}>{selectedVehicle.model}</h2><p style={{margin:0, color:'#949494'}}>Placa: {selectedVehicle.plate}</p></div>
                </div>
                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px'}}>
                   <div><label style={styles.labelSimple}>Localização Atual</label><strong>{selectedVehicle.location || 'Base Principal'}</strong></div>
@@ -250,16 +250,16 @@ const styles: Record<string, any> = {
   kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' },
   kpiCard: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   kpiInfo: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  kpiLabel: { fontSize: '12px', fontWeight: '700', color: '#94a3b8', margin: 0 },
+  kpiLabel: { fontSize: '12px', fontWeight: '700', color: '#949494', margin: 0 },
   tableCard: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid #e2e8f0', overflow: 'hidden' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  th: { textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', borderBottom: '1px solid #e8e8e8' },
+  th: { textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '600', color: '#949494', textTransform: 'uppercase', borderBottom: '1px solid #e8e8e8' },
   td: { padding: '16px 24px', fontSize: '14px', borderBottom: '1px solid #e8e8e8', color: '#475569' },
   btnPrimary: { padding: '10px 20px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
   actionBar: { display: 'flex', justifyContent: 'flex-end' },
-  iconBtnTable: { padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: '#f4f4f4', cursor: 'pointer', color: '#64748B' },
+  iconBtnTable: { padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: '#f4f4f4', cursor: 'pointer', color: '#949494' },
   statusBadge: { padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '600' },
-  labelSimple: { fontSize: '11px', fontWeight: '700', color: '#94a3b8', display: 'block', marginBottom: '4px' }
+  labelSimple: { fontSize: '11px', fontWeight: '700', color: '#949494', display: 'block', marginBottom: '4px' }
 };
 
 export default Fleet;

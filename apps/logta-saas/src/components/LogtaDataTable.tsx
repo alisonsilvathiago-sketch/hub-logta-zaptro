@@ -1,13 +1,11 @@
 import React from 'react';
+import { ChevronLeft, ChevronRight, Loader2, Search } from 'lucide-react';
 import {
-  ChevronLeft,
-  ChevronRight,
-  FileSpreadsheet,
-  FileText,
-  Loader2,
-  Printer,
-  Search,
-} from 'lucide-react';
+  LogtaExportExcelButton,
+  LogtaExportPdfButton,
+  LogtaExportPrintButton,
+  LogtaExportToolbar,
+} from './LogtaExportToolbar';
 import {
   downloadExcelCsv,
   downloadPdfTable,
@@ -26,7 +24,18 @@ export type LogtaDataTableProps = {
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
   filterSlot?: React.ReactNode;
+  /** Quando true, PDF/Excel/Imprimir não aparecem à direita (use renderInlineActions). */
+  hideExportActions?: boolean;
+  /** Botões de exportação/impressão na faixa da busca (ícones ao lado de Filtrar / +). */
+  renderInlineActions?: (actions: {
+    onPrint: () => void;
+    onExportPdf: () => void;
+    onExportExcel: () => void;
+    exporting: 'pdf' | 'excel' | null;
+  }) => React.ReactNode;
   toolbarExtra?: React.ReactNode;
+  /** KPIs ou conteúdo em linha própria abaixo da barra (busca, filtros, exportação). */
+  toolbarBelow?: React.ReactNode;
   loading?: boolean;
   loadingLabel?: string;
   empty?: React.ReactNode;
@@ -52,7 +61,10 @@ export function LogtaDataTable({
   onSearchChange,
   searchPlaceholder = 'Buscar…',
   filterSlot,
+  hideExportActions = false,
+  renderInlineActions,
   toolbarExtra,
+  toolbarBelow,
   loading = false,
   loadingLabel = 'Carregando…',
   empty,
@@ -108,58 +120,59 @@ export function LogtaDataTable({
   const showPagination =
     typeof page === 'number' && typeof totalPages === 'number' && totalPages > 1 && onPageChange;
 
-  return (
-    <div className={`space-y-4 ${className}`.trim()}>
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-          {showSearch && onSearchChange ? (
-            <div className="relative min-w-0 flex-1">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 sm:left-4" />
-              <input
-                type="search"
-                value={searchValue}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder={searchPlaceholder}
-                className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-10 pr-3 text-sm font-semibold text-gray-900 shadow-sm outline-none transition-all focus:border-primary/50 sm:py-4 sm:pl-12"
-              />
-            </div>
-          ) : null}
-          {filterSlot}
-          {toolbarExtra}
-        </div>
+  const hasSearch = showSearch && onSearchChange;
+  const hasToolbarActions = Boolean(filterSlot || toolbarExtra || renderInlineActions);
 
-        <div className="flex flex-wrap items-center gap-2 print:hidden">
-          <button
-            type="button"
-            disabled={!!exporting}
-            onClick={() => void runExport('pdf', 'filtered')}
-            className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-normal text-gray-700 shadow-sm transition-all hover:border-primary/30 hover:text-primary disabled:opacity-60"
-          >
-            {exporting === 'pdf' ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
-            Exportar PDF
-          </button>
-          <button
-            type="button"
-            disabled={!!exporting}
-            onClick={() => void runExport('excel', 'filtered')}
-            className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-normal text-gray-700 shadow-sm transition-all hover:border-primary/30 hover:text-primary disabled:opacity-60"
-          >
-            {exporting === 'excel' ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <FileSpreadsheet size={16} />
-            )}
-            Exportar Excel
-          </button>
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-normal text-gray-700 shadow-sm transition-all hover:border-primary/30 hover:text-primary"
-          >
-            <Printer size={16} /> Imprimir
-          </button>
+  return (
+    <div className={`space-y-6 ${className}`.trim()}>
+      <div className="flex flex-col gap-4 py-5 print:hidden">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+            {hasSearch ? (
+              <div className="relative min-w-0 flex-1">
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 sm:left-4" />
+                <input
+                  type="search"
+                  value={searchValue}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-10 pr-3 text-sm font-semibold text-gray-900 shadow-sm outline-none transition-all focus:border-primary/50 sm:py-4 sm:pl-12"
+                />
+              </div>
+            ) : null}
+            {hasToolbarActions || renderInlineActions ? (
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                {filterSlot}
+                {renderInlineActions?.({
+                  onPrint: handlePrint,
+                  onExportPdf: () => void runExport('pdf', 'filtered'),
+                  onExportExcel: () => void runExport('excel', 'filtered'),
+                  exporting,
+                })}
+                {toolbarExtra}
+              </div>
+            ) : null}
+          </div>
+
+          {!hideExportActions ? (
+            <LogtaExportToolbar>
+              <LogtaExportPrintButton onClick={handlePrint} />
+              <LogtaExportPdfButton
+                disabled={!!exporting}
+                loading={exporting === 'pdf'}
+                onClick={() => void runExport('pdf', 'filtered')}
+              />
+              <LogtaExportExcelButton
+                disabled={!!exporting}
+                loading={exporting === 'excel'}
+                onClick={() => void runExport('excel', 'filtered')}
+              />
+            </LogtaExportToolbar>
+          ) : null}
         </div>
       </div>
+
+      {toolbarBelow ? <div className="print:hidden">{toolbarBelow}</div> : null}
 
       {selectedCount > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 print:hidden">

@@ -271,7 +271,7 @@ export function buildFinanceiroAlerts(input: {
       message: `Lucro mensal abaixo da meta operacional (${margem.toFixed(1)}% de margem).`,
       priority: margem < 8 ? 'critical' : 'high',
       category: 'ia',
-      actionPath: '/financeiro/assistente?tab=lucro',
+      actionPath: '/financeiro/dashboard',
       actionLabel: 'Simular lucro',
       impacto: `Margem: ${margem.toFixed(1)}%`,
       recomendacao: 'Meta transportadora: 12–18% de margem líquida.',
@@ -383,7 +383,7 @@ export function buildFinanceiroAlerts(input: {
       message: 'Receita prevista para o período recente caiu em relação às saídas.',
       priority: 'medium',
       category: 'ia',
-      actionPath: '/financeiro/assistente?tab=projecao',
+      actionPath: '/financeiro/fluxo',
       actionLabel: 'Projeção IA',
       createdAt: now,
     });
@@ -408,7 +408,6 @@ export function buildFinanceiroIaInsights(
       type: 'risk',
       actions: [
         { label: 'Fluxo de caixa', path: '/financeiro/fluxo' },
-        { label: 'Projeção IA', path: '/financeiro/assistente?tab=projecao' },
       ],
     });
   }
@@ -431,7 +430,7 @@ export function buildFinanceiroIaInsights(
       title: 'Crescimento financeiro',
       description: `Margem operacional em ${pct}%. Oportunidade de reinvestir em frota ou expandir rotas rentáveis.`,
       type: 'opportunity',
-      actions: [{ label: 'Simulador operacional', path: '/financeiro/assistente?tab=operacional' }],
+      actions: [{ label: 'Painel operacional', path: '/financeiro/operacional' }],
     });
   }
 
@@ -452,7 +451,7 @@ export function buildFinanceiroIaInsights(
       title: 'Operação financeira estável',
       description: 'Nenhuma anomalia crítica detectada. Continue registrando lançamentos para maior precisão da IA.',
       type: 'info',
-      actions: [{ label: 'Assistente IA', path: '/financeiro/assistente' }],
+      actions: [{ label: 'Central financeira', path: '/financeiro/central' }],
     });
   }
 

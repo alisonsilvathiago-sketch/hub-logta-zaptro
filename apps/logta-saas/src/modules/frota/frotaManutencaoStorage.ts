@@ -48,11 +48,45 @@ export function normalizePlaca(p?: string) {
   return (p || '').toUpperCase().replace(/\s/g, '');
 }
 
+const MOCK_INITIAL_MANUTENCOES: Omit<FrotaManutencaoRecord, 'companyId'>[] = [
+  {
+    id: 'manut-initial-trk204',
+    placa: 'TRK-204',
+    modelo: 'Volvo FH 540',
+    tipo: 'revisao',
+    valor: 4250,
+    responsavel: 'Pedro Almeida',
+    motivo: 'Revisão geral de 40.000 km de fábrica',
+    observacao: 'Troca de lubrificantes do motor, substituição do filtro de óleo, filtro de ar do motor, filtro de combustível e filtro do separador de água (racor). Regulagem eletrônica de válvulas e diagnóstico geral preventivo via scanner de concessionária Volvo.',
+    realizadoEm: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    financeTransactionId: 'tx-trk204-rev',
+  },
+  {
+    id: 'manut-initial-bra2l22',
+    placa: 'BRA-2L22',
+    modelo: 'Scania R450',
+    tipo: 'troca_pneu',
+    valor: 5800,
+    responsavel: 'Carlos Henrique',
+    motivo: 'Troca de pneus do eixo direcional (dianteiro)',
+    observacao: 'Substituição dos dois pneus dianteiros por novos Michelin 295/80 R22.5 X Line Energy Z. Realizado o alinhamento 3D das rodas a laser, balanceamento fino e calibração com nitrogênio.',
+    realizadoEm: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    financeTransactionId: 'tx-bra2l22-pneu',
+  }
+];
+
 export function loadFrotaManutencoes(companyId: string): FrotaManutencaoRecord[] {
   if (typeof window === 'undefined' || !companyId) return [];
   try {
     const raw = localStorage.getItem(storageKey(companyId));
-    const list = JSON.parse(raw ?? '[]') as FrotaManutencaoRecord[];
+    if (!raw) {
+      const initial = MOCK_INITIAL_MANUTENCOES.map(item => ({ ...item, companyId })) as FrotaManutencaoRecord[];
+      localStorage.setItem(storageKey(companyId), JSON.stringify(initial));
+      return initial;
+    }
+    const list = JSON.parse(raw) as FrotaManutencaoRecord[];
     return list.sort((a, b) => new Date(b.realizadoEm).getTime() - new Date(a.realizadoEm).getTime());
   } catch {
     return [];

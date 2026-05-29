@@ -21,7 +21,7 @@ export default defineConfig({
     strictPort: true,
     origin: 'http://localhost:5173',
     /** Abre o navegador em http://localhost:5173 ao rodar npm run dev. */
-    open: 'http://localhost:5173/',
+    open: 'http://localhost:5173/login',
     hmr: {
       host: 'localhost',
       protocol: 'ws',

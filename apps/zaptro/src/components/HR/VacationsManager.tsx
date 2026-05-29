@@ -51,18 +51,15 @@ const VacationsManager: React.FC = () => {
     if (!profile?.company_id) return;
     setLoading(true);
     try {
-      // Mock for development OR fetch
-      const mockVacations: Vacation[] = [
-        { id: '1', employee_id: '101', employee_name: 'Ana Costa', position: 'Gerente Comercial', start_date: '2026-05-10', end_date: '2026-05-30', days: 20, status: 'AGENDADA', created_at: '2026-01-10' },
-        { id: '2', employee_id: '102', employee_name: 'Thiago Silva', position: 'Motorista Jr', start_date: '2026-04-01', end_date: '2026-04-15', days: 15, status: 'EM_ANDAMENTO', created_at: '2026-01-15' },
-        { id: '3', employee_id: '103', employee_name: 'Carla Nunes', position: 'Analista de RH', start_date: '2026-06-15', end_date: '2026-07-15', days: 30, status: 'PENDENTE', created_at: '2026-02-10' },
-        { id: '4', employee_id: '104', employee_name: 'Marcos Braz', position: 'Supervisor Frota', start_date: '2026-03-01', end_date: '2026-03-10', days: 9, status: 'FINALIZADA', created_at: '2026-01-05' }
-      ];
-
-      // If NOT admin, filter to see only own? 
-      // This part depends on how users are linked to employees.
-      // For now, I'll assume we show based on identity if not admin.
-      setVacations(isAdmin ? mockVacations : mockVacations.filter(v => v.employee_name === profile.full_name));
+      const { data, error } = await supabase
+        .from('vacations')
+        .select('*');
+      
+      if (data) {
+        setVacations(isAdmin ? data : data.filter((v: any) => v.employee_name === profile.full_name));
+      } else {
+        setVacations([]);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -123,20 +120,20 @@ const VacationsManager: React.FC = () => {
   const stats = {
     total_on: vacations.filter(v => v.status === 'EM_ANDAMENTO').length,
     scheduled: vacations.filter(v => v.status === 'AGENDADA').length,
-    expired: 2, // Mock expired logic
+    expired: 0,
     in_progress: vacations.filter(v => v.status === 'EM_ANDAMENTO').length
   };
 
   const chartData = [
-    { name: 'Jan', v: 4 }, { name: 'Fev', v: 3 }, { name: 'Mar', v: 8 },
-    { name: 'Abr', v: 12 }, { name: 'Mai', v: 15 }, { name: 'Jun', v: 10 }
+    { name: 'Jan', v: 0 }, { name: 'Fev', v: 0 }, { name: 'Mar', v: 0 },
+    { name: 'Abr', v: 0 }, { name: 'Mai', v: 0 }, { name: 'Jun', v: 0 }
   ];
 
-  const statusPie = [
-    { name: 'Aprovadas', value: 12, color: '#10b981' },
-    { name: 'Pendentes', value: 5, color: '#f59e0b' },
-    { name: 'Canceladas', value: 2, color: '#ef4444' }
-  ];
+  const statusPie = vacations.length > 0 ? [
+    { name: 'Aprovadas', value: vacations.filter(v => v.status === 'APROVADA').length, color: '#10b981' },
+    { name: 'Pendentes', value: vacations.filter(v => v.status === 'PENDENTE').length, color: '#f59e0b' },
+    { name: 'Canceladas', value: vacations.filter(v => v.status === 'CANCELADA').length, color: '#ef4444' }
+  ].filter(i => i.value > 0) : [{ name: 'Sem Dados', value: 1, color: '#e2e8f0' }];
 
   const styles = {
     section: { display: 'flex', flexDirection: 'column' as const, gap: '32px' },
@@ -152,7 +149,7 @@ const VacationsManager: React.FC = () => {
     searchBox: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 20px', backgroundColor: 'white', borderRadius: '16px', border: '1px solid #E2E8F0', width: '350px' },
     
     table: { width: '100%', borderCollapse: 'separate' as const, borderSpacing: '0 8px' },
-    th: { textAlign: 'left' as const, padding: '12px 16px', fontSize: '11px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase' as const },
+    th: { textAlign: 'left' as const, padding: '12px 16px', fontSize: '11px', fontWeight: '600', color: '#949494', textTransform: 'uppercase' as const },
     tr: { backgroundColor: 'white', border: '1px solid #e8e8e8', borderRadius: '16px' },
     td: { padding: '16px', fontSize: '14px', fontWeight: '600' },
     
@@ -161,17 +158,17 @@ const VacationsManager: React.FC = () => {
         'EM_ANDAMENTO': { bg: '#ecfdf5', text: '#10b981' },
         'AGENDADA': { bg: 'rgba(217, 255, 0, 0.12)', text: '#D9FF00' },
         'PENDENTE': { bg: '#fff7ed', text: '#f97316' },
-        'FINALIZADA': { bg: '#f4f4f4', text: '#64748b' },
+        'FINALIZADA': { bg: '#f4f4f4', text: '#949494' },
         'CANCELADA': { bg: '#fef2f2', text: '#ef4444' }
       };
-      const c = colors[status] || { bg: '#f1f5f9', text: '#94a3b8' };
+      const c = colors[status] || { bg: '#f1f5f9', text: '#949494' };
       return { backgroundColor: c.bg, color: c.text, padding: '6px 12px', borderRadius: '8px', fontSize: '10px', fontWeight: '600' };
     },
 
     primaryBtn: { padding: '12px 24px', borderRadius: '14px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
     calendarGrid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginTop: '20px' },
     day: { aspectRatio: '1/1', border: '1px solid #e8e8e8', borderRadius: '12px', padding: '8px', position: 'relative' as const },
-    dayLabel: { fontSize: '12px', fontWeight: '600', color: '#94a3b8' }
+    dayLabel: { fontSize: '12px', fontWeight: '600', color: '#949494' }
   };
 
   const renderDashboard = () => (
@@ -179,19 +176,19 @@ const VacationsManager: React.FC = () => {
        <div style={styles.kpiRow}>
           <div style={styles.kpiCard}>
              <div style={{...styles.kpiIcon, backgroundColor: '#ecfdf5', color: '#10b981'}}><Users size={24} /></div>
-             <div><p style={{fontSize: '11px', fontWeight: '600', color: '#94a3b8', margin: 0}}>Atualmente de Férias</p><p style={{fontSize: '28px', fontWeight: '700', margin: 0}}>{stats.total_on}</p></div>
+             <div><p style={{fontSize: '11px', fontWeight: '600', color: '#949494', margin: 0}}>Atualmente de Férias</p><p style={{fontSize: '28px', fontWeight: '700', margin: 0}}>{stats.total_on}</p></div>
           </div>
           <div style={styles.kpiCard}>
              <div style={{...styles.kpiIcon, backgroundColor: 'rgba(217, 255, 0, 0.12)', color: '#D9FF00'}}><Calendar size={24} /></div>
-             <div><p style={{fontSize: '11px', fontWeight: '600', color: '#94a3b8', margin: 0}}>Próximas Férias</p><p style={{fontSize: '28px', fontWeight: '700', margin: 0}}>{stats.scheduled}</p></div>
+             <div><p style={{fontSize: '11px', fontWeight: '600', color: '#949494', margin: 0}}>Próximas Férias</p><p style={{fontSize: '28px', fontWeight: '700', margin: 0}}>{stats.scheduled}</p></div>
           </div>
           <div style={styles.kpiCard}>
              <div style={{...styles.kpiIcon, backgroundColor: '#fef2f2', color: '#ef4444'}}><AlertCircle size={24} /></div>
-             <div><p style={{fontSize: '11px', fontWeight: '600', color: '#94a3b8', margin: 0}}>Inconsistências (Vencidas)</p><p style={{fontSize: '28px', fontWeight: '700', margin: 0}}>{stats.expired}</p></div>
+             <div><p style={{fontSize: '11px', fontWeight: '600', color: '#949494', margin: 0}}>Inconsistências (Vencidas)</p><p style={{fontSize: '28px', fontWeight: '700', margin: 0}}>{stats.expired}</p></div>
           </div>
           <div style={styles.kpiCard}>
              <div style={{...styles.kpiIcon, backgroundColor: 'rgba(217, 255, 0, 0.18)', color: 'var(--primary)'}}><Clock size={24} /></div>
-             <div><p style={{fontSize: '11px', fontWeight: '600', color: '#94a3b8', margin: 0}}>Solicitações Pendentes</p><p style={{fontSize: '28px', fontWeight: '700', margin: 0}}>5</p></div>
+             <div><p style={{fontSize: '11px', fontWeight: '600', color: '#949494', margin: 0}}>Solicitações Pendentes</p><p style={{fontSize: '28px', fontWeight: '700', margin: 0}}>{vacations.filter(v => v.status === 'PENDENTE').length}</p></div>
           </div>
        </div>
 
@@ -227,7 +224,7 @@ const VacationsManager: React.FC = () => {
                      <div key={s.name} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                         <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                            <div style={{width: '8px', height: '8px', borderRadius: '50%', backgroundColor: s.color}} />
-                           <span style={{fontSize: '13px', fontWeight: '700', color: '#64748b'}}>{s.name}</span>
+                           <span style={{fontSize: '13px', fontWeight: '700', color: '#949494'}}>{s.name}</span>
                         </div>
                         <span style={{fontWeight: '600'}}>{s.value}</span>
                      </div>
@@ -243,7 +240,7 @@ const VacationsManager: React.FC = () => {
     <div style={styles.section}>
        <div style={styles.actionRow}>
           <div style={styles.searchBox}>
-             <Search size={18} color="#94a3b8" />
+             <Search size={18} color="#949494" />
              <input placeholder="Buscar colaborador..." style={{border: 'none', background: 'none', outline: 'none', width: '100%'}} />
           </div>
           <div style={{display: 'flex', gap: '12px'}}>
@@ -271,7 +268,7 @@ const VacationsManager: React.FC = () => {
                       <td style={{...styles.td, borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px'}}>
                          <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
                             <div style={{width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#ebebeb', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><User size={16} color="var(--primary)" /></div>
-                            <div><p style={{margin: 0, fontWeight: '600'}}>{v.employee_name}</p><p style={{margin: 0, fontSize: '11px', color: '#94a3b8'}}>{v.position}</p></div>
+                            <div><p style={{margin: 0, fontWeight: '600'}}>{v.employee_name}</p><p style={{margin: 0, fontSize: '11px', color: '#949494'}}>{v.position}</p></div>
                          </div>
                       </td>
                       <td style={styles.td}>
@@ -293,7 +290,7 @@ const VacationsManager: React.FC = () => {
                                  <button onClick={() => handleReject(v.id)} style={{padding: '8px', borderRadius: '10px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer'}} title="Rejeitar"><X size={16} /></button>
                                </>
                             )}
-                            <button onClick={() => { setSelectedVacation(v); setIsDetailOpen(true); }} style={{padding: '8px', borderRadius: '10px', border: '1px solid #e2e8f0', color: '#64748b', backgroundColor: 'transparent', cursor: 'pointer'}}><FileText size={16} /></button>
+                            <button onClick={() => { setSelectedVacation(v); setIsDetailOpen(true); }} style={{padding: '8px', borderRadius: '10px', border: '1px solid #e2e8f0', color: '#949494', backgroundColor: 'transparent', cursor: 'pointer'}}><FileText size={16} /></button>
                          </div>
                       </td>
                    </tr>
@@ -314,14 +311,24 @@ const VacationsManager: React.FC = () => {
           </div>
        </div>
        <div style={styles.calendarGrid}>
-          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map(d => <div key={d} style={{textAlign: 'center', fontSize: '11px', fontWeight: '700', color: '#94a3b8', padding: '10px'}}>{d}</div>)}
-          {Array.from({length: 30}).map((_, i) => (
-             <div key={i} style={styles.day}>
-                <span style={styles.dayLabel}>{i + 1}</span>
-                {i === 10 && <div style={{marginTop: '4px', padding: '4px', backgroundColor: 'rgba(217, 255, 0, 0.1)', color: '#D9FF00', fontSize: '10px', fontWeight: '600', borderRadius: '4px'}}>Ana Costa</div>}
-                {i === 15 && <div style={{marginTop: '4px', padding: '4px', backgroundColor: 'rgba(217, 255, 0, 0.1)', color: '#D9FF00', fontSize: '10px', fontWeight: '600', borderRadius: '4px'}}>Thiago Silva</div>}
-             </div>
-          ))}
+          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map(d => <div key={d} style={{textAlign: 'center', fontSize: '11px', fontWeight: '700', color: '#949494', padding: '10px'}}>{d}</div>)}
+          {Array.from({length: 30}).map((_, i) => {
+             const dayVacations = vacations.filter(v => {
+               const start = new Date(v.start_date).getDate();
+               const end = new Date(v.end_date).getDate();
+               return i + 1 >= start && i + 1 <= end && v.status === 'APROVADA';
+             });
+             return (
+                <div key={i} style={styles.day}>
+                   <span style={styles.dayLabel}>{i + 1}</span>
+                   {dayVacations.map((dv, idx) => (
+                     <div key={idx} style={{marginTop: '4px', padding: '4px', backgroundColor: 'rgba(217, 255, 0, 0.1)', color: '#D9FF00', fontSize: '10px', fontWeight: '600', borderRadius: '4px'}}>
+                       {dv.employee_name}
+                     </div>
+                   ))}
+                </div>
+             );
+          })}
        </div>
     </div>
   );
@@ -340,7 +347,7 @@ const VacationsManager: React.FC = () => {
                 onClick={() => setActiveView(tab.id as any)}
                 style={{
                    padding: '10px 20px', border: 'none', borderRadius: '16px', background: activeView === tab.id ? 'white' : 'none', cursor: 'pointer',
-                   color: activeView === tab.id ? 'var(--primary)' : '#94a3b8',
+                   color: activeView === tab.id ? 'var(--primary)' : '#949494',
                    fontWeight: '600', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px',
                    boxShadow: activeView === tab.id ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none',
                    transition: 'all 0.3s'
@@ -364,7 +371,7 @@ const VacationsManager: React.FC = () => {
        >
           <div style={{display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px'}}>
              <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
-                <label style={{fontSize: '13px', fontWeight: '600', color: '#64748b'}}>Seleção de Colaborador</label>
+                <label style={{fontSize: '13px', fontWeight: '600', color: '#949494'}}>Seleção de Colaborador</label>
                 <select 
                    style={{padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none', width: '100%'}}
                    value={newRequest.employee_id}
@@ -377,7 +384,7 @@ const VacationsManager: React.FC = () => {
 
              <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px'}}>
                 <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
-                   <label style={{fontSize: '13px', fontWeight: '600', color: '#64748b'}}>Data Início</label>
+                   <label style={{fontSize: '13px', fontWeight: '600', color: '#949494'}}>Data Início</label>
                    <input 
                       type="date" 
                       style={{padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none'}} 
@@ -392,7 +399,7 @@ const VacationsManager: React.FC = () => {
                    />
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
-                   <label style={{fontSize: '13px', fontWeight: '600', color: '#64748b'}}>Data Fim</label>
+                   <label style={{fontSize: '13px', fontWeight: '600', color: '#949494'}}>Data Fim</label>
                    <input 
                       type="date" 
                       style={{padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none'}} 
@@ -407,13 +414,13 @@ const VacationsManager: React.FC = () => {
                    />
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
-                   <label style={{fontSize: '13px', fontWeight: '600', color: '#64748b'}}>Total Dias</label>
+                   <label style={{fontSize: '13px', fontWeight: '600', color: '#949494'}}>Total Dias</label>
                    <div style={{padding: '14px', borderRadius: '12px', backgroundColor: '#f4f4f4', border: '1px solid #e2e8f0', fontWeight: '700', textAlign: 'center'}}>{newRequest.days}</div>
                 </div>
              </div>
 
              <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
-                <label style={{fontSize: '13px', fontWeight: '600', color: '#64748b'}}>Observação Interna</label>
+                <label style={{fontSize: '13px', fontWeight: '600', color: '#949494'}}>Observação Interna</label>
                 <textarea 
                    style={{padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none', height: '100px'}} 
                    placeholder="Ex: Férias relativas ao período aquisitivo 2024/2025"
@@ -437,15 +444,15 @@ const VacationsManager: React.FC = () => {
           {selectedVacation && (
              <div style={{padding: '10px'}}>
                 <div style={{backgroundColor: '#f4f4f4', padding: '24px', borderRadius: '24px', border: '1px solid #e8e8e8', marginBottom: '24px'}}>
-                   <p style={{fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px'}}>STATUS ATUAL</p>
+                   <p style={{fontSize: '11px', fontWeight: '700', color: '#949494', textTransform: 'uppercase', marginBottom: '8px'}}>STATUS ATUAL</p>
                    <span style={styles.statusBadge(selectedVacation.status)}>{selectedVacation.status}</span>
                 </div>
                 
                 <div style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
-                   <div style={{display: 'flex', justifyContent: 'space-between'}}><span style={{fontWeight: '700', color: '#64748b'}}>Colaborador</span><span style={{fontWeight: '600'}}>{selectedVacation.employee_name}</span></div>
-                   <div style={{display: 'flex', justifyContent: 'space-between'}}><span style={{fontWeight: '700', color: '#64748b'}}>Início</span><span style={{fontWeight: '600'}}>{new Date(selectedVacation.start_date).toLocaleDateString()}</span></div>
-                   <div style={{display: 'flex', justifyContent: 'space-between'}}><span style={{fontWeight: '700', color: '#64748b'}}>Término</span><span style={{fontWeight: '600'}}>{new Date(selectedVacation.end_date).toLocaleDateString()}</span></div>
-                   <div style={{display: 'flex', justifyContent: 'space-between'}}><span style={{fontWeight: '700', color: '#64748b'}}>Total de Dias</span><span style={{fontWeight: '600'}}>{selectedVacation.days} Dias</span></div>
+                   <div style={{display: 'flex', justifyContent: 'space-between'}}><span style={{fontWeight: '700', color: '#949494'}}>Colaborador</span><span style={{fontWeight: '600'}}>{selectedVacation.employee_name}</span></div>
+                   <div style={{display: 'flex', justifyContent: 'space-between'}}><span style={{fontWeight: '700', color: '#949494'}}>Início</span><span style={{fontWeight: '600'}}>{new Date(selectedVacation.start_date).toLocaleDateString()}</span></div>
+                   <div style={{display: 'flex', justifyContent: 'space-between'}}><span style={{fontWeight: '700', color: '#949494'}}>Término</span><span style={{fontWeight: '600'}}>{new Date(selectedVacation.end_date).toLocaleDateString()}</span></div>
+                   <div style={{display: 'flex', justifyContent: 'space-between'}}><span style={{fontWeight: '700', color: '#949494'}}>Total de Dias</span><span style={{fontWeight: '600'}}>{selectedVacation.days} Dias</span></div>
                 </div>
 
                 <div style={{marginTop: '32px', display: 'flex', gap: '12px'}}>

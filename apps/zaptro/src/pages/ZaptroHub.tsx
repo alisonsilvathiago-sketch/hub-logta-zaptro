@@ -24,7 +24,7 @@ const ZaptroHub: React.FC = () => {
     bg: isStandalone ? '#051c0f' : '#FFFFFF',
     card: isStandalone ? 'rgba(255, 255, 255, 0.03)' : '#ffffff',
     text: isStandalone ? '#ffffff' : '#1e293b',
-    subText: isStandalone ? '#9dffc8' : '#64748b',
+    subText: isStandalone ? '#9dffc8' : '#949494',
     primary: '#D2FF00',
     border: isStandalone ? 'rgba(210, 255, 0, 0.1)' : '#e2e8f0',
     inputBg: isStandalone ? 'rgba(0,0,0,0.2)' : '#f1f5f9',

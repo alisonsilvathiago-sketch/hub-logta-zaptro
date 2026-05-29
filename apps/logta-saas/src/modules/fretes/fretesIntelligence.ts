@@ -214,8 +214,8 @@ export function buildFretesIaInsights(shipments: ShipmentNormalized[], alerts: F
       id: 'ia-rota',
       title: 'Otimização de rotas',
       description: 'IA identificou oportunidade de consolidar cargas na mesma região para reduzir custo/km.',
-      type: 'opportunity',
-      actions: [{ label: 'Assistente IA', path: '/financeiro/assistente?tab=frete' }],
+      type: 'info',
+      actions: [{ label: 'Análise de margem', path: '/financeiro/dashboard' }],
     });
   }
 

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { resolveDemoCompanyId } from '../../../../lib/seed';
 import {
   appendPontoRecord,
   loadPontoConfig,
@@ -13,18 +14,18 @@ import {
 import type { PontoConfig, PontoRecord } from '../types';
 
 export function usePontoConfig(companyId: string | undefined) {
+  const cid = resolveDemoCompanyId(companyId);
   const [config, setConfig] = useState<PontoConfig | null>(null);
   const [records, setRecords] = useState<PontoRecord[]>([]);
 
   useEffect(() => {
-    if (!companyId) return;
-    setConfig(loadPontoConfig(companyId));
-    setRecords(loadPontoRecords(companyId));
-  }, [companyId]);
+    setConfig(loadPontoConfig(cid));
+    setRecords(loadPontoRecords(cid));
+  }, [cid]);
 
   const persistConfig = useCallback(
     (patch: Partial<PontoConfig> | ((prev: PontoConfig) => PontoConfig)) => {
-      if (!companyId || !config) return;
+      if (!config) return;
       const next =
         typeof patch === 'function'
           ? savePontoConfig(patch(config))
@@ -32,21 +33,35 @@ export function usePontoConfig(companyId: string | undefined) {
       setConfig(next);
       return next;
     },
-    [companyId, config],
+    [config],
   );
 
+  const activateConfig = useCallback(() => {
+    if (!config) return;
+    const mode = config.registrationMode;
+    return persistConfig({
+      isActive: true,
+      activatedAt: new Date().toISOString(),
+      qrEnabled: mode === 'qr' || mode === 'both',
+      linkEnabled: mode === 'link' || mode === 'both',
+    });
+  }, [config, persistConfig]);
+
+  const deactivateConfig = useCallback(() => {
+    if (!config) return;
+    return persistConfig({ isActive: false });
+  }, [config, persistConfig]);
+
   const refreshRecords = useCallback(() => {
-    if (!companyId) return;
-    setRecords(loadPontoRecords(companyId));
-  }, [companyId]);
+    setRecords(loadPontoRecords(cid));
+  }, [cid]);
 
   const addRecord = useCallback(
     (record: PontoRecord) => {
-      if (!companyId) return;
-      const next = appendPontoRecord(companyId, record);
+      const next = appendPontoRecord(cid, record);
       setRecords(next);
     },
-    [companyId],
+    [cid],
   );
 
   const alerts = useMemo(
@@ -66,8 +81,11 @@ export function usePontoConfig(companyId: string | undefined) {
     insights,
     stats,
     persistConfig,
+    activateConfig,
+    deactivateConfig,
     refreshRecords,
     addRecord,
     setConfig,
+    companyId: cid,
   };
 }

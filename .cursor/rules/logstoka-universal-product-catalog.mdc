@@ -1,0 +1,56 @@
+---
+description: LogStoka — cadastro universal de produtos (PIM) compatível com marketplaces e ERPs
+globs: apps/logstoka/**
+alwaysApply: false
+---
+
+# PADRÃO UNIVERSAL DE CADASTRO DE PRODUTOS
+
+LogStoka = **fonte da verdade**. Cadastro no padrão **Bling / Tiny / Anymarket / Tray** (cadastro mestre + adaptadores por canal).
+
+## Obrigatório
+
+- **SKU mestre** único (mesmo código em todos os canais)
+- **Foto principal** obrigatória (JPG/PNG/WEBP, mín. 1000×1000 recomendado, fundo branco preferencial)
+- **EAN/GTIN** (código de barras) quando aplicável
+- **NCM**, peso e dimensões para frete fiscal
+- Descrição curta + completa (HTML opcional para canais que aceitam)
+
+## Campos mestre (modelo interno)
+
+Identificação: SKU, código interno, EAN, nome, nome curto, marca, categoria, NCM, origem, unidade  
+Descrição: curta, completa, HTML, specs/atributos dinâmicos  
+Preços: custo, venda, promocional, atacado  
+Estoque: atual/reservado/disponível, mín/máx (mestre = WMS)  
+Logística: peso (kg), altura/largura/comprimento (cm)  
+Mídia: imagem principal + galeria (`extra_images`)  
+Variações: produto pai/filho (cor, tamanho, grade) — futuro  
+Marketplace Data: ID anúncio, SKU canal, status, link, última sync por canal
+
+## Imagens (padrão de mercado)
+
+| Canal | Requisito típico |
+|-------|------------------|
+| Mercado Livre | JPG/PNG, min 500px, ideal 1200×1200, fundo branco recomendado |
+| Shopee | 1:1, min 800×800, até 9 imagens |
+| Amazon | min 1000px lado maior, fundo branco produto principal |
+| TikTok Shop | 600×600 min, 1:1 |
+| Magalu | 1000×1000 recomendado |
+
+Implementação: `universalProductCatalog.ts` · UI: `ProductsPage` / modal universal.
+
+## Tabela de produtos
+
+Exibir: **foto thumb**, SKU, EAN, nome, categoria, estoque, preço, marketplaces vinculados, status.
+
+## Ao salvar
+
+1. Validar foto + SKU + nome + campos logísticos mínimos  
+2. Persistir cadastro mestre  
+3. Se marketplaces selecionados → enfileirar publicação/sync (fila de integração)
+
+## Referências
+
+- Catálogo mestre + links: `logstoka-master-catalog-pim-hub.mdc`
+- Integrações/webhooks: `logstoka-integrations-webhooks-hub.mdc`
+- Tipos: `src/lib/universalProductCatalog.ts`, `src/types/index.ts`

@@ -182,7 +182,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   subtitle: {
     fontSize: '15px',
-    color: '#64748B',
+    color: '#949494',
     fontWeight: 600,
     lineHeight: 1.6,
     margin: '0 0 32px 0',
@@ -198,7 +198,7 @@ const styles: Record<string, React.CSSProperties> = {
   errorLabel: {
     fontSize: '11px',
     fontWeight: 700,
-    color: '#94A3B8',
+    color: '#949494',
     letterSpacing: '1px',
     marginBottom: '8px',
   },
@@ -238,7 +238,7 @@ const styles: Record<string, React.CSSProperties> = {
     overflowY: 'auto',
     margin: 0,
     fontSize: '12px',
-    color: '#94A3B8',
+    color: '#949494',
     fontFamily: 'monospace',
     whiteSpace: 'pre-wrap',
   },

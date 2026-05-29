@@ -356,7 +356,7 @@ const Checkout: React.FC = () => {
                 <div style={styles.generatedContainer}>
                   {generatedData.qrCode && (
                     <div style={{textAlign: 'center'}}>
-                      <p style={{fontSize: '13px', color: '#64748b', marginBottom: '12px'}}>Escaneie o QR Code abaixo:</p>
+                      <p style={{fontSize: '13px', color: '#949494', marginBottom: '12px'}}>Escaneie o QR Code abaixo:</p>
                       <img src={generatedData.qrCode} style={{width: '200px', margin: '0 auto'}} />
                     </div>
                   )}
@@ -616,7 +616,7 @@ const styles: Record<string, any> = {
   moreBtn: {
     background: 'none',
     border: 'none',
-    color: '#94a3b8',
+    color: '#949494',
     cursor: 'pointer',
     fontSize: '20px'
   },
@@ -680,7 +680,7 @@ const styles: Record<string, any> = {
   },
   inputLabel: {
     fontSize: '13px',
-    color: '#64748b',
+    color: '#949494',
     marginBottom: '8px'
   },
   inputField: {
@@ -711,7 +711,7 @@ const styles: Record<string, any> = {
   },
   cardLastDigits: {
     fontSize: '14px',
-    color: '#64748b',
+    color: '#949494',
     marginLeft: 'auto',
     marginRight: '12px'
   },
@@ -731,7 +731,7 @@ const styles: Record<string, any> = {
   },
   legalText: {
     fontSize: '12px',
-    color: '#64748b',
+    color: '#949494',
     lineHeight: '1.6',
     textAlign: 'center',
     marginBottom: '24px'
@@ -752,7 +752,7 @@ const styles: Record<string, any> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     fontSize: '13px',
-    color: '#94a3b8'
+    color: '#949494'
   },
   footerLinks: {
     display: 'flex',

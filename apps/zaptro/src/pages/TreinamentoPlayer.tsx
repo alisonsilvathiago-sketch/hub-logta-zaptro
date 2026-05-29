@@ -251,7 +251,7 @@ const TreinamentoPlayer: React.FC = () => {
                           ))}
                           {comments.length === 0 && (
                             <div style={styles.emptyTab} className="animate-fade-in">
-                               <MessageSquare size={40} color="#334155" />
+                               <MessageSquare size={40} color="#6B6B6B" />
                                <p>Seja o primeiro a comentar nesta aula!</p>
                             </div>
                           )}
@@ -273,7 +273,7 @@ const TreinamentoPlayer: React.FC = () => {
                           </div>
                         ) : (
                           <div style={styles.emptyTab}>
-                             <FileText size={48} color="#334155" />
+                             <FileText size={48} color="#6B6B6B" />
                              <p>Nenhum material disponível para esta aula.</p>
                           </div>
                         )}
@@ -315,12 +315,12 @@ const TreinamentoPlayer: React.FC = () => {
 
 const styles = {
   container: { height: '100vh', display: 'flex', flexDirection: 'column' as const, backgroundColor: '#0F172A', color: 'white' },
-  loading: { padding: '100px', textAlign: 'center' as const, color: '#94A3B8', fontSize: '18px' },
-  header: { padding: '16px 32px', backgroundColor: '#1E293B', borderBottom: '1px solid #334155', display: 'flex', alignItems: 'center', gap: '24px' },
-  backBtn: { background: 'none', border: 'none', color: '#94A3B8', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' },
+  loading: { padding: '100px', textAlign: 'center' as const, color: '#949494', fontSize: '18px' },
+  header: { padding: '16px 32px', backgroundColor: '#1E293B', borderBottom: '1px solid #6B6B6B', display: 'flex', alignItems: 'center', gap: '24px' },
+  backBtn: { background: 'none', border: 'none', color: '#949494', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' },
   sidebarHeader: { flex: 1, display: 'flex', flexDirection: 'column' as const, gap: '4px' },
-  courseTitle: { margin: 0, fontSize: '13px', color: '#94A3B8', fontWeight: '600', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
-  progressContainer: { width: '200px', height: '6px', backgroundColor: '#334155', borderRadius: '3px', marginTop: '4px', overflow: 'hidden' },
+  courseTitle: { margin: 0, fontSize: '13px', color: '#949494', fontWeight: '600', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
+  progressContainer: { width: '200px', height: '6px', backgroundColor: '#6B6B6B', borderRadius: '3px', marginTop: '4px', overflow: 'hidden' },
   progressBar: { height: '100%', backgroundColor: '#10b981', transition: 'width 0.3s ease' },
   progressText: { margin: 0, fontSize: '11px', fontWeight: '700', color: '#CBD5E1' },
   certBtn: { width: 'fit-content', marginTop: '8px', padding: '6px 14px', backgroundColor: 'var(--primary)', color: 'white', borderRadius: '8px', border: 'none', fontWeight: '600', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', animation: 'pulse 2s infinite' },
@@ -329,54 +329,54 @@ const styles = {
   playerArea: { padding: '40px', overflowY: 'auto' as const, display: 'flex', flexDirection: 'column' as const, gap: '24px' },
   videoWrap: { width: '100%', aspectRatio: '16/9', backgroundColor: 'black', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' },
   iframe: { width: '100%', height: '100%' },
-  noVideo: { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: '16px', color: '#64748B' },
+  noVideo: { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: '16px', color: '#949494' },
   
   controls: { display: 'flex', justifyContent: 'space-between', marginTop: '8px' },
-  stepBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '14px', border: '1px solid #334155', backgroundColor: '#1E293B', color: 'white', fontWeight: '700', cursor: 'pointer' },
+  stepBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '14px', border: '1px solid #6B6B6B', backgroundColor: '#1E293B', color: 'white', fontWeight: '700', cursor: 'pointer' },
   nextBtn: { backgroundColor: 'var(--primary)', border: 'none' },
-  markBtn: { backgroundColor: '#334155', border: '1px solid #475569' },
+  markBtn: { backgroundColor: '#6B6B6B', border: '1px solid #475569' },
   completedBtn: { backgroundColor: '#10b981', border: 'none' },
 
-  lessonTabs: { display: 'flex', gap: '32px', borderBottom: '1px solid #334155', marginTop: '24px' },
-  tabLink: { padding: '16px 4px', border: 'none', background: 'none', color: '#94A3B8', fontWeight: '600', fontSize: '14px', cursor: 'pointer', position: 'relative' as const },
+  lessonTabs: { display: 'flex', gap: '32px', borderBottom: '1px solid #6B6B6B', marginTop: '24px' },
+  tabLink: { padding: '16px 4px', border: 'none', background: 'none', color: '#949494', fontWeight: '600', fontSize: '14px', cursor: 'pointer', position: 'relative' as const },
   tabActive: { color: 'white' },
   tabContent: { padding: '24px 0', minHeight: '300px' },
   tabScrollWrap: { display: 'flex', flexDirection: 'column' as const, gap: '24px' },
   
   description: { fontSize: '16px', lineHeight: '1.6', color: '#CBD5E1' },
   
-  commentForm: { display: 'flex', flexDirection: 'column' as const, gap: '12px', padding: '24px', backgroundColor: '#1E293B', borderRadius: '16px', border: '1px solid #334155' },
-  commentInput: { width: '100%', minHeight: '80px', backgroundColor: '#0F172A', border: '1px solid #334155', borderRadius: '12px', color: 'white', padding: '16px', fontSize: '14px', outline: 'none', resize: 'none' as const },
+  commentForm: { display: 'flex', flexDirection: 'column' as const, gap: '12px', padding: '24px', backgroundColor: '#1E293B', borderRadius: '16px', border: '1px solid #6B6B6B' },
+  commentInput: { width: '100%', minHeight: '80px', backgroundColor: '#0F172A', border: '1px solid #6B6B6B', borderRadius: '12px', color: 'white', padding: '16px', fontSize: '14px', outline: 'none', resize: 'none' as const },
   commentBtn: { alignSelf: 'flex-end', padding: '10px 24px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer' },
   commentList: { display: 'flex', flexDirection: 'column' as const, gap: '16px' },
-  commentItem: { display: 'flex', gap: '16px', padding: '16px', borderBottom: '1px solid #334155' },
-  cUserInitials: { width: '40px', height: '40px', backgroundColor: '#334155', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', color: 'var(--primary)', fontSize: '18px' },
+  commentItem: { display: 'flex', gap: '16px', padding: '16px', borderBottom: '1px solid #6B6B6B' },
+  cUserInitials: { width: '40px', height: '40px', backgroundColor: '#6B6B6B', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', color: 'var(--primary)', fontSize: '18px' },
   cBody: { flex: 1 },
   cHeader: { display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '4px' },
   cUserName: { fontSize: '14px', fontWeight: '600', color: 'white' },
-  cDate: { fontSize: '11px', color: '#64748B' },
+  cDate: { fontSize: '11px', color: '#949494' },
   cText: { fontSize: '14px', color: '#CBD5E1', lineHeight: '1.5', margin: 0 },
 
-  materialCard: { backgroundColor: '#1E293B', padding: '24px', borderRadius: '20px', border: '1px solid #334155', display: 'flex', alignItems: 'center', gap: '20px' },
-  matIcon: { width: '56px', height: '56px', backgroundColor: '#334155', color: 'var(--primary)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  materialCard: { backgroundColor: '#1E293B', padding: '24px', borderRadius: '20px', border: '1px solid #6B6B6B', display: 'flex', alignItems: 'center', gap: '20px' },
+  matIcon: { width: '56px', height: '56px', backgroundColor: '#6B6B6B', color: 'var(--primary)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   matInfo: { flex: 1 },
   matName: { margin: 0, fontSize: '15px', fontWeight: '600', color: 'white' },
-  matSize: { margin: '4px 0 0 0', fontSize: '12px', color: '#94A3B8' },
-  downloadBtnLink: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: '#334155', color: 'white', borderRadius: '12px', textDecoration: 'none', fontWeight: '700', fontSize: '14px', border: '1px solid #475569' },
+  matSize: { margin: '4px 0 0 0', fontSize: '12px', color: '#949494' },
+  downloadBtnLink: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: '#6B6B6B', color: 'white', borderRadius: '12px', textDecoration: 'none', fontWeight: '700', fontSize: '14px', border: '1px solid #475569' },
   
-  emptyTab: { textAlign: 'center' as const, padding: '40px', color: '#64748B', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '16px' },
+  emptyTab: { textAlign: 'center' as const, padding: '40px', color: '#949494', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '16px' },
 
-  sidebar: { backgroundColor: '#1E293B', borderLeft: '1px solid #334155', display: 'flex', flexDirection: 'column' as const },
-  sideHeader: { padding: '24px', fontSize: '12px', fontWeight: '700', color: '#94A3B8', letterSpacing: '1px', borderBottom: '1px solid #334155' },
+  sidebar: { backgroundColor: '#1E293B', borderLeft: '1px solid #6B6B6B', display: 'flex', flexDirection: 'column' as const },
+  sideHeader: { padding: '24px', fontSize: '12px', fontWeight: '700', color: '#949494', letterSpacing: '1px', borderBottom: '1px solid #6B6B6B' },
   moduleScroll: { flex: 1, overflowY: 'auto' as const, padding: '16px' },
   moduleGroup: { marginBottom: '24px' },
   moduleLabel: { fontSize: '13px', fontWeight: '700', color: 'white', marginBottom: '12px', paddingLeft: '8px' },
   lessonsInSide: { display: 'flex', flexDirection: 'column' as const, gap: '4px' },
   sideLessonItem: { padding: '12px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: 'all 0.2s' },
   activeSideItem: { backgroundColor: 'rgba(217, 255, 0, 0.15)', border: '1px solid rgba(217, 255, 0, 0.3)' },
-  sideIconWrap: { width: '24px', height: '24px', borderRadius: '6px', backgroundColor: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  sideIconWrap: { width: '24px', height: '24px', borderRadius: '6px', backgroundColor: '#6B6B6B', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   sideLessonName: { flex: 1, fontSize: '13px', fontWeight: '600', color: '#CBD5E1' },
-  sideLessonTime: { fontSize: '10px', color: '#64748B', fontWeight: '700' }
+  sideLessonTime: { fontSize: '10px', color: '#949494', fontWeight: '700' }
 };
 
 export default TreinamentoPlayer;

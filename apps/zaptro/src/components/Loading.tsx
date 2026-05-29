@@ -162,7 +162,7 @@ const Loading: React.FC<{ context?: ZaptroLoadingPhraseContext; message?: string
           <div style={styles.classicSpinner} />
         </div>
         <h1 style={{ ...styles.classicTitle, color: '#0F172A' }}>Logta SaaS</h1>
-        <p style={{ color: '#94A3B8', fontSize: '13px', fontWeight: 600 }}>{message || 'Sincronizando dados...'}</p>
+        <p style={{ color: '#949494', fontSize: '13px', fontWeight: 600 }}>{message || 'Sincronizando dados...'}</p>
 
         {showRetry && (
           <button

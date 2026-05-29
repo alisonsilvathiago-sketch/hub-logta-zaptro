@@ -41,7 +41,7 @@ const PublicCalculatorView: React.FC = () => {
     header: { textAlign: 'center' as const, marginBottom: '50px' },
     badge: { display: 'inline-flex', padding: '6px 16px', backgroundColor: '#E0F2FE', color: '#0369A1', borderRadius: '30px', fontSize: '11px', fontWeight: '700', marginBottom: '16px', letterSpacing: '1.5px', textTransform: 'uppercase' as const },
     title: { fontSize: '32px', fontWeight: '700', color: '#0C4A6E', marginBottom: '12px' },
-    companyLine: { fontSize: '14px', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '700' },
+    companyLine: { fontSize: '14px', color: '#949494', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '700' },
     
     divider: { height: '1px', backgroundColor: '#ebebeb', margin: '40px 0' },
     
@@ -49,15 +49,15 @@ const PublicCalculatorView: React.FC = () => {
     entry: { padding: '24px', borderRadius: '24px', backgroundColor: '#f4f4f4', border: '1px solid #e8e8e8' },
     entryH: { display: 'flex', justifyContent: 'space-between', marginBottom: '8px' },
     entryTitle: { fontSize: '16px', fontWeight: '600', color: '#1E293B' },
-    entryExpr: { fontSize: '13px', color: '#94A3B8', fontFamily: 'monospace' },
+    entryExpr: { fontSize: '13px', color: '#949494', fontFamily: 'monospace' },
     entryRes: { fontSize: '24px', fontWeight: '700', color: '#0369A1', marginTop: '12px' },
-    entryObs: { marginTop: '12px', fontSize: '13px', color: '#64748B', fontStyle: 'italic', borderTop: '1px dashed #E2E8F0', paddingTop: '12px' },
+    entryObs: { marginTop: '12px', fontSize: '13px', color: '#949494', fontStyle: 'italic', borderTop: '1px dashed #E2E8F0', paddingTop: '12px' },
     
     totalCard: { marginTop: '40px', padding: '32px', borderRadius: '24px', backgroundColor: '#0C4A6E', color: 'white', textAlign: 'right' as const },
     totalLabel: { fontSize: '12px', fontWeight: '600', opacity: 0.7, textTransform: 'uppercase' as const },
     totalValue: { fontSize: '36px', fontWeight: '700', marginTop: '4px' },
     
-    footer: { marginTop: '40px', textAlign: 'center' as const, color: '#94A3B8' },
+    footer: { marginTop: '40px', textAlign: 'center' as const, color: '#949494' },
     footerLink: { color: '#0369A1', textDecoration: 'none', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '13px' },
     
     denied: { textAlign: 'center' as const, padding: '100px 40px' },
@@ -69,7 +69,7 @@ const PublicCalculatorView: React.FC = () => {
        <div style={styles.card}>
           <div style={{textAlign: 'center', padding: '60px'}}>
              <Globe size={48} color="#E0F2FE" />
-             <p style={{marginTop: '20px', color: '#94A3B8', fontWeight: '600'}}>Validando credenciais de acesso seguro do Logta...</p>
+             <p style={{marginTop: '20px', color: '#949494', fontWeight: '600'}}>Validando credenciais de acesso seguro do Logta...</p>
           </div>
        </div>
     </div>
@@ -80,7 +80,7 @@ const PublicCalculatorView: React.FC = () => {
        <div style={{...styles.card, ...styles.denied}}>
           <Lock size={64} color="#EF4444" style={{marginBottom: '24px'}} />
           <h2 style={styles.deniedTitle}>Conteúdo Não Disponível</h2>
-          <p style={{color: '#64748B', maxWidth: '400px', margin: '0 auto 32px auto'}}>Este link foi revogado pelo administrador ou expirou. Você não tem permissão para visualizar este conteúdo no momento.</p>
+          <p style={{color: '#949494', maxWidth: '400px', margin: '0 auto 32px auto'}}>Este link foi revogado pelo administrador ou expirou. Você não tem permissão para visualizar este conteúdo no momento.</p>
           <button onClick={() => navigate('/')} style={{padding: '12px 24px', borderRadius: '14px', border: 'none', backgroundColor: '#0C4A6E', color: 'white', fontWeight: '600', cursor: 'pointer'}}>Ir para Home</button>
        </div>
     </div>
@@ -123,11 +123,11 @@ const PublicCalculatorView: React.FC = () => {
           <div style={{marginTop: '50px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px'}}>
              <div style={{padding: '20px', borderRadius: '24px', backgroundColor: '#f4f4f4', display: 'flex', alignItems: 'center', gap: '16px'}}>
                 <div style={{width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><Mail size={18} color="#0369A1" /></div>
-                <div style={{fontSize: '12px'}}><p style={{color: '#94A3B8', margin: 0}}>Atendimento</p><strong style={{color: '#0C4A6E'}}>contato@logta.com</strong></div>
+                <div style={{fontSize: '12px'}}><p style={{color: '#949494', margin: 0}}>Atendimento</p><strong style={{color: '#0C4A6E'}}>contato@logta.com</strong></div>
              </div>
              <div style={{padding: '20px', borderRadius: '24px', backgroundColor: '#f4f4f4', display: 'flex', alignItems: 'center', gap: '16px'}}>
                 <div style={{width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><Phone size={18} color="#0369A1" /></div>
-                <div style={{fontSize: '12px'}}><p style={{color: '#94A3B8', margin: 0}}>WhatsApp</p><strong style={{color: '#0C4A6E'}}>(11) 98765-4321</strong></div>
+                <div style={{fontSize: '12px'}}><p style={{color: '#949494', margin: 0}}>WhatsApp</p><strong style={{color: '#0C4A6E'}}>(11) 98765-4321</strong></div>
              </div>
           </div>
        </div>

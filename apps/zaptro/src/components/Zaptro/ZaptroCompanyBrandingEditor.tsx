@@ -223,7 +223,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
       gap: '4px',
       borderRadius: '14px',
       padding: '2px 4px',
-      border: `1px solid ${light ? ZAPTRO_SECTION_BORDER : '#334155'}`,
+      border: `1px solid ${light ? ZAPTRO_SECTION_BORDER : '#6B6B6B'}`,
       backgroundColor: light ? ZAPTRO_FIELD_BG : '#1e293b',
     };
     const tabInactive: React.CSSProperties = {
@@ -430,7 +430,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
             <div
               style={{
                 borderRadius: 16,
-                border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                 overflow: 'hidden',
                 backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#fff',
                 boxShadow: palette.mode === 'dark' ? 'none' : '0 10px 30px rgba(15,23,42,0.06)',
@@ -442,7 +442,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                   alignItems: 'center',
                   gap: 8,
                   padding: '8px 12px',
-                  borderBottom: `1px solid ${palette.mode === 'dark' ? '#334155' : '#f1f5f9'}`,
+                  borderBottom: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : '#f1f5f9'}`,
                   fontSize: 11,
                   fontWeight: 700,
                   color: palette.textMuted,
@@ -508,7 +508,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
             <div
               style={{
                 borderRadius: 16,
-                border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                 overflow: 'hidden',
                 backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#fff',
                 boxShadow: palette.mode === 'dark' ? 'none' : '0 10px 30px rgba(15,23,42,0.06)',
@@ -520,7 +520,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                   alignItems: 'center',
                   gap: 8,
                   padding: '8px 12px',
-                  borderBottom: `1px solid ${palette.mode === 'dark' ? '#334155' : '#f1f5f9'}`,
+                  borderBottom: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : '#f1f5f9'}`,
                   fontSize: 11,
                   fontWeight: 700,
                   color: palette.textMuted,
@@ -636,7 +636,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                     marginBottom: 18,
                     padding: 16,
                     borderRadius: 16,
-                    border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                    border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                     backgroundColor: palette.mode === 'dark' ? 'rgba(15,23,42,0.45)' : '#fff',
                     boxSizing: 'border-box',
                   }}
@@ -678,7 +678,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                           gap: 8,
                           padding: '10px 16px',
                           borderRadius: 14,
-                          border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                          border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                           backgroundColor: brandForm.primary_color,
                           color: pickLabelOnColor(brandForm.primary_color),
                           fontWeight: 700,
@@ -737,7 +737,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                     marginBottom: 18,
                     padding: 16,
                     borderRadius: 16,
-                    border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                    border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                     backgroundColor: palette.mode === 'dark' ? 'rgba(15,23,42,0.45)' : '#fff',
                     boxSizing: 'border-box',
                   }}
@@ -779,7 +779,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                         gap: 8,
                         padding: '10px 16px',
                         borderRadius: 14,
-                        border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                        border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                         backgroundColor: brandForm.primary_color,
                         color: pickLabelOnColor(brandForm.primary_color),
                         fontWeight: 700,
@@ -835,7 +835,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                 <details
                   style={{
                     borderRadius: 14,
-                    border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                    border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                     backgroundColor: palette.mode === 'dark' ? 'rgba(15,23,42,0.35)' : ZAPTRO_FIELD_BG,
                     padding: '12px 14px',
                   }}
@@ -879,7 +879,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                   minWidth: 0,
                   padding: 18,
                   borderRadius: 18,
-                  border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                  border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                   backgroundColor: palette.mode === 'dark' ? 'rgba(15,23,42,0.55)' : '#fff',
                   boxSizing: 'border-box',
                   alignSelf: 'start',
@@ -906,7 +906,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                       style={{
                         borderRadius: 14,
                         overflow: 'hidden',
-                        border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                        border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                         background: `linear-gradient(165deg, ${brandForm.secondary_color} 0%, #0f172a 95%)`,
                         minHeight: 160,
                         display: 'flex',
@@ -951,7 +951,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                       style={{
                         borderRadius: 14,
                         overflow: 'hidden',
-                        border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                        border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                         background: `linear-gradient(165deg, ${brandForm.secondary_color} 0%, #0f172a 95%)`,
                         minHeight: 160,
                         display: 'flex',
@@ -1094,7 +1094,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                 <div
                   style={{
                     borderRadius: 18,
-                    border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                    border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                     padding: '18px 20px 16px',
                     backgroundColor: palette.mode === 'dark' ? 'rgba(15,23,42,0.75)' : '#ffffff',
                     boxSizing: 'border-box',
@@ -1170,7 +1170,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                 <div
                   style={{
                     borderRadius: 18,
-                    border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                    border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                     overflow: 'hidden',
                     backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#fff',
                   }}
@@ -1181,7 +1181,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                       fontWeight: 700,
                       letterSpacing: '0.1em',
                       padding: '8px 12px',
-                      borderBottom: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                      borderBottom: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                       color: palette.textMuted,
                     }}
                   >
@@ -1308,7 +1308,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                   marginBottom: 4,
                   padding: '12px 14px',
                   borderRadius: 14,
-                  border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                  border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                   backgroundColor: palette.mode === 'dark' ? '#0f172a' : ZAPTRO_FIELD_BG,
                 }}
               >
@@ -1367,7 +1367,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                   minWidth: 240,
                   maxWidth: 'min(100%, 400px)',
                   borderRadius: 20,
-                  border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                  border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                   padding: '16px 16px 18px',
                   backgroundColor: palette.mode === 'dark' ? 'rgba(15,23,42,0.45)' : '#ffffff',
                   boxSizing: 'border-box',
@@ -1392,7 +1392,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                       gap: 8,
                       padding: '10px 16px',
                       borderRadius: 12,
-                      border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                      border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                       backgroundColor: loginPreviewLayout === 'split' ? palette.lime : 'transparent',
                       color: loginPreviewLayout === 'split' ? '#000' : palette.text,
                       fontWeight: 700,
@@ -1412,7 +1412,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                       gap: 8,
                       padding: '10px 16px',
                       borderRadius: 12,
-                      border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                      border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                       backgroundColor: loginPreviewLayout === 'center' ? palette.lime : 'transparent',
                       color: loginPreviewLayout === 'center' ? '#000' : palette.text,
                       fontWeight: 700,
@@ -1486,7 +1486,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                 <div
                   style={{
                     borderRadius: 20,
-                    border: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                    border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                     overflow: 'hidden',
                     backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#f4f4f4',
                     boxShadow: palette.mode === 'dark' ? 'none' : '0 16px 40px rgba(15, 23, 42, 0.07)',
@@ -1501,7 +1501,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                       justifyContent: 'space-between',
                       gap: 10,
                       padding: '12px 16px',
-                      borderBottom: `1px solid ${palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER}`,
+                      borderBottom: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER}`,
                       backgroundColor: palette.mode === 'dark' ? 'rgba(2,6,23,0.5)' : '#ffffff',
                     }}
                   >
@@ -1554,9 +1554,9 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                           justifyContent: 'center',
                         }}
                       >
-                        <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>E-mail ou utilizador</div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: '#949494' }}>E-mail ou utilizador</div>
                         <div style={{ height: 10, borderRadius: 5, background: '#ebebeb', width: '100%' }} />
-                        <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', marginTop: 4 }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: '#949494', marginTop: 4 }}>
                           Palavra-passe
                         </div>
                         <div style={{ height: 10, borderRadius: 5, background: '#ebebeb', width: '100%' }} />
@@ -1642,7 +1642,7 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
         <footer
           style={{
             ...st.brandModalFooter,
-            borderTopColor: palette.mode === 'dark' ? '#334155' : ZAPTRO_SECTION_BORDER,
+            borderTopColor: palette.mode === 'dark' ? '#6B6B6B' : ZAPTRO_SECTION_BORDER,
           }}
         >
           <button

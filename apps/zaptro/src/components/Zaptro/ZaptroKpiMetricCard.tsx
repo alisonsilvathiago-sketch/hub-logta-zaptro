@@ -2,8 +2,7 @@ import React from 'react';
 import type { LucideIcon } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useZaptroTheme } from '../../context/ZaptroThemeContext';
-import { zaptroCardSurfaceStyle, zaptroIconOrbStyle } from '../../constants/zaptroCardSurface';
-
+import { zaptroCardSurfaceStyle, zaptroIconOrbStyle, ZAPTRO_ICON_ORB_FG } from '../../constants/zaptroCardSurface';
 const DELTA_POSITIVE_GREEN = '#15803d';
 
 export type ZaptroKpiMetricCardProps = {
@@ -62,9 +61,20 @@ const ZaptroKpiMetricCard: React.FC<ZaptroKpiMetricCardProps> = ({
 
   const valueFontSize = valueSize === 'hero' ? 34 : valueSize === 'xl' ? 26 : valueSize === 'lg' ? 24 : 20;
 
+  const titleStyle: CSSProperties = {
+    margin: 0,
+    fontSize: 10,
+    fontWeight: 500,
+    color: 'rgba(168, 168, 168, 1)',
+    lineHeight: 1.45,
+    ...(titleCaps
+      ? { letterSpacing: '0.02em', textTransform: 'uppercase' }
+      : { marginBottom: subtitle ? 2 : 4 }),
+  };
+
   return (
     <div
-      className={className}
+      className={['zaptro-kpi-metric-card', className].filter(Boolean).join(' ')}
       style={{
         ...zaptroCardSurfaceStyle(isDark),
         ...(accentBorder ? { borderLeft: `3px solid ${lime}` } : {}),
@@ -77,7 +87,7 @@ const ZaptroKpiMetricCard: React.FC<ZaptroKpiMetricCardProps> = ({
       }}
     >
       <div style={{ ...zaptroIconOrbStyle({ size: 48, rounded: 'circle' }), alignSelf: subtitle ? 'flex-start' : 'center' }}>
-        <Icon size={22} strokeWidth={2} />
+        <Icon size={22} strokeWidth={2.1} color={ZAPTRO_ICON_ORB_FG} />
       </div>
       <div
         style={{
@@ -89,25 +99,7 @@ const ZaptroKpiMetricCard: React.FC<ZaptroKpiMetricCardProps> = ({
           gap: subtitle ? 2 : 0,
         }}
       >
-        <div
-          style={
-            titleCaps
-              ? {
-                  margin: 0,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: '0.02em',
-                  color: palette.textMuted,
-                  textTransform: 'uppercase',
-                }
-              : {
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: palette.textMuted,
-                  marginBottom: subtitle ? 2 : 4,
-                }
-          }
-        >
+        <div className="zaptro-kpi-metric-card__title" style={titleStyle}>
           {title}
         </div>
         <div
@@ -120,9 +112,10 @@ const ZaptroKpiMetricCard: React.FC<ZaptroKpiMetricCardProps> = ({
           }}
         >
           <span
+            className="zaptro-kpi-metric-card__value"
             style={{
               fontSize: valueFontSize,
-              fontWeight: 700,
+              fontWeight: 650,
               letterSpacing: '-0.04em',
               color: palette.text,
               lineHeight: 1.12,
@@ -132,7 +125,7 @@ const ZaptroKpiMetricCard: React.FC<ZaptroKpiMetricCardProps> = ({
             {value}
           </span>
           {delta ? (
-            <span style={{ fontSize: 13, fontWeight: 600, color: deltaColor }}>{delta}</span>
+            <span style={{ fontSize: 13, fontWeight: 550, color: deltaColor }}>{delta}</span>
           ) : null}
         </div>
         {subtitle ? (
@@ -140,7 +133,7 @@ const ZaptroKpiMetricCard: React.FC<ZaptroKpiMetricCardProps> = ({
             style={{
               marginTop: 6,
               fontSize: titleCaps ? 12 : 13,
-              fontWeight: 600,
+              fontWeight: 550,
               color: palette.textMuted,
               lineHeight: 1.35,
             }}

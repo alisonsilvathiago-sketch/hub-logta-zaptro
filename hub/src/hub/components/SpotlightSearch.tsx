@@ -109,10 +109,10 @@ const SpotlightSearch: React.FC<SpotlightSearchProps> = ({ isOpen, onClose }) =>
                 >
                   <div style={{
                     ...styles.iconBox,
-                    backgroundColor: res.type === 'shortcut' ? '#F0F7FF' : res.type === 'vehicle' ? '#F0FDF4' : '#FFF7ED'
+                    backgroundColor: res.type === 'shortcut' ? '#F0F7FF' : res.type === 'vehicle' ? '#EFF6FF' : '#FFF7ED'
                   }}>
                     {res.type === 'shortcut' ? (res.icon || <Zap size={16} />) : 
-                     res.type === 'vehicle' ? <Car size={16} color="#10B981" /> : 
+                     res.type === 'vehicle' ? <Car size={16} color="#0061FF" /> : 
                      res.type === 'client' ? <Users size={16} color="#F59E0B" /> : <Building2 size={16} color="#0061FF" />}
                   </div>
                   <div style={styles.resInfo}>

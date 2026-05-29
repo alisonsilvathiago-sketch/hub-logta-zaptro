@@ -178,7 +178,7 @@ export const RH_ADMIN_HUB_CONFIG: Record<
   administrativo: {
     path: '/rh/administrativo',
     label: 'RH Administrativo',
-    excludeSectionIds: ['jornada', 'documentos'],
+    excludeSectionIds: ['jornada', 'documentos', 'pessoas'],
   },
   'jornada-ponto': {
     path: '/rh/jornada-ponto',

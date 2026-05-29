@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { isZaptroHubGuardBypassed } from '../lib/zaptroPreviewMode';
 
 // Tela elegante de bloqueio
 function BlockScreen({ title, message }: { title: string, message: string }) {
@@ -11,7 +12,7 @@ function BlockScreen({ title, message }: { title: string, message: string }) {
           🔒
         </div>
         <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1A2340', marginBottom: '12px' }}>{title}</h2>
-        <p style={{ fontSize: '14px', color: '#64748B', lineHeight: 1.6, marginBottom: '32px' }}>{message}</p>
+        <p style={{ fontSize: '14px', color: '#949494', lineHeight: 1.6, marginBottom: '32px' }}>{message}</p>
         <a href="https://hub.logta.com.br" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '12px', background: '#1A2340', color: '#fff', textDecoration: 'none', borderRadius: '10px', fontWeight: 600, fontSize: '14px', transition: 'background 0.2s' }}>
           Acessar o Hub Central
         </a>
@@ -23,16 +24,16 @@ function BlockScreen({ title, message }: { title: string, message: string }) {
 // O Guarda-costas
 export default function HubGuard({ children, companyId }: { children: React.ReactNode, companyId: string }) {
   const { isMaster } = useAuth();
-  const isDev = !!localStorage.getItem('hub-dev-session');
+  const isDev = false;
   const [status, setStatus] = useState<'loading' | 'allowed' | 'blocked' | 'maintenance'>(
-    (isMaster || isDev) ? 'allowed' : 'loading'
+    isMaster ? 'allowed' : 'loading'
   );
   const [reason, setReason] = useState('');
 
   useEffect(() => {
     async function validateWithHub() {
-      // Se for MASTER ou não houver ID (ambiente dev / bootstrap), liberamos o acesso local
-      if (isMaster || !companyId || localStorage.getItem('hub-dev-session')) {
+      // MASTER, dev/localhost ou bootstrap sem empresa — libera módulos para pré-visualização
+      if (isMaster || !companyId || isZaptroHubGuardBypassed()) {
         setStatus('allowed');
         return;
       }

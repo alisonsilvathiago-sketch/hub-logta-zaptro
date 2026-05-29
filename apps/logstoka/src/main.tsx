@@ -2,20 +2,23 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from '@shared/context/AuthContext';
+import { LogstokaAuthProvider } from '@/context/LogstokaAuthProvider';
 import { LogstokaTenantProvider } from '@/context/LogstokaTenantContext';
+import { LogstokaBrandingProvider } from '@/context/LogstokaBrandingContext';
 import App from './App';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider>
+      <LogstokaAuthProvider>
         <LogstokaTenantProvider>
-          <Toaster position="bottom-right" />
-          <App />
+          <LogstokaBrandingProvider>
+            <Toaster position="bottom-right" />
+            <App />
+          </LogstokaBrandingProvider>
         </LogstokaTenantProvider>
-      </AuthProvider>
+      </LogstokaAuthProvider>
     </BrowserRouter>
   </React.StrictMode>,
 );

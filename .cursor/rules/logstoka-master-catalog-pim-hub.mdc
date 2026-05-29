@@ -1,0 +1,87 @@
+---
+description: LogStoka — cadastro mestre de produtos, PIM e hub de integrações multicanal (fonte da verdade)
+globs: apps/logstoka/**
+alwaysApply: false
+---
+
+# LogStoka = PIM + Hub de Produtos + Hub de Estoque + Hub de Integrações
+
+O LogStoka **não é só WMS**. É o **centro da operação**; marketplaces são canais conectados.
+
+## Regra principal — SKU mestre
+
+- **Fonte da verdade**: cadastro mestre no LogStoka (`ls_products` / catálogo interno).
+- **SKU LogStoka = SKU oficial** em Shopee, Mercado Livre, Amazon, TikTok Shop e Magalu.
+- **Proibido** duplicar o mesmo produto com SKUs diferentes por canal.
+- **Proibido** divergência silenciosa (ex.: ML-88421 ≠ SKU WMS) — detectar, registrar e permitir correção na UI.
+
+Exemplo: SKU `3449` · *Baby Free 50 C/20* → mesmo código em todos os canais.
+
+## Cadastro centralizado
+
+Fluxo ao criar/editar produto:
+
+1. Salvar **apenas local** (rascunho WMS), ou
+2. **Publicar** nos marketplaces selecionados (multi-select: Shopee, ML, Amazon, TikTok, Magalu).
+
+UI alvo: `apps/logstoka/src/modules/products/` — wizard/modal “Publicar nos marketplaces”.
+
+## Sincronização bidirecional
+
+| Direção | Origem → Destino | Dados |
+|--------|-------------------|-------|
+| **Receber** | Marketplace → LogStoka | pedidos, estoque, entregas, cancelamentos, devoluções, updates de produto |
+| **Enviar** | LogStoka → Marketplace | produtos novos, estoque, preço, descrição, imagens, ativar/desativar anúncio |
+
+## Hub de estoque
+
+- Estoque LogStoka é o **estoque principal**.
+- Venda em qualquer canal decrementa o mestre; **propaga** o saldo atualizado a todos os canais conectados.
+- Ex.: 100 un → venda Shopee −1 → LogStoka 99 → push 99 para ML, Amazon, TikTok, Magalu.
+
+## Vinculação de produtos (UI)
+
+Tela **Produtos → Integrações** (ou aba no detalhe do produto):
+
+- SKU interno | SKU Shopee | SKU ML | SKU Amazon | SKU TikTok | SKU Magalu
+- Ações: vincular, sincronizar, corrigir divergência.
+
+Referências atuais: `ProductsPage.tsx`, `ProductDetailPage.tsx`, `marketplaceHub.ts`, `SettingsIntegrationsPanel.tsx`.
+
+## Marketplace Hub (módulo backend)
+
+Responsável por: receber/enviar eventos, atualizar estoque/produtos/pedidos, sincronizar anúncios.
+
+Frontend hub operacional por canal: `/app/{marketplace}` (`MarketplaceHubPage.tsx`, `marketplaceHub.ts`).
+
+## Webhooks (entrada)
+
+Tratar eventos: pedido criado/pago/enviado/entregue/cancelado/devolvido; update estoque; update produto.
+
+Pipeline obrigatório:
+
+```
+Marketplace → Webhook → Fila → Processamento → Banco → Estoque → Dashboard
+```
+
+- **Sempre fila** (BullMQ/Redis ou fallback em memória com retry) — nunca processar síncrono direto no handler.
+- **Sempre log/histórico** por produto e por evento (data, hora, canal, status, payload resumido).
+
+## Registro de eventos
+
+Histórico auditável por SKU, ex.: *3449 — recebido Shopee · estoque push ML/Amazon/TikTok/Magalu · OK*.
+
+Usar/estender: `SettingsAuditPanel`, `IntegrationLogDetailPage`, tabela de eventos de integração.
+
+## Ao implementar
+
+- Novos campos de vínculo por marketplace no modelo de produto (não hardcodar mapas demo como solução final).
+- Demo seed (`logstokaDemoSeed.ts`) pode simular fluxo; produção usa fila + webhooks + API.
+- Manter conformidade Meta/WhatsApp nas transmissões (regra separada do Zaptro).
+- Não desativar serviços essenciais (Evolution/Ollama) — regra `zaptro-service-availability`.
+
+## Objetivo de produto
+
+**Cadastra uma vez no LogStoka → distribui automaticamente → recebe eventos → estoque sincronizado em tempo real.**
+
+Posicionamento: ERP leve + PIM + hub de integração (competir com Bling, Tiny, Anymarket).

@@ -9,6 +9,8 @@ import OpenStreetRouteMap from '../components/OpenStreetRouteMap';
 import { useZaptroTheme } from '../context/ZaptroThemeContext';
 import { notifyZaptro } from '../components/Zaptro/ZaptroNotificationSystem';
 import { ZAPTRO_DEMO_VEHICLES } from '../constants/zaptroVehiclesDemo';
+import { supabase } from '../lib/supabase';
+import { Activity } from 'lucide-react';
 
 const LIME = '#D9FF00';
 
@@ -26,16 +28,9 @@ interface RouteCard {
   time: string;
 }
 
-const MOCK_ROUTES: RouteCard[] = [
-  { id: 'RT-0041', client: 'Silva Logística', driver: 'João Pereira', origin: 'São Paulo, SP', destination: 'Rio de Janeiro, RJ', km: '429 km', eta: '5h 20min', status: 'em_rota', time: '08:30' },
-  { id: 'RT-0042', client: 'Norte Frete', driver: 'Carlos Lima', origin: 'Curitiba, PR', destination: 'Porto Alegre, RS', km: '336 km', eta: '4h 10min', status: 'pendente', time: '10:00' },
-  { id: 'RT-0040', client: 'Mega Trans', driver: 'Ana Santos', origin: 'Belo Horizonte, MG', destination: 'Vitória, ES', km: '521 km', eta: '6h 45min', status: 'concluido', time: '06:00' },
-  { id: 'RT-0039', client: 'Expresso Sul', driver: 'Pedro Costa', origin: 'Florianópolis, SC', destination: 'Joinville, SC', km: '180 km', eta: '2h 30min', status: 'erro', time: '07:15' },
-];
-
 const STATUS_CONFIG: Record<RouteStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   em_rota:  { label: 'Em rota',   color: '#f59e0b', bg: '#fef3c710', icon: Navigation },
-  pendente: { label: 'Pendente',  color: '#94a3b8', bg: '#f1f5f910', icon: Circle },
+  pendente: { label: 'Pendente',  color: '#949494', bg: '#f1f5f910', icon: Circle },
   concluido:{ label: 'Concluído', color: '#10b981', bg: '#d1fae510', icon: CheckCircle2 },
   erro:     { label: 'Erro',      color: '#ef4444', bg: '#fee2e210', icon: AlertCircle },
 };
@@ -50,14 +45,61 @@ const ZaptroOpenStreetMap: React.FC = () => {
   const [destination, setDestination] = useState('');
   const [client, setClient] = useState('');
   const [driver, setDriver] = useState('');
+  const [routes, setRoutes] = useState<RouteCard[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = MOCK_ROUTES.filter(r => filterStatus === 'all' || r.status === filterStatus);
+  const fetchRoutes = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data: fData, error } = await supabase
+        .from('fretes')
+        .select(`
+          id,
+          numero_frete,
+          cliente_nome,
+          origem,
+          destino,
+          distancia_estimada,
+          previsao_entrega,
+          status,
+          created_at,
+          motoristas (
+            nome
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setRoutes(fData?.map(f => ({
+        id: f.numero_frete || f.id.slice(0, 8).toUpperCase(),
+        client: f.cliente_nome || 'Cliente não identificado',
+        driver: (f.motoristas as any)?.nome || 'Sem motorista',
+        origin: f.origem || '---',
+        destination: f.destino || '---',
+        km: f.distancia_estimada ? `${f.distancia_estimada} km` : '---',
+        eta: f.previsao_entrega ? new Date(f.previsao_entrega).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '---',
+        status: (f.status === 'pendente' || f.status === 'em_transito' || f.status === 'concluido' || f.status === 'erro' ? f.status : 'pendente') as RouteStatus,
+        time: new Date(f.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      })) || []);
+    } catch (err) {
+      console.error('Erro ao buscar rotas:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchRoutes();
+  }, [fetchRoutes]);
+
+  const filtered = routes.filter(r => filterStatus === 'all' || r.status === filterStatus);
 
   const stats = {
-    em_rota: MOCK_ROUTES.filter(r => r.status === 'em_rota').length,
-    pendente: MOCK_ROUTES.filter(r => r.status === 'pendente').length,
-    concluido: MOCK_ROUTES.filter(r => r.status === 'concluido').length,
-    erro: MOCK_ROUTES.filter(r => r.status === 'erro').length,
+    em_rota: routes.filter(r => r.status === 'em_rota' || r.status === 'em_transito').length,
+    pendente: routes.filter(r => r.status === 'pendente').length,
+    concluido: routes.filter(r => r.status === 'concluido').length,
+    erro: routes.filter(r => r.status === 'erro').length,
   };
 
   const fleetForMap = ZAPTRO_DEMO_VEHICLES.map((v, i) => ({
@@ -148,12 +190,17 @@ const ZaptroOpenStreetMap: React.FC = () => {
 
           {/* Route list */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {filtered.length === 0 && (
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                <Activity className="animate-spin" size={24} color={LIME} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: mutedColor }}>CARREGANDO ROTAS...</span>
+              </div>
+            ) : filtered.length === 0 && (
               <div style={{ textAlign: 'center', padding: '40px 0', color: mutedColor, fontSize: 13, fontWeight: 600 }}>
                 Nenhuma rota encontrada.
               </div>
             )}
-            {filtered.map((route) => {
+            {!loading && filtered.map((route) => {
               const cfg = STATUS_CONFIG[route.status];
               const Icon = cfg.icon;
               return (

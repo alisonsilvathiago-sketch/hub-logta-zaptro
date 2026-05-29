@@ -1,0 +1,44 @@
+> [debug] [2026-05-10T05:03:30.934Z] Found config in file "/Volumes/PODCAST/PROJETOS/hub-logta-zaptro/hub/vercel.json"
+> [debug] [2026-05-10T05:03:30.937Z] Vercel CLI 52.0.0
+> [debug] [2026-05-10T05:03:30.972Z] Agent/TTY/nonInteractive: isAgent=true agentName=antigravity stdin.isTTY=true --non-interactive=false explicitFalse=false => nonInteractive=false
+> [debug] [2026-05-10T05:03:30.974Z] user supplied known subcommand: "build"
+> [debug] [2026-05-10T05:03:31.050Z] Setting target to production
+> [debug] [2026-05-10T05:03:31.082Z] Spinner invoked (Retrieving project…) with a 1000ms delay
+> [debug] [2026-05-10T05:03:31.086Z] Valid access token, skipping token refresh.
+> [debug] [2026-05-10T05:03:31.243Z] #1 → GET https://api.vercel.com/teams/team_bufEwvRw60uJbU0iejmMAnbh?teamId=team_bufEwvRw60uJbU0iejmMAnbh
+> [debug] [2026-05-10T05:03:31.246Z] #2 → GET https://api.vercel.com/v9/projects/prj_d0GcOpKwPhxz8SbYUezoAL1kdOjx?teamId=team_bufEwvRw60uJbU0iejmMAnbh
+> [debug] [2026-05-10T05:03:31.885Z] #1 ← 200 OK: sfo1::f7h4h-1778389412061-2102443a070a [642ms]
+> [debug] [2026-05-10T05:03:31.907Z] #2 ← 200 OK: sfo1::5vs2q-1778389412067-3ca5ec569522 [660ms]
+> Overwriting existing .vercel/.env.production.local file
+> Downloading `production` Environment Variables for alisons-projects-9c220824/hub
+> [debug] [2026-05-10T05:03:31.914Z] Spinner invoked (Downloading) with a 300ms delay
+> [debug] [2026-05-10T05:03:31.914Z] Fetching Environment Variables of prj_d0GcOpKwPhxz8SbYUezoAL1kdOjx and target production
+> [debug] [2026-05-10T05:03:31.916Z] #3 → GET https://api.vercel.com/v3/env/pull/prj_d0GcOpKwPhxz8SbYUezoAL1kdOjx/production?source=vercel-cli%3Apull&teamId=team_bufEwvRw60uJbU0iejmMAnbh
+> [debug] [2026-05-10T05:03:32.270Z] #3 ← 200 OK: sfo1::x7cc2-1778389412322-124197ddbcaf [354ms]
+
+Changes:
++ VERCEL_OIDC_TOKEN (Updated)
++ VITE_SUPABASE_PUBLISHABLE_KEY
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- NEXT_PUBLIC_SUPABASE_URL
+- SUPABASE_SERVICE_ROLE_KEY
+- VITE_SUPABASE_ANON_KEY
+
+Updated .vercel/.env.production.local file  [372ms]
+
+> Downloading project settings
+Downloaded project settings to /Volumes/PODCAST/PROJETOS/hub-logta-zaptro/hub/.vercel/project.json [0ms]
+WARNING! Build not running on Vercel. System environment variables will not be available.
+> [debug] [2026-05-10T05:03:33.167Z] Loaded environment variables from "/Volumes/PODCAST/PROJETOS/hub-logta-zaptro/hub/.vercel/.env.production.local"
+> [debug] [2026-05-10T05:03:33.438Z] vercel-flags: checking env vars for SDK Keys
+> [debug] [2026-05-10T05:03:33.440Z] vercel-flags: found 0 SDK keys
+> [debug] [2026-05-10T05:03:33.450Z] Locating files /Volumes/PODCAST/PROJETOS/hub-logta-zaptro/hub/hub
+> [debug] [2026-05-10T05:03:33.453Z] Ignoring invalid file /Volumes/PODCAST/PROJETOS/hub-logta-zaptro/hub/hub
+> [debug] [2026-05-10T05:03:33.471Z] Locating files /Volumes/PODCAST/PROJETOS/hub-logta-zaptro/hub/hub [21ms]
+> [debug] [2026-05-10T05:03:35.055Z] Imported Builder "@vercel/static-build" from "/usr/local/lib/node_modules/vercel/node_modules/@vercel/static-build"
+> [debug] [2026-05-10T05:03:35.055Z] Resolved builders: "@vercel/static-build => 2.9.21"
+> [debug] [2026-05-10T05:03:35.407Z] Setting env VERCEL_PROJECT_SETTINGS_NODE_VERSION to "24.x"
+> [debug] [2026-05-10T05:03:35.407Z] Building entrypoint "package.json" with "@vercel/static-build"
+Error: spawn sh ENOENT
+> [debug] [2026-05-10T05:03:37.605Z] Telemetry subprocess killed due to timeout
+> [debug] [2026-05-10T05:03:37.632Z] Telemetry subprocess exited with code null

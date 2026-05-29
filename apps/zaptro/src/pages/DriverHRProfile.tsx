@@ -24,26 +24,42 @@ const DriverHRProfile: React.FC = () => {
   const [driver, setDriver] = useState<any>(null);
 
   useEffect(() => {
-    // Mock data for initial profile load
-    setDriver({
-      id: id,
-      name: 'Thiago Silva',
-      status: 'ATIVO',
-      type: 'Agregado',
-      admission: '12/01/2024',
-      phone: '(11) 98877-6655',
-      email: 'thiago.silva@logta.com',
-      health: 'Ótimo',
-      attendance: 98,
-      earnings: 4500.00
-    });
-    setLoading(false);
+    const fetchDriverHR = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('motoristas')
+          .select('*, perfis(*)')
+          .eq('id', id)
+          .single();
+        
+        if (data) {
+          setDriver({
+            id: data.id,
+            name: data.perfis?.nome_completo || 'Colaborador',
+            status: data.status?.toUpperCase() || 'ATIVO',
+            type: data.tipo_contratacao || 'Motorista',
+            admission: data.data_admissao ? new Date(data.data_admissao).toLocaleDateString() : 'Não informada',
+            phone: data.perfis?.telefone || 'Não informado',
+            email: data.perfis?.email || 'Não informado',
+            health: 'Em Análise',
+            attendance: 0,
+            earnings: 0
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDriverHR();
   }, [id]);
 
   const styles = {
     container: { padding: '32px', backgroundColor: '#f4f4f4', minHeight: '100vh' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-    backBtn: { display: 'flex', alignItems: 'center', gap: '8px', border: 'none', background: 'none', cursor: 'pointer', color: '#64748B', fontWeight: '700' },
+    backBtn: { display: 'flex', alignItems: 'center', gap: '8px', border: 'none', background: 'none', cursor: 'pointer', color: '#949494', fontWeight: '700' },
     
     mainGrid: { display: 'grid', gridTemplateColumns: 'minmax(350px, 1fr) 2fr', gap: '32px' },
     sidebar: { display: 'flex', flexDirection: 'column' as const, gap: '24px' },
@@ -53,19 +69,19 @@ const DriverHRProfile: React.FC = () => {
     avatarLarge: { width: '120px', height: '120px', borderRadius: '40px', backgroundColor: '#ebebeb', margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', position: 'relative' as const },
     onlineDot: { width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#10b981', border: '3px solid white', position: 'absolute' as const, bottom: '5px', right: '5px' },
     name: { fontSize: '24px', fontWeight: '700', color: '#0F172A', marginBottom: '4px' },
-    role: { fontSize: '12px', fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '24px', display: 'block' },
+    role: { fontSize: '12px', fontWeight: '600', color: '#949494', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '24px', display: 'block' },
     
     scoreGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '32px' },
     scoreItem: { padding: '16px', borderRadius: '24px', backgroundColor: '#f4f4f4', border: '1px solid #e8e8e8' },
-    scoreLabel: { fontSize: '11px', color: '#94A3B8', fontWeight: '600', marginBottom: '4px' },
+    scoreLabel: { fontSize: '11px', color: '#949494', fontWeight: '600', marginBottom: '4px' },
     scoreValue: { fontSize: '18px', fontWeight: '700', color: '#1E293B' },
     
     contactInfo: { textAlign: 'left' as const, display: 'flex', flexDirection: 'column' as const, gap: '16px', paddingTop: '24px', borderTop: '1px solid #e8e8e8' },
-    contactRow: { display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: '#64748B', fontWeight: '600' },
+    contactRow: { display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: '#949494', fontWeight: '600' },
     iconBox: { padding: '8px', borderRadius: '10px', backgroundColor: '#ebebeb', color: 'var(--text-muted)' },
     
     tabNavPremium: { display: 'flex', gap: '8px', backgroundColor: 'white', padding: '8px', borderRadius: '24px', border: '1px solid #E2E8F0', marginBottom: '32px' },
-    tabBtn: { padding: '12px 24px', border: 'none', background: 'none', cursor: 'pointer', borderRadius: '18px', fontSize: '13px', fontWeight: '600', color: '#94A3B8', transition: 'all 0.2s' },
+    tabBtn: { padding: '12px 24px', border: 'none', background: 'none', cursor: 'pointer', borderRadius: '18px', fontSize: '13px', fontWeight: '600', color: '#949494', transition: 'all 0.2s' },
     tabBtnActive: { backgroundColor: 'var(--primary)', color: 'white', boxShadow: '0 4px 12px rgba(217, 255, 0, 0.2)' },
     
     cardPremium: { backgroundColor: 'white', borderRadius: '32px', padding: '32px', border: '1px solid #E2E8F0' },
@@ -73,7 +89,7 @@ const DriverHRProfile: React.FC = () => {
     sectionTitle: { fontSize: '18px', fontWeight: '600', color: '#1E293B', display: 'flex', alignItems: 'center', gap: '12px' },
     
     attendanceTable: { width: '100%', borderCollapse: 'separate' as const, borderSpacing: '0 8px' },
-    th: { textAlign: 'left' as const, padding: '12px 16px', fontSize: '11px', fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase' as const },
+    th: { textAlign: 'left' as const, padding: '12px 16px', fontSize: '11px', fontWeight: '600', color: '#949494', textTransform: 'uppercase' as const },
     tr: { backgroundColor: '#f4f4f4', transition: 'all 0.2s' },
     td: { padding: '16px', fontSize: '14px', fontWeight: '600', color: '#475569' },
     pontoBadge: { padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: '600' },
@@ -112,8 +128,8 @@ const DriverHRProfile: React.FC = () => {
                    <div style={{ padding: '8px', borderRadius: '10px', backgroundColor: '#f97316', color: 'white' }}><Award size={16} /></div>
                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#9a3412' }}>Tempo Casa</span>
                 </div>
-                <h4 style={{ fontSize: '20px', fontWeight: '700', color: '#9a3412' }}>284 Dias</h4>
-                <p style={{ fontSize: '11px', color: '#c2410c', marginTop: '4px' }}>Desde Jan 2024</p>
+                <h4 style={{ fontSize: '20px', fontWeight: '700', color: '#9a3412' }}>--</h4>
+                <p style={{ fontSize: '11px', color: '#c2410c', marginTop: '4px' }}>Baseado na Admissão</p>
              </div>
           </div>
        </div>
@@ -130,23 +146,13 @@ const DriverHRProfile: React.FC = () => {
                    <th style={styles.th}>Status</th>
                 </tr>
              </thead>
-             <tbody>
-                {[
-                   { date: '11/04 Sáb', in: '08:00', lunch: '12:00', out: '--:--', status: 'PRESENTE', color: '#10b981' },
-                   { date: '10/04 Sex', in: '08:15', lunch: '12:00', out: '18:30', status: 'ATRASO (15m)', color: '#f59e0b' },
-                   { date: '09/04 Qui', in: '07:55', lunch: '12:05', out: '18:10', status: 'ON-TIME', color: '#10b981' }
-                ].map((item, i) => (
-                   <tr key={i} style={styles.tr}>
-                      <td style={{...styles.td, borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px'}}>{item.date}</td>
-                      <td style={styles.td}>{item.in}</td>
-                      <td style={styles.td}>{item.lunch}</td>
-                      <td style={styles.td}>{item.out}</td>
-                      <td style={{...styles.td, borderTopRightRadius: '16px', borderBottomRightRadius: '16px'}}>
-                         <span style={{...styles.pontoBadge, backgroundColor: `${item.color}20`, color: item.color}}>{item.status}</span>
-                      </td>
-                   </tr>
-                ))}
-             </tbody>
+              <tbody>
+                 <tr>
+                    <td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: '#949494', fontSize: '13px' }}>
+                       Nenhum registro de ponto encontrado para o período.
+                    </td>
+                 </tr>
+              </tbody>
           </table>
        </div>
     </div>
@@ -197,13 +203,8 @@ const DriverHRProfile: React.FC = () => {
             <div style={styles.cardPremium}>
                <h4 style={{...styles.sectionTitle, fontSize: '16px', marginBottom: '20px'}}>Documentos Pendentes</h4>
                <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px' }}>
-                  <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#fef2f2', border: '1px solid #fee2e2', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                     <AlertCircle size={16} color="#ef4444" />
-                     <span style={{ fontSize: '12px', fontWeight: '700', color: '#991b1b' }}>CNH Vence em 15 dias</span>
-                  </div>
-                  <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: '#f0fdf4', border: '1px solid #dcfce7', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                     <CheckCircle2 size={16} color="#10b981" />
-                     <span style={{ fontSize: '12px', fontWeight: '700', color: '#166534' }}>Exame Toxicológico OK</span>
+                  <div style={{ padding: '24px', textAlign: 'center', color: '#949494', fontSize: '12px' }}>
+                     <p>Documentos totalmente sincronizados.</p>
                   </div>
                </div>
             </div>
@@ -232,7 +233,7 @@ const DriverHRProfile: React.FC = () => {
                <div style={styles.cardPremium}>
                   <div style={{ padding: '80px', textAlign: 'center' }}>
                      <Search size={48} color="#E2E8F0" style={{ marginBottom: '16px' }} />
-                     <p style={{ color: '#94A3B8', fontWeight: '600' }}>Processando dados de {activeTab} para o ID {id}...</p>
+                     <p style={{ color: '#949494', fontWeight: '600' }}>Processando dados de {activeTab} para o ID {id}...</p>
                   </div>
                </div>
             )}

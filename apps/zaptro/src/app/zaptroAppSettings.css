@@ -1,0 +1,14 @@
+.zaptro-app-settings-page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+  background: #ffffff;
+  box-sizing: border-box;
+  color: #c9c9c9;
+}
+
+.zaptro-app-settings-page .zaptro-settings-layout {
+  width: 100%;
+}

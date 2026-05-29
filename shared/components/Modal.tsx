@@ -126,8 +126,8 @@ const Modal: React.FC<ModalProps> = ({
             <div style={{ flex: 1 }}>
               {!hideTitle && (
                 <h2 style={{ 
-                  fontSize: '26px', 
-                  fontWeight: '700', 
+                  fontSize: '20px', 
+                  fontWeight: '800', 
                   color: darkMode ? '#FFF' : '#1E1B4B', 
                   margin: 0, 
                   letterSpacing: '-0.4px'
@@ -136,7 +136,7 @@ const Modal: React.FC<ModalProps> = ({
                 </h2>
               )}
               {subtitle && (
-                <p style={{ color: '#64748B', fontSize: '11px', margin: '4px 0 0', fontWeight: '500', letterSpacing: '0.2px' }}>
+                <p style={{ color: '#949494', fontSize: '11px', margin: '4px 0 0', fontWeight: '500', letterSpacing: '0.2px' }}>
                   {subtitle}
                 </p>
               )}

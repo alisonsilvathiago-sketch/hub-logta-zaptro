@@ -96,7 +96,7 @@ const styles = {
   container: { display: 'flex', flexDirection: 'column' as const, gap: '32px' },
   header: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
   title: { fontSize: '28px', fontWeight: '700', color: '#1e293b', letterSpacing: '-1px' },
-  subtitle: { fontSize: '16px', color: '#64748b', fontWeight: '500' },
+  subtitle: { fontSize: '16px', color: '#949494', fontWeight: '500' },
   
   loading: { padding: '100px', textAlign: 'center' as const, color: 'var(--primary)', fontWeight: '600' },
   
@@ -120,7 +120,7 @@ const styles = {
   cTitle: { fontSize: '16px', fontWeight: '600', color: '#1e293b', height: '40px', overflow: 'hidden' },
   
   progressContainer: { display: 'flex', flexDirection: 'column' as const, gap: '6px', marginTop: '8px' },
-  progressLabel: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: '700', color: '#94a3b8' },
+  progressLabel: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: '700', color: '#949494' },
   progressBar: { height: '6px', backgroundColor: '#ebebeb', borderRadius: '3px', overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: 'var(--primary)', borderRadius: '3px' },
   

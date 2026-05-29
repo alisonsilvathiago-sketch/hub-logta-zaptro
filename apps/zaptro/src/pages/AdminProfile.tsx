@@ -71,15 +71,9 @@ const AdminProfile: React.FC = () => {
     holder_name: '', number: '', expiry: '', cvv: '', brand: 'visa'
   });
 
-  // Mock data (would be fetched from Supabase)
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([
-    { id: '1', bank_name: 'Banco do Brasil', account_type: 'Corrente', agency: '1234-5', account_number: '12345-6', pix_key: 'empresa@email.com', is_main: true },
-    { id: '2', bank_name: 'Itaú', account_type: 'Poupança', agency: '5678-0', account_number: '98765-4', is_main: false },
-  ]);
-
-  const [paymentCards, setPaymentCards] = useState<PaymentCard[]>([
-    { id: '1', holder_name: 'EMPRESA LOGTA LTDA', last_four: '4242', brand: 'Visa', expiry: '12/28', is_main: true },
-  ]);
+  // Dados serão carregados do Supabase
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [paymentCards, setPaymentCards] = useState<PaymentCard[]>([]);
 
   const tabs = [
     { id: 'meus-dados', label: 'Meus Dados', icon: User },
@@ -199,7 +193,7 @@ const AdminProfile: React.FC = () => {
         <div>
           <h3 style={styles.avatarName}>{profile?.full_name || 'Administrador'}</h3>
           <span style={styles.roleBadge}>{profile?.role || 'ADMIN'}</span>
-          <p style={{ color: '#64748b', fontSize: '13px', marginTop: '8px' }}>{profile?.email}</p>
+          <p style={{ color: '#949494', fontSize: '13px', marginTop: '8px' }}>{profile?.email}</p>
         </div>
       </div>
 
@@ -219,9 +213,9 @@ const AdminProfile: React.FC = () => {
               disabled 
               placeholder="Email não editável" 
             />
-            <Lock size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <Lock size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#949494' }} />
           </div>
-          <span style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+          <span style={{ fontSize: '11px', color: '#949494', marginTop: '4px' }}>
             Para alterar seu e-mail, entre em contato com o Administrador Master.
           </span>
         </div>
@@ -269,7 +263,7 @@ const AdminProfile: React.FC = () => {
         </div>
         <div>
           <h3 style={styles.avatarName}>{company?.name || 'Minha Empresa'}</h3>
-          <p style={{ color: '#64748b', fontSize: '13px' }}>ID: {company?.id?.slice(0, 8) || '—'}</p>
+          <p style={{ color: '#949494', fontSize: '13px' }}>ID: {company?.id?.slice(0, 8) || '—'}</p>
           <span style={{ ...styles.roleBadge, backgroundColor: '#ecfdf5', color: '#166534' }}>✓ Conta Ativa</span>
         </div>
       </div>
@@ -388,7 +382,7 @@ const AdminProfile: React.FC = () => {
 
       <div style={styles.securityNote}>
         <Shield size={16} color="#D9FF00" />
-        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+        <p style={{ margin: 0, fontSize: '13px', color: '#949494' }}>
           Seus dados de pagamento são criptografados e armazenados com segurança. Nunca compartilhamos seus dados com terceiros.
         </p>
       </div>
@@ -464,7 +458,7 @@ const AdminProfile: React.FC = () => {
 
       <div style={styles.securityNote}>
         <CheckCircle size={16} color="#10b981" />
-        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+        <p style={{ margin: 0, fontSize: '13px', color: '#949494' }}>
           As contas cadastradas ficam vinculadas ao módulo financeiro para facilitar conciliações bancárias e pagamentos.
         </p>
       </div>
@@ -577,7 +571,7 @@ const AdminProfile: React.FC = () => {
               <label style={styles.label}>CVV</label>
               <div style={{ position: 'relative' }}>
                 <input style={{ ...styles.input, paddingRight: '40px' }} type={showCVV ? 'text' : 'password'} placeholder="•••" maxLength={4} value={newCard.cvv} onChange={e => setNewCard({ ...newCard, cvv: e.target.value })} />
-                <button type="button" onClick={() => setShowCVV(!showCVV)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                <button type="button" onClick={() => setShowCVV(!showCVV)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#949494' }}>
                   {showCVV ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
@@ -594,7 +588,7 @@ const AdminProfile: React.FC = () => {
           </div>
           <div style={styles.securityNote}>
             <Lock size={14} color="#D9FF00" />
-            <span style={{ fontSize: '12px', color: '#64748b' }}>Dados protegidos com criptografia SSL de 256 bits</span>
+            <span style={{ fontSize: '12px', color: '#949494' }}>Dados protegidos com criptografia SSL de 256 bits</span>
           </div>
           <button style={styles.btnPrimary} onClick={handleAddCard}>
             <CreditCard size={16} /> Adicionar Cartão
@@ -623,7 +617,7 @@ const styles: Record<string, any> = {
 
   // Tabs
   tabBar: { display: 'flex', gap: '4px', backgroundColor: 'white', padding: '8px', borderRadius: '18px', border: '1px solid #e8e8e8', margin: '20px 0 0 0' },
-  tabBtn: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 16px', borderRadius: '12px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: '#64748b', transition: 'all 0.2s' },
+  tabBtn: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 16px', borderRadius: '12px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: '#949494', transition: 'all 0.2s' },
   tabBtnActive: { backgroundColor: 'var(--primary)', color: 'white', fontWeight: '600', boxShadow: '0 4px 12px rgba(217, 255, 0, 0.3)' },
 
   // Content Card
@@ -655,7 +649,7 @@ const styles: Record<string, any> = {
   // Buttons
   btnPrimary: { padding: '14px 24px', borderRadius: '14px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' },
   btnOutline: { padding: '8px 16px', borderRadius: '10px', backgroundColor: 'transparent', color: 'var(--primary)', border: '1px solid var(--primary)', fontWeight: '700', cursor: 'pointer', fontSize: '13px' },
-  btnEdit: { padding: '8px', borderRadius: '10px', backgroundColor: '#ebebeb', color: '#64748b', border: 'none', cursor: 'pointer' },
+  btnEdit: { padding: '8px', borderRadius: '10px', backgroundColor: '#ebebeb', color: '#949494', border: 'none', cursor: 'pointer' },
   btnDelete: { padding: '8px', borderRadius: '10px', backgroundColor: '#fef2f2', color: '#ef4444', border: 'none', cursor: 'pointer' },
 
   // Card styles
@@ -677,17 +671,17 @@ const styles: Record<string, any> = {
   accountHeader: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' },
   accountIcon: { width: '44px', height: '44px', borderRadius: '14px', backgroundColor: 'rgba(217, 255, 0, 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   accountName: { fontSize: '16px', fontWeight: '600', color: 'var(--text-main)' },
-  accountType: { fontSize: '12px', color: '#64748b', fontWeight: '600' },
+  accountType: { fontSize: '12px', color: '#949494', fontWeight: '600' },
   mainPill: { padding: '4px 12px', backgroundColor: 'rgba(217, 255, 0, 0.18)', color: 'var(--primary)', borderRadius: '20px', fontSize: '12px', fontWeight: '600' },
   accountDetails: { display: 'flex', gap: '32px', padding: '16px', backgroundColor: '#f4f4f4', borderRadius: '14px', marginBottom: '16px', flexWrap: 'wrap' },
   accountDetail: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  accountDetailLabel: { fontSize: '10px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase' },
+  accountDetailLabel: { fontSize: '10px', fontWeight: '600', color: '#949494', textTransform: 'uppercase' },
   accountDetailValue: { fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' },
   accountFooter: { display: 'flex', gap: '8px', alignItems: 'center' },
 
   // Empty state
   emptyState: { textAlign: 'center', padding: '60px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' },
-  emptyText: { color: '#94a3b8', fontWeight: '600', margin: 0 },
+  emptyText: { color: '#949494', fontWeight: '600', margin: 0 },
 
   // Security note
   securityNote: { display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 18px', backgroundColor: '#f4f4f4', borderRadius: '14px', border: '1px solid #e8e8e8' },

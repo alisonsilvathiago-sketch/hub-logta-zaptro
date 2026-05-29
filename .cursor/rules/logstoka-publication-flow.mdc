@@ -1,0 +1,40 @@
+---
+description: LogStoka — fluxo integrações primeiro, rascunho e Central de Publicação por loja/grupo
+globs: apps/logstoka/**
+alwaysApply: false
+---
+
+# FLUXO DE PUBLICAÇÃO LOGSTOKA (≠ Bling)
+
+LogStoka = **estoque + integração + logística**. Não nasce publicando como ERP.
+
+## Ordem obrigatória
+
+1. **Configurações → Integrações** — conectar marketplaces; sistema descobre **contas/lojas** (Shopee Stock Express, ML Pluma Baby, etc.)
+2. **Grupos de lojas** — agrupar lojas do mesmo segmento (`/app/products/grupos`)
+3. **Cadastro** — produto nasce **Rascunho**; nunca publica automaticamente
+4. **Validação** — foto, peso, dimensões, descrição, categoria, EAN, NCM
+5. **Central de Publicação** (`/app/products/publicacao`) — selecionar produtos + **lojas específicas** (não só marketplace)
+6. **Sincronização** — após publicado: receber vendas/webhooks; enviar estoque/preço
+
+## Status do produto
+
+`draft` → `review` → `ready` → `published` (por loja, não global cego)
+
+Botão **Publicar bloqueado** se `validateProductForPublication` falhar.
+
+## Publicação por loja
+
+Usuário escolhe: ☑ Shopee Stock Express · ☐ Shopee Baby Bear · ☑ ML Stock Express
+
+Implementação: `productPublication.ts` · UI: `ProductPublicationPage.tsx`
+
+## Menu Produtos
+
+Cadastro · Grupos · Publicação · Sincronização
+
+## Ao implementar
+
+- Não adicionar checkboxes de marketplace no modal de cadastro
+- Publicação sempre explícita na Central
+- Fila de integração para envio real (futuro)

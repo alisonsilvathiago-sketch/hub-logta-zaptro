@@ -20,6 +20,8 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { getSandboxOperationalBundle, resolveDemoCompanyId } from '../../../lib/seed';
 import { supabase } from '../../../lib/supabase';
 import { useFrotaIntelligence } from '../context/FrotaIntelligenceContext';
+import { VehicleTollTagBadge } from '../../../components/VehicleTollTagBadge';
+import { getVehicleTollTag, normalizeVehiclePlate } from '../../../lib/vehicleTollTag';
 
 export type VeiculoDetailRow = {
   id: string;
@@ -31,9 +33,7 @@ export type VeiculoDetailRow = {
 };
 
 function normalizePlate(p?: string) {
-  return decodeURIComponent(p || '')
-    .toUpperCase()
-    .replace(/\s/g, '');
+  return normalizeVehiclePlate(p);
 }
 
 function mapVehicleRow(v: Record<string, unknown>): VeiculoDetailRow {
@@ -133,6 +133,8 @@ export function VeiculoDetailView() {
     ];
   }, [vehicle, motoristaAtual]);
 
+  const tollTag = useMemo(() => (vehicle ? getVehicleTollTag(vehicle.placa) : null), [vehicle]);
+
   const loading = opLoading && dbLoading && !vehicle;
 
   if (loading) {
@@ -191,9 +193,12 @@ export function VeiculoDetailView() {
               </p>
             </div>
           </div>
-          <span className={`self-start rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-normal ${statusTone(vehicle.status)}`}>
-            {statusLabel(vehicle.status)}
-          </span>
+          <div className="flex flex-col items-end gap-3">
+            <span className={`rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-normal ${statusTone(vehicle.status)}`}>
+              {statusLabel(vehicle.status)}
+            </span>
+            {tollTag ? <VehicleTollTagBadge plate={vehicle.placa} tag={tollTag} compact showLinks={false} /> : null}
+          </div>
         </div>
       </div>
 
@@ -265,6 +270,10 @@ export function VeiculoDetailView() {
               </div>
               <ChevronRight size={16} className="text-gray-300" />
             </Link>
+          ) : null}
+
+          {tollTag ? (
+            <VehicleTollTagBadge plate={vehicle.placa} tag={tollTag} />
           ) : null}
         </div>
       </div>

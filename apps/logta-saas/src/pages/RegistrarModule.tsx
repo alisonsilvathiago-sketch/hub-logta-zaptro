@@ -379,6 +379,13 @@ export default function RegistrarModule() {
   }, [navigate]);
 
   useEffect(() => {
+    window.document.body.classList.add('logta-public-auth');
+    return () => {
+      window.document.body.classList.remove('logta-public-auth');
+    };
+  }, []);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('sso') === '1') {
       supabase.auth.getUser().then(({ data }) => {
@@ -424,7 +431,7 @@ export default function RegistrarModule() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] w-full flex-col bg-white font-sans lg:flex-row">
+    <div className="logta-auth-page flex min-h-[100dvh] w-full flex-col bg-white font-sans lg:flex-row">
       <aside className="relative flex flex-col justify-between overflow-hidden bg-[#0a0f1c] px-8 py-10 text-white lg:w-[42%] lg:max-w-xl lg:py-14 xl:px-12">
         <div
           className="pointer-events-none absolute inset-0 opacity-90"

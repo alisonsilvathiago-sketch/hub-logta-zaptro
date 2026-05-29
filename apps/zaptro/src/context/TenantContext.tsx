@@ -10,10 +10,14 @@ import { validateTenantAccess, type AccessStatus } from '../lib/accessControl';
 import BlockedScreen from '../components/BlockedScreen';
 
 export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
   const { profile, isLoading: authLoading } = useAuth();
   const [company, setCompanyState] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [access, setAccess] = useState<AccessStatus>({ allowed: true });
+
+  /** Shell /app exige login — sem bypass de assinatura na área operacional. */
+  const isOpenWaLinkShell = false;
 
   const fetchCompanyData = async () => {
     // Check for impersonation cookie (shared across subdomains)
@@ -62,13 +66,23 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [profile, authLoading]);
 
-  if (!access.allowed && !isLoading) {
-    return <BlockedScreen reason={access.reason || 'Restrição Administrativa'} />;
-  }
+  const providerValue: TenantContextType = {
+    company,
+    profile,
+    isLoading: isLoading || authLoading,
+    setCompany: setCompanyState,
+    fetchCompanyData,
+  };
+
+  const blocked = !access.allowed && !isLoading && !isOpenWaLinkShell;
 
   return (
-    <TenantContext.Provider value={{ company, profile, isLoading: isLoading || authLoading, setCompany: setCompanyState, fetchCompanyData }}>
-      {children}
+    <TenantContext.Provider value={providerValue}>
+      {blocked ? (
+        <BlockedScreen reason={access.reason || 'Restrição Administrativa'} />
+      ) : (
+        children
+      )}
     </TenantContext.Provider>
   );
 };

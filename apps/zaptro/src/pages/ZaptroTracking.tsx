@@ -70,7 +70,7 @@ const ZaptroTracking: React.FC = () => {
         <section style={styles.searchSection}>
           <form onSubmit={handleSearch} style={styles.searchForm}>
             <div style={styles.inputWrapper}>
-              <Search size={20} color="#94a3b8" style={styles.searchIcon} />
+              <Search size={20} color="#949494" style={styles.searchIcon} />
               <input 
                 type="text" 
                 placeholder="Código de rastreio ou CPF/CNPJ" 
@@ -131,7 +131,7 @@ const ZaptroTracking: React.FC = () => {
                  {occurrences.length > 0 ? occurrences.map((occ, i) => (
                    <div key={occ.id} style={styles.timelineItem}>
                       <div style={styles.timelineDot}>
-                         <div style={{...styles.dotInner, backgroundColor: i === 0 ? '#D9FF00' : '#334155'}} />
+                         <div style={{...styles.dotInner, backgroundColor: i === 0 ? '#D9FF00' : '#6B6B6B'}} />
                          {i !== occurrences.length - 1 && <div style={styles.dotLine} />}
                       </div>
                       <div style={styles.timelineContent}>
@@ -199,7 +199,7 @@ const styles = {
     margin: 0,
   },
   headerSub: {
-    color: '#94a3b8',
+    color: '#949494',
     fontSize: '14px',
   },
   main: {
@@ -231,7 +231,7 @@ const styles = {
   input: {
     width: '100%',
     backgroundColor: '#0a0a0a',
-    border: '1px solid #334155',
+    border: '1px solid #6B6B6B',
     borderRadius: '14px',
     padding: '16px 16px 16px 48px',
     color: '#fff',
@@ -282,7 +282,7 @@ const styles = {
     margin: '0 0 4px 0',
   },
   trackingSub: {
-    color: '#94a3b8',
+    color: '#949494',
     fontSize: '14px',
     margin: 0,
   },
@@ -328,7 +328,7 @@ const styles = {
   timelineTitle: {
     fontSize: '14px',
     fontWeight: 600,
-    color: '#94a3b8',
+    color: '#949494',
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
@@ -374,11 +374,11 @@ const styles = {
   },
   timelineDate: {
     fontSize: '12px',
-    color: '#64748b',
+    color: '#949494',
   },
   timelineDesc: {
     fontSize: '14px',
-    color: '#94a3b8',
+    color: '#949494',
     margin: '0 0 8px 0',
     lineHeight: 1.5,
   },

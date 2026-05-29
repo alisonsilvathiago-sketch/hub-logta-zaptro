@@ -11,6 +11,8 @@ export type ActiveRouteRow = {
   clientRef?: string;
   /** Nota só para a equipa (não vai para o link público). */
   internalNote?: string;
+  /** Motorista vinculado (`whatsapp_drivers.id` ou demo). */
+  driverId?: string;
 };
 
 export function routesStorageKey(crmId: string): string {

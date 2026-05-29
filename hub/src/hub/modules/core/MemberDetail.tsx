@@ -3,7 +3,7 @@ import React from 'react';
 const MemberDetailStub: React.FC = () => {
   return (
     <div style={{ padding: '40px', backgroundColor: 'white', borderRadius: '24px', border: '1px solid var(--border)' }}>
-      <h1 style={{ fontSize: '29px', fontWeight: '800', marginBottom: '16px', letterSpacing: 0, color: '#000000', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }}>Detalhes do Membro</h1>
+      <h1 style={{ fontSize: '29px', fontWeight: '800', marginBottom: '16px', letterSpacing: 0, color: '#000000' }}>Detalhes do Membro</h1>
       <p style={{ color: 'var(--text-muted)' }}>Este módulo está sendo migrado para a nova arquitetura monorepo.</p>
     </div>
   );

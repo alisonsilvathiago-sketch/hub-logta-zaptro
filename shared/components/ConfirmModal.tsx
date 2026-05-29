@@ -53,14 +53,14 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </div>
         
         <h3 style={{ fontSize: '20px', fontWeight: '900', color: '#0F172A', marginBottom: '12px' }}>{title}</h3>
-        <p style={{ fontSize: '14px', color: '#64748B', lineHeight: '1.6', marginBottom: '32px' }}>{message}</p>
+        <p style={{ fontSize: '14px', color: '#949494', lineHeight: '1.6', marginBottom: '32px' }}>{message}</p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <button 
             onClick={onClose}
             style={{ 
               padding: '14px', borderRadius: '12px', border: '1px solid #E2E8F0', 
-              background: '#fff', color: '#64748B', fontWeight: '800', cursor: 'pointer',
+              background: '#fff', color: '#949494', fontWeight: '800', cursor: 'pointer',
               fontSize: '13px'
             }}
           >

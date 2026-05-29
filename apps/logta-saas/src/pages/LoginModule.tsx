@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTenant } from '../contexts/TenantContext';
 import { ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { hasRealConfig, supabase, supabaseUrl } from '../lib/supabase';
+import { signInWithPasswordWithTimeout } from '../lib/authSession';
 import { LOGTA_SESSION_BOOT_FLAG } from '../components/SessionBootLoader';
 import { isLogtaDemoLogin } from '../lib/logtaDemoAuth';
 /** Hero da coluna esquerda — `public/login-hero-containers.png` (atualize o arquivo sem rebuild). */
@@ -66,10 +67,9 @@ const Login = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'auto';
+    document.body.classList.add('logta-public-auth');
     return () => {
-      document.body.style.overflow = prev;
+      document.body.classList.remove('logta-public-auth');
     };
   }, []);
 
@@ -110,23 +110,26 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setErrorMsg(null);
 
     const emailNorm = email.trim().toLowerCase();
     const passwordNorm = password;
 
+    /** Credenciais locais — entra direto, sem esperar Supabase. */
+    if (isLogtaDemoLogin(emailNorm, passwordNorm)) {
+      grantDemoSessionAndEnter();
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailNorm,
-        password: passwordNorm,
-      });
+      const { data, error } = await signInWithPasswordWithTimeout(emailNorm, passwordNorm);
 
       if (error) {
         console.error('Login error:', error.message);
 
         if (isLogtaDemoLogin(emailNorm, passwordNorm)) {
-          console.warn('[LoginModule] Supabase error. Granting local development fallback session.');
           grantDemoSessionAndEnter();
           return;
         }
@@ -134,17 +137,14 @@ const Login = () => {
         setErrorMsg(
           error.message.includes('Email not confirmed')
             ? 'Confirme o e-mail no Supabase ou use logta@teste.com em ambiente local.'
-            : 'E-mail ou senha inválidos.',
+            : error.name === 'AuthTimeout'
+              ? 'Servidor de autenticação demorou demais. Tente de novo ou use logta@teste.com no local.'
+              : 'E-mail ou senha inválidos.',
         );
         return;
       }
 
       if (data?.session) {
-        grantDemoSessionAndEnter();
-        return;
-      }
-
-      if (isLogtaDemoLogin(emailNorm, passwordNorm)) {
         grantDemoSessionAndEnter();
         return;
       }
@@ -256,6 +256,11 @@ const Login = () => {
             <p className="mx-auto max-w-[280px] text-pretty text-sm font-medium text-gray-500 sm:max-w-sm">
               Insira seu e-mail corporativo e senha de acesso abaixo.
             </p>
+            {import.meta.env.DEV ? (
+              <p className="mt-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs font-semibold text-primary">
+                Local: <span className="font-mono">logta@teste.com</span> · senha <span className="font-mono">123456</span>
+              </p>
+            ) : null}
           </div>
 
           <form onSubmit={handleLogin} className="mx-auto w-full max-w-md space-y-6">

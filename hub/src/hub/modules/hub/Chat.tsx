@@ -20,15 +20,11 @@ const HubChat: React.FC = () => {
   const [message, setMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isLogDockModalOpen, setIsLogDockModalOpen] = useState(false);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [logDockFiles, setLogDockFiles] = useState<any[]>([]);
-  const [isDocsLoading, setIsDocsLoading] = useState(false);
   
-  const handleOpenLogDock = () => {
-    setIsLogDockModalOpen(true);
-    toastInfo('Sincronizando com LogDock.com.br...');
+  const handleAttachDocument = () => {
+    toastInfo('Anexos: use o papel no chat ou envie arquivos pelo módulo de documentação Logta.');
   };
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   
   // UI states
   const [isMembersOpen, setIsMembersOpen] = useState(false);
@@ -59,9 +55,9 @@ const HubChat: React.FC = () => {
 
   const [users] = useState([
     { id: 'u1', name: 'Alison Thiago', status: 'online', email: 'alison@hub.com', team: 'Core', role: 'Atendente Master' },
-    { id: 'u2', name: 'João Silva', status: 'online', email: 'joao@transpxp.com', team: 'Transportadora XP', role: 'Cliente Zaptro', segment: 'Logística', plan: 'Enterprise', since: '6 meses' },
+    { id: 'u2', name: 'João Silva', status: 'online', email: 'joao@transpxp.com', team: 'Transportadora XP', role: 'Cliente Logta', segment: 'Logística', plan: 'Enterprise', since: '6 meses' },
     { id: 'u3', name: 'Maria Souza', status: 'offline', email: 'maria@hub.com', team: 'Design', role: 'Colaboradora' },
-    { id: 'u4', name: 'Suporte Zaptro', status: 'online', email: 'suporte@zaptro.com', team: 'Ops', role: 'Atendente' }
+    { id: 'u4', name: 'Suporte Logta', status: 'online', email: 'suporte@logta.com.br', team: 'Ops', role: 'Atendente' }
   ]);
 
   const channels = [
@@ -121,18 +117,18 @@ const HubChat: React.FC = () => {
         aiResponse.report = {
           title: 'Resumo Operacional - Abril 2024',
           metrics: [
-            { label: 'Receita Total', value: 'R$ 1.240.000', trend: '+12%', color: '#10B981' },
+            { label: 'Receita Total', value: 'R$ 1.240.000', trend: '+12%', color: '#0061FF' },
             { label: 'Novos Clientes', value: '42', trend: '+5%', color: '#0061FF' },
             { label: 'Conversão', value: '18.4%', trend: '-2%', color: '#F59E0B' }
           ],
           chartData: [65, 78, 90, 85, 95, 110, 120]
         };
       } else if (input.includes('usuário') || input.includes('ativos')) {
-        aiResponse.text = 'Atualmente temos 142 usuários ativos no ecossistema (Logta + Zaptro).';
+        aiResponse.text = 'Atualmente temos 142 usuários ativos no Logta e no Hub Master.';
         aiResponse.metadata = { type: 'users_online', count: 142 };
       } else if (input.includes('erro') || input.includes('problema') || input.includes('crítico')) {
         aiResponse.text = 'Detectei 3 alertas de sistema pendentes de revisão na Infraestrutura.';
-        aiResponse.metadata = { type: 'system_errors', errors: ['API Timeout (Zaptro)', 'Redis High Memory', 'Latência DB > 200ms'] };
+        aiResponse.metadata = { type: 'system_errors', errors: ['Gateway API timeout', 'Redis com memória alta', 'Latência DB > 200ms'] };
       } else if (input.includes('suporte') || input.includes('ajuda')) {
         aiResponse.text = 'Você pode gerenciar todos os chamados na aba de "Suporte" ao lado. Deseja que eu abra um novo ticket para você?';
       } else {
@@ -255,7 +251,7 @@ const HubChat: React.FC = () => {
                     >
                       <div style={styles.avatarWrapper}>
                         <div style={styles.avatarMini}>{user.name[0]}</div>
-                        <div style={{...styles.statusDotInner, backgroundColor: user.status === 'online' ? '#10B981' : '#94A3B8'}} />
+                        <div style={{...styles.statusDotInner, backgroundColor: user.status === 'online' ? '#0061FF' : '#94A3B8'}} />
                       </div>
                       <div style={styles.dmInfo}>
                         <span style={styles.dmName}>{user.name}</span>
@@ -423,7 +419,7 @@ const HubChat: React.FC = () => {
             <div style={styles.inputActions}>
               <button style={styles.actionBtn} title="Insights de Dados"><Activity size={20} /></button>
               <button style={styles.actionBtn} onClick={() => setIsPaymentModalOpen(true)} title="Gerar Cobrança"><DollarSign size={20} /></button>
-              <button style={styles.actionBtn} onClick={handleOpenLogDock} title="Anexar do LogDock"><FileText size={20} /></button>
+              <button style={styles.actionBtn} onClick={handleAttachDocument} title="Anexar documento"><FileText size={20} /></button>
             </div>
             
             <input 
@@ -482,7 +478,7 @@ const HubChat: React.FC = () => {
                       <div style={styles.pulseDot} />
                       <span>INTELIGÊNCIA ATIVA</span>
                    </div>
-                   <p style={styles.aiContextDesc}>O Hub Assistant monitora constantemente Logta e Zaptro em busca de anomalias.</p>
+                   <p style={styles.aiContextDesc}>O Hub Assistant monitora operações Logta e sinais do painel Master.</p>
                    <div style={styles.aiStatsGrid}>
                       <div style={styles.aiStat}>
                          <span style={styles.statVal}>99.8%</span>
@@ -505,7 +501,7 @@ const HubChat: React.FC = () => {
                   <div style={styles.heroAvatar}>{selectedUserInfo.name[0]}</div>
                   <h4 style={styles.heroName}>{selectedUserInfo.name}</h4>
                   <span style={styles.heroBadge}>{selectedUserInfo.role}</span>
-                  <div style={styles.heroStatus}><div style={{...styles.statusDotSmall, backgroundColor: '#10B981'}} /> Online Agora</div>
+                  <div style={styles.heroStatus}><div style={{...styles.statusDotSmall, backgroundColor: '#0061FF'}} /> Online Agora</div>
                   
                   <div style={styles.infoGrid}>
                     <div style={styles.infoRow}><span style={styles.infoLabel}>Empresa</span><span style={styles.infoValue}>{selectedUserInfo.team}</span></div>
@@ -662,8 +658,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   secondaryActionBtn: { width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontWeight: '800', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' },
 
   aiContext: { padding: '24px' },
-  aiStatusHeader: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', fontWeight: '900', color: '#10B981', marginBottom: '16px' },
-  pulseDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981' },
+  aiStatusHeader: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', fontWeight: '900', color: '#0061FF', marginBottom: '16px' },
+  pulseDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF' },
   aiContextDesc: { fontSize: '13px', color: '#64748B', lineHeight: '1.6', marginBottom: '24px' },
   aiStatsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' },
   aiStat: { padding: '16px', borderRadius: '12px', backgroundColor: '#F8FAFC', textAlign: 'center' },
@@ -675,7 +671,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   heroAvatar: { width: '64px', height: '64px', borderRadius: '20px', backgroundColor: '#0061FF', color: 'white', fontSize: '24px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' },
   heroName: { fontSize: '16px', fontWeight: '900', margin: '0 0 4px' },
   heroBadge: { fontSize: '10px', color: '#0061FF', fontWeight: '800', textTransform: 'uppercase', backgroundColor: '#F0F7FF', padding: '3px 10px', borderRadius: '100px' },
-  heroStatus: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', color: '#10B981', fontWeight: '700', marginTop: '12px' },
+  heroStatus: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', color: '#0061FF', fontWeight: '700', marginTop: '12px' },
   
   infoGrid: { padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' },
   infoRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },

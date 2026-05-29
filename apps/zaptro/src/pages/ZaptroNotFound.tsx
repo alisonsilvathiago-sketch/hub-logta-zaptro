@@ -59,9 +59,9 @@ const styles: Record<string, any> = {
   card: { textAlign: 'center', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', padding: '0 20px' },
   iconBox: { width: '80px', height: '80px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: ZAPTRO_SHADOW.lg },
   title: { fontSize: '28px', fontWeight: '700', margin: 0, letterSpacing: '-1px' },
-  text: { fontSize: '15px', color: '#64748B', lineHeight: '1.6', margin: 0 },
+  text: { fontSize: '15px', color: '#949494', lineHeight: '1.6', margin: 0 },
   btn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '16px 32px', borderRadius: '16px', border: 'none', fontWeight: '700', fontSize: '13px', cursor: 'pointer', transition: '0.2s' },
-  watermark: { position: 'absolute', bottom: '40px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: '600', color: '#64748B', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.5 }
+  watermark: { position: 'absolute', bottom: '40px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: '600', color: '#949494', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.5 }
 };
 
 export default ZaptroNotFound;

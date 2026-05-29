@@ -95,7 +95,7 @@ const NotificationCenter: React.FC<{ isDark?: boolean; pageBg?: string }> = ({ i
       case 'CRITICAL': return { color: '#ef4444', icon: <AlertTriangle size={16} color="#ef4444" /> };
       case 'HIGH': return { color: '#f59e0b', icon: <Info size={16} color="#f59e0b" /> };
       case 'MEDIUM': return { color: LIME, icon: <Zap size={16} color={LIME} fill={LIME} /> };
-      default: return { color: '#94a3b8', icon: <Check size={16} color="#94a3b8" /> };
+      default: return { color: '#949494', icon: <Check size={16} color="#949494" /> };
     }
   };
 
@@ -174,12 +174,12 @@ const NotificationCenter: React.FC<{ isDark?: boolean; pageBg?: string }> = ({ i
                 <h3 style={{ fontSize: 16, fontWeight: 800, color: isDark ? '#FFF' : '#0F172A', margin: 0, letterSpacing: '-0.02em' }}>
                   Notificações
                 </h3>
-                <p style={{ margin: '2px 0 0 0', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
+                <p style={{ margin: '2px 0 0 0', fontSize: 11, fontWeight: 700, color: '#949494', textTransform: 'uppercase' }}>
                   {isMaster ? 'Visão Master' : isAdmin ? 'Administrador' : 'Colaborador'}
                 </p>
               </div>
               <button 
-                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 4 }} 
+                style={{ background: 'none', border: 'none', color: '#949494', cursor: 'pointer', padding: 4 }} 
                 onClick={() => setIsOpen(false)}
               >
                 <X size={20} />
@@ -190,7 +190,7 @@ const NotificationCenter: React.FC<{ isDark?: boolean; pageBg?: string }> = ({ i
               {notifications.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                    <Bell size={40} color={isDark ? '#333' : '#E2E8F0'} style={{ marginBottom: 16 }} />
-                   <p style={{ color: '#94a3b8', fontSize: 13, fontWeight: 600 }}>Nenhuma notificação por aqui.</p>
+                   <p style={{ color: '#949494', fontSize: 13, fontWeight: 600 }}>Nenhuma notificação por aqui.</p>
                 </div>
               ) : (
                 notifications.map(n => {
@@ -233,12 +233,12 @@ const NotificationCenter: React.FC<{ isDark?: boolean; pageBg?: string }> = ({ i
                              <span style={{ fontSize: 10, fontWeight: 800, color: pStyle.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                {n.type}
                              </span>
-                             <span style={{ fontSize: 10, color: '#94a3b8', fontWeight: 700 }}>
+                             <span style={{ fontSize: 10, color: '#949494', fontWeight: 700 }}>
                                {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                              </span>
                           </div>
                           <p style={{ fontSize: 14, fontWeight: 700, color: isDark ? '#FFF' : '#0F172A', margin: '0 0 4px 0', lineHeight: 1.2 }}>{n.title}</p>
-                          <p style={{ fontSize: 12, color: isDark ? '#94A3B8' : '#64748b', margin: 0, lineHeight: 1.4, fontWeight: 500 }}>{n.message}</p>
+                          <p style={{ fontSize: 12, color: isDark ? '#949494' : '#949494', margin: 0, lineHeight: 1.4, fontWeight: 500 }}>{n.message}</p>
                        </div>
                     </div>
                   );

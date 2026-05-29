@@ -92,7 +92,7 @@ const styles = {
   navLink: { 
     display: 'flex', alignItems: 'center', gap: '8px', 
     padding: '10px 20px', borderRadius: '14px', border: 'none', 
-    backgroundColor: 'transparent', color: '#64748b', 
+    backgroundColor: 'transparent', color: '#949494', 
     fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' 
   },
   navLinkActive: { 
@@ -106,7 +106,7 @@ const styles = {
   userProfile: { display: 'flex', alignItems: 'center', gap: '12px' },
   userInfo: { textAlign: 'right' as const },
   userName: { fontSize: '14px', fontWeight: '600', color: '#1e293b', margin: 0 },
-  userBadge: { fontSize: '10px', fontWeight: '700', color: '#94a3b8' },
+  userBadge: { fontSize: '10px', fontWeight: '700', color: '#949494' },
   avatar: { 
     width: '38px', height: '38px', borderRadius: '12px', 
     backgroundColor: '#ebebeb', border: '2px solid white', 
@@ -127,7 +127,7 @@ const styles = {
     padding: '40px', backgroundColor: '#ffffff', 
     borderTop: '1px solid #e2e8f0', display: 'flex', 
     justifyContent: 'space-between', alignItems: 'center',
-    color: '#94a3b8', fontSize: '12px', fontWeight: '600'
+    color: '#949494', fontSize: '12px', fontWeight: '600'
   },
   footerLinks: { display: 'flex', gap: '24px' }
 };

@@ -1,10 +1,17 @@
+/** Host do browser é localhost / 127.0.0.1 (não preview Vercel, staging, etc.). */
+export function isZaptroLocalhost(): boolean {
+  if (typeof window === 'undefined') return false;
+  const h = window.location.hostname;
+  return h === 'localhost' || h === '127.0.0.1';
+}
+
 /**
  * Bypass “dev-admin” só em localhost + build de desenvolvimento.
  * Em produção (zaptro.com.br, Vercel, etc.) nunca usar — evita confundir com login real
  * e sessões sem dados de `profiles` / foto.
  */
 export function isZaptroLocalhostDev(): boolean {
-  const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const isLocal = isZaptroLocalhost();
   const hasDevFlag = typeof window !== 'undefined' && window.location.search.includes('dev=true');
   
   return (

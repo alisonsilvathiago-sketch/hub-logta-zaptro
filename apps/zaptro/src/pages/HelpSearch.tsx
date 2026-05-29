@@ -61,7 +61,7 @@ const HelpSearch: React.FC = () => {
         <div style={styles.bcItem} onClick={() => navigate('/ajuda')}>
           <Home size={14} /> Central de Ajuda
         </div>
-        <ChevronRight size={14} color="#94a3b8" />
+        <ChevronRight size={14} color="#949494" />
         <div style={{...styles.bcItem, color: 'var(--text-main)', cursor: 'default'}}>
           Busca
         </div>
@@ -74,7 +74,7 @@ const HelpSearch: React.FC = () => {
         </div>
         
         <form style={styles.searchBox} onSubmit={handleNewSearch}>
-           <Search size={20} color="#94a3b8" />
+           <Search size={20} color="#949494" />
            <input 
              type="text" 
              style={styles.searchInput} 
@@ -130,7 +130,7 @@ const styles: Record<string, any> = {
   container: { minHeight: '100vh', backgroundColor: '#fcfdfe', padding: '120px 40px 80px 40px' },
   breadcrumb: { 
     maxWidth: '1200px', margin: '0 auto 40px auto', display: 'flex', alignItems: 'center', gap: '8px',
-    fontSize: '13px', color: '#94a3b8', fontWeight: '500' 
+    fontSize: '13px', color: '#949494', fontWeight: '500' 
   },
   bcItem: { cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s', '&:hover': { color: 'var(--primary)' } },
   
@@ -140,7 +140,7 @@ const styles: Record<string, any> = {
   },
   headerContent: { flex: 1 },
   title: { fontSize: '32px', fontWeight: '700', color: '#0F172A', letterSpacing: '-1.5px', marginBottom: '8px' },
-  subtitle: { fontSize: '16px', color: '#64748B' },
+  subtitle: { fontSize: '16px', color: '#949494' },
   
   searchBox: { 
     flex: 1, maxWidth: '500px', backgroundColor: 'white', borderRadius: '18px', 
@@ -151,8 +151,8 @@ const styles: Record<string, any> = {
   searchBtn: { padding: '10px 20px', backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '14px', fontWeight: '600', cursor: 'pointer' },
 
   main: { maxWidth: '1200px', margin: '0 auto' },
-  loading: { padding: '80px', textAlign: 'center', color: '#64748B', fontWeight: '600' },
-  emptyState: { textAlign: 'center', padding: '100px 40px', color: '#94a3b8' },
+  loading: { padding: '80px', textAlign: 'center', color: '#949494', fontWeight: '600' },
+  emptyState: { textAlign: 'center', padding: '100px 40px', color: '#949494' },
   backBtn: { marginTop: '24px', padding: '12px 24px', backgroundColor: '#ebebeb', border: 'none', borderRadius: '12px', color: '#0f172a', fontWeight: '600', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' },
 
   resultsList: { display: 'grid', gridTemplateColumns: '1fr', gap: '20px' },
@@ -163,9 +163,9 @@ const styles: Record<string, any> = {
   },
   categoryBadge: { width: 'fit-content', padding: '4px 10px', backgroundColor: 'rgba(217, 255, 0, 0.18)', color: 'var(--primary)', borderRadius: '8px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase' },
   articleTitle: { fontSize: '20px', fontWeight: '700', color: '#1e293b' },
-  articleExcerpt: { fontSize: '15px', color: '#64748B', lineHeight: '1.6' },
+  articleExcerpt: { fontSize: '15px', color: '#949494', lineHeight: '1.6' },
   cardFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid #e8e8e8' },
-  meta: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#94a3b8' },
+  meta: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#949494' },
   link: { display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)', fontWeight: '600', fontSize: '14px' }
 };
 

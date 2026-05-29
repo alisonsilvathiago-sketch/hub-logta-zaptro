@@ -18,15 +18,29 @@ const ClientsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchClients = async () => {
+    setLoading(true);
     try {
-      const mockClients: Client[] = [
-        { id: '1', name: 'Zaptro Logística LTDA', document: '12.345.678/0001-99', email: 'contato@zaptro.com', phone: '(11) 99999-0000', address: 'Av. Paulista, 1000 - SP', status: 'ATIVO' },
-        { id: '2', name: 'Transportes TransRapido', document: '98.765.432/0001-00', email: 'adm@transrapido.com.br', phone: '(21) 88888-1111', address: 'Rua das Flores, 50 - RJ', status: 'ATIVO' },
-        { id: '3', name: 'Logta Soluções', document: '11.222.333/0001-44', email: 'suporte@logta.me', phone: '(41) 77777-2222', address: 'Rua da Tecnologia, 200 - PR', status: 'INATIVO' },
-      ];
-      setClients(mockClients);
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+
+      if (data) {
+        setClients(data.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          document: c.settings?.cnpj || 'S/ CNPJ',
+          email: c.settings?.email || 'N/A',
+          phone: c.settings?.phone || 'N/A',
+          address: c.settings?.address || 'S/ Endereço',
+          status: (c.status || 'ativo').toUpperCase()
+        })));
+      }
     } catch (error) {
-      toast.error('Erro ao carregar clientes');
+      console.error('Erro ao buscar clientes:', error);
+      toast.error('Erro ao carregar clientes reais');
     } finally {
       setLoading(false);
     }

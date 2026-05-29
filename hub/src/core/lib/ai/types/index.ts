@@ -4,7 +4,17 @@
  * Standardized interfaces for multi-provider, multi-agent AI operations.
  */
 
-export type AISystemId = 'crm' | 'logistica' | 'financeiro' | 'atendimento' | 'whatsapp' | 'master';
+export type AISystemId =
+  | 'crm'
+  | 'logistica'
+  | 'financeiro'
+  | 'atendimento'
+  | 'whatsapp'
+  | 'master'
+  | 'logta'
+  | 'zaptro'
+  | 'logdock'
+  | 'ia-gateway';
 
 export interface AISystemRequest {
   systemId: AISystemId;

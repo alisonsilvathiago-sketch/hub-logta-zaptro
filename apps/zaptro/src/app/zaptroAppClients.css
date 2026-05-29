@@ -1,0 +1,427 @@
+.zaptro-app-clients-page {
+  flex: 1;
+  overflow: auto;
+  background: #ffffff;
+  font-size: 12px;
+  margin-top: 0;
+  padding: 0;
+  min-height: 894px;
+}
+
+.zaptro-clients-panel__row {
+  cursor: pointer;
+}
+
+.zaptro-clients-panel__td {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  padding-left: 0;
+  padding-right: 0;
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+.zaptro-clients-panel__td--actions {
+  padding-right: 24px;
+}
+
+.zaptro-clients-panel__last-event {
+  display: block;
+  font-size: 11px;
+  color: #949494;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.zaptro-clients-panel__row .zaptro-clients-panel__td:first-child {
+  padding-left: 24px;
+}
+
+.zaptro-clients-panel {
+  padding-top: 0;
+  box-sizing: border-box;
+}
+
+.zaptro-app-clients-page .zaptro-kpi-metric-card,
+.zaptro-app-clients-page .hub-premium-pill,
+.zaptro-clients-panel .zaptro-kpi-metric-card,
+.zaptro-clients-panel .hub-premium-pill {
+  font-family: Inter, system-ui, sans-serif;
+}
+
+/* Cabeçalho da página de clientes */
+.zaptro-clients-panel__header {
+  padding-top: 50px;
+  padding-bottom: 50px;
+  letter-spacing: 0;
+}
+
+.zaptro-clients-panel__subtitle {
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(194, 194, 194, 1);
+}
+
+/* Grelha de KPIs — 4 cards, sem padding extra */
+.zaptro-clients-panel__kpi-grid {
+  padding: 0;
+  margin: 0 0 28px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 10px;
+}
+
+@media (max-width: 1100px) {
+  .zaptro-clients-panel__kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .zaptro-clients-panel__kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.zaptro-clients-panel__kpi-card.zaptro-kpi-metric-card {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+.zaptro-clients-panel__kpi-card .zaptro-kpi-metric-card__title {
+  font-size: 9px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  color: rgba(107, 107, 107, 1) !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 5px !important;
+}
+
+.zaptro-clients-panel__kpi-card .zaptro-kpi-metric-card__value {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: rgba(117, 117, 117, 1) !important;
+  margin-bottom: 5px !important;
+  letter-spacing: 0 !important;
+}
+
+/* Barra de filtros + acções (baixar / importar) */
+.zaptro-clients-panel__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 6px 50px;
+  box-sizing: border-box;
+  font-size: 10px;
+}
+
+.zaptro-clients-panel__toolbar-filters {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 280px;
+}
+
+.zaptro-clients-panel__search-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  background-color: #fbfbfc;
+  padding: 0 14px;
+  border-radius: 18px;
+  border: 1px solid #ebebec;
+  min-width: 200px;
+  box-sizing: border-box;
+}
+
+.zaptro-clients-panel__search-box--status {
+  flex: 0 1 220px;
+  min-width: 180px;
+}
+
+.zaptro-clients-panel__field {
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(135, 135, 135, 1);
+}
+
+.zaptro-clients-panel__field::placeholder {
+  color: rgba(194, 194, 194, 1);
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.zaptro-clients-panel__select {
+  cursor: pointer;
+  appearance: none;
+}
+
+.zaptro-clients-panel__toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 14px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  color: rgba(117, 117, 117, 1);
+  flex-shrink: 0;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.zaptro-clients-panel__toolbar-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.zaptro-clients-panel__toolbar-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.zaptro-clients-panel__toolbar-btn.hub-premium-pill.secondary .zaptro-clients-panel__toolbar-btn-icon {
+  color: rgba(54, 54, 54, 1);
+}
+
+.zaptro-clients-panel__toolbar-btn.hub-premium-pill.dark .zaptro-clients-panel__toolbar-btn-icon {
+  color: #ffffff;
+}
+
+.zaptro-clients-panel__toolbar-btn.hub-premium-pill.secondary {
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: rgba(135, 135, 135, 1);
+}
+
+.zaptro-clients-panel__toolbar-btn.hub-premium-pill.dark {
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  color: #d9ff00;
+}
+
+.zaptro-clients-panel__toolbar-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+}
+
+.zaptro-clients-panel__toolbar-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.zaptro-clients-panel__toolbar-btn--muted {
+  font-weight: 400;
+  color: rgba(135, 135, 135, 1);
+}
+
+.zaptro-clients-panel__avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.zaptro-clients-panel__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.zaptro-clients-panel__assignee-badge {
+  position: absolute;
+  right: -5px;
+  bottom: -4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  background: #f1f5f9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 800;
+  color: #0f172a;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
+.zaptro-clients-panel__assignee-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.zaptro-clients-panel__assignee-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.zaptro-clients-panel__status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.zaptro-clients-panel__status-assignee {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.zaptro-clients-panel__status-assignee--none {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.zaptro-clients-panel__status-assignee-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 4px 10px 4px 4px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.zaptro-clients-panel__status-assignee-chip:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.zaptro-clients-panel__status-assignee-chip--muted {
+  opacity: 0.85;
+  border-style: dashed;
+}
+
+.zaptro-clients-panel__status-assignee-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+}
+
+.zaptro-clients-panel__status-assignee-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.zaptro-clients-panel__status-assignee-initial {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.zaptro-clients-panel__status-assignee-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.zaptro-clients-panel__status-assignee-chip--muted .zaptro-clients-panel__status-assignee-name {
+  color: #64748b;
+}
+
+.zaptro-clients-panel__status-assignee-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.zaptro-clients-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: 20px;
+}
+
+.zaptro-clients-panel__action-conversar {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  min-height: 36px;
+  border-radius: 14px !important;
+  gap: 0 !important;
+  font-size: 0 !important;
+  letter-spacing: 0;
+  box-shadow: none !important;
+  background: #0f172a !important;
+  color: #d9ff00 !important;
+}
+
+.zaptro-clients-panel__action-conversar svg {
+  stroke: #d9ff00 !important;
+  fill: #d9ff00 !important;
+}
+
+.zaptro-clients-panel__action-conversar:hover {
+  background: #0a0a0a !important;
+  color: #d9ff00 !important;
+  transform: none;
+  box-shadow: none !important;
+}
+
+.zaptro-clients-panel__actions .zaptro-client-profile__edit-btn,
+.zaptro-clients-panel__actions .zaptro-client-profile__delete-btn,
+.zaptro-clients-panel__actions .zaptro-clients-panel__action-conversar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  text-decoration: none;
+}

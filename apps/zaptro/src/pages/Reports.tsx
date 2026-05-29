@@ -13,30 +13,9 @@ const Reports: React.FC = () => {
   const { company } = useTenant();
   const [activeTab, setActiveTab] = React.useState<'dashboard' | 'logistica' | 'financeiro' | 'rh'>('dashboard');
 
-  // Dados fictícios para demonstração
-  const monthlyData = [
-    { name: 'Jan', volume: 400, revenue: 2400 },
-    { name: 'Fev', volume: 300, revenue: 1398 },
-    { name: 'Mar', volume: 200, revenue: 9800 },
-    { name: 'Abr', volume: 278, revenue: 3908 },
-    { name: 'Mai', volume: 189, revenue: 4800 },
-    { name: 'Jun', volume: 239, revenue: 3800 },
-  ];
-
-  const productivityData = [
-    { name: 'Motorista A', efficiency: 95 },
-    { name: 'Motorista B', efficiency: 88 },
-    { name: 'Motorista C', efficiency: 92 },
-    { name: 'Motorista D', efficiency: 84 },
-    { name: 'Motorista E', efficiency: 70 },
-  ];
-
-  const fleetData = [
-    { name: 'Em Trânsito', value: 40, color: 'var(--accent)' },
-    { name: 'Disponível', value: 30, color: 'var(--success)' },
-    { name: 'Manutenção', value: 10, color: 'var(--danger)' },
-    { name: 'Em Carga', value: 20, color: 'var(--warning)' },
-  ];
+  const monthlyData: any[] = [];
+  const productivityData: any[] = [];
+  const fleetData: any[] = [];
 
   return (
     <div style={styles.container} className="animate-fade-in">
@@ -74,24 +53,24 @@ const Reports: React.FC = () => {
           <div style={{...styles.iconBox, color: 'var(--accent)'}}><Truck size={24} /></div>
           <div>
             <span style={styles.metricLabel}>Total de Viagens</span>
-            <h2 style={styles.metricValue}>1,248</h2>
-            <span style={styles.trend}><TrendingUp size={14} /> +12.5%</span>
+            <h2 style={styles.metricValue}>---</h2>
+            <span style={styles.trend}><TrendingUp size={14} /> ---</span>
           </div>
         </div>
         <div style={styles.metricCard}>
           <div style={{...styles.iconBox, color: 'var(--success)'}}><Users size={24} /></div>
           <div>
             <span style={styles.metricLabel}>Motoristas Ativos</span>
-            <h2 style={styles.metricValue}>86</h2>
-            <span style={styles.trendSuccess}>94% taxa de ocupação</span>
+            <h2 style={styles.metricValue}>---</h2>
+            <span style={styles.trendSuccess}>---</span>
           </div>
         </div>
         <div style={styles.metricCard}>
           <div style={{...styles.iconBox, color: 'var(--danger)'}}><AlertCircle size={24} /></div>
           <div>
             <span style={styles.metricLabel}>Ocorrências em Rota</span>
-            <h2 style={styles.metricValue}>14</h2>
-            <span style={{color: 'var(--danger)', fontSize: '12px', fontWeight: '600'}}>-2% vs mês anterior</span>
+            <h2 style={styles.metricValue}>---</h2>
+            <span style={{color: 'var(--danger)', fontSize: '12px', fontWeight: '600'}}>---</span>
           </div>
         </div>
       </div>

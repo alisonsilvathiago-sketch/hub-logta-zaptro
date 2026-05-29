@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Brain, FileText, Clock, FolderOpen, Folder, Link as LinkIcon, Tag } from 'lucide-react';
+import { Brain, FileText, Clock, FolderOpen, Folder, Link as LinkIcon, Tag, MessageSquare, X, ArrowLeft } from 'lucide-react';
+import IAAssistant from '@shared/components/IAAssistant';
 
 export default function CentralInteligentePage() {
   const [activeFilter, setActiveFilter] = useState('todos');
   const [uploadQueue, setUploadQueue] = useState<any[]>([]);
+  const [showChat, setShowChat] = useState(false);
 
   const timelineData = [
     {
@@ -21,6 +23,28 @@ export default function CentralInteligentePage() {
     }
   ];
 
+  if (showChat) {
+    return (
+      <div style={{ padding: '32px', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#F8F9FA', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <button 
+            onClick={() => setShowChat(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', color: '#64748B', fontWeight: 700, cursor: 'pointer' }}
+          >
+            <ArrowLeft size={18} /> Voltar para Histórico
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 16px', backgroundColor: '#EFF6FF', borderRadius: '100px' }}>
+             <Brain size={16} color="#0061FF" />
+             <span style={{ fontSize: '11px', fontWeight: 900, color: '#0061FF', textTransform: 'uppercase', letterSpacing: '1px' }}>Assistente Interativo LogDock</span>
+          </div>
+        </div>
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <IAAssistant appContext="LogDock" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: '48px 64px', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#F8F9FA' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
@@ -31,16 +55,24 @@ export default function CentralInteligentePage() {
           </h1>
           <p style={{ fontSize: '15px', color: '#64748B', marginTop: '8px' }}>Histórico completo de automações e organizações feitas pela IA.</p>
         </div>
-        <div style={{ display: 'flex', gap: '12px', backgroundColor: '#FFF', padding: '6px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          {['todos', 'financeiro', 'entregas', 'clientes'].map(f => (
-            <button 
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              style={{ padding: '8px 16px', borderRadius: '12px', border: 'none', backgroundColor: activeFilter === f ? '#0061FF' : 'transparent', color: activeFilter === f ? '#FFF' : '#64748B', fontWeight: 700, fontSize: '13px', cursor: 'pointer', textTransform: 'capitalize' }}
-            >
-              {f}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <button 
+            onClick={() => setShowChat(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 24px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '16px', fontWeight: 800, fontSize: '14px', cursor: 'pointer', boxShadow: '0 8px 20px rgba(0, 97, 255, 0.2)' }}
+          >
+            <MessageSquare size={18} /> Conversar com Assistente
+          </button>
+          <div style={{ display: 'flex', gap: '4px', backgroundColor: '#FFF', padding: '6px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+            {['todos', 'financeiro', 'entregas', 'clientes'].map(f => (
+              <button 
+                key={f}
+                onClick={() => setActiveFilter(f)}
+                style={{ padding: '8px 16px', borderRadius: '12px', border: 'none', backgroundColor: activeFilter === f ? '#0061FF' : 'transparent', color: activeFilter === f ? '#FFF' : '#64748B', fontWeight: 700, fontSize: '13px', cursor: 'pointer', textTransform: 'capitalize' }}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -138,3 +170,4 @@ export default function CentralInteligentePage() {
     </div>
   );
 }
+

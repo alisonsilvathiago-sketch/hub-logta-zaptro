@@ -48,6 +48,34 @@ export function buildFrotaAlerts(vehicles: FrotaVehicleRow[]): FrotaAlert[] {
         createdAt: now,
       });
     }
+    if (plate === 'LOG-8890') {
+      alerts.push({
+        id: `multa-log8890`,
+        title: `Multa rodoviária grave detectada`,
+        message: `Multa por excesso de velocidade registrada na BR-116 Km 482 (20% acima do limite). Motorista condutor: Pedro Almeida. Valor: R$ 195,23 (Grave - 5 pontos).`,
+        priority: 'critical',
+        category: 'documento',
+        actionPath: `/frota/veiculos/${encodeURIComponent(plate)}`,
+        actionLabel: 'Ver detalhes do veículo',
+        impacto: 'Grave infração de trânsito, necessária identificação formal do condutor.',
+        vehiclePlate: plate,
+        createdAt: now,
+      });
+    }
+
+    if (plate === 'BRA-2L22') {
+      alerts.push({
+        id: `pneu-bra2l22`,
+        title: `Alinhamento pendente pós-troca`,
+        message: `Troca recente de pneus dianteiros Michelin 295/80 realizada. Recomendado acompanhar alinhamento nos próximos 5.000 km.`,
+        priority: 'medium',
+        category: 'manutencao',
+        actionPath: `/frota/manutencao/${encodeURIComponent(plate)}`,
+        actionLabel: 'Ver manutenção',
+        vehiclePlate: plate,
+        createdAt: now,
+      });
+    }
   });
 
   if (vehicles.length > 0) {

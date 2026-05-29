@@ -147,8 +147,8 @@ const MasterLMS: React.FC = () => {
                     )}
                     <span style={{
                       ...styles.statusBadge, 
-                      backgroundColor: course.status === 'publicado' ? '#ecfdf5' : '#fef3c7',
-                      color: course.status === 'publicado' ? '#10b981' : '#d97706'
+                      backgroundColor: course.status === 'publicado' ? '#EFF6FF' : '#fef3c7',
+                      color: course.status === 'publicado' ? '#0061FF' : '#d97706'
                     }}>
                       {course.status.toUpperCase()}
                     </span>
@@ -255,7 +255,7 @@ const styles = {
   cDesc: { fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.5', marginBottom: '16px' },
   owner: { fontSize: '11px', color: '#94a3b8', marginTop: 'auto', marginBottom: '12px' },
   footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #e8e8e8' },
-  price: { fontSize: '16px', fontWeight: '700', color: '#10b981' },
+  price: { fontSize: '16px', fontWeight: '700', color: '#0061FF' },
   editBtn: { padding: '8px', borderRadius: '10px', backgroundColor: 'var(--bg-app)', border: 'none', color: 'var(--primary)', cursor: 'pointer' },
   empty: { padding: '80px', textAlign: 'center' as const, color: '#94a3b8', border: '2px dashed var(--border)', borderRadius: '24px', gridColumn: '1 / -1' },
   loading: { padding: '80px', textAlign: 'center' as const, color: 'var(--primary)', gridColumn: '1 / -1', fontWeight: '700' },

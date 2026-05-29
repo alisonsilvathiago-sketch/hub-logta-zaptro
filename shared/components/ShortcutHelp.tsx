@@ -32,7 +32,7 @@ export const ShortcutHelp: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#64748B',
+          color: '#949494',
           cursor: 'pointer',
           boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
           zIndex: 1000,

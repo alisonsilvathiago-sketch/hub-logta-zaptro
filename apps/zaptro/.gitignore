@@ -6,6 +6,8 @@ dist-ssr
 # Env (secrets)
 .env
 .env.local
+supabase/secrets.evolution.env
+supabase/.access-token
 .env.*.local
 .env.development.local
 .env.test.local
@@ -32,5 +34,4 @@ Thumbs.db
 # Vite / tooling cache
 .cache
 *.tsbuildinfo
-.vercel
 .env*.local

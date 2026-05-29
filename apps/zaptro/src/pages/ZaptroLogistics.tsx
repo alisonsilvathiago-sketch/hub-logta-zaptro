@@ -114,9 +114,9 @@ const ZaptroLogistics: React.FC = () => {
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'in_transit': return { bg: '#F0F9FF', text: '#0369A1', label: 'EM ROTA' };
-      case 'pending': return { bg: '#FBFBFC', text: '#64748B', label: 'PENDENTE' };
+      case 'pending': return { bg: '#FBFBFC', text: '#949494', label: 'PENDENTE' };
       case 'delivered': return { bg: '#F0FDF4', text: '#15803D', label: 'ENTREGUE' };
-      default: return { bg: '#FBFBFC', text: '#94A3B8', label: status.toUpperCase() };
+      default: return { bg: '#FBFBFC', text: '#949494', label: status.toUpperCase() };
     }
   };
 
@@ -223,7 +223,7 @@ const styles: Record<string, any> = {
   container: { backgroundColor: '#FFFFFF' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '50px' },
   title: { fontSize: '38px', fontWeight: '700', color: '#000', margin: 0, letterSpacing: '-2px' },
-  subtitle: { fontSize: '15px', color: '#94A3B8', fontWeight: '600', margin: '6px 0 0 0' },
+  subtitle: { fontSize: '15px', color: '#949494', fontWeight: '600', margin: '6px 0 0 0' },
   primaryBtn: { backgroundColor: 'rgba(217, 255, 0, 0.14)', color: '#000', border: '1px solid rgba(217, 255, 0, 1)', padding: '18px 30px', borderRadius: '18px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' },
   
   statsBar: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '25px', marginBottom: '50px' },
@@ -248,7 +248,7 @@ const styles: Record<string, any> = {
   idCell: { display: 'flex', alignItems: 'center', gap: '18px' },
   iconCircle: { width: '42px', height: '42px', borderRadius: '14px', backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D9FF00' },
   mainText: { display: 'block', fontSize: '15px', fontWeight: '700', color: '#000' },
-  subText: { fontSize: '11px', color: '#94A3B8', fontWeight: '750', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' },
+  subText: { fontSize: '11px', color: '#949494', fontWeight: '750', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' },
   driverCell: { display: 'flex', alignItems: 'center', gap: '14px' },
   avatarMini: { width: '30px', height: '30px', borderRadius: '10px', backgroundColor: '#000', color: '#D9FF00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '700' },
   badge: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '12px', fontSize: '11px', fontWeight: '700' },
@@ -261,7 +261,7 @@ const styles: Record<string, any> = {
   modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' },
   pTag: { padding: '4px 8px', backgroundColor: '#000', color: '#D9FF00', borderRadius: '6px', fontSize: '9px', fontWeight: '700', display: 'inline-block', marginBottom: '10px' },
   pTitle: { fontSize: '32px', fontWeight: '700', margin: 0, letterSpacing: '-1.5px' },
-  pSub: { fontSize: '14px', color: '#94A3B8', fontWeight: '700' },
+  pSub: { fontSize: '14px', color: '#949494', fontWeight: '700' },
   sLabel: { fontSize: '10px', fontWeight: '700', color: '#000000', display: 'block', marginBottom: '6px' },
   sVal: { fontSize: '16px', fontWeight: '700' },
 
@@ -276,7 +276,7 @@ const styles: Record<string, any> = {
   timeline: { borderLeft: '2px solid #d4d4d8', marginLeft: '10px', paddingLeft: '35px', display: 'flex', flexDirection: 'column', gap: '30px' },
   tItem: { position: 'relative' },
   tDotActive: { position: 'absolute', left: '-42px', top: '2px', width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#D9FF00', border: '2px solid #d4d4d8' },
-  tDot: { position: 'absolute', left: '-40.5px', top: '4px', width: '9px', height: '9px', borderRadius: '50%', backgroundColor: '#94A3B8' },
+  tDot: { position: 'absolute', left: '-40.5px', top: '4px', width: '9px', height: '9px', borderRadius: '50%', backgroundColor: '#949494' },
   tLine: { position: 'absolute', left: '-36.5px', top: '20px', height: '100%', width: '0' },
 
   addForm: { padding: '10px' },

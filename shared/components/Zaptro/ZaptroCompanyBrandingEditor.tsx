@@ -1554,9 +1554,9 @@ export const ZaptroCompanyBrandingEditor: React.FC<ZaptroCompanyBrandingEditorPr
                           justifyContent: 'center',
                         }}
                       >
-                        <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>E-mail ou utilizador</div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: '#949494' }}>E-mail ou utilizador</div>
                         <div style={{ height: 10, borderRadius: 5, background: '#ebebeb', width: '100%' }} />
-                        <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', marginTop: 4 }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: '#949494', marginTop: 4 }}>
                           Palavra-passe
                         </div>
                         <div style={{ height: 10, borderRadius: 5, background: '#ebebeb', width: '100%' }} />

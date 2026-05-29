@@ -102,7 +102,7 @@ function ZaptroToastCard({
             padding: 4,
             margin: '-4px -4px 0 0',
             borderRadius: 8,
-            color: '#64748b',
+            color: '#949494',
             fontSize: 18,
             lineHeight: 1,
             fontWeight: 700,
@@ -164,14 +164,14 @@ export const notifyZaptroChat = (
         {avatarUrl ? (
           <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', color: '#64748b', fontSize: 18, fontWeight: 700 }}>
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', color: '#949494', fontSize: 18, fontWeight: 700 }}>
             {name.charAt(0).toUpperCase()}
           </div>
         )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 800, fontSize: 14, color: '#0f172a', marginBottom: 2 }}>{name}</div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#949494', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {message}
         </div>
       </div>

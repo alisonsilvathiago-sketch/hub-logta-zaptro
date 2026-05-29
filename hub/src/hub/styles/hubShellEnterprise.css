@@ -1,0 +1,405 @@
+/**
+ * Shell visual Hub Master — referência “dashboard SaaS” (clean, modular).
+ * Escopo: apenas elementos dentro de .hub-master-shell (MasterLayout).
+ */
+
+.hub-master-shell {
+  --hub-shell-radius-sm: 8px;
+  --hub-shell-radius-md: 12px;
+  --hub-shell-radius-lg: 16px;
+  --hub-shell-space-page-x: clamp(20px, 4vw, 48px);
+  --hub-shell-space-page-y: clamp(20px, 3vw, 36px);
+  --hub-header-h: 56px;
+}
+
+.hub-master-shell .hub-master-main {
+  background-color: var(--hub-shell-bg) !important;
+  background-image: none !important;
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hub-master-shell .hub-master-outlet-frame {
+  overflow: visible;
+  min-height: min-content;
+}
+
+/* Tipografia global do shell: hierarquia mais leve (menos “gritado”) */
+.hub-master-shell h1,
+.hub-master-shell .h1-style,
+.hub-master-shell .page-title {
+  font-size: 1.375rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--hub-shell-text) !important;
+  line-height: 1.3 !important;
+}
+
+.hub-master-shell h2,
+.hub-master-shell .h2-style {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  color: var(--hub-shell-text) !important;
+  line-height: 1.35 !important;
+}
+
+.hub-master-shell h3,
+.hub-master-shell .h3-style {
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  color: var(--hub-shell-text) !important;
+}
+
+.hub-master-shell .text-subtitle {
+  color: var(--hub-shell-text-muted) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 400 !important;
+  max-width: 42rem !important;
+}
+
+.hub-master-shell .kpi-value,
+.hub-master-shell .stat-value,
+.hub-master-shell .metric-value {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  color: var(--hub-shell-text) !important;
+}
+
+.hub-master-shell .kpi-label,
+.hub-master-shell .stat-label,
+.hub-master-shell .metric-label {
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  color: var(--hub-shell-text-subtle) !important;
+}
+
+/* Header topo */
+.hub-master-header {
+  height: var(--hub-header-h) !important;
+  min-height: var(--hub-header-h) !important;
+  background-color: var(--hub-shell-surface) !important;
+  border-bottom: 1px solid var(--hub-shell-border) !important;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  box-shadow: none;
+}
+
+.hub-master-header .hub-header-breadcrumb-inner {
+  gap: 0.25rem;
+}
+
+.hub-master-header .hub-bc-sep {
+  color: var(--hub-shell-border);
+  font-size: 12px;
+  font-weight: 500;
+  user-select: none;
+  margin: 0 2px;
+}
+
+.hub-master-header a.hub-bc-link {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em;
+}
+
+.hub-master-header a.hub-bc-link:hover {
+  color: var(--hub-shell-accent) !important;
+}
+
+.hub-master-header .hub-header-right {
+  width: auto !important;
+  max-width: none !important;
+  flex-shrink: 0 !important;
+  gap: 8px !important;
+  padding: 0 4px;
+  align-items: center !important;
+}
+
+.hub-master-header .hub-header-right .hub-header-selector {
+  border: 1px solid var(--hub-border) !important;
+  background-color: var(--hub-bg-elevated) !important;
+  box-shadow: var(--hub-shadow-card) !important;
+}
+
+.hub-master-header .hub-header-right .hub-header-selector:hover {
+  border-color: var(--hub-border-hover) !important;
+  background-color: var(--hub-sidebar-hover) !important;
+}
+
+.hub-master-header .hub-header-icon-btn {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: var(--hub-shell-radius-sm) !important;
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+}
+
+.hub-master-header .hub-header-icon-btn:hover {
+  background-color: var(--hub-sidebar-hover) !important;
+  border-color: var(--hub-shell-border-soft) !important;
+}
+
+.hub-master-header .hub-header-collab-stack {
+  padding-right: 4px;
+}
+
+@media (max-width: 1100px) {
+  .hub-master-header .hub-header-collab-stack {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .hub-master-shell {
+    --hub-shell-space-page-x: 16px;
+    --hub-shell-space-page-y: 16px;
+  }
+}
+
+/* Menu lateral interno (Configurações, Empresas, Financeiro…) */
+.hub-master-shell .hub-settings-layout > aside nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 233px;
+  box-sizing: border-box;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 16px 0 0;
+  min-height: min(650px, calc(100vh - 120px));
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.hub-master-shell .hub-settings-layout > aside nav .hub-settings-section-label {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.hub-master-shell .hub-settings-layout .hub-sidebar-item,
+.hub-master-shell .hub-settings-layout .hub-sidebar-item span {
+  font-size: var(--hub-nav-font-size, 13px) !important;
+}
+
+.hub-master-shell .hub-settings-layout .hub-sidebar-item,
+.hub-master-shell .hub-settings-layout button.hub-sidebar-item {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.hub-master-shell .hub-settings-layout .hub-sidebar-item:hover {
+  background: var(--hub-sidebar-hover) !important;
+  box-shadow: none !important;
+  color: var(--hub-text-main) !important;
+}
+
+.hub-master-shell .hub-settings-layout .hub-sidebar-item.active {
+  background: var(--hub-sidebar-active-bg) !important;
+  box-shadow: none !important;
+  color: var(--hub-sidebar-active-text) !important;
+}
+
+/* Configurações Master: coluna única em telas estreitas */
+@media (max-width: 900px) {
+  .hub-master-shell .hub-settings-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hub-master-shell .hub-settings-layout aside {
+    position: relative !important;
+    top: auto !important;
+    max-height: none !important;
+  }
+
+  .hub-master-shell .hub-settings-layout > aside nav {
+    width: 100%;
+    min-height: 0;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 16px 0 0;
+  }
+}
+
+/* --- Distribuição de conteúdo (grid tipo “templates” / SQL editor) --- */
+.hub-section-head {
+  margin-bottom: 1.25rem;
+}
+
+.hub-section-kicker {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hub-shell-text-subtle);
+  margin-bottom: 0.35rem;
+}
+
+.hub-section-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--hub-shell-text);
+  line-height: 1.3;
+}
+
+.hub-section-desc {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--hub-shell-text-muted);
+  max-width: 42rem;
+}
+
+.hub-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+@media (min-width: 1200px) {
+  .hub-tile-grid--three {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.hub-tile {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem 1.25rem;
+  background: var(--hub-shell-surface);
+  border: 1px solid var(--hub-shell-border);
+  border-radius: var(--hub-shell-radius-md);
+  box-shadow: var(--hub-shadow-card);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+  box-sizing: border-box;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+}
+
+.hub-tile:hover {
+  background: #fafbfc;
+  border-color: #dce0e5;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+}
+
+.hub-tile:focus-visible {
+  outline: none;
+  border-color: rgba(0, 97, 255, 0.45);
+  box-shadow: 0 0 0 3px var(--hub-shell-accent-soft);
+}
+
+.hub-tile__icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--hub-shell-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hub-tile__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--hub-shell-text);
+  line-height: 1.35;
+}
+
+.hub-tile__desc {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--hub-shell-text-muted);
+}
+
+.hub-surface-card {
+  background: var(--hub-shell-surface);
+  border: 1px solid var(--hub-shell-border);
+  border-radius: var(--hub-shell-radius-lg);
+  box-shadow: var(--hub-shell-shadow-card);
+  box-sizing: border-box;
+}
+
+.hub-split-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .hub-split-2 {
+    grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .hub-master-shell .hub-activity-row {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    align-items: start !important;
+  }
+
+  .hub-master-shell .hub-activity-row span:last-child {
+    text-align: left !important;
+  }
+}
+
+/* Formulários na área principal: altura e foco padronizados */
+.hub-master-shell .hub-master-main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]),
+.hub-master-shell .hub-master-main select,
+.hub-master-shell .hub-master-main textarea {
+  border-radius: var(--hub-shell-radius-sm) !important;
+  border-color: var(--hub-shell-border) !important;
+  min-height: 40px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hub-master-shell .hub-master-main textarea {
+  min-height: 100px;
+}
+
+.hub-master-shell .hub-master-main input:focus,
+.hub-master-shell .hub-master-main select:focus,
+.hub-master-shell .hub-master-main textarea:focus {
+  outline: none !important;
+  border-color: rgba(0, 97, 255, 0.45) !important;
+  box-shadow: 0 0 0 3px var(--hub-shell-accent-soft) !important;
+}
+
+/* Logta — perfil cliente: alinhar preview (peso do texto na sidebar, títulos de lista, grupos sem row-gap) */
+.hub-master-shell .logta-client-profile aside button span {
+  font-weight: 500 !important;
+}
+
+.hub-master-shell .logta-client-profile p.logta-profile-snap-title {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+}
+
+.hub-master-shell .logta-client-profile .logta-client-sidebar-group {
+  row-gap: 0 !important;
+  gap: 0 !important;
+}

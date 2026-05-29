@@ -1,1 +1,1 @@
-export { supabase } from '../../../../shared/lib/supabase';
+export { supabase, hasRealConfig, supabaseUrl } from '../../../../shared/lib/supabase';

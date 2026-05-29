@@ -450,7 +450,7 @@ export function buildTransactionalEmail(
       const subject = `Novo comentário em sua demanda — ${cn}`;
       const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
         <p><strong>${vars.author || 'Alguém'}</strong> comentou no card que você está acompanhando:</p>
-        <div style="font-style: italic; color: #94a3b8; padding: 16px; border-left: 4px solid #0061FF; background: rgba(99,102,241,0.05); margin: 20px 0;">
+        <div style="font-style: italic; color: #949494; padding: 16px; border-left: 4px solid #0061FF; background: rgba(99,102,241,0.05); margin: 20px 0;">
           "${vars.comment || '...'}"
         </div>`;
       return {
@@ -595,7 +595,7 @@ export function buildTransactionalEmail(
         <p>Vimos que você está aproveitando ao máximo a plataforma <strong>${cn}</strong>, e adoraríamos ter mais parceiros como você no nosso ecossistema.</p>
         <p>Indique um amigo usando seu link exclusivo e, assim que ele ativar a conta, você ganha <strong>${reward}</strong> como agradecimento.</p>
         <div style="background: rgba(217,255,0,0.05); padding: 24px; border-radius: 16px; border: 1px dashed rgba(217,255,0,0.3); text-align: center; margin: 24px 0;">
-          <p style="margin: 0 0 12px 0; font-size: 13px; color: #94a3b8;">Seu link exclusivo:</p>
+          <p style="margin: 0 0 12px 0; font-size: 13px; color: #949494;">Seu link exclusivo:</p>
           <strong style="color: #D9FF00; font-size: 16px;">${vars.referral_link || '—'}</strong>
         </div>`;
       return {
@@ -618,7 +618,7 @@ export function buildTransactionalEmail(
       const body = `<p>Olá, <strong>${esc(name)}</strong>!</p>
         <p>Seu engajamento e compromisso com o sucesso da sua operação levaram você a um novo patamar.</p>
         <div style="text-align: center; margin: 32px 0;">
-          <p style="margin: 0; font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px;">Novo Nível Alcançado:</p>
+          <p style="margin: 0; font-size: 14px; color: #949494; text-transform: uppercase; letter-spacing: 2px;">Novo Nível Alcançado:</p>
           <h2 style="margin: 8px 0; font-size: 32px; color: #D9FF00; font-weight: 800;">${level}</h2>
         </div>
         <p>Como reconhecimento, você acaba de desbloquear um novo benefício exclusivo:</p>
@@ -647,7 +647,7 @@ export function buildTransactionalEmail(
       const body = `<p>Olá, <strong>${esc(name)}</strong>.</p>
         <p>${isApologetic ? 'Infelizmente, identificamos um imprevisto na sua rota que causará um atraso.' : 'Gostaríamos de informar uma pequena alteração no cronograma da sua entrega.'}</p>
         <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; margin: 24px 0;">
-          <p style="margin: 0; font-size: 14px; color: #94a3b8;">Pedido: <strong>${vars.tracking_code}</strong></p>
+          <p style="margin: 0; font-size: 14px; color: #949494;">Pedido: <strong>${vars.tracking_code}</strong></p>
           <p style="margin: 8px 0 0 0; font-size: 16px; color: #fff;">Novo atraso previsto: <span style="color: #D9FF00;">${delayText}</span></p>
         </div>
         <p>Nossa equipe já está trabalhando para normalizar a situação o mais rápido possível.</p>`;

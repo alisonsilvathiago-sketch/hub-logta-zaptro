@@ -1,0 +1,322 @@
+.zaptro-app-module-page {
+  flex: 1;
+  overflow: auto;
+  background: #ffffff;
+  font-size: 13px;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.zaptro-app-module-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.zaptro-app-module-head h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #000000;
+}
+
+.zaptro-app-module-head p {
+  margin: 4px 0 0;
+  color: #949494;
+  font-weight: 500;
+}
+
+.zaptro-app-module-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: #0f172a;
+  color: #d9ff00;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.zaptro-app-module-card {
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.zaptro-app-profile-card {
+  max-width: 720px;
+}
+
+.zaptro-app-profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.zaptro-app-profile-avatar,
+.zaptro-app-profile-avatar-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  flex-shrink: 0;
+}
+
+.zaptro-app-profile-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #d9ff00, #a3e635);
+  color: #0f172a;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.zaptro-app-profile-avatar-img {
+  object-fit: cover;
+}
+
+.zaptro-app-profile-hero h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.zaptro-app-profile-hero p {
+  margin: 4px 0 0;
+  color: #949494;
+  font-weight: 500;
+}
+
+.zaptro-app-profile-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.zaptro-app-profile-row {
+  display: grid;
+  grid-template-columns: 20px 120px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  color: #949494;
+}
+
+.zaptro-app-profile-row strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.zaptro-app-contacts-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.zaptro-app-contacts-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fbfbfc;
+}
+
+.zaptro-app-contacts-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.zaptro-app-contacts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.zaptro-app-contacts-table th,
+.zaptro-app-contacts-table td {
+  padding: 14px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.zaptro-app-contacts-table th {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #949494;
+}
+
+.zaptro-app-contacts-table td {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.zaptro-app-contacts-mirror-hint {
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #949494;
+}
+
+.zaptro-app-contacts-name-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.zaptro-app-contacts-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(217, 255, 0, 0.35);
+  color: #0f172a;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.zaptro-app-contacts-badge--lead {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.zaptro-app-contacts-badge--contact {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: rgba(4, 120, 87, 0.15);
+}
+
+.zaptro-app-contacts-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: #f4f4f4;
+  border: 1px solid #ebebeb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  color: #949494;
+}
+
+.zaptro-app-contacts-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.zaptro-app-module-btn--ghost {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+}
+
+.zaptro-app-contacts-empty {
+  padding: 48px 16px;
+  text-align: center;
+  color: #949494;
+  font-weight: 600;
+}
+
+.zaptro-app-contacts-empty--card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 24px 36px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.zaptro-app-contacts-empty--card svg {
+  color: #94a3b8;
+}
+
+.zaptro-app-contacts-empty-title {
+  margin: 4px 0 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.zaptro-app-contacts-empty-copy {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: #949494;
+  max-width: 420px;
+}
+
+.zaptro-app-contacts-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.zaptro-app-module-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.zaptro-app-module-link-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  background: #f4f4f4;
+  text-decoration: none;
+  color: #0f172a;
+}
+
+.zaptro-app-module-link-card strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.zaptro-app-module-link-card span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #949494;
+  line-height: 1.45;
+}
+
+@keyframes zaptroModuleSpin {
+  to { transform: rotate(360deg); }
+}
+
+.zaptro-clients-spin {
+  animation: zaptroModuleSpin 0.9s linear infinite;
+}

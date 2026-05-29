@@ -1,21 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { useWarehouses } from '@/hooks/useCatalog';
 import { logstokaApi } from '@/lib/logstokaApi';
+import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
+import { DEMO_TRANSFERS, type DemoTransferRow } from '@/lib/logstokaDemoSeed';
 import Modal from '@/components/ui/Modal';
+import ClickableTableRow, { stopRowNavigate } from '@/components/ui/ClickableTableRow';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
-
-interface TransferRow {
-  id: string;
-  status: string;
-  notes?: string | null;
-  created_at: string;
-  origin_warehouse_id: string;
-  destination_warehouse_id: string;
-  ls_warehouses?: { name: string };
-}
 
 const statusMap: Record<string, string> = {
   pending: 'Pendente',
@@ -27,19 +21,35 @@ const statusMap: Record<string, string> = {
 const TransfersPage: React.FC = () => {
   const { companyId } = useLogstokaTenant();
   const { warehouses } = useWarehouses();
-  const [transfers, setTransfers] = useState<TransferRow[]>([]);
+  const [transfers, setTransfers] = useState<DemoTransferRow[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ origin: '', destination: '', sku: '', quantity: 1, notes: '' });
 
   const load = useCallback(async () => {
     if (!companyId) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      setTransfers(DEMO_TRANSFERS);
+      return;
+    }
     const { data } = await supabase
       .from('ls_transfers')
       .select('*, origin:ls_warehouses!origin_warehouse_id(name), destination:ls_warehouses!destination_warehouse_id(name)')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })
       .limit(50);
-    setTransfers((data ?? []) as TransferRow[]);
+    setTransfers(
+      (data ?? []).map((t: Record<string, unknown>) => ({
+        id: String(t.id),
+        status: String(t.status),
+        notes: t.notes as string | null,
+        created_at: String(t.created_at),
+        origin_warehouse_id: String(t.origin_warehouse_id),
+        destination_warehouse_id: String(t.destination_warehouse_id),
+        origin_name: String((t.origin as { name?: string })?.name ?? '—'),
+        destination_name: String((t.destination as { name?: string })?.name ?? '—'),
+        items: [],
+      })),
+    );
   }, [companyId]);
 
   useEffect(() => {
@@ -49,6 +59,11 @@ const TransfersPage: React.FC = () => {
   const createTransfer = async () => {
     if (!form.origin || !form.destination || !form.sku) {
       toast.error('Preencha origem, destino e SKU');
+      return;
+    }
+    if (isLogstokaDemoCompany(companyId)) {
+      toast.success('[Demo] Transferência criada');
+      setModalOpen(false);
       return;
     }
     try {
@@ -70,10 +85,12 @@ const TransfersPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-black">Transferências</h2>
+          <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Transferências</h2>
           <p className="text-sm text-slate-500">CD origem → em trânsito → CD destino</p>
         </div>
-        <button type="button" className="ls-btn-primary" onClick={() => setModalOpen(true)}>Nova transferência</button>
+        <button type="button" className="ls-btn-primary" onClick={() => setModalOpen(true)}>
+          Nova transferência
+        </button>
       </div>
 
       <div className="ls-table-wrap">
@@ -82,6 +99,7 @@ const TransfersPage: React.FC = () => {
             <tr>
               <th>Status</th>
               <th>Origem → Destino</th>
+              <th>Itens</th>
               <th>Observação</th>
               <th>Data</th>
               <th>Ações</th>
@@ -89,24 +107,35 @@ const TransfersPage: React.FC = () => {
           </thead>
           <tbody>
             {transfers.map((t) => (
-              <tr key={t.id}>
-                <td><span className="ls-badge bg-slate-100">{statusMap[t.status] ?? t.status}</span></td>
-                <td>{t.origin_warehouse_id.slice(0, 8)}… → {t.destination_warehouse_id.slice(0, 8)}…</td>
+              <ClickableTableRow key={t.id} to={`/app/transfers/${t.id}`}>
+                <td>
+                  <span className="ls-badge bg-slate-100">{statusMap[t.status] ?? t.status}</span>
+                </td>
+                <td>
+                  {t.origin_name} → {t.destination_name}
+                </td>
+                <td className="text-sm">
+                  {t.items.map((i) => (
+                    <div key={i.sku}>
+                      {i.sku} · {i.quantity} un.
+                    </div>
+                  ))}
+                </td>
                 <td>{t.notes || '—'}</td>
                 <td>{new Date(t.created_at).toLocaleString('pt-BR')}</td>
-                <td className="flex gap-1">
-                  {t.status === 'pending' && (
+                <td onClick={stopRowNavigate} className="flex gap-1">
+                  {t.status === 'pending' && !isLogstokaDemoCompany(companyId) && (
                     <button type="button" className="ls-btn-secondary px-2 py-1 text-xs" onClick={() => void logstokaApi.shipTransfer(t.id).then(load)}>
                       Enviar
                     </button>
                   )}
-                  {t.status === 'in_transit' && (
+                  {t.status === 'in_transit' && !isLogstokaDemoCompany(companyId) && (
                     <button type="button" className="ls-btn-primary px-2 py-1 text-xs" onClick={() => void logstokaApi.receiveTransfer(t.id).then(load)}>
                       Receber
                     </button>
                   )}
                 </td>
-              </tr>
+              </ClickableTableRow>
             ))}
           </tbody>
         </table>
@@ -118,14 +147,22 @@ const TransfersPage: React.FC = () => {
             <label className="ls-label">Origem</label>
             <select className="ls-input" value={form.origin} onChange={(e) => setForm((f) => ({ ...f, origin: e.target.value }))}>
               <option value="">—</option>
-              {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+              {warehouses.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
             </select>
           </div>
           <div>
             <label className="ls-label">Destino</label>
             <select className="ls-input" value={form.destination} onChange={(e) => setForm((f) => ({ ...f, destination: e.target.value }))}>
               <option value="">—</option>
-              {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+              {warehouses.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
             </select>
           </div>
           <BarcodeScanner onScan={(sku) => setForm((f) => ({ ...f, sku }))} />
@@ -137,7 +174,9 @@ const TransfersPage: React.FC = () => {
             <label className="ls-label">Observação</label>
             <input className="ls-input" value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
           </div>
-          <button type="button" className="ls-btn-primary w-full" onClick={() => void createTransfer()}>Criar transferência</button>
+          <button type="button" className="ls-btn-primary w-full" onClick={() => void createTransfer()}>
+            Criar transferência
+          </button>
         </div>
       </Modal>
     </div>

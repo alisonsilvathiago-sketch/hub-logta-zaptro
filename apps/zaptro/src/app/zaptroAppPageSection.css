@@ -1,0 +1,96 @@
+/**
+ * Secção branca arredondada — envolve todo o conteúdo das páginas /app
+ * (referência: Relatórios / painel com fundo cinza + card principal).
+ */
+.zaptro-app-main {
+  background: #f4f4f4;
+}
+
+.zaptro-app-content {
+  background: #f4f4f4;
+  padding: 0;
+}
+
+.zaptro-app-page-section {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0 20px 20px;
+  background: #ffffff;
+  border-radius: 28px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow:
+    0 4px 6px rgba(15, 23, 42, 0.04),
+    0 12px 32px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.zaptro-app-page-section .zaptro-app-content-gutter {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Início — o card visual fica no `.zhome`; secção só encaixa o layout. */
+.zaptro-app-page-section--inicio {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+/* CRM, Agenda, Rotas, Conversas, Config — conteúdo até à borda interna. */
+.zaptro-app-page-section--compact,
+.zaptro-app-page-section--edge,
+.zaptro-app-page-section--settings {
+  overflow: hidden;
+}
+
+.zaptro-app-content--inicio {
+  padding: 0;
+}
+
+.zaptro-app-content--inicio .zaptro-app-content-gutter {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.zaptro-app-content--settings {
+  padding: 0;
+  color: #c9c9c9;
+}
+
+.zaptro-app-content--settings .zaptro-app-content-gutter {
+  padding-left: var(--zaptro-app-gutter-left);
+  padding-right: var(--zaptro-app-gutter-right);
+  padding-top: var(--zaptro-app-gutter-top);
+  padding-bottom: var(--zaptro-app-gutter-bottom);
+  margin-left: var(--zaptro-app-gutter-margin-left);
+  margin-right: var(--zaptro-app-gutter-margin-right);
+  box-sizing: content-box;
+}
+
+.zaptro-app-main .wa-link-page,
+.zaptro-app-main .wa-conversas {
+  min-height: 100%;
+  height: 100%;
+}
+
+.zaptro-app-page-section--compact .wa-conversas,
+.zaptro-app-page-section--compact .wa-link-page {
+  border-radius: 0;
+}
+
+@media (max-width: 980px) {
+  .zaptro-app-content {
+    padding: 0;
+  }
+
+  .zaptro-app-page-section {
+    margin: 0 20px 20px;
+    border-radius: 22px;
+  }
+}

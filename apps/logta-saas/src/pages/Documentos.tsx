@@ -19,7 +19,8 @@ import {
   MoreVertical,
   Activity,
   DollarSign,
-  Briefcase
+  Briefcase,
+  Upload
 } from 'lucide-react';
 import { supabase } from '@shared/lib/supabase';
 import { useHubEntitlements } from '../contexts/HubEntitlementsContext';
@@ -75,6 +76,7 @@ const Documentos = () => {
   }, [config?.id]);
   const [selectedCte, setSelectedCte] = React.useState<any>(null);
   const [selectedMdfe, setSelectedMdfe] = React.useState<any>(null);
+  const [selectedRejection, setSelectedRejection] = React.useState<any>(null);
   const [isUploadOpen, setIsUploadOpen] = React.useState(false);
   const [isMdfeOpen, setIsMdfeOpen] = React.useState(false);
   const [isNovoDocOpen, setIsNovoDocOpen] = React.useState(false);
@@ -126,7 +128,7 @@ const Documentos = () => {
           <Route path="dashboard" element={<FiscalCentralDashboard />} />
           <Route path="cte" element={<CteManagementView cteList={fiscalSandbox?.cteList ?? []} onSelect={setSelectedCte} onUpload={() => setIsUploadOpen(true)} />} />
           <Route path="mdfe" element={<MdfeManagementView mdfeList={fiscalSandbox?.mdfeList ?? []} onSelect={setSelectedMdfe} onNewMdfe={() => setIsMdfeOpen(true)} onUpload={() => setIsUploadOpen(true)} />} />
-          <Route path="rejeitados" element={<RejectedDocsView rejected={(fiscalSandbox?.cteList ?? []).filter((c) => c.status === 'Rejeitado')} onUpload={() => setIsUploadOpen(true)} />} />
+          <Route path="rejeitados" element={<RejectedDocsView rejected={(fiscalSandbox?.cteList ?? []).filter((c) => c.status === 'Rejeitado')} onUpload={() => setIsUploadOpen(true)} onSelectRejection={setSelectedRejection} />} />
         </Routes>
       </div>
 
@@ -284,6 +286,16 @@ const Documentos = () => {
               </button>
               <button 
                 onClick={() => {
+                  setSelectedCte(null);
+                  setIsUploadOpen(true);
+                  showToast('info', 'Arraste ou selecione os arquivos para sincronizar com o LogDock Drive.', 'LogDock');
+                }}
+                className="px-6 py-3 bg-[#18191B] border border-primary/40 text-primary font-bold rounded-xl text-xs uppercase tracking-normal transition-all cursor-pointer hover:bg-primary/5"
+              >
+                Subir no LogDock
+              </button>
+              <button 
+                onClick={() => {
                   if ((window as any).showToast) {
                     (window as any).showToast('success', 'XML do documento baixado com sucesso!', 'XML Salvo');
                   }
@@ -386,6 +398,95 @@ const Documentos = () => {
           </div>
         </div>
       )}
+
+      {/* SEFAZ Rejection Detail Modal */}
+      {selectedRejection && (
+        <div className="fixed inset-0 bg-gray-950/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
+          <div className="bg-[#18191B] rounded-[40px] border border-neutral-800 shadow-2xl p-8 max-w-xl w-full text-left animate-in zoom-in-95 duration-300 text-white">
+            <div className="flex justify-between items-start mb-6 pb-4 border-b border-neutral-800">
+              <div>
+                <span className="text-[9px] font-black px-2.5 py-1 rounded uppercase tracking-normal block w-fit mb-2 bg-red-500/10 text-red-400">
+                  REJEIÇÃO SEFAZ · CÓDIGO 225
+                </span>
+                <h3 className="logta-modal-title leading-none tracking-tight">
+                  CT-e #{selectedRejection.nr} — {selectedRejection.client}
+                </h3>
+                <p className="text-xs text-neutral-400 font-bold uppercase tracking-normal mt-1.5">
+                  Diagnóstico e Correção de Inconsistência
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedRejection(null)}
+                className="w-10 h-10 bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white rounded-xl flex items-center justify-center transition-all cursor-pointer"
+              >
+                <Plus size={20} className="rotate-45" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="p-5 bg-red-950/10 rounded-3xl border border-red-900/30 text-red-200 space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-wider text-red-400">Erro Retornado pela SEFAZ</p>
+                <p className="text-xs font-bold font-mono bg-black/40 p-3 rounded-xl border border-red-900/20 text-red-300 leading-normal">
+                  Rejeição 225: Falha na validação do CFOP. O CFOP (5.352) é inválido para operações interestaduais.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-neutral-900 rounded-2xl border border-neutral-800">
+                  <p className="text-[9px] font-black text-neutral-400 uppercase tracking-normal mb-0.5">Origem</p>
+                  <p className="text-xs font-bold text-white">{selectedRejection.origin}</p>
+                </div>
+                <div className="p-4 bg-neutral-900 rounded-2xl border border-neutral-800">
+                  <p className="text-[9px] font-black text-neutral-400 uppercase tracking-normal mb-0.5">Destino</p>
+                  <p className="text-xs font-bold text-white">{selectedRejection.dest}</p>
+                </div>
+              </div>
+
+              <div className="p-5 bg-neutral-900 rounded-3xl border border-neutral-800 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-lg bg-primary px-2 py-0.5 text-[9px] font-black uppercase text-white">IA Fiscal</span>
+                  <p className="text-[10px] font-black text-neutral-400 uppercase tracking-normal">Resolução Recomendada</p>
+                </div>
+                <p className="text-xs text-neutral-300 leading-relaxed">
+                  Identificamos que o endereço do remetente é do estado de origem e o destinatário é de outro estado. 
+                  Para transações interestaduais, o CFOP deve iniciar com o dígito <strong>6</strong>.
+                </p>
+                <div className="bg-neutral-950 p-4 rounded-xl border border-neutral-800 flex justify-between items-center text-xs">
+                  <div>
+                    <span className="text-neutral-500 font-bold block text-[9px] uppercase mb-0.5">CFOP Atual</span>
+                    <span className="text-red-400 font-black line-through">5.352</span>
+                  </div>
+                  <div className="text-neutral-500">→</div>
+                  <div className="text-right">
+                    <span className="text-primary font-bold block text-[9px] uppercase mb-0.5">CFOP Correto</span>
+                    <span className="text-green-400 font-black">6.352</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end gap-3">
+              <button 
+                onClick={() => setSelectedRejection(null)}
+                className="px-6 py-3 bg-neutral-900 border border-neutral-800 text-white font-bold rounded-xl text-xs uppercase tracking-normal transition-all cursor-pointer hover:bg-neutral-800"
+              >
+                Ignorar
+              </button>
+              <button 
+                onClick={() => {
+                  if ((window as any).showToast) {
+                    (window as any).showToast('success', 'CFOP atualizado para 6.352 e CT-e transmitido com sucesso!', 'Emissão Concluída');
+                  }
+                  setSelectedRejection(null);
+                }}
+                className="px-6 py-3 bg-primary text-white font-bold rounded-xl text-xs uppercase tracking-normal transition-all cursor-pointer hover:opacity-95"
+              >
+                Corrigir e Transmitir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </FiscalIntelligenceProvider>
   );
@@ -478,7 +579,7 @@ const CteManagementView = ({
                     }}
                     className="p-2 text-gray-400 hover:text-primary transition-colors"
                   >
-                    <FileText size={18} />
+                    <Download size={18} />
                   </button>
                   <button 
                     title="Baixar XML" 
@@ -489,6 +590,16 @@ const CteManagementView = ({
                     className="p-2 text-gray-400 hover:text-primary transition-colors"
                   >
                     <FileCode size={18} />
+                  </button>
+                  <button 
+                    title="Subir no LogDock" 
+                    onClick={() => {
+                      onUpload();
+                      showToast('info', `Abrindo biblioteca para subir documento para o CT-e #${cte.nr}. Sincronização direta com o LogDock Drive ativa.`, 'LogDock');
+                    }}
+                    className="p-2 text-blue-500 hover:text-blue-600 transition-colors bg-blue-50 hover:bg-blue-100 rounded-lg shrink-0"
+                  >
+                    <Upload size={18} />
                   </button>
                   <button title="Enviar E-mail" className="p-2 text-gray-400 hover:text-primary transition-colors"><Mail size={18} /></button>
                 </div>
@@ -584,7 +695,15 @@ const MdfeManagementView = ({
   );
 };
 
-const RejectedDocsView = ({ rejected, onUpload }: { rejected: any[]; onUpload: () => void }) => (
+const RejectedDocsView = ({ 
+  rejected, 
+  onUpload,
+  onSelectRejection
+}: { 
+  rejected: any[]; 
+  onUpload: () => void;
+  onSelectRejection: (cte: any) => void;
+}) => (
   <div className="logta-panel-card p-8">
     <div className="flex items-center gap-4 mb-8">
       <div className="w-12 h-12 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center">
@@ -603,7 +722,11 @@ const RejectedDocsView = ({ rejected, onUpload }: { rejected: any[]; onUpload: (
     ) : (
       <div className="space-y-3">
         {rejected.map((cte) => (
-          <div key={cte.nr} className="rounded-2xl border border-red-100 bg-red-50/50 p-5">
+          <div 
+            key={cte.nr} 
+            onClick={() => onSelectRejection(cte)}
+            className="rounded-2xl border border-red-100 bg-red-50/50 p-5 hover:border-red-300 hover:bg-red-50 transition-all cursor-pointer text-left"
+          >
             <p className="text-sm font-bold text-gray-900">CT-e {cte.nr} — {cte.client}</p>
             <p className="mt-1 text-xs text-gray-600">
               {cte.origin} → {cte.dest} · {cte.date}

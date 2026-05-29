@@ -1,15 +1,36 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Building2, MapPin, Navigation, Package, Phone, Truck, AlertTriangle, Sparkles } from 'lucide-react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { Building2, MapPin, Navigation, Package, Phone, Truck, AlertTriangle, Sparkles, ExternalLink, ShieldBan } from 'lucide-react';
+import { isDriverBlockedById, isDriverBlockedByPhone } from '../lib/zaptroDriverProfileExtended';
+import {
+  employmentTypeLabel,
+  formatDriverPhoneDisplay,
+  resolveFleetDriverForRoute,
+  vehicleOwnershipLabel,
+  type FleetDriverContext,
+} from '../lib/zaptroFleetDriverResolve';
+import ZaptroDriverRouteMap from '../components/Zaptro/ZaptroDriverRouteMap';
+import { notifyZaptro } from '../components/Zaptro/ZaptroNotificationSystem';
+import {
+  buildGoogleMapsNavigationUrl,
+  buildWazeNavigationUrl,
+  buildRouteLiveNavigationPatch,
+  distanceMeters,
+  formatRouteDistance,
+  formatRouteDuration,
+  openExternalNavigation,
+} from '../lib/zaptroRouteNavigation';
 import {
   DRIVER_AUTOMATION_EVENTS,
+  DRIVER_ROUTE_ACTIONS,
   ROUTE_STATUS_LABEL,
   zaptroPublicTrackPath,
   type RouteExecutionSnapshot,
   type RouteExecutionStatus,
 } from '../constants/zaptroRouteExecution';
 import { patchRouteLive, readRouteLive, type RouteLiveBucket } from '../constants/zaptroRouteLiveStore';
-import { notifyZaptro } from '../components/Zaptro/ZaptroNotificationSystem';
+import { resolveRouteCompanyBranding } from '../lib/zaptroRouteCompanyBranding';
+import { ZAPTRO_COMPANY_PROFILE_EVENT } from '../hooks/useZaptroCompanyBusinessProfile';
 import {
   readZaptroDriverSelfProfile,
   writeZaptroDriverSelfProfile,
@@ -40,6 +61,12 @@ const pageInner: React.CSSProperties = {
   boxSizing: 'border-box',
 };
 
+function asText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value == null) return '';
+  return String(value);
+}
+
 function demoSnapshot(token: string): RouteExecutionSnapshot {
   return {
     token,
@@ -59,28 +86,39 @@ function demoSnapshot(token: string): RouteExecutionSnapshot {
  */
 const ZaptroDriverRoute: React.FC = () => {
   const { token = '' } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
+  const waFromUrl = searchParams.get('wa') || searchParams.get('phone') || searchParams.get('whatsapp') || '';
   const decoded = useMemo(() => decodeURIComponent(token) || 'demo', [token]);
   const base = useMemo(() => demoSnapshot(decoded), [decoded]);
   const [status, setStatus] = useState<RouteExecutionStatus>(base.status);
-  const [locActive, setLocActive] = useState(false);
-  /** Espelha se existe `watchPosition` activo — não ler `watchRef` no render (ESLint react-hooks/refs). */
+  /** Espelha se existe `watchPosition` ativo — não ler `watchRef` no render (ESLint react-hooks/refs). */
   const [gpsWatchActive, setGpsWatchActive] = useState(false);
   const [liveBucket, setLiveBucket] = useState<RouteLiveBucket | null>(() => readRouteLive(decoded));
   const [profile, setProfile] = useState<ZaptroDriverSelfProfile>(() => readZaptroDriverSelfProfile());
   const [coPhotoFail, setCoPhotoFail] = useState(false);
   const [drPhotoFail, setDrPhotoFail] = useState(false);
+  const [brandTick, setBrandTick] = useState(0);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const watchRef = useRef<number | null>(null);
   const lastPersistRef = useRef(0);
   const routeNotifyEmailSentRef = useRef(false);
+  const lastTrailPointRef = useRef<{ lat: number; lng: number } | null>(null);
+  const [routePlanLoading, setRoutePlanLoading] = useState(false);
+  const deliveryTrackingStoppedRef = useRef(false);
+  const fleetSyncRef = useRef<string | null>(null);
 
   const pushDriverProfileToLive = useCallback(
-    (p: ZaptroDriverSelfProfile) => {
+    (p: ZaptroDriverSelfProfile, fleet?: FleetDriverContext | null) => {
+      const live = readRouteLive(decoded);
       patchRouteLive(decoded, {
-        driverDisplayName: p.displayName.trim() || base.driverDisplayName,
-        driverPhone: p.phone.trim() || null,
-        driverVehicle: p.vehicle.trim() || null,
-        driverAvatarUrl: p.avatarUrl,
+        fleetDriverId: fleet?.id ?? live?.fleetDriverId ?? null,
+        driverDisplayName:
+          (fleet?.name || asText(p.displayName).trim() || asText(live?.driverDisplayName) || base.driverDisplayName) || null,
+        driverPhone: (fleet?.phone || asText(p.phone).trim() || asText(live?.driverPhone)) || null,
+        driverVehicle: (fleet?.vehicle || asText(p.vehicle).trim() || asText(live?.driverVehicle)) || null,
+        driverAvatarUrl: fleet?.photoUrl ?? p.avatarUrl ?? live?.driverAvatarUrl ?? null,
+        driverEmploymentType: fleet?.employmentType ?? live?.driverEmploymentType ?? null,
+        driverVehicleOwnership: fleet?.vehicleOwnership ?? live?.driverVehicleOwnership ?? null,
         driverStatsDeliveries: p.deliveries,
         driverStatsRoutes: p.routes,
       });
@@ -89,7 +127,30 @@ const ZaptroDriverRoute: React.FC = () => {
     [decoded, base.driverDisplayName],
   );
 
+  const fleetDriver = useMemo(
+    () =>
+      resolveFleetDriverForRoute(
+        {
+          fleetDriverId: liveBucket?.fleetDriverId,
+          driverPhone: liveBucket?.driverPhone,
+          driverDisplayName: liveBucket?.driverDisplayName,
+          driverVehicle: liveBucket?.driverVehicle,
+          driverAvatarUrl: liveBucket?.driverAvatarUrl,
+        },
+        waFromUrl,
+      ),
+    [
+      liveBucket?.fleetDriverId,
+      liveBucket?.driverPhone,
+      liveBucket?.driverDisplayName,
+      liveBucket?.driverVehicle,
+      liveBucket?.driverAvatarUrl,
+      waFromUrl,
+    ],
+  );
+
   useEffect(() => {
+    fleetSyncRef.current = null;
     const live = readRouteLive(decoded);
     setLiveBucket(live);
     if (live?.status) setStatus(live.status);
@@ -105,11 +166,48 @@ const ZaptroDriverRoute: React.FC = () => {
     return () => window.removeEventListener('zaptro-route-live', h);
   }, [decoded]);
 
+  /** Vincula motorista da frota pelo WhatsApp (URL `?wa=`) ou pelo ID/telefone gravado na rota. */
   useEffect(() => {
-    const p = readZaptroDriverSelfProfile();
-    setProfile(p);
-    pushDriverProfileToLive(p);
-  }, [decoded, pushDriverProfileToLive]);
+    const local = readZaptroDriverSelfProfile();
+    if (fleetDriver) {
+      const syncKey = `${decoded}:${fleetDriver.id}:${fleetDriver.phone}`;
+      if (fleetSyncRef.current === syncKey) return;
+      fleetSyncRef.current = syncKey;
+
+      const merged: ZaptroDriverSelfProfile = {
+        displayName: fleetDriver.name,
+        phone: fleetDriver.phone,
+        vehicle: fleetDriver.vehicle,
+        avatarUrl: fleetDriver.photoUrl ?? local.avatarUrl,
+        deliveries: local.deliveries,
+        routes: local.routes,
+      };
+      setProfile(merged);
+      try {
+        writeZaptroDriverSelfProfile(merged);
+      } catch {
+        /* ignore quota */
+      }
+      pushDriverProfileToLive(merged, fleetDriver);
+      return;
+    }
+
+    fleetSyncRef.current = null;
+    const live = readRouteLive(decoded);
+    const fromLive: ZaptroDriverSelfProfile = {
+      displayName: asText(live?.driverDisplayName).trim() || local.displayName,
+      phone: asText(live?.driverPhone).trim() || local.phone,
+      vehicle: asText(live?.driverVehicle).trim() || local.vehicle,
+      avatarUrl: live?.driverAvatarUrl ?? local.avatarUrl,
+      deliveries: local.deliveries,
+      routes: local.routes,
+    };
+    if (fromLive.displayName || fromLive.phone || fromLive.vehicle) {
+      setProfile(fromLive);
+      return;
+    }
+    setProfile(local);
+  }, [decoded, fleetDriver?.id, fleetDriver?.phone, pushDriverProfileToLive]);
 
   const saveDriverProfile = () => {
     try {
@@ -118,14 +216,20 @@ const ZaptroDriverRoute: React.FC = () => {
       notifyZaptro('error', 'Perfil', 'Não foi possível guardar (imagem demasiado grande?). Reduza a foto ou remova a foto.');
       return;
     }
-    pushDriverProfileToLive(profile);
+    pushDriverProfileToLive(profile, fleetDriver);
     notifyZaptro('success', 'Perfil', 'Dados do motorista guardados neste aparelho e espelhados na lista de rotas.');
   };
 
   useEffect(() => {
+    const onBrand = () => setBrandTick((n) => n + 1);
+    window.addEventListener(ZAPTRO_COMPANY_PROFILE_EVENT, onBrand);
+    return () => window.removeEventListener(ZAPTRO_COMPANY_PROFILE_EVENT, onBrand);
+  }, []);
+
+  useEffect(() => {
     setCoPhotoFail(false);
     setDrPhotoFail(false);
-  }, [liveBucket?.publicHeaderLogoUrl, profile.avatarUrl]);
+  }, [liveBucket?.publicHeaderLogoUrl, driverAvatar, brandTick]);
 
   useEffect(() => {
     return () => {
@@ -140,13 +244,14 @@ const ZaptroDriverRoute: React.FC = () => {
   const [gpsPermissionState, setGpsPermissionState] = useState<'pending' | 'granted' | 'denied'>('pending');
 
   useEffect(() => {
-    if (navigator.permissions) {
-      navigator.permissions.query({ name: 'geolocation' }).then((status) => {
-        if (status.state === 'granted') {
-          setGpsPermissionState('granted');
-        }
-      });
-    }
+    if (!navigator.permissions) return;
+    navigator.permissions.query({ name: 'geolocation' }).then((perm) => {
+      const sync = () => {
+        setGpsPermissionState(perm.state === 'granted' ? 'granted' : perm.state === 'denied' ? 'denied' : 'pending');
+      };
+      sync();
+      perm.onchange = sync;
+    });
   }, []);
 
   /** Alinha `html` / `body` / `#root` ao fundo escuro desta rota (evita branco por trás do shell). */
@@ -208,34 +313,32 @@ const ZaptroDriverRoute: React.FC = () => {
       });
     }
 
-    if (next === 'started') {
-      iniciarRastreamento();
-    } else if (next === 'delivered' || next === 'issue') {
-      pararRastreamento();
+    if (next === 'en_route' || next === 'started') {
+      startTracking();
     }
   };
 
-  const pararRastreamento = () => {
+  const pararRastreamento = useCallback((reason: 'delivered' | 'cleanup' = 'cleanup') => {
     if (watchRef.current != null) {
       navigator.geolocation.clearWatch(watchRef.current);
       watchRef.current = null;
       setGpsWatchActive(false);
-      setLocActive(false);
-      routeNotifyEmailSentRef.current = false;
-      notifyZaptro('info', 'Localização', 'Rastreamento parado.');
+      lastTrailPointRef.current = null;
+      if (reason === 'delivered' && !deliveryTrackingStoppedRef.current) {
+        deliveryTrackingStoppedRef.current = true;
+        routeNotifyEmailSentRef.current = false;
+        notifyZaptro('success', 'Entrega concluída', 'Rastreamento terminado automaticamente.');
+      }
     }
-  };
+  }, []);
 
-  const iniciarRastreamento = () => {
+  const startTracking = useCallback(() => {
     if (!navigator.geolocation) {
       notifyZaptro('warning', 'Localização', 'Geolocalização não disponível neste dispositivo.');
       return;
     }
-
-    if (watchRef.current != null) {
-      pararRastreamento();
-      return;
-    }
+    if (watchRef.current != null) return;
+    if (status === 'delivered') return;
 
     if (!routeNotifyEmailSentRef.current) {
       routeNotifyEmailSentRef.current = true;
@@ -260,42 +363,57 @@ const ZaptroDriverRoute: React.FC = () => {
     watchRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         const now = Date.now();
-        if (now - lastPersistRef.current < 3500) return;
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const prev = lastTrailPointRef.current;
+        if (prev) {
+          const moved = distanceMeters(prev, { lat, lng });
+          if (moved < 6 && now - lastPersistRef.current < 2000) return;
+        } else if (now - lastPersistRef.current < 800) {
+          return;
+        }
         lastPersistRef.current = now;
-
-        const data = {
-          rotaId: decoded,
-          motoristaId: profile.phone || 'mt-demo',
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          velocidade: pos.coords.speed,
-          timestamp: new Date().toISOString()
-        };
-        console.log("Localização:", data);
+        lastTrailPointRef.current = { lat, lng };
 
         patchRouteLive(decoded, {
-          lastLat: pos.coords.latitude,
-          lastLng: pos.coords.longitude,
+          lastLat: lat,
+          lastLng: lng,
           lastLocAt: new Date().toISOString(),
         });
-        setLocActive(true);
+        setLiveBucket(readRouteLive(decoded));
       },
-      () => {
-        notifyZaptro('error', 'Localização', 'Permissão negada ou GPS indisponível.');
+      (err) => {
         if (watchRef.current != null) {
           navigator.geolocation.clearWatch(watchRef.current);
           watchRef.current = null;
         }
         setGpsWatchActive(false);
-        setLocActive(false);
+        if (err.code === 1) {
+          setGpsPermissionState('denied');
+          notifyZaptro('error', 'Localização', 'Permissão negada. Active a localização para continuar a rota.');
+          return;
+        }
+        notifyZaptro('warning', 'Localização', 'Sinal GPS instável — a tentar reconectar…');
+        window.setTimeout(() => {
+          if (readRouteLive(decoded)?.status !== 'delivered') startTracking();
+        }, 3000);
       },
-      { enableHighAccuracy: true, maximumAge: 4000, timeout: 20_000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 25_000 },
     );
 
     setGpsWatchActive(true);
-    setLocActive(true);
-    pushAutomation(DRIVER_AUTOMATION_EVENTS.LOCATION_SHARED, 'Partilha de localização activa — o cliente vê coordenadas no link público (neste dispositivo).');
-  };
+  }, [decoded, status]);
+
+  useEffect(() => {
+    if (status === 'delivered') {
+      pararRastreamento('delivered');
+      return;
+    }
+    deliveryTrackingStoppedRef.current = false;
+    if (gpsPermissionState === 'granted' && watchRef.current == null) {
+      startTracking();
+    }
+  }, [gpsPermissionState, startTracking, status, pararRastreamento]);
 
   const requestCustomerContact = () => {
     patchRouteLive(decoded, { contactRequestedAt: new Date().toISOString() });
@@ -305,26 +423,38 @@ const ZaptroDriverRoute: React.FC = () => {
     );
   };
 
-  const reportIssue = () => {
-    setStatus('issue');
-    persistStatus('issue', { issueReportedAt: new Date().toISOString() });
-    pushAutomation(DRIVER_AUTOMATION_EVENTS.ISSUE_REPORTED, 'Problema na entrega — estado actualizado para o cliente e para a equipa.');
+  /** Acidente / ocorrência — alerta só para a operação; o cliente mantém o último estado no link público. */
+  const reportOpsIncident = () => {
+    const note = window.prompt(
+      'Descreva brevemente a ocorrência (acidente, avaria, atraso grave). A operação será alertada.',
+      '',
+    );
+    if (note === null) return;
+    patchRouteLive(decoded, {
+      opsIncidentAt: new Date().toISOString(),
+      opsIncidentNote: note.trim() || 'Ocorrência reportada pelo motorista',
+    });
+    setLiveBucket(readRouteLive(decoded));
+    pushAutomation(
+      DRIVER_AUTOMATION_EVENTS.OPS_INCIDENT,
+      'Ocorrência registada — a equipa vê em Rotas e deve contactar o motorista. O cliente não vê este alerta.',
+    );
     const live = readRouteLive(decoded);
     const to = live?.opsNotifyEmail?.trim() ?? '';
     if (to && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
-      const trackUrl = `${window.location.origin}${zaptroPublicTrackPath(decoded)}`;
       fireTransactionalEmailNonBlocking(supabaseZaptro, {
         kind: 'delivery_status',
         to,
         variables: {
           userName: live?.publicCompanyName || 'Operação',
-          status: 'Problema reportado',
-          message: 'O motorista reportou um problema nesta entrega.',
-          ctaUrl: trackUrl,
-          ctaLabel: 'Ver rastreio',
+          status: 'Ocorrência na rota',
+          message: `Motorista reportou: ${note.trim() || 'ocorrência sem descrição'}. Contacte o motorista.`,
+          ctaUrl: `${window.location.origin}/app/rotas`,
+          ctaLabel: 'Abrir Central Logística',
         },
       });
     }
+    notifyZaptro('warning', 'Ocorrência enviada', 'A operação foi alertada. Continue quando for seguro ou aguarde instruções.');
   };
 
   const btn = (active: boolean): React.CSSProperties => ({
@@ -340,14 +470,122 @@ const ZaptroDriverRoute: React.FC = () => {
     textAlign: 'center',
   });
 
-  const canStart = status === 'assigned' || status === 'draft';
-  const problemDisabled = status === 'delivered' || status === 'issue';
+  const incidentDisabled = status === 'delivered' || Boolean(liveBucket?.opsIncidentAt);
 
-  const companyUrl = liveBucket?.publicHeaderLogoUrl?.trim() || null;
-  const displayName = (profile.displayName.trim() || base.driverDisplayName).trim();
+  const companyBrand = useMemo(
+    () => resolveRouteCompanyBranding(liveBucket),
+    [liveBucket, brandTick],
+  );
+  const companyUrl = companyBrand.logoUrl;
+  const companyDisplayName = companyBrand.name;
+  const displayName = (
+    fleetDriver?.name ||
+    liveBucket?.driverDisplayName ||
+    profile.displayName.trim() ||
+    base.driverDisplayName
+  ).trim();
+  const driverPhone = asText(fleetDriver?.phone || liveBucket?.driverPhone || profile.phone);
+  const driverVehicle = asText(fleetDriver?.vehicle || liveBucket?.driverVehicle || profile.vehicle);
+  const driverAvatar = fleetDriver?.photoUrl || liveBucket?.driverAvatarUrl || profile.avatarUrl;
+  const employmentType = fleetDriver?.employmentType ?? liveBucket?.driverEmploymentType ?? null;
+  const vehicleOwnership = fleetDriver?.vehicleOwnership ?? liveBucket?.driverVehicleOwnership ?? null;
   const driverInitials = zaptroProfileInitials(displayName);
   const lastLat = liveBucket?.lastLat;
   const lastLng = liveBucket?.lastLng;
+  const destAddress = liveBucket?.destLabel?.trim() || base.deliveryAddress;
+  const originAddress = liveBucket?.originLabel?.trim() || '';
+  const gpsReady = gpsPermissionState === 'granted' && gpsWatchActive;
+
+  const driverAccessBlocked = useMemo(() => {
+    const phone = (driverPhone || '').trim();
+    if (phone && isDriverBlockedByPhone(phone)) return true;
+    const fid = liveBucket?.fleetDriverId;
+    if (fid && isDriverBlockedById(fid)) return true;
+    return false;
+  }, [driverPhone, liveBucket?.fleetDriverId]);
+
+  const routeLine = useMemo((): [number, number][] => {
+    const pts = liveBucket?.navigationPolyline;
+    if (!pts?.length) return [];
+    return pts.map((p) => [p.lat, p.lng] as [number, number]);
+  }, [liveBucket?.navigationPolyline]);
+
+  const driverPos = lastLat != null && lastLng != null ? ([lastLat, lastLng] as [number, number]) : null;
+  const originPos =
+    liveBucket?.originLat != null && liveBucket?.originLng != null
+      ? ([liveBucket.originLat, liveBucket.originLng] as [number, number])
+      : null;
+  const destPos =
+    liveBucket?.destLat != null && liveBucket?.destLng != null
+      ? ([liveBucket.destLat, liveBucket.destLng] as [number, number])
+      : null;
+
+  const googleNavUrl = useMemo(
+    () =>
+      buildGoogleMapsNavigationUrl({
+        origin: originPos
+          ? { lat: originPos[0], lng: originPos[1] }
+          : driverPos
+            ? { lat: driverPos[0], lng: driverPos[1] }
+            : null,
+        originAddress: originAddress || null,
+        destination: destPos ? { lat: destPos[0], lng: destPos[1] } : destAddress,
+      }),
+    [originPos, driverPos, originAddress, destPos, destAddress],
+  );
+
+  const wazeNavUrl = useMemo(
+    () =>
+      buildWazeNavigationUrl({
+        destination: destPos ? { lat: destPos[0], lng: destPos[1] } : destAddress,
+      }),
+    [destPos, destAddress],
+  );
+
+  useEffect(() => {
+    if (status === 'delivered') return;
+    const ac = new AbortController();
+    let cancelled = false;
+
+    void (async () => {
+      setRoutePlanLoading(true);
+      const live = readRouteLive(decoded);
+      if (!live) {
+        if (!cancelled) setRoutePlanLoading(false);
+        return;
+      }
+
+      const patch = await buildRouteLiveNavigationPatch(live, {
+        destinationFallback: base.deliveryAddress,
+        signal: ac.signal,
+        preferDriverPosition: true,
+      });
+      if (patch && Object.keys(patch).length > 0) {
+        patchRouteLive(decoded, patch);
+        if (!cancelled) setLiveBucket(readRouteLive(decoded));
+      }
+      if (!cancelled) setRoutePlanLoading(false);
+    })().catch(() => {
+      if (!cancelled) setRoutePlanLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+      ac.abort();
+    };
+  }, [
+    decoded,
+    status,
+    liveBucket?.originLabel,
+    liveBucket?.destLabel,
+    liveBucket?.lastLat,
+    liveBucket?.lastLng,
+    liveBucket?.navigationPolyline?.length,
+    liveBucket?.navigationRouteFromLat,
+    liveBucket?.navigationRouteFromLng,
+    base.deliveryAddress,
+  ]);
+
   const mapHref =
     lastLat != null && lastLng != null ? `https://www.google.com/maps?q=${lastLat},${lastLng}` : null;
 
@@ -377,35 +615,79 @@ const ZaptroDriverRoute: React.FC = () => {
     backgroundColor: side === 'company' ? 'rgba(37,99,235,0.2)' : 'rgba(148,163,184,0.18)',
   });
 
-  if (gpsPermissionState !== 'granted') {
+  if (driverAccessBlocked) {
+    return (
+      <div style={pageShell}>
+        <div
+          style={{
+            ...pageInner,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            minHeight: '100dvh',
+            gap: 20,
+          }}
+        >
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 999,
+              backgroundColor: 'rgba(239,68,68,0.12)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid rgba(239,68,68,0.45)',
+            }}
+          >
+            <ShieldBan size={32} color="#ef4444" />
+          </div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.03em' }}>
+            Acesso bloqueado
+          </h2>
+          <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(248,250,252,0.7)', lineHeight: 1.5, margin: 0 }}>
+            Este motorista foi bloqueado pela operação e não pode aceder a rotas, links nem partilhar localização.
+            Contacte a transportadora se acredita que é um erro.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status !== 'delivered' && gpsPermissionState !== 'granted') {
     return (
       <div style={pageShell}>
         <div style={{ ...pageInner, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', minHeight: '100dvh', gap: 20 }}>
           <div style={{ width: 64, height: 64, borderRadius: 999, backgroundColor: 'rgba(217,255,0,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${LIME}` }}>
             <MapPin size={32} color={LIME} />
           </div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.03em' }}>Localização Obrigatória</h2>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.03em' }}>Localização obrigatória</h2>
           <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(248,250,252,0.7)', lineHeight: 1.5, margin: 0 }}>
             {gpsPermissionState === 'denied'
-              ? 'Você precisa ativar sua localização nas permissões do navegador para sincronizar com a rota. Sem isso, não é possível continuar.'
-              : 'Para rastrear a entrega em tempo real, precisamos de acesso ao GPS do seu dispositivo.'}
+              ? 'Sem GPS activo não é possível executar a rota. Abra as definições do browser ou do telemóvel e permita a localização para este site.'
+              : 'Para iniciar a rota e o cliente acompanhar em tempo real, é obrigatório activar a localização do telemóvel. Sem isso, os botões de entrega ficam bloqueados.'}
           </p>
-          <button 
+          <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(248,250,252,0.45)', lineHeight: 1.45, margin: 0 }}>
+            Recomendamos também permitir notificações do browser para alertas da operação.
+          </p>
+          <button
             type="button"
             onClick={() => {
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                  (pos) => {
-                    setGpsPermissionState('granted');
-                  },
-                  (err) => setGpsPermissionState('denied'),
-                  { enableHighAccuracy: true, timeout: 10000 }
-                );
+              if (!navigator.geolocation) {
+                setGpsPermissionState('denied');
+                return;
               }
+              navigator.geolocation.getCurrentPosition(
+                () => setGpsPermissionState('granted'),
+                () => setGpsPermissionState('denied'),
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 15_000 },
+              );
             }}
             style={{ ...btn(true), marginTop: 10 }}
           >
-            Ativar localização
+            Activar localização do telemóvel
           </button>
         </div>
       </div>
@@ -416,15 +698,35 @@ const ZaptroDriverRoute: React.FC = () => {
     <div style={pageShell}>
       <div style={pageInner}>
       <header style={head}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={logo}>
-            <Truck size={22} color="#000" />
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {companyUrl && !coPhotoFail ? (
+            <img
+              src={companyUrl}
+              alt={companyDisplayName}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                objectFit: 'cover',
+                border: '1px solid rgba(255,255,255,0.15)',
+                flexShrink: 0,
+              }}
+              onError={() => setCoPhotoFail(true)}
+            />
+          ) : (
+            <div style={logo}>
+              <span style={{ fontSize: 18, fontWeight: 800, color: '#000' }}>
+                {companyDisplayName[0]?.toUpperCase() || 'E'}
+              </span>
+            </div>
+          )}
           <div>
             <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(248,250,252,0.55)' }}>
               MOTORISTA · EXECUÇÃO DE ROTA
             </p>
-            <h1 style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: '-0.03em' }}>Zaptro</h1>
+            <h1 style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: '-0.03em' }}>
+              {companyDisplayName}
+            </h1>
           </div>
         </div>
         <p style={{ margin: '14px 0 0', fontSize: 13, color: 'rgba(248,250,252,0.75)', lineHeight: 1.45, fontWeight: 600 }}>
@@ -455,9 +757,9 @@ const ZaptroDriverRoute: React.FC = () => {
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(248,250,252,0.45)' }}>MOTORISTA</span>
               <div style={avatarShell('driver')}>
-                {profile.avatarUrl && !drPhotoFail ? (
+                {driverAvatar && !drPhotoFail ? (
                   <img
-                    src={profile.avatarUrl}
+                    src={driverAvatar}
                     alt=""
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={() => setDrPhotoFail(true)}
@@ -470,13 +772,56 @@ const ZaptroDriverRoute: React.FC = () => {
           </div>
           <h2 style={{ margin: '14px 0 6px', fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: '-0.03em' }}>{displayName}</h2>
           <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'rgba(248,250,252,0.78)', lineHeight: 1.45 }}>
-            {profile.phone.trim() || '—'} · {profile.vehicle.trim() || 'Veículo não indicado'}
+            <Phone size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+            {formatDriverPhoneDisplay(driverPhone)} · {driverVehicle.trim() || 'Veículo não indicado'}
           </p>
+          {employmentType || vehicleOwnership ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+              {employmentType ? (
+                <span
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    backgroundColor: employmentType === 'clt' ? 'rgba(217,255,0,0.15)' : 'rgba(251,191,36,0.12)',
+                    border: `1px solid ${employmentType === 'clt' ? 'rgba(217,255,0,0.4)' : 'rgba(251,191,36,0.35)'}`,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: employmentType === 'clt' ? LIME : '#fbbf24',
+                  }}
+                >
+                  {employmentTypeLabel(employmentType)}
+                </span>
+              ) : null}
+              {vehicleOwnership ? (
+                <span
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    backgroundColor: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: 'rgba(248,250,252,0.85)',
+                  }}
+                >
+                  <Truck size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+                  {vehicleOwnershipLabel(vehicleOwnership)}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+          {fleetDriver ? (
+            <p style={{ margin: '8px 0 0', fontSize: 11, fontWeight: 600, color: 'rgba(248,250,252,0.45)' }}>
+              Identificado pelo WhatsApp cadastrado na frota
+            </p>
+          ) : null}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 14 }}>
             <MapPin size={18} color={LIME} style={{ flexShrink: 0, marginTop: 2 }} />
             <div style={{ minWidth: 0 }}>
               <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.02em', color: 'rgba(248,250,252,0.45)' }}>MORADA DA ENTREGA</p>
-              <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 700, color: 'rgba(248,250,252,0.9)', lineHeight: 1.45 }}>{base.deliveryAddress}</p>
+              <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 700, color: 'rgba(248,250,252,0.9)', lineHeight: 1.45 }}>
+                {liveBucket?.destLabel?.trim() || base.deliveryAddress}
+              </p>
             </div>
           </div>
           <p style={{ margin: '12px 0 0', fontSize: 12, fontWeight: 600, color: 'rgba(248,250,252,0.55)', lineHeight: 1.45 }}>
@@ -488,7 +833,7 @@ const ZaptroDriverRoute: React.FC = () => {
                 </a>
               </>
             ) : (
-              'Sem coordenadas GPS neste momento — usa “Partilhar localização” abaixo.'
+              'Sem coordenadas GPS neste momento — o rastreamento activa-se automaticamente.'
             )}
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
@@ -619,11 +964,70 @@ const ZaptroDriverRoute: React.FC = () => {
         </section>
 
         <section style={card}>
+          <p style={eyebrow}>ROTA NO MAPA</p>
+          {originAddress ? (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 10, marginBottom: 8 }}>
+              <Navigation size={16} color="rgba(248,250,252,0.55)" style={{ flexShrink: 0, marginTop: 2 }} />
+              <div style={{ minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'rgba(248,250,252,0.45)' }}>ORIGEM</p>
+                <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: 'rgba(248,250,252,0.85)', lineHeight: 1.45 }}>{originAddress}</p>
+              </div>
+            </div>
+          ) : null}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 12 }}>
+            <MapPin size={18} color={LIME} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'rgba(248,250,252,0.45)' }}>DESTINO</p>
+              <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 700, color: 'rgba(248,250,252,0.9)', lineHeight: 1.45 }}>{destAddress}</p>
+            </div>
+          </div>
+          <ZaptroDriverRouteMap
+            driverPos={driverPos}
+            originPos={originPos}
+            destPos={destPos}
+            routeLine={routeLine}
+            height={240}
+          />
+          {routePlanLoading ? (
+            <p style={{ margin: '10px 0 0', fontSize: 12, fontWeight: 600, color: 'rgba(248,250,252,0.55)' }}>
+              A calcular rota no mapa…
+            </p>
+          ) : liveBucket?.routeDistanceM != null && liveBucket?.routeDurationS != null ? (
+            <p style={{ margin: '10px 0 0', fontSize: 13, fontWeight: 700, color: LIME }}>
+              {formatRouteDistance(liveBucket.routeDistanceM)} · {formatRouteDuration(liveBucket.routeDurationS)} estimados
+            </p>
+          ) : null}
+          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+            <button
+              type="button"
+              style={{ ...btn(false), flex: 1, padding: '14px 12px', fontSize: 13 }}
+              onClick={() => openExternalNavigation(googleNavUrl)}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <ExternalLink size={16} /> Google Maps
+              </span>
+            </button>
+            <button
+              type="button"
+              style={{ ...btn(false), flex: 1, padding: '14px 12px', fontSize: 13 }}
+              onClick={() => openExternalNavigation(wazeNavUrl)}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <ExternalLink size={16} /> Waze
+              </span>
+            </button>
+          </div>
+          <p style={{ margin: '10px 0 0', fontSize: 11, fontWeight: 600, color: 'rgba(248,250,252,0.45)', lineHeight: 1.45 }}>
+            Abre a navegação turn-by-turn no app instalado no telemóvel, com destino e percurso já definidos.
+          </p>
+        </section>
+
+        <section style={card}>
           <p style={eyebrow}>{base.companyName}</p>
           <h2 style={{ margin: '6px 0 8px', fontSize: 22, fontWeight: 700, color: '#fff', letterSpacing: '-0.04em' }}>{base.deliveryLabel}</h2>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
             <MapPin size={18} color={LIME} style={{ flexShrink: 0, marginTop: 2 }} />
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'rgba(248,250,252,0.88)', lineHeight: 1.45 }}>{base.deliveryAddress}</p>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'rgba(248,250,252,0.88)', lineHeight: 1.45 }}>{destAddress}</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
             <Package size={16} color="rgba(248,250,252,0.55)" />
@@ -637,57 +1041,101 @@ const ZaptroDriverRoute: React.FC = () => {
         </section>
 
         <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(248,250,252,0.45)' }}>
+            ATUALIZAR ENTREGA
+          </p>
+          {!gpsReady ? (
+            <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 700, color: '#fecaca', lineHeight: 1.45 }}>
+              GPS obrigatório: aguarde a localização activa ou reactive o GPS para avançar na rota.
+            </p>
+          ) : null}
+          {DRIVER_ROUTE_ACTIONS.map((action) => {
+            const isActive = status === action.status;
+            const isNext =
+              (status === 'assigned' || status === 'draft') && action.status === 'en_route'
+                ? true
+                : status === 'en_route' && action.status === 'started'
+                  ? true
+                  : status === 'started' && action.status === 'arrived'
+                    ? true
+                    : status === 'arrived' && action.status === 'delivered'
+                      ? true
+                      : false;
+            const enabled = isNext && status !== 'delivered' && status !== 'issue' && gpsReady;
+            return (
+              <button
+                key={action.status}
+                type="button"
+                disabled={!enabled}
+                style={{ ...btn(isActive), opacity: enabled ? 1 : 0.4 }}
+                onClick={() => {
+                  if (!gpsReady) {
+                    notifyZaptro('warning', 'Localização obrigatória', 'Active o GPS do telemóvel para actualizar o estado da rota.');
+                    return;
+                  }
+                  setStep(action.status, action.event, action.clientMsg);
+                }}
+              >
+                {action.label}
+              </button>
+            );
+          })}
           <button
             type="button"
-            disabled={!canStart}
-            style={{ ...btn(status === 'started'), opacity: canStart ? 1 : 0.45 }}
-            onClick={() => setStep('started', DRIVER_AUTOMATION_EVENTS.ROUTE_STARTED, 'Rota iniciada — cliente pode receber “saiu para entrega”.')}
-          >
-            Iniciar rota
-          </button>
-          <button
-            type="button"
-            disabled={status !== 'started'}
-            style={{ ...btn(status === 'arrived'), opacity: status === 'started' ? 1 : 0.45 }}
-            onClick={() => setStep('arrived', DRIVER_AUTOMATION_EVENTS.DRIVER_ARRIVED, 'Chegou ao local — cliente pode receber “motorista a chegar”.')}
-          >
-            Cheguei no local
-          </button>
-          <button
-            type="button"
-            disabled={status !== 'arrived'}
-            style={{ ...btn(status === 'delivered'), opacity: status === 'arrived' ? 1 : 0.45 }}
-            onClick={() => setStep('delivered', DRIVER_AUTOMATION_EVENTS.DELIVERED, 'Entrega concluída — cliente recebe confirmação.')}
-          >
-            Entrega realizada
-          </button>
-          <button
-            type="button"
-            disabled={problemDisabled}
+            disabled={incidentDisabled}
             style={{
               ...btn(false),
-              borderColor: 'rgba(248,113,113,0.45)',
+              borderColor: 'rgba(248,113,113,0.55)',
               color: '#fecaca',
-              opacity: problemDisabled ? 0.45 : 1,
+              opacity: incidentDisabled ? 0.4 : 1,
+              marginTop: 6,
             }}
-            onClick={reportIssue}
+            onClick={reportOpsIncident}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <AlertTriangle size={18} /> Problema na entrega
+              <AlertTriangle size={18} /> Ocorrência / acidente (só operação)
             </span>
           </button>
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'rgba(248,250,252,0.45)', lineHeight: 1.45 }}>
+            O link do cliente actualiza automaticamente a cada botão. Ocorrências não aparecem no rastreio do cliente.
+          </p>
         </section>
 
         <section style={card}>
-          <button type="button" style={{ ...btn(locActive), marginBottom: 12 }} onClick={iniciarRastreamento}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-              <MapPin size={20} /> {locActive && gpsWatchActive ? 'Parar partilha manual' : 'Partilhar localização'}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '12px 16px',
+              borderRadius: 999,
+              marginBottom: 12,
+              backgroundColor: status === 'delivered' ? 'rgba(255,255,255,0.08)' : LIME,
+              border: status === 'delivered' ? '1px solid rgba(255,255,255,0.12)' : 'none',
+              width: 'fit-content',
+            }}
+          >
+            <MapPin size={18} color={status === 'delivered' ? 'rgba(248,250,252,0.55)' : '#000'} />
+            <span
+              style={{
+                fontWeight: 700,
+                fontSize: 14,
+                color: status === 'delivered' ? 'rgba(248,250,252,0.65)' : '#000',
+              }}
+            >
+              {status === 'delivered'
+                ? 'Rastreamento concluído'
+                : gpsWatchActive
+                  ? 'Rastreamento activo'
+                  : 'A activar GPS…'}
             </span>
-          </button>
+          </div>
           <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'rgba(248,250,252,0.55)', lineHeight: 1.45 }}>
-            {locActive && gpsWatchActive
-              ? 'Rastreamento activo. A sua posição está a ser transmitida para a operação.'
-              : 'O rastreamento inicia automaticamente ao clicar em "Iniciar rota". Pode ligar manualmente aqui.'}
+            {status === 'delivered'
+              ? 'A entrega foi concluída — a partilha de localização terminou automaticamente.'
+              : gpsWatchActive
+                ? 'A localização é transmitida automaticamente durante toda a rota. Só para quando concluir a entrega no destino.'
+                : 'O rastreamento inicia sozinho assim que o GPS estiver activo. Não é possível desactivar manualmente.'}
           </p>
         </section>
 

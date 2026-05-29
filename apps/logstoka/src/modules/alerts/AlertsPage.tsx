@@ -1,11 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
+import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
 import { useAlerts } from '@/hooks/useLogstokaData';
+import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
+import type { LsAlert } from '@/types';
 
 const AlertsPage: React.FC = () => {
-  const { alerts } = useAlerts();
+  const navigate = useNavigate();
+  const { companyId } = useLogstokaTenant();
+  const { alerts: initialAlerts } = useAlerts();
+  const [alerts, setAlerts] = useState<LsAlert[]>(initialAlerts);
+
+  useEffect(() => {
+    setAlerts(initialAlerts);
+  }, [initialAlerts]);
 
   const markRead = async (id: string) => {
+    if (isLogstokaDemoCompany(companyId)) {
+      setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, is_read: true } : a)));
+      toast.success('[Demo] Alerta marcado como lido');
+      return;
+    }
     await supabase.from('ls_alerts').update({ is_read: true }).eq('id', id);
     window.location.reload();
   };
@@ -13,13 +31,18 @@ const AlertsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-black">Alertas & Notificações</h2>
+        <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Alertas & Notificações</h2>
         <p className="text-sm text-slate-500">Ruptura, mínimo, divergências e pendências</p>
       </div>
       <div className="space-y-3">
         {alerts.length === 0 && <div className="ls-card text-sm text-slate-500">Nenhum alerta ativo.</div>}
         {alerts.map((a) => (
-          <div key={a.id} className={`ls-card flex items-start justify-between gap-4 ${!a.is_read ? 'border-emerald-200 bg-emerald-50/30' : ''}`}>
+          <button
+            key={a.id}
+            type="button"
+            onClick={() => navigate(`/app/alerts/${a.id}`)}
+            className={`ls-card flex w-full cursor-pointer items-start justify-between gap-4 text-left transition hover:border-orange-200 ${!a.is_read ? 'border-orange-200 bg-orange-50/30' : ''}`}
+          >
             <div>
               <p className="font-black text-slate-900">{a.title}</p>
               <p className="text-sm text-slate-500">{a.message}</p>
@@ -30,12 +53,19 @@ const AlertsPage: React.FC = () => {
                 {a.severity}
               </span>
               {!a.is_read && (
-                <button type="button" className="text-xs font-bold text-emerald-700" onClick={() => void markRead(a.id)}>
+                <button
+                  type="button"
+                  className="text-xs font-bold text-orange-700"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void markRead(a.id);
+                  }}
+                >
                   Marcar lido
                 </button>
               )}
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>

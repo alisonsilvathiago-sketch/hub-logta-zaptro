@@ -1,0 +1,40 @@
+/* Página Orçamentos — largura máxima e respiro interno (modelo perfil) */
+.zaptro-quotes-page {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.zaptro-quotes-page__inner {
+  padding-top: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+  padding-left: 0;
+  box-sizing: border-box;
+}
+
+.zaptro-quotes-page__head {
+  padding: 0 0 24px;
+  box-sizing: border-box;
+}
+
+.zaptro-quotes-page .zaptro-quotes-filter-input {
+  height: 50px;
+  min-height: 50px;
+  max-height: 50px;
+  padding-top: 0;
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+
+.zaptro-quotes-page .zaptro-quotes-filter-input--search {
+  padding-left: 40px;
+  padding-right: 14px;
+}
+
+.zaptro-quotes-page .zaptro-quotes-toolbar-card {
+  padding: 24px 28px;
+  margin-bottom: 20px;
+}

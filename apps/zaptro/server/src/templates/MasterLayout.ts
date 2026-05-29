@@ -33,8 +33,8 @@ const THEMES = {
     bg: '#0f172a',
     card: '#1e293b',
     text: '#f8fafc',
-    muted: '#94a3b8',
-    border: '#334155',
+    muted: '#949494',
+    border: '#6B6B6B',
     label: 'HUB MASTER CONTROL'
   },
   SAFIRA: {
@@ -42,8 +42,8 @@ const THEMES = {
     bg: '#0f172a',
     card: '#1e293b',
     text: '#f8fafc',
-    muted: '#94a3b8',
-    border: '#334155',
+    muted: '#949494',
+    border: '#6B6B6B',
     label: 'LOGTA OPERATING SYSTEM'
   },
   PLATINUM: {

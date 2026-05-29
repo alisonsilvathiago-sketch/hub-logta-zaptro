@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Plus,
   Phone,
@@ -48,13 +48,18 @@ import {
 } from '../constants/zaptroMapStyles';
 import ZaptroLayout from '../components/Zaptro/ZaptroLayout';
 import ZaptroKpiMetricCard from '../components/Zaptro/ZaptroKpiMetricCard';
+import ZaptroCalculatorToolbarButton from '../components/Zaptro/ZaptroCalculatorToolbarButton';
 import { CrmKanbanVirtualList } from '../components/Zaptro/CrmKanbanVirtualList';
+import { ZaptroCrmCreateLeadModal } from '../components/Zaptro/ZaptroCrmCreateLeadModal';
+import { ZaptroCrmQuoteWizardModal } from '../components/Zaptro/ZaptroCrmQuoteWizardModal';
 import { useAuth } from '../context/AuthContext';
 import { useTenant } from '../context/TenantContext';
 import { useZaptroTheme } from '../context/ZaptroThemeContext';
 import HubGuard from '../components/HubGuard';
 import { appendZaptroActivityLog } from '../constants/zaptroActivityLogStore';
-import { ZAPTRO_ROUTES, zaptroWhatsappInboxThreadPath } from '../constants/zaptroRoutes';
+import { ZAPTRO_ROUTES, zaptroLeadProfilePath } from '../constants/zaptroRoutes';
+import { ZAPTRO_APP_ROUTES, zaptroAppInboxThreadPath, zaptroAppOrLegacy } from '../app/zaptroAppRoutes';
+import { crmLeadWaThreadKey } from '../lib/zaptroCrmWhatsappInboxSync';
 import { routesStorageKey, writeActiveRoutes, type ActiveRouteRow } from '../constants/zaptroCrmActiveRoutes';
 import {
   type FreightQuote,
@@ -96,6 +101,7 @@ import {
 } from '../constants/zaptroCardSurface';
 import { ZaptroFollowUpModule } from '../components/Zaptro/ZaptroFollowUpModule';
 import { ZaptroAgendaModule } from '../components/Zaptro/ZaptroAgendaModule';
+import { promoteWaLinkToClient } from '../modules/wa-link/waLinkClientLifecycle';
 
 const LIME = '#D9FF00';
 
@@ -126,8 +132,8 @@ type CrmLead = {
 };
 
 const STAGES: { id: Stage; label: string; accent: string; probHint: string }[] = [
-  { id: 'novos', label: 'Novos Leads', accent: '#94A3B8', probHint: 'Prob. fecho típica ~12%' },
-  { id: 'atendimento', label: 'Em Atendimento', accent: '#64748B', probHint: '~32% ponderado' },
+  { id: 'novos', label: 'Novos Leads', accent: '#949494', probHint: 'Prob. fecho típica ~12%' },
+  { id: 'atendimento', label: 'Em Atendimento', accent: '#949494', probHint: '~32% ponderado' },
   { id: 'negociacao', label: 'Negociação', accent: '#475569', probHint: '~62% ponderado' },
   { id: 'fechado', label: 'Fechado', accent: LIME, probHint: 'Ganho 100%' },
   { id: 'perdido', label: 'Perdido', accent: 'rgba(248, 113, 113, 0.95)', probHint: 'Arquivado' },
@@ -224,6 +230,8 @@ type CrmTimelineEvent = {
   title: string;
   body?: string;
   actor?: string;
+  /** Liga evento a orçamento com link público (`FreightQuote.id`). */
+  quoteId?: string;
 };
 
 function seedEventsForLeads(leads: CrmLead[], actorName: string): Record<string, CrmTimelineEvent[]> {
@@ -320,66 +328,19 @@ function crmAttentionBadge(stage: Stage): { label: string; hint: string } {
   }
 }
 
-function demoLeads(selfId: string, adminName: string): CrmLead[] {
-  return [
-    {
-      id: 'lead-active-001',
-      clientName: 'Logística Integrada Brasil',
-      phone: '5511998776655',
-      origin: 'São Paulo/SP',
-      destination: 'Curitiba/PR',
-      cargoType: 'Carga Fechada — 28t',
-      estimatedValue: 12500,
-      assigneeId: selfId,
-      assigneeName: adminName,
-      createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-      tag: 'vip',
-      progress: 3,
-      stage: 'atendimento'
-    },
-    {
-      id: 'lead-active-002',
-      clientName: 'Alimentos Norte Sul',
-      phone: '5585991223344',
-      origin: 'Fortaleza/CE',
-      destination: 'Recife/PE',
-      cargoType: 'Frigorificado — Perecíveis',
-      estimatedValue: 8400,
-      assigneeId: null,
-      assigneeName: 'Aguardando Atendente',
-      createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-      tag: 'urgente',
-      progress: 1,
-      stage: 'novos'
-    },
-    {
-      id: 'lead-active-003',
-      clientName: 'Mineração Vale do Sol',
-      phone: '5531988112233',
-      origin: 'Belo Horizonte/MG',
-      destination: 'Santos/SP',
-      cargoType: 'Maquinário Pesado',
-      estimatedValue: 42000,
-      assigneeId: selfId,
-      assigneeName: adminName,
-      createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-      tag: 'retorno',
-      progress: 4,
-      stage: 'negociacao'
-    }
-  ];
-}
 
-const ZaptroCrmContent: React.FC = () => {
+
+export const ZaptroCrmContent: React.FC = () => {
   const { profile } = useAuth();
   const { company } = useTenant();
   const { palette } = useZaptroTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const isAdmin = isZaptroTenantAdminRole(profile?.role);
   const isDark = palette.mode === 'dark';
   const cardBg = isDark ? ZAPTRO_CARD_BG_DARK : '#FFFFFF';
-  const border = isDark ? '#334155' : '#E4E4E7';
+  const border = isDark ? '#6B6B6B' : '#E4E4E7';
 
   const [leads, setLeads] = useState<CrmLead[]>([]);
   const [teamOptions, setTeamOptions] = useState<{ id: string; full_name: string | null; avatar_url?: string | null }[]>([]);
@@ -409,18 +370,10 @@ const ZaptroCrmContent: React.FC = () => {
   const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
   const [meetingModalOpen, setMeetingModalOpen] = useState(false);
   const [followUpFilter, setFollowUpFilter] = useState<'todos' | 'hoje' | 'atrasados' | 'proximos'>('todos');
-  const [proposalOpen, setProposalOpen] = useState(false);
-  const [proposalForm, setProposalForm] = useState<{
-    kind: 'proposal' | 'negotiation';
-    leadId: string;
-    title: string;
-    value: string;
-    schedule: string;
-    notes: string;
-  }>({ kind: 'proposal', leadId: '', title: '', value: '', schedule: '', notes: '' });
-
   const [quotesByLead, setQuotesByLead] = useState<Record<string, FreightQuote[]>>({});
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
+  /** Lead activo no wizard de orçamento (detalhe aberto ou escolhido no cabeçalho). */
+  const [quoteWizardLeadId, setQuoteWizardLeadId] = useState<string | null>(null);
   const [quoteWizardStep, setQuoteWizardStep] = useState<1 | 2 | 3>(1);
   const [quoteForm, setQuoteForm] = useState({
     origin: '',
@@ -460,26 +413,21 @@ const ZaptroCrmContent: React.FC = () => {
     durationMinutes: 30
   });
 
-  /** Um único fluxo: o modal escolhe Proposta vs Oportunidade. URLs só pré-seleccionam o tipo. */
-  useEffect(() => {
-    const action = searchParams.get('action');
-    if (action !== 'new_proposal' && action !== 'new_negociation' && action !== 'new_negotiation') return;
-    const kind: 'proposal' | 'negotiation' = action === 'new_proposal' ? 'proposal' : 'negotiation';
-    setProposalForm({
-      kind,
-      leadId: detail?.id || leads[0]?.id || '',
-      title: '',
-      value: '',
-      schedule: '',
-      notes: '',
-    });
-    setProposalOpen(true);
-    setSearchParams({}, { replace: true });
-  }, [searchParams, detail?.id, leads, setSearchParams]);
-
   const companyId = profile?.company_id || '';
   /** Sem empresa no perfil ainda: mesmo assim mostramos o Kanban com dados locais de demonstração. */
   const crmStorageId = companyId || 'local-demo';
+
+  const quoteWizardLead = useMemo(() => {
+    const id = detail?.id || quoteWizardLeadId;
+    if (!id) return null;
+    return leads.find((l) => l.id === id) ?? null;
+  }, [detail?.id, quoteWizardLeadId, leads]);
+
+  const closeQuoteWizard = useCallback(() => {
+    setQuoteModalOpen(false);
+    setQuoteWizardLeadId(null);
+    setQuotesByLead(readQuotesMap(crmStorageId));
+  }, [crmStorageId]);
 
   /** Evita gravar no Supabase imediatamente a seguir a hidratação remota (debounce). */
   const workspaceUpsertSuppressUntilRef = useRef(0);
@@ -499,21 +447,11 @@ const ZaptroCrmContent: React.FC = () => {
           setLeads(parsed);
         }
       }
-      if (nextLeads.length === 0) {
-        const seed = demoLeads(profile?.id || 'me', profile?.full_name || 'Você');
-        nextLeads = seed;
-        setLeads(seed);
-        localStorage.setItem(storageKey(crmStorageId), JSON.stringify(seed));
-      }
     } catch {
-      const seed = demoLeads(profile?.id || 'me', profile?.full_name || 'Você');
-      nextLeads = seed;
-      setLeads(seed);
-      try {
-        localStorage.setItem(storageKey(crmStorageId), JSON.stringify(seed));
-      } catch {
-        /* ignore */
-      }
+      // Ignora erro de JSON
+    }
+    if (nextLeads.length === 0) {
+      setLeads([]);
     }
 
     try {
@@ -522,10 +460,6 @@ const ZaptroCrmContent: React.FC = () => {
         const parsed = JSON.parse(evRaw) as Record<string, CrmTimelineEvent[]>;
         if (parsed && typeof parsed === 'object') setLeadEvents(parsed);
         else setLeadEvents({});
-      } else if (nextLeads.length > 0) {
-        const seeded = seedEventsForLeads(nextLeads, profile?.full_name || 'Equipa');
-        setLeadEvents(seeded);
-        localStorage.setItem(eventsStorageKey(crmStorageId), JSON.stringify(seeded));
       } else {
         setLeadEvents({});
       }
@@ -757,6 +691,7 @@ const ZaptroCrmContent: React.FC = () => {
   }, [loadLeadTasks]);
 
   const openTaskScheduling = useCallback((leadId: string, clientName: string) => {
+    setDetail(null);
     setTaskContextLeadId(leadId);
     setTaskForm({
       title: `Retorno: ${clientName}`,
@@ -882,10 +817,16 @@ const ZaptroCrmContent: React.FC = () => {
     [detail, isAdmin, profile?.id]
   );
 
-  const quotesForDetail = useMemo(
-    () => (detail ? [...(quotesByLead[detail.id] || [])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : []),
-    [detail, quotesByLead]
-  );
+  const quotesForWizardLead = useMemo(() => {
+    const id = quoteWizardLead?.id;
+    if (!id) return [];
+    return [...(quotesByLead[id] || [])].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }, [quoteWizardLead?.id, quotesByLead]);
+
+  const wizardCanAct = useMemo(() => {
+    if (!quoteWizardLead) return false;
+    return canActOnLead(quoteWizardLead, isAdmin, profile?.id);
+  }, [quoteWizardLead, isAdmin, profile?.id]);
 
   const detailApprovedForCargo = useMemo(() => {
     if (!detail) return false;
@@ -918,9 +859,14 @@ const ZaptroCrmContent: React.FC = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, [callModalLead]);
 
-  /** Visibilidade total da equipa: todos veem os mesmos cards; permissões em `canActOnLead`. */
+  /** Admin vê tudo; colaborador vê só leads livres ou dele. */
   const visibleLeads = useMemo(() => {
     let list = leads;
+
+    if (!isAdmin) {
+      const uid = profile?.id || '';
+      list = list.filter((l) => !l.assigneeId || l.assigneeId === uid);
+    }
 
     // Filter by stage
     if (filter === 'perdidos') {
@@ -950,7 +896,7 @@ const ZaptroCrmContent: React.FC = () => {
     }
 
     return list;
-  }, [leads, filter, searchTerm]);
+  }, [leads, filter, isAdmin, profile?.id, searchTerm]);
 
   const fetchFollowUps = useCallback(async () => {
     if (!company?.id) return;
@@ -1143,15 +1089,18 @@ const ZaptroCrmContent: React.FC = () => {
 
   const handleCrmToHubSync = async (lead: CrmLead) => {
     try {
-      // 1. Update whatsapp_conversations if possible
-      if (lead.id.length > 30) { // Check if it's a UUID (probably from WA sync)
-        await supabaseZaptro
-          .from('whatsapp_conversations')
-          .update({ crm_type: 'client' })
-          .eq('id', lead.id);
+      if (companyId) {
+        const waId = lead.id.startsWith('wa-') ? lead.id.slice(3) : lead.id.length > 30 ? lead.id : undefined;
+        await promoteWaLinkToClient({
+          companyId,
+          conversationId: waId,
+          phone: lead.phone,
+          name: lead.clientName,
+          source: 'crm_fechado',
+        });
       }
 
-      // 2. Sync to Hub Master
+      // Sync to Hub Master
       const clientName = lead.clientName || 'Novo Cliente';
       const clientSlug = clientName
         .toLowerCase()
@@ -1339,86 +1288,80 @@ const ZaptroCrmContent: React.FC = () => {
     });
   };
 
-  const openProposalModal = (presetKind: 'proposal' | 'negotiation' = 'proposal') => {
-    setProposalForm({
-      kind: presetKind,
-      leadId: detail?.id || leads[0]?.id || '',
-      title: '',
-      value: '',
-      schedule: '',
-      notes: '',
-    });
-    setProposalOpen(true);
-  };
+  const openQuoteWizard = useCallback(
+    (leadId?: string) => {
+      const id = leadId || detail?.id || leads[0]?.id;
+      if (!id) {
+        notifyZaptro('info', 'Orçamento', 'Adiciona um lead no funil antes de gerar a proposta.');
+        return;
+      }
+      const lead = leads.find((l) => l.id === id);
+      if (!lead) return;
+      setQuoteWizardLeadId(id);
+      setQuoteForm({
+        origin: lead.origin,
+        destination: lead.destination,
+        cargoType: lead.cargoType,
+        weightQty: '',
+        freightValue: lead.estimatedValue ? String(lead.estimatedValue) : '',
+        deliveryDeadline: '',
+        notes: '',
+      });
+      setQuoteWizardStep(1);
+      setLastCreatedQuote(null);
+      setQuotesByLead(readQuotesMap(crmStorageId));
+      setQuoteModalOpen(true);
+    },
+    [crmStorageId, detail?.id, leads],
+  );
 
-  const submitProposal = () => {
-    if (!proposalForm.leadId || !proposalForm.title.trim()) {
-      notifyZaptro(
-        'info',
-        proposalForm.kind === 'proposal' ? 'Proposta' : 'Oportunidade',
-        proposalForm.kind === 'proposal'
-          ? 'Escolhe um lead e preenche o título da proposta.'
-          : 'Escolhe um lead e o título da oportunidade.',
-      );
-      return;
-    }
-    const val = Number(String(proposalForm.value).replace(/\D/g, '')) || 0;
-    const isProposal = proposalForm.kind === 'proposal';
-    const parts = isProposal
-      ? ([
-          val ? `Valor: ${formatBrl(val)}` : null,
-          proposalForm.schedule.trim() ? `Validade: ${proposalForm.schedule.trim()}` : null,
-          proposalForm.notes.trim() ? proposalForm.notes.trim() : null,
-        ].filter(Boolean) as string[])
-      : ([
-          val ? `Valor alvo: ${formatBrl(val)}` : null,
-          proposalForm.schedule.trim() ? `Prazo: ${proposalForm.schedule.trim()}` : null,
-          proposalForm.notes.trim() ? proposalForm.notes.trim() : null,
-        ].filter(Boolean) as string[]);
-    appendLeadEvent(proposalForm.leadId, {
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action !== 'new_proposal' && action !== 'new_negociation' && action !== 'new_negotiation') return;
+    const urlLeadId = searchParams.get('leadId')?.trim() || undefined;
+    openQuoteWizard(urlLeadId);
+    setSearchParams({}, { replace: true });
+  }, [searchParams, openQuoteWizard, setSearchParams]);
+
+  const openInboxForLead = useCallback(
+    (lead: CrmLead) => {
+      const threadKey = crmLeadWaThreadKey(lead);
+      if (!threadKey) {
+        notifyZaptro('warning', 'WhatsApp', 'Número inválido para abrir o inbox.');
+        return;
+      }
+      navigate(zaptroAppInboxThreadPath(location.pathname, threadKey, { clientName: lead.clientName }));
+    },
+    [location.pathname, navigate],
+  );
+
+  const openFreightQuoteFromLead = useCallback(() => {
+    if (!detail) return;
+    const leadId = detail.id;
+    const clientLabel = detail.clientName;
+    const quotesPath = zaptroAppOrLegacy(
+      location.pathname,
+      ZAPTRO_APP_ROUTES.QUOTES,
+      ZAPTRO_ROUTES.COMMERCIAL_QUOTES,
+    );
+    setDetail(null);
+    setSearchParams({}, { replace: true });
+    navigate(`${quotesPath}?${new URLSearchParams({ leadId }).toString()}`);
+    appendLeadEvent(leadId, {
       at: new Date().toISOString(),
-      kind: isProposal ? 'proposal' : 'negotiation',
-      title: isProposal
-        ? `Proposta comercial: ${proposalForm.title.trim()}`
-        : `Oportunidade: ${proposalForm.title.trim()}`,
-      body: parts.join('\n') || undefined,
+      kind: 'quote',
+      title: 'Abriu página de orçamentos',
+      body: 'A partir do detalhe do lead — lista filtrada por este contacto.',
       actor: profile?.full_name || '—',
     });
-    setProposalOpen(false);
-    setProposalForm({ kind: 'proposal', leadId: '', title: '', value: '', schedule: '', notes: '' });
-    notifyZaptro(
-      'success',
-      isProposal ? 'Proposta' : 'Oportunidade',
-      isProposal
-        ? 'Registada no histórico do lead. PDF e envio por e-mail serão ligados ao backend.'
-        : 'Registada no histórico do lead.',
-    );
-    const lead = leads.find((l) => l.id === proposalForm.leadId);
     appendZaptroActivityLog(crmStorageId, {
       type: 'atendimento',
       actorName: profile?.full_name || '—',
-      clientLabel: lead?.clientName || 'Lead',
-      action: isProposal ? `Proposta: ${proposalForm.title.trim()}` : `Oportunidade: ${proposalForm.title.trim()}`,
-      details: parts.join(' · ') || undefined,
+      clientLabel,
+      action: 'Abriu página de orçamentos a partir do CRM',
+      details: `Lead ${leadId}`,
     });
-  };
-
-  const openQuoteWizard = () => {
-    if (!detail) return;
-    setQuoteForm({
-      origin: detail.origin,
-      destination: detail.destination,
-      cargoType: detail.cargoType,
-      weightQty: '',
-      freightValue: detail.estimatedValue ? String(detail.estimatedValue) : '',
-      deliveryDeadline: '',
-      notes: '',
-    });
-    setQuoteWizardStep(1);
-    setLastCreatedQuote(null);
-    setQuotesByLead(readQuotesMap(crmStorageId));
-    setQuoteModalOpen(true);
-  };
+  }, [crmStorageId, detail, location.pathname, navigate, profile?.full_name, setSearchParams]);
 
   const confirmQuoteStep2 = () => {
     if (!quoteForm.origin.trim() || !quoteForm.destination.trim()) {
@@ -1429,7 +1372,7 @@ const ZaptroCrmContent: React.FC = () => {
   };
 
   const commitQuotePendente = () => {
-    if (!detail) return;
+    if (!quoteWizardLead) return;
     const val = Number(String(quoteForm.freightValue).replace(/\D/g, '')) || 0;
     const now = new Date().toISOString();
     const id = `qt-${Date.now()}`;
@@ -1443,9 +1386,9 @@ const ZaptroCrmContent: React.FC = () => {
         : undefined;
     const q: FreightQuote = {
       id,
-      leadId: detail.id,
+      leadId: quoteWizardLead.id,
       token,
-      clientNameSnapshot: detail.clientName,
+      clientNameSnapshot: quoteWizardLead.clientName,
       origin: quoteForm.origin.trim(),
       destination: quoteForm.destination.trim(),
       cargoType: cargo,
@@ -1466,9 +1409,9 @@ const ZaptroCrmContent: React.FC = () => {
       issuerPrimaryColor: primaryHex,
     };
     const map = { ...readQuotesMap(crmStorageId) };
-    map[detail.id] = [...(map[detail.id] || []), q];
+    map[quoteWizardLead.id] = [...(map[quoteWizardLead.id] || []), q];
     persistQuotesMap(map);
-    appendLeadEvent(detail.id, {
+    appendLeadEvent(quoteWizardLead.id, {
       at: now,
       kind: 'quote',
       title: `Orçamento de frete · ${formatBrl(val)}`,
@@ -1481,16 +1424,16 @@ const ZaptroCrmContent: React.FC = () => {
     appendZaptroActivityLog(crmStorageId, {
       type: 'atendimento',
       actorName: profile?.full_name || '—',
-      clientLabel: detail.clientName,
+      clientLabel: quoteWizardLead.clientName,
       action: `Orçamento de frete criado · ${formatBrl(val)}`,
       details: `${q.origin} → ${q.destination} · ${id}`,
     });
   };
 
   const simulateSendQuoteWhatsApp = () => {
-    if (!lastCreatedQuote || !detail) return;
+    if (!lastCreatedQuote || !quoteWizardLead) return;
     const map = { ...readQuotesMap(crmStorageId) };
-    const arr = [...(map[detail.id] || [])];
+    const arr = [...(map[quoteWizardLead.id] || [])];
     const idx = arr.findIndex((x) => x.id === lastCreatedQuote.id);
     if (idx === -1) return;
     const now = new Date().toISOString();
@@ -1502,10 +1445,10 @@ const ZaptroCrmContent: React.FC = () => {
       updatedAt: now,
       history: [...arr[idx].history, { at: now, action: 'Enviado ao cliente (simulação)', detail: 'WhatsApp + link público' }],
     };
-    map[detail.id] = arr;
+    map[quoteWizardLead.id] = arr;
     persistQuotesMap(map);
     void navigator.clipboard?.writeText(msg).catch(() => {});
-    appendLeadEvent(detail.id, {
+    appendLeadEvent(quoteWizardLead.id, {
       at: now,
       kind: 'quote',
       title: 'Orçamento enviado (simulação WhatsApp)',
@@ -1516,22 +1459,42 @@ const ZaptroCrmContent: React.FC = () => {
     appendZaptroActivityLog(crmStorageId, {
       type: 'atendimento',
       actorName: profile?.full_name || '—',
-      clientLabel: detail.clientName,
+      clientLabel: quoteWizardLead.clientName,
       action: 'Orçamento enviado (simulação WhatsApp)',
       details: `Ref. ${lastCreatedQuote.id}`,
     });
   };
 
-  const copyQuotePublicLink = (q: FreightQuote) => {
-    const url = `${window.location.origin}${quotePublicPath(q.token)}`;
+  const copyQuotePublicLink = useCallback((q: FreightQuote | string) => {
+    const token = typeof q === 'string' ? q : q.token;
+    const url = `${window.location.origin}${quotePublicPath(token)}`;
     void navigator.clipboard?.writeText(url).catch(() => {});
     notifyZaptro('success', 'Link', 'Link público do orçamento copiado.');
-  };
+  }, []);
+
+  const editQuoteFromWizard = useCallback(
+    (q: FreightQuote) => {
+      const quotesPath = zaptroAppOrLegacy(
+        location.pathname,
+        ZAPTRO_APP_ROUTES.QUOTES,
+        ZAPTRO_ROUTES.COMMERCIAL_QUOTES,
+      );
+      const qsp = new URLSearchParams({
+        leadId: q.leadId,
+        quoteId: q.id,
+        calc: '1',
+      });
+      navigate(`${quotesPath}?${qsp.toString()}`);
+      closeQuoteWizard();
+    },
+    [closeQuoteWizard, location.pathname, navigate],
+  );
 
   const markExistingQuoteSent = (q: FreightQuote) => {
-    if (!detail) return;
+    const leadId = q.leadId || quoteWizardLead?.id;
+    if (!leadId) return;
     const map = { ...readQuotesMap(crmStorageId) };
-    const arr = [...(map[detail.id] || [])];
+    const arr = [...(map[leadId] || [])];
     const idx = arr.findIndex((x) => x.id === q.id);
     if (idx === -1) return;
     if (arr[idx].status === 'aprovado' || arr[idx].status === 'recusado') return;
@@ -1542,20 +1505,21 @@ const ZaptroCrmContent: React.FC = () => {
       updatedAt: now,
       history: [...arr[idx].history, { at: now, action: 'Marcado como enviado', detail: 'Equipa comercial' }],
     };
-    map[detail.id] = arr;
+    map[leadId] = arr;
     persistQuotesMap(map);
     copyQuotePublicLink(q);
-    appendLeadEvent(detail.id, {
+    appendLeadEvent(leadId, {
       at: now,
       kind: 'quote',
       title: 'Orçamento marcado como enviado',
       body: `Ref. ${q.id}`,
       actor: profile?.full_name || '—',
     });
+    const leadName = leads.find((l) => l.id === leadId)?.clientName || 'Lead';
     appendZaptroActivityLog(crmStorageId, {
       type: 'atendimento',
       actorName: profile?.full_name || '—',
-      clientLabel: detail.clientName,
+      clientLabel: leadName,
       action: 'Orçamento marcado como enviado',
       details: `Ref. ${q.id}`,
     });
@@ -1862,8 +1826,8 @@ const ZaptroCrmContent: React.FC = () => {
             title={canAct ? 'Abrir conversa no Zaptro (WhatsApp interno)' : 'Apenas o responsável ou admin pode contactar'}
             onClick={() => {
               if (!canAct) return;
-              const d = waDigits(lead.phone);
-              if (!d) {
+              const threadKey = crmLeadWaThreadKey(lead);
+              if (!threadKey) {
                 notifyZaptro('warning', 'WhatsApp', 'Número inválido.');
                 return;
               }
@@ -1871,7 +1835,7 @@ const ZaptroCrmContent: React.FC = () => {
                 at: new Date().toISOString(),
                 kind: 'whatsapp',
                 title: 'Abriu o inbox Zaptro a partir do cartão',
-                body: `Telefone ${d} — conversa no sistema.`,
+                body: `Conversa ${threadKey} — chat no sistema.`,
                 actor: profile?.full_name || '—',
               });
               appendZaptroActivityLog(crmStorageId, {
@@ -1881,7 +1845,7 @@ const ZaptroCrmContent: React.FC = () => {
                 action: 'Abriu conversa Zaptro (WhatsApp) a partir do cartão',
                 details: `Lead ${lead.id}`,
               });
-              navigate(zaptroWhatsappInboxThreadPath(d));
+              openInboxForLead(lead);
             }}
           >
             <MessageSquare size={14} /> WA
@@ -1895,9 +1859,9 @@ const ZaptroCrmContent: React.FC = () => {
               cursor: canAct ? 'pointer' : 'not-allowed',
             }}
             title={canAct ? 'Agendar retorno (tarefa)' : 'Apenas o responsável ou admin'}
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               if (!canAct) return;
-              openDetail(lead);
               openTaskScheduling(lead.id, lead.clientName);
             }}
           >
@@ -1994,15 +1958,14 @@ const ZaptroCrmContent: React.FC = () => {
           width: '100%',
           maxWidth: 'none',
           margin: 0,
-          padding: '0 0 48px',
-          boxSizing: 'border-box',
+          padding: 0,
+          boxSizing: 'content-box',
           /** Transparente: herda o fundo da área principal (`palette.pageBg` no layout). */
           backgroundColor: 'transparent',
           minHeight: '100%',
         }}
       >
         <header style={{ marginBottom: 22 }}>
-          <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: palette.textMuted }}>PIPELINE COMERCIAL</p>
           <div
             style={{
               display: 'flex',
@@ -2011,20 +1974,23 @@ const ZaptroCrmContent: React.FC = () => {
               justifyContent: 'space-between',
               columnGap: 37,
               rowGap: 24,
-              height: 107,
+              height: 50,
+              fontSize: 13,
               paddingLeft: 0,
               paddingRight: 0,
-              marginTop: 41,
+              paddingTop: 0,
+              paddingBottom: 0,
+              marginTop: 0,
             }}
           >
             <div style={{ flex: '1 1 280px', minWidth: 0 }}>
-              <h1 style={{ margin: 0, fontSize: 34, fontWeight: 700, letterSpacing: '-1.2px', color: palette.text }}>
+              <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, letterSpacing: '-0.02em', color: '#000' }}>
                 CRM — Pipeline e contactos
               </h1>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'flex-end' }}>
               {[
-                { label: 'Gerar Proposta', icon: FileText, color: '#3b82f6', action: () => openProposalModal('proposal') },
+                { label: 'Gerar Proposta', icon: FileText, color: '#3b82f6', action: () => openQuoteWizard() },
               ].map((chip, i) => (
                 <button
                   key={i}
@@ -2077,6 +2043,43 @@ const ZaptroCrmContent: React.FC = () => {
                 }}
               >
                 <Plus size={14} strokeWidth={2.5} color="#000" /> Novo Negócio
+              </button>
+
+              <ZaptroCalculatorToolbarButton
+                title="Calculadora"
+                placement="left"
+                style={{
+                  border: `1px solid ${border}`,
+                  backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#fff',
+                  color: palette.mode === 'dark' ? '#fff' : '#000',
+                }}
+              />
+              <button
+                type="button"
+                className="zaptro-btn-toolbar"
+                onClick={() =>
+                  navigate(
+                    zaptroAppOrLegacy(
+                      location.pathname,
+                      ZAPTRO_APP_ROUTES.QUOTES,
+                      ZAPTRO_ROUTES.COMMERCIAL_QUOTES,
+                    ),
+                  )
+                }
+                title="Orçamentos"
+                aria-label="Ir para orçamentos"
+                style={{
+                  width: 40,
+                  minWidth: 40,
+                  maxWidth: 40,
+                  padding: 0,
+                  borderRadius: 12,
+                  border: `1px solid ${border}`,
+                  backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#fff',
+                  color: palette.mode === 'dark' ? '#fff' : '#000',
+                }}
+              >
+                <FileText size={18} strokeWidth={2.2} aria-hidden />
               </button>
             </div>
           </div>
@@ -2140,7 +2143,8 @@ const ZaptroCrmContent: React.FC = () => {
             boxSizing: 'border-box',
             overflowX: 'auto',
             WebkitOverflowScrolling: 'touch',
-            height: 74,
+            minHeight: 74,
+            width: '100%',
           }}
         >
           <button
@@ -2254,7 +2258,17 @@ const ZaptroCrmContent: React.FC = () => {
               }}
             />
           </div>
-          <div style={{ display: 'flex', flexShrink: 0, alignItems: 'center', gap: 8 }} role="group" aria-label="Modo de visualização do CRM">
+          <div
+            style={{
+              display: 'flex',
+              flexShrink: 0,
+              alignItems: 'center',
+              gap: 8,
+              marginLeft: 'auto',
+            }}
+            role="group"
+            aria-label="Modo de visualização do CRM"
+          >
             <button
               type="button"
               onClick={() => setCrmUiMode('kanban')}
@@ -2356,8 +2370,8 @@ const ZaptroCrmContent: React.FC = () => {
         {crmUiMode === 'kanban' ? (
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'row',
+            display: 'grid',
+            gridTemplateColumns: `repeat(${STAGES.length}, minmax(280px, 1fr))`,
             gap: 16,
             width: '100%',
             overflowX: 'auto',
@@ -2388,7 +2402,7 @@ const ZaptroCrmContent: React.FC = () => {
                 updateLeadStage(id, col.id);
               }}
               style={{
-                flex: '0 0 280px', // Largura estável para as colunas
+                minWidth: 280,
                 borderRadius: 26,
                 padding: '12px 12px 16px',
                 backgroundColor: palette.mode === 'dark' ? ZAPTRO_CARD_BG_DARK : CRM_KANBAN_COLUMN_BG_LIGHT,
@@ -2609,14 +2623,8 @@ const ZaptroCrmContent: React.FC = () => {
               grid-template-columns: minmax(0, 1fr);
             }
           }
-          @media (max-width: 640px) {
-            .zaptro-crm-kanban-grid {
-              flex-direction: column;
-            }
-            .zaptro-crm-kanban-grid > div {
-              flex: 1 0 auto;
-              width: 100%;
-            }
+          .zaptro-crm-kanban-grid {
+            scrollbar-gutter: stable both-edges;
           }
         `}</style>
       </div>
@@ -2647,209 +2655,16 @@ const ZaptroCrmContent: React.FC = () => {
         <Plus size={26} strokeWidth={2.5} />
       </button>
 
-      {createOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 5000,
-            backgroundColor: 'rgba(15,23,42,0.45)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-          }}
-          onClick={() => setCreateOpen(false)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '100%',
-              maxWidth: 960,
-              padding: 32,
-              borderRadius: 32,
-              backgroundColor: cardBg,
-              border: `1px solid ${border}`,
-              color: palette.text,
-              boxShadow: palette.mode === 'dark' ? 'none' : ZAPTRO_SHADOW.lg,
-              position: 'relative'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
-              <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em' }}>Novo contato</h2>
-              <button 
-                type="button" 
-                style={{ 
-                  border: 'none', 
-                  background: palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#f1f5f9', 
-                  width: 36,
-                  height: 36,
-                  borderRadius: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: palette.textMuted
-                }} 
-                onClick={() => setCreateOpen(false)} 
-                aria-label="Fechar"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
-              {[
-                ['clientName', 'Cliente / empresa'],
-                ['phone', 'Telefone / WhatsApp'],
-                ['origin', 'Origem'],
-                ['destination', 'Destino'],
-                ['cargoType', 'Tipo de carga'],
-              ].map(([key, lab]) => (
-                <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: palette.text, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {lab}
-                  </label>
-                  <input
-                    style={{
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      padding: '14px 16px',
-                      borderRadius: 16,
-                      border: `1px solid ${border}`,
-                      backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f4f4f4',
-                      color: palette.text,
-                      fontWeight: 700,
-                      fontSize: 14,
-                      outline: 'none',
-                      fontFamily: 'inherit'
-                    }}
-                    value={(createForm as any)[key]}
-                    onChange={(e) => setCreateForm((f) => ({ ...f, [key]: e.target.value }))}
-                  />
-                </div>
-              ))}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: palette.text, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Valor estimado (R$)
-                </label>
-                <input
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '14px 16px',
-                    borderRadius: 16,
-                    border: `1px solid ${border}`,
-                    backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f4f4f4',
-                    color: palette.text,
-                    fontWeight: 700,
-                    fontSize: 14,
-                    outline: 'none',
-                    fontFamily: 'inherit'
-                  }}
-                  value={createForm.estimatedValue}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, estimatedValue: e.target.value }))}
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: palette.text, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Tag
-                </label>
-                <select
-                  style={{
-                    width: '100%',
-                    padding: '14px 16px',
-                    borderRadius: 16,
-                    border: `1px solid ${border}`,
-                    backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f4f4f4',
-                    color: palette.text,
-                    fontWeight: 700,
-                    fontSize: 14,
-                    outline: 'none',
-                    appearance: 'none',
-                    fontFamily: 'inherit'
-                  }}
-                  value={createForm.tag}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, tag: e.target.value as any }))}
-                >
-                  <option value="">—</option>
-                  <option value="urgente">Urgente</option>
-                  <option value="vip">VIP</option>
-                  <option value="retorno">Retorno</option>
-                </select>
-              </div>
-              {isAdmin && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: palette.text, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Responsável
-                  </label>
-                  <select
-                    style={{
-                      width: '100%',
-                      padding: '14px 16px',
-                      borderRadius: 16,
-                      border: `1px solid ${border}`,
-                      backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f4f4f4',
-                      color: palette.text,
-                      fontWeight: 700,
-                      fontSize: 14,
-                      outline: 'none',
-                      appearance: 'none',
-                      fontFamily: 'inherit'
-                    }}
-                    value={createForm.assigneeId}
-                    onChange={(e) => setCreateForm((f) => ({ ...f, assigneeId: e.target.value }))}
-                  >
-                    <option value="">Eu ({profile?.full_name || 'admin'})</option>
-                    {teamOptions.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.full_name || t.id}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32 }}>
-              <button 
-                type="button" 
-                onClick={() => setCreateOpen(false)} 
-                style={{ 
-                  padding: '14px 24px', 
-                  borderRadius: 16, 
-                  border: `1px solid ${border}`, 
-                  background: 'transparent', 
-                  fontWeight: 700, 
-                  fontSize: 14,
-                  cursor: 'pointer', 
-                  color: palette.textMuted,
-                  fontFamily: 'inherit'
-                }}
-              >
-                Cancelar
-              </button>
-              <button 
-                type="button" 
-                onClick={submitCreate} 
-                style={{ 
-                  padding: '14px 24px', 
-                  borderRadius: 16, 
-                  border: 'none', 
-                  background: '#000', 
-                  color: LIME, 
-                  fontWeight: 800, 
-                  fontSize: 14,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.15)'
-                }}
-              >
-                Criar lead
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ZaptroCrmCreateLeadModal
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        form={createForm}
+        onChange={(patch) => setCreateForm((f) => ({ ...f, ...patch }))}
+        onSubmit={submitCreate}
+        isAdmin={isAdmin}
+        teamOptions={teamOptions}
+        profileLabel={profile?.full_name || 'admin'}
+      />
 
       {detail && (
         <div
@@ -2882,7 +2697,17 @@ const ZaptroCrmContent: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>{detail.clientName}</h2>
                 <button
-                  onClick={() => navigate(zaptroClientProfilePath(detail.id))}
+                  type="button"
+                  title="Perfil completo do lead no CRM (não é cliente até pagamento confirmado)"
+                  onClick={() => {
+                    const path = zaptroAppOrLegacy(
+                      location.pathname,
+                      ZAPTRO_APP_ROUTES.leadProfile(detail.id),
+                      zaptroLeadProfilePath(detail.id),
+                    );
+                    setDetail(null);
+                    navigate(path);
+                  }}
                   style={{
                     padding: '6px 12px',
                     borderRadius: 10,
@@ -2892,7 +2717,7 @@ const ZaptroCrmContent: React.FC = () => {
                     fontSize: 11,
                     fontWeight: 700,
                     cursor: 'pointer',
-                    fontFamily: 'inherit'
+                    fontFamily: 'inherit',
                   }}
                 >
                   Ver perfil completo
@@ -3278,150 +3103,6 @@ const ZaptroCrmContent: React.FC = () => {
                 Tarefas no servidor: associa o perfil a uma empresa (company_id) para gravar follow-ups no Supabase.
               </p>
             )}
-            <div
-              style={{
-                marginBottom: 16,
-                padding: 14,
-                borderRadius: 16,
-                border: `1px solid ${border}`,
-                backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#FAFAFA',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 10,
-                  marginBottom: 10,
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: palette.text, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <FileSpreadsheet size={16} /> Orçamentos (neste lead)
-                  </p>
-                  <p style={{ margin: '6px 0 0', fontSize: 11, fontWeight: 600, color: palette.textMuted, lineHeight: 1.45 }}>
-                    Fluxo principal: criar e enviar daqui. O item «Orçamentos» no menu lateral é só visão geral da empresa.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(
-                      `${ZAPTRO_ROUTES.COMMERCIAL_QUOTES}?leadId=${encodeURIComponent(detail.id)}`
-                    )
-                  }
-                  style={{
-                    padding: '8px 14px',
-                    borderRadius: 12,
-                    border: `1px solid ${border}`,
-                    backgroundColor: palette.mode === 'dark' ? '#111' : '#fff',
-                    fontWeight: 700,
-                    fontSize: 12,
-                    cursor: 'pointer',
-                    color: palette.text,
-                    fontFamily: 'inherit',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <ExternalLink size={14} />
-                  Ver todos os orçamentos
-                </button>
-              </div>
-              {quotesForDetail.length === 0 ? (
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: palette.textMuted }}>
-                  Ainda sem orçamentos. Usa o botão «Orçamento» em baixo ou «Novo passo a passo» para criar o primeiro.
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {quotesForDetail.map((q) => (
-                    <div
-                      key={q.id}
-                      style={{
-                        padding: 12,
-                        ...rowCard(),
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 10,
-                      }}
-                    >
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: palette.text }}>
-                          {formatBrl(q.freightValue)} · {q.origin} → {q.destination}
-                        </div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: palette.textMuted, marginTop: 4 }}>
-                          {QUOTE_STATUS_LABEL[q.status]} · {new Date(q.updatedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        <button
-                          type="button"
-                          onClick={() => copyQuotePublicLink(q)}
-                          style={{
-                            padding: '8px 12px',
-                            borderRadius: 10,
-                            border: `1px solid ${border}`,
-                            background: 'transparent',
-                            fontWeight: 700,
-                            fontSize: 11,
-                            cursor: 'pointer',
-                            color: palette.text,
-                          }}
-                        >
-                          <Link2 size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
-                          Link
-                        </button>
-                        {detailCanAct && q.status === 'pendente' && (
-                          <button
-                            type="button"
-                            title="Marca como Enviado, copia o link público para colares no WhatsApp (envio automático pela API em roadmap)."
-                            onClick={() => markExistingQuoteSent(q)}
-                            style={{
-                              padding: '8px 12px',
-                              borderRadius: 10,
-                              border: 'none',
-                              background: '#000',
-                              color: LIME,
-                              fontWeight: 700,
-                              fontSize: 11,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <Send size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
-                            Marcar enviado
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {detailCanAct && (
-                <button
-                  type="button"
-                  onClick={openQuoteWizard}
-                  style={{
-                    marginTop: 12,
-                    padding: '10px 14px',
-                    borderRadius: 12,
-                    border: `1px solid ${border}`,
-                    background: palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
-                    fontWeight: 700,
-                    fontSize: 12,
-                    cursor: 'pointer',
-                    color: palette.text,
-                    boxShadow: palette.mode === 'light' ? '0 1px 2px rgba(15,23,42,0.05)' : 'none',
-                  }}
-                >
-                  + Novo orçamento (passo a passo)
-                </button>
-              )}
-            </div>
 
               </div>
               <div className="zaptro-detail-right-col">
@@ -3452,9 +3133,9 @@ const ZaptroCrmContent: React.FC = () => {
                               : ev.kind === 'proposal'
                                 ? '#3b82f6'
                                 : ev.kind === 'stage'
-                                  ? '#64748b'
+                                  ? '#949494'
                                   : ev.kind === 'assign'
-                                    ? '#94a3b8'
+                                    ? '#949494'
                                     : border
                           }`,
                           paddingLeft: 12,
@@ -3500,8 +3181,8 @@ const ZaptroCrmContent: React.FC = () => {
                 }
                 onClick={() => {
                   if (!detailCanAct || !detail) return;
-                  const d = waDigits(detail.phone);
-                  if (!d) {
+                  const threadKey = crmLeadWaThreadKey(detail);
+                  if (!threadKey) {
                     notifyZaptro('warning', 'WhatsApp', 'Número inválido para abrir o inbox.');
                     return;
                   }
@@ -3519,7 +3200,7 @@ const ZaptroCrmContent: React.FC = () => {
                     action: 'Abriu conversas (WhatsApp) a partir do lead',
                     details: `Lead ${detail.id}`,
                   });
-                  navigate(zaptroWhatsappInboxThreadPath(d));
+                  openInboxForLead(detail);
                 }}
                 style={{
                   flex: '1 1 140px',
@@ -3576,9 +3257,10 @@ const ZaptroCrmContent: React.FC = () => {
               <button
                 type="button"
                 disabled={!detailCanAct}
+                title={detailCanAct ? 'Abrir a página Orçamentos (/app/orcamentos) — sem popup' : 'Apenas o responsável ou admin'}
                 onClick={() => {
                   if (!detailCanAct) return;
-                  openQuoteWizard();
+                  openFreightQuoteFromLead();
                 }}
                 style={{
                   flex: '1 1 140px',
@@ -3629,7 +3311,7 @@ const ZaptroCrmContent: React.FC = () => {
               borderRadius: 24,
               padding: 24,
               backgroundColor: palette.mode === 'dark' ? '#111' : '#fff',
-              border: `1px solid ${palette.mode === 'dark' ? '#334155' : '#e4e4e7'}`,
+              border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : '#e4e4e7'}`,
               color: palette.text,
             }}
           >
@@ -3661,7 +3343,7 @@ const ZaptroCrmContent: React.FC = () => {
                   boxSizing: 'border-box',
                   padding: '12px 14px',
                   borderRadius: 14,
-                  border: `1px solid ${palette.mode === 'dark' ? '#334155' : '#e4e4e7'}`,
+                  border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : '#e4e4e7'}`,
                   backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#f4f4f4',
                   color: palette.text,
                   fontWeight: 700,
@@ -3681,7 +3363,7 @@ const ZaptroCrmContent: React.FC = () => {
                   boxSizing: 'border-box',
                   padding: '12px 14px',
                   borderRadius: 14,
-                  border: `1px solid ${palette.mode === 'dark' ? '#334155' : '#e4e4e7'}`,
+                  border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : '#e4e4e7'}`,
                   backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#f4f4f4',
                   color: palette.text,
                   fontWeight: 700,
@@ -3701,7 +3383,7 @@ const ZaptroCrmContent: React.FC = () => {
                   boxSizing: 'border-box',
                   padding: '12px 14px',
                   borderRadius: 14,
-                  border: `1px solid ${palette.mode === 'dark' ? '#334155' : '#e4e4e7'}`,
+                  border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : '#e4e4e7'}`,
                   backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#f4f4f4',
                   color: palette.text,
                   fontWeight: 700,
@@ -3718,7 +3400,7 @@ const ZaptroCrmContent: React.FC = () => {
                 style={{
                   padding: '12px 18px',
                   borderRadius: 14,
-                  border: `1px solid ${palette.mode === 'dark' ? '#334155' : '#e4e4e7'}`,
+                  border: `1px solid ${palette.mode === 'dark' ? '#6B6B6B' : '#e4e4e7'}`,
                   background: 'transparent',
                   fontWeight: 700,
                   cursor: taskSaving ? 'not-allowed' : 'pointer',
@@ -3750,457 +3432,45 @@ const ZaptroCrmContent: React.FC = () => {
         </div>
       )}
 
-      {quoteModalOpen && detail && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 5100,
-            backgroundColor: 'rgba(15,23,42,0.5)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
+      {quoteModalOpen && quoteWizardLead && (
+        <ZaptroCrmQuoteWizardModal
+          isOpen={quoteModalOpen}
+          onClose={closeQuoteWizard}
+          lead={quoteWizardLead}
+          leads={leads}
+          showLeadSelector={!detail}
+          leadId={quoteWizardLeadId || quoteWizardLead.id}
+          onLeadChange={(id) => {
+            const nextLead = leads.find((l) => l.id === id);
+            if (!nextLead) return;
+            setQuoteWizardLeadId(id);
+            setQuoteForm({
+              origin: nextLead.origin,
+              destination: nextLead.destination,
+              cargoType: nextLead.cargoType,
+              weightQty: '',
+              freightValue: nextLead.estimatedValue ? String(nextLead.estimatedValue) : '',
+              deliveryDeadline: '',
+              notes: '',
+            });
           }}
-          onClick={() => {
-            setQuoteModalOpen(false);
-            setQuotesByLead(readQuotesMap(crmStorageId));
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '100%',
-              maxWidth: 960,
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              padding: 26,
-              ...panelCard(),
-              color: palette.text,
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Orçamento de frete</h2>
-                <p style={{ margin: '6px 0 0', fontSize: 12, fontWeight: 600, color: palette.textMuted }}>
-                  Cliente: <strong style={{ color: palette.text }}>{detail.clientName}</strong> · Passo {quoteWizardStep} de 3
-                </p>
-              </div>
-              <button
-                type="button"
-                style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
-                onClick={() => {
-                  setQuoteModalOpen(false);
-                  setQuotesByLead(readQuotesMap(crmStorageId));
-                }}
-                aria-label="Fechar"
-              >
-                <X size={22} color={palette.textMuted} />
-              </button>
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
-              {[1, 2, 3].map((s) => (
-                <div
-                  key={s}
-                  style={{
-                    flex: 1,
-                    height: 4,
-                    borderRadius: 999,
-                    backgroundColor: quoteWizardStep >= s ? LIME : palette.mode === 'dark' ? '#334155' : '#E4E4E7',
-                  }}
-                />
-              ))}
-            </div>
-
-            {quoteWizardStep === 1 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[
-                  ['origin', 'Origem'],
-                  ['destination', 'Destino'],
-                  ['cargoType', 'Tipo de carga'],
-                  ['weightQty', 'Peso / quantidade'],
-                  ['freightValue', 'Valor do frete (R$)'],
-                  ['deliveryDeadline', 'Prazo de entrega'],
-                ].map(([key, lab]) => (
-                  <label key={key} style={{ fontSize: 11, fontWeight: 700, color: palette.textMuted }}>
-                    {lab}
-                    <input
-                      style={{
-                        marginTop: 6,
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        padding: '12px 14px',
-                        borderRadius: 14,
-                        border: `1px solid ${border}`,
-                        backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#f4f4f4',
-                        color: palette.text,
-                        fontWeight: 700,
-                      }}
-                      value={(quoteForm as any)[key]}
-                      onChange={(e) => setQuoteForm((f) => ({ ...f, [key]: e.target.value }))}
-                    />
-                  </label>
-                ))}
-                <label style={{ fontSize: 11, fontWeight: 700, color: palette.textMuted }}>
-                  Observações
-                  <textarea
-                    style={{
-                      marginTop: 6,
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      minHeight: 72,
-                      padding: '12px 14px',
-                      borderRadius: 14,
-                      border: `1px solid ${border}`,
-                      backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#f4f4f4',
-                      color: palette.text,
-                      fontWeight: 700,
-                      resize: 'vertical',
-                    }}
-                    value={quoteForm.notes}
-                    onChange={(e) => setQuoteForm((f) => ({ ...f, notes: e.target.value }))}
-                  />
-                </label>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
-                  <button
-                    type="button"
-                    onClick={() => setQuoteModalOpen(false)}
-                    style={{ padding: '12px 18px', borderRadius: 14, border: `1px solid ${border}`, background: 'transparent', fontWeight: 700, cursor: 'pointer', color: palette.textMuted }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={confirmQuoteStep2}
-                    style={{ padding: '12px 18px', borderRadius: 14, border: 'none', background: '#000', color: LIME, fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    Continuar →
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {quoteWizardStep === 2 && (
-              <div style={{ fontSize: 14, fontWeight: 600, color: palette.textMuted, lineHeight: 1.55 }}>
-                <p style={{ margin: '0 0 12px', color: palette.text, fontWeight: 700 }}>Confirma os dados antes de gerar o orçamento</p>
-                <ul style={{ margin: 0, paddingLeft: 18 }}>
-                  <li>
-                    <strong style={{ color: palette.text }}>Rota:</strong> {quoteForm.origin} → {quoteForm.destination}
-                  </li>
-                  <li>
-                    <strong style={{ color: palette.text }}>Carga:</strong> {quoteForm.cargoType || '—'} · {quoteForm.weightQty || '—'}
-                  </li>
-                  <li>
-                    <strong style={{ color: palette.text }}>Frete:</strong> {formatBrl(Number(String(quoteForm.freightValue).replace(/\D/g, '')) || 0)}
-                  </li>
-                  <li>
-                    <strong style={{ color: palette.text }}>Prazo:</strong> {quoteForm.deliveryDeadline || '—'}
-                  </li>
-                </ul>
-                {quoteForm.notes.trim() ? (
-                  <p style={{ margin: '12px 0 0' }}>
-                    <strong style={{ color: palette.text }}>Notas:</strong> {quoteForm.notes}
-                  </p>
-                ) : null}
-                <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginTop: 22 }}>
-                  <button
-                    type="button"
-                    onClick={() => setQuoteWizardStep(1)}
-                    style={{ padding: '12px 18px', borderRadius: 14, border: `1px solid ${border}`, background: 'transparent', fontWeight: 700, cursor: 'pointer', color: palette.text }}
-                  >
-                    ← Voltar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={commitQuotePendente}
-                    style={{ padding: '12px 18px', borderRadius: 14, border: 'none', background: '#000', color: LIME, fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    Gerar orçamento
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {quoteWizardStep === 3 && lastCreatedQuote && (
-              <div>
-                <p style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 600, color: palette.text }}>
-                  Estado: <strong>{QUOTE_STATUS_LABEL[lastCreatedQuote.status]}</strong> — partilha o link com o cliente.
-                </p>
-                <p style={{ margin: '0 0 14px', fontSize: 12, fontWeight: 600, color: palette.textMuted, lineHeight: 1.5 }}>
-                  Envio automático real pelo WhatsApp (sem copiar/colar) fica para quando o gateway e o número estiverem ligados ao
-                  backend partilhado. Até lá: copiar link ou «Simular envio» (mensagem modelo na área de transferência).
-                </p>
-                <div
-                  style={{
-                    padding: 12,
-                    borderRadius: 14,
-                    backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#ebebeb',
-                    fontSize: 12,
-                    wordBreak: 'break-all',
-                    marginBottom: 14,
-                    fontWeight: 700,
-                    color: palette.textMuted,
-                  }}
-                >
-                  {`${window.location.origin}${quotePublicPath(lastCreatedQuote.token)}`}
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                  <button
-                    type="button"
-                    onClick={() => copyQuotePublicLink(lastCreatedQuote)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '12px 16px',
-                      borderRadius: 14,
-                      border: `1px solid ${border}`,
-                      background: palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#fff',
-                      fontWeight: 700,
-                      fontSize: 13,
-                      cursor: 'pointer',
-                      color: palette.text,
-                    }}
-                  >
-                    <Link2 size={16} /> Copiar link público
-                  </button>
-                  <button
-                    type="button"
-                    onClick={simulateSendQuoteWhatsApp}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '12px 16px',
-                      borderRadius: 14,
-                      border: 'none',
-                      background: '#000',
-                      color: LIME,
-                      fontWeight: 700,
-                      fontSize: 13,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <Send size={16} /> Simular envio WhatsApp
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQuoteModalOpen(false);
-                      setQuotesByLead(readQuotesMap(crmStorageId));
-                    }}
-                    style={{
-                      padding: '12px 16px',
-                      borderRadius: 14,
-                      border: `1px solid ${border}`,
-                      background: 'transparent',
-                      fontWeight: 700,
-                      fontSize: 13,
-                      cursor: 'pointer',
-                      color: palette.textMuted,
-                    }}
-                  >
-                    Concluir
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {proposalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 5000,
-            backgroundColor: 'rgba(15,23,42,0.45)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-          }}
-          onClick={() => setProposalOpen(false)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '100%',
-              maxWidth: 960,
-              padding: 28,
-              ...panelCard(),
-              color: palette.text,
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Proposta ou oportunidade</h2>
-              <button type="button" style={{ border: 'none', background: 'transparent', cursor: 'pointer' }} onClick={() => setProposalOpen(false)} aria-label="Fechar">
-                <X size={22} color={palette.textMuted} />
-              </button>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-              <div className="zaptro-proposal-left">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: palette.textMuted }}>
-                    Lead
-                    <select
-                      style={{
-                        marginTop: 6,
-                        width: '100%',
-                        padding: '12px 14px',
-                        borderRadius: 14,
-                        border: `1px solid ${border}`,
-                        backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#f4f4f4',
-                        color: palette.text,
-                        fontWeight: 700,
-                      }}
-                      value={proposalForm.leadId}
-                      onChange={(e) => setProposalForm((f) => ({ ...f, leadId: e.target.value }))}
-                    >
-                      <option value="">— Escolher —</option>
-                      {leads.map((l) => (
-                        <option key={l.id} value={l.id}>
-                          {l.clientName}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: palette.textMuted }}>
-                    Título / Tema
-                    <input
-                      style={{
-                        marginTop: 6,
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        padding: '12px 14px',
-                        borderRadius: 14,
-                        border: `1px solid ${border}`,
-                        backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#f4f4f4',
-                        color: palette.text,
-                        fontWeight: 700,
-                        outline: 'none'
-                      }}
-                      value={proposalForm.title}
-                      onChange={(e) => setProposalForm((f) => ({ ...f, title: e.target.value }))}
-                    />
-                  </label>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: palette.textMuted }}>
-                    {proposalForm.kind === 'proposal' ? 'Valor (R$)' : 'Valor alvo (R$)'}
-                    <input
-                      style={{
-                        marginTop: 6,
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        padding: '12px 14px',
-                        borderRadius: 14,
-                        border: `1px solid ${border}`,
-                        backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#f4f4f4',
-                        color: palette.text,
-                        fontWeight: 700,
-                        outline: 'none'
-                      }}
-                      value={proposalForm.value}
-                      onChange={(e) => setProposalForm((f) => ({ ...f, value: e.target.value }))}
-                    />
-                  </label>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: palette.textMuted }}>
-                    {proposalForm.kind === 'proposal' ? 'Validade' : 'Prazo'}
-                    <input
-                      style={{
-                        marginTop: 6,
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        padding: '12px 14px',
-                        borderRadius: 14,
-                        border: `1px solid ${border}`,
-                        backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#f4f4f4',
-                        color: palette.text,
-                        fontWeight: 700,
-                        outline: 'none'
-                      }}
-                      value={proposalForm.schedule}
-                      onChange={(e) => setProposalForm((f) => ({ ...f, schedule: e.target.value }))}
-                    />
-                  </label>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: palette.textMuted }}>
-                    Notas internas
-                    <textarea
-                      style={{
-                        marginTop: 6,
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        minHeight: 120,
-                        padding: '12px 14px',
-                        borderRadius: 14,
-                        border: `1px solid ${border}`,
-                        backgroundColor: palette.mode === 'dark' ? '#0f172a' : '#f4f4f4',
-                        color: palette.text,
-                        fontWeight: 600,
-                        fontSize: 13,
-                        resize: 'none',
-                        fontFamily: 'inherit',
-                        outline: 'none'
-                      }}
-                      value={proposalForm.notes}
-                      onChange={(e) => setProposalForm((f) => ({ ...f, notes: e.target.value }))}
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="zaptro-proposal-right" style={{ borderLeft: `1px solid ${border}`, paddingLeft: 24, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Histórico do Dia</h3>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    {['D', 'S', 'M'].map((t) => (
-                      <button key={t} style={{ padding: '4px 8px', borderRadius: 6, border: 'none', background: t === 'D' ? LIME : 'transparent', color: '#000', fontSize: 10, fontWeight: 800, cursor: 'pointer' }}>{t}</button>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 400 }}>
-                  {Object.values(leadEvents).flat()
-                    .filter(ev => ev.kind === 'proposal' || ev.kind === 'negotiation')
-                    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
-                    .slice(0, 8)
-                    .map((ev, idx) => (
-                      <div key={idx} style={{ padding: 14, borderRadius: 16, backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc', border: `1px solid ${border}` }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                          <span style={{ fontSize: 10, fontWeight: 800, color: LIME, backgroundColor: '#000', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>
-                            {ev.kind === 'proposal' ? 'PROPOSTA' : 'OPORTUNIDADE'}
-                          </span>
-                          <span style={{ fontSize: 10, color: palette.textMuted, fontWeight: 700 }}>{new Date(ev.at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        <p style={{ margin: '4px 0', fontSize: 13, fontWeight: 700, color: palette.text }}>{ev.title}</p>
-                        <p style={{ margin: 0, fontSize: 11, color: palette.textMuted, fontWeight: 600 }}>Responsável: {ev.actor}</p>
-                      </div>
-                    ))}
-                  {Object.values(leadEvents).flat().filter(ev => ev.kind === 'proposal' || ev.kind === 'negotiation').length === 0 && (
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, opacity: 0.5 }}>
-                      <CalendarClock size={32} />
-                      <span style={{ fontSize: 12, fontWeight: 700 }}>Sem registos hoje</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 22 }}>
-              <button
-                type="button"
-                onClick={() => setProposalOpen(false)}
-                style={{ padding: '12px 18px', borderRadius: 14, border: `1px solid ${border}`, background: 'transparent', fontWeight: 700, cursor: 'pointer', color: palette.textMuted }}
-              >
-                Cancelar
-              </button>
-              <button type="button" onClick={submitProposal} style={{ padding: '12px 18px', borderRadius: 14, border: 'none', background: '#000', color: LIME, fontWeight: 700, cursor: 'pointer' }}>
-                Guardar no histórico
-              </button>
-            </div>
-          </div>
-        </div>
+          step={quoteWizardStep}
+          form={quoteForm}
+          onFormChange={(patch) => setQuoteForm((f) => ({ ...f, ...patch }))}
+          quotes={quotesForWizardLead}
+          timelineEvents={quoteWizardLead ? leadEvents[quoteWizardLead.id] || [] : []}
+          lastCreatedQuote={lastCreatedQuote}
+          canAct={wizardCanAct}
+          formatBrl={formatBrl}
+          onConfirmStep2={confirmQuoteStep2}
+          onCommitQuote={commitQuotePendente}
+          onBackStep1={() => setQuoteWizardStep(1)}
+          onCopyLink={copyQuotePublicLink}
+          onMarkSent={markExistingQuoteSent}
+          onEditQuote={editQuoteFromWizard}
+          onSimulateSend={simulateSendQuoteWhatsApp}
+          onStartNewQuote={() => setQuoteWizardStep(1)}
+        />
       )}
 
       {meetingModalOpen && (

@@ -20,6 +20,7 @@ import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import UserManagement from './Admins';
 import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
+import { resolveStaffMemberAvatarUrl } from '@hub/lib/hubMasterAvatar';
 
 // --- TYPES ---
 interface StaffMember {
@@ -78,6 +79,10 @@ function normalizePermissions(raw: unknown): string[] {
       .map(([k]) => k);
   }
   return [];
+}
+
+function staffHasPermission(member: StaffMember, perm: string): boolean {
+  return normalizePermissions(member.profile.permissions).includes(perm);
 }
 
 // Beautiful preset premium avatars
@@ -160,6 +165,7 @@ const TeamHub: React.FC = () => {
 // 1. MEMBROS / COLLABORATORS MANAGEMENT TAB
 // ==========================================
 const StaffManagementContent: React.FC = () => {
+  const { profile: sessionProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -252,7 +258,7 @@ const StaffManagementContent: React.FC = () => {
       profile: {
         full_name: 'Ana Júlia Ramos',
         email: 'ana.julia@logdock.com.br',
-        avatar_url: PRESET_AVATARS[6],
+        avatar_url: PRESET_AVATARS[3],
         permissions: ['crm', 'backup'],
         tem_logta: true,
         tem_zaptro: true,
@@ -548,7 +554,7 @@ const StaffManagementContent: React.FC = () => {
                          <td style={styles.td}>
                             <div style={styles.memberCell}>
                                <img 
-                                 src={member.profile.avatar_url || PRESET_AVATARS[0]} 
+                                 src={resolveStaffMemberAvatarUrl(member, sessionProfile)} 
                                  alt={member.profile.full_name} 
                                  style={styles.tableAvatar}
                                />
@@ -573,8 +579,8 @@ const StaffManagementContent: React.FC = () => {
                                borderRadius: '20px', 
                                fontSize: '10px', 
                                fontWeight: '800',
-                               backgroundColor: member.status === 'ativo' ? '#ecfdf5' : member.status === 'suspenso' ? '#fffbeb' : '#fef2f2',
-                               color: member.status === 'ativo' ? '#10b981' : member.status === 'suspenso' ? '#d97706' : '#ef4444'
+                               backgroundColor: member.status === 'ativo' ? '#EFF6FF' : member.status === 'suspenso' ? '#fffbeb' : '#fef2f2',
+                               color: member.status === 'ativo' ? '#0061FF' : member.status === 'suspenso' ? '#d97706' : '#ef4444'
                             }}>{member.status.toUpperCase()}</span>
                          </td>
                          <td style={{...styles.td, textAlign: 'right'}}>
@@ -799,7 +805,7 @@ const StaffManagementContent: React.FC = () => {
              </div>
              <div style={{ padding: '28px' }}>
                 <div style={styles.detailProfileRow}>
-                   <img src={selectedMember.profile.avatar_url || PRESET_AVATARS[0]} alt="" style={styles.detailAvatar} />
+                   <img src={resolveStaffMemberAvatarUrl(selectedMember, sessionProfile)} alt="" style={styles.detailAvatar} />
                    <div>
                       <h2 style={{ margin: '0 0 6px', fontSize: '20px', fontWeight: 600, color: '#0F172A', letterSpacing: '-0.02em' }}>
                         {selectedMember.profile.full_name}
@@ -815,36 +821,36 @@ const StaffManagementContent: React.FC = () => {
                 <div style={{ marginTop: '28px' }}>
                    <h3 style={styles.modalSectionTitle}>Matriz de acessos unificados (SSO)</h3>
                    <div style={styles.systemsMatrixGrid}>
-                      <div style={{...styles.matrixCard, opacity: selectedMember.profile.permissions?.includes('logistica') ? 1 : 0.65}}>
+                      <div style={{...styles.matrixCard, opacity: staffHasPermission(selectedMember, 'logistica') ? 1 : 0.65}}>
                          <div style={styles.matrixIconShell}>
                            <CloudLightning color="#0061FF" size={22} strokeWidth={2} />
                          </div>
                          <div style={{ minWidth: 0 }}>
                             <span style={styles.matrixCardName}>Logta SaaS</span>
                             <p style={styles.matrixCardMeta}>
-                              {selectedMember.profile.permissions?.includes('logistica') ? 'Permissão ativa' : 'Sem acesso'}
+                              {staffHasPermission(selectedMember, 'logistica') ? 'Permissão ativa' : 'Sem acesso'}
                             </p>
                          </div>
                       </div>
-                      <div style={{...styles.matrixCard, opacity: selectedMember.profile.permissions?.includes('crm') ? 1 : 0.65}}>
-                         <div style={{ ...styles.matrixIconShell, background: 'rgba(16, 185, 129, 0.12)' }}>
-                           <Zap color="#10b981" size={22} strokeWidth={2} />
+                      <div style={{...styles.matrixCard, opacity: staffHasPermission(selectedMember, 'crm') ? 1 : 0.65}}>
+                         <div style={{ ...styles.matrixIconShell, background: 'rgba(0, 97, 255, 0.12)' }}>
+                           <Zap color="#0061FF" size={22} strokeWidth={2} />
                          </div>
                          <div style={{ minWidth: 0 }}>
                             <span style={styles.matrixCardName}>Zaptro</span>
                             <p style={styles.matrixCardMeta}>
-                              {selectedMember.profile.permissions?.includes('crm') ? 'Permissão ativa' : 'Sem acesso'}
+                              {staffHasPermission(selectedMember, 'crm') ? 'Permissão ativa' : 'Sem acesso'}
                             </p>
                          </div>
                       </div>
-                      <div style={{...styles.matrixCard, opacity: selectedMember.profile.permissions?.includes('backup') ? 1 : 0.65}}>
+                      <div style={{...styles.matrixCard, opacity: staffHasPermission(selectedMember, 'backup') ? 1 : 0.65}}>
                          <div style={{ ...styles.matrixIconShell, background: 'rgba(245, 158, 11, 0.14)' }}>
                            <Database color="#f59e0b" size={22} strokeWidth={2} />
                          </div>
                          <div style={{ minWidth: 0 }}>
                             <span style={styles.matrixCardName}>LogDock Archives</span>
                             <p style={styles.matrixCardMeta}>
-                              {selectedMember.profile.permissions?.includes('backup') ? 'Permissão ativa' : 'Sem acesso'}
+                              {staffHasPermission(selectedMember, 'backup') ? 'Permissão ativa' : 'Sem acesso'}
                             </p>
                          </div>
                       </div>
@@ -1069,7 +1075,7 @@ export const SystemsManagementContent: React.FC = () => {
                   <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
                      <div style={styles.sysIconBox}>
                         {sys.slug === 'logta' && <CloudLightning color="#0061FF" />}
-                        {sys.slug === 'zaptro' && <Zap color="#10b981" />}
+                        {sys.slug === 'zaptro' && <Zap color="#0061FF" />}
                         {sys.slug === 'logdock' && <Database color="#f59e0b" />}
                      </div>
                      <div>
@@ -1079,8 +1085,8 @@ export const SystemsManagementContent: React.FC = () => {
                   </div>
                   <span style={{
                     ...styles.sysStatus,
-                    backgroundColor: sys.status === 'online' ? '#ecfdf5' : '#fef2f2',
-                    color: sys.status === 'online' ? '#10b981' : '#ef4444'
+                    backgroundColor: sys.status === 'online' ? '#EFF6FF' : '#fef2f2',
+                    color: sys.status === 'online' ? '#0061FF' : '#ef4444'
                   }}>
                     <div
                       role="presentation"
@@ -1089,7 +1095,7 @@ export const SystemsManagementContent: React.FC = () => {
                         height: '8px',
                         borderRadius: '50%',
                         flexShrink: 0,
-                        backgroundColor: sys.status === 'online' ? '#10b981' : '#ef4444',
+                        backgroundColor: sys.status === 'online' ? '#0061FF' : '#ef4444',
                         animation: 'pulse 1s infinite',
                       }}
                     />
@@ -1147,7 +1153,7 @@ export const SystemsManagementContent: React.FC = () => {
           <div style={styles.orquestradorCard}>
              <h3 style={styles.sectionTitle}>Status de Autenticação Unificada (SSO)</h3>
              <div style={styles.ssoStatusRow}>
-                <Lock size={20} color="#10b981" />
+                <Lock size={20} color="#0061FF" />
                 <div>
                    <strong>Sessão Compartilhada Ativa</strong>
                    <p style={{margin: 0, fontSize: '13px', color: '#64748b'}}>
@@ -1281,13 +1287,13 @@ export const PerformanceContent: React.FC = () => {
     { name: 'LogDock Archives', value: 100 },
   ];
 
-  const COLORS = ['#0061FF', '#10b981', '#f59e0b'];
+  const COLORS = ['#0061FF', '#0061FF', '#f59e0b'];
 
   return (
     <div className="animate-slide-up">
        <div style={{ ...HUB_METRIC_GRID_STYLE, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
           <HubMetricCard label="Eficiência HQ Global" value="99.2%" icon={Trophy} accent="#0061FF" />
-          <HubMetricCard label="Protocolos Sync / 24h" value="1,452" icon={Zap} accent="#10b981" />
+          <HubMetricCard label="Protocolos Sync / 24h" value="1,452" icon={Zap} accent="#0061FF" />
           <HubMetricCard label="Sistemas Conectados" value="3 Módulos" icon={Server} accent="#F59E0B" />
        </div>
 
@@ -1302,7 +1308,7 @@ export const PerformanceContent: React.FC = () => {
                       <YAxis axisLine={false} tickLine={false} style={{fontSize: '11px'}} />
                       <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px rgba(0,0,0,0.1)'}} />
                       <Bar dataKey="acoes" fill="#0061FF" radius={[4, 4, 0, 0]} barSize={40} name="Ações HQ" />
-                      <Bar dataKey="tarefas" fill="#10b981" radius={[4, 4, 0, 0]} barSize={40} name="Demandas" />
+                      <Bar dataKey="tarefas" fill="#0061FF" radius={[4, 4, 0, 0]} barSize={40} name="Demandas" />
                    </BarChart>
                 </ResponsiveContainer>
              </div>
@@ -1339,7 +1345,7 @@ const styles: Record<string, any> = {
   embeddedRoot: { padding: 0, margin: 0, width: '100%' },
   embeddedTabsWrap: { marginBottom: '28px' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-  title: { fontSize: '29px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: 0 },
   subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '16px' },
   mainCard: { backgroundColor: 'white', borderRadius: '28px', border: '1px solid #e2e8f0', overflow: 'hidden' },

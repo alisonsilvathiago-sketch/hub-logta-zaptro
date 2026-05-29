@@ -3,6 +3,7 @@
  * Motorista grava; página pública `/acompanhar/:token` lê o mesmo `token`.
  */
 import type { RouteExecutionStatus } from './zaptroRouteExecution';
+import type { DriverEmploymentType, VehicleOwnershipType } from '../lib/zaptroDriverProfileExtended';
 
 /** Chave `localStorage` — útil para `storage` entre abas. */
 export const ZAPTRO_ROUTE_LIVE_STORAGE_KEY = 'zaptro_route_live_v1';
@@ -27,8 +28,29 @@ export type RouteLiveBucket = {
   locationTrail?: RouteLiveTrailPoint[];
   /** Pedido «Solicitar contacto com cliente» — visto pela operação no link público como aviso. */
   contactRequestedAt?: string | null;
-  /** Motorista reportou problema. */
+  /** Motorista reportou problema (visível no link do cliente). */
   issueReportedAt?: string | null;
+  /**
+   * Ocorrência / acidente — **só operação** (link do cliente não mostra detalhe).
+   * O estado visível ao cliente mantém-se no último passo antes da ocorrência.
+   */
+  opsIncidentAt?: string | null;
+  opsIncidentNote?: string | null;
+  /** Moradas definidas na criação da rota (Central Logística). */
+  originLabel?: string | null;
+  destLabel?: string | null;
+  /** Coordenadas geocodificadas (origem/destino) — cache local para mapa e navegação externa. */
+  originLat?: number;
+  originLng?: number;
+  destLat?: number;
+  destLng?: number;
+  /** Percurso planeado origem→destino (OSRM) — linha no mapa motorista/cliente. */
+  navigationPolyline?: Array<{ lat: number; lng: number }>;
+  routeDistanceM?: number;
+  routeDurationS?: number;
+  /** Última origem usada no cálculo OSRM — evita recalcular a cada segundo. */
+  navigationRouteFromLat?: number;
+  navigationRouteFromLng?: number;
   /** Nome da transportadora (Minha empresa / `whatsapp_companies.name`) — link público `/acompanhar`. */
   publicCompanyName?: string;
   /** Plano premium de marca no link público (espelha `RouteExecutionSnapshot`). */
@@ -41,6 +63,9 @@ export type RouteLiveBucket = {
   driverAvatarUrl?: string | null;
   driverPhone?: string | null;
   driverVehicle?: string | null;
+  /** Vínculo e propriedade do veículo (espelho do cadastro da frota). */
+  driverEmploymentType?: DriverEmploymentType | null;
+  driverVehicleOwnership?: VehicleOwnershipType | null;
   /** Contadores locais até integração com backend. */
   driverStatsDeliveries?: number;
   driverStatsRoutes?: number;

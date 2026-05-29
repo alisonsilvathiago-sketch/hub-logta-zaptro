@@ -34,6 +34,7 @@ export function initKeyboardEngine() {
     }
 
     shortcuts.forEach(s => {
+      if (!s?.key || !e?.key) return;
       const isKeyMatch = e.key.toLowerCase() === s.key.toLowerCase();
       const isModifierMatch = 
         (!!s.ctrl === e.ctrlKey) &&

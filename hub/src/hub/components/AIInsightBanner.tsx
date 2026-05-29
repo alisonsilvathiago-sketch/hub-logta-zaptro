@@ -26,7 +26,7 @@ const colorMap = {
   info: { bg: '#F0F9FF', text: '#0369A1', border: '#BAE6FD', iconBg: '#0284C7' },
   warning: { bg: '#FFFBEB', text: '#92400E', border: '#FEF3C7', iconBg: '#D97706' },
   error: { bg: '#FEF2F2', text: '#991B1B', border: '#FEE2E2', iconBg: '#DC2626' },
-  success: { bg: '#F0FDF4', text: '#166534', border: '#DCFCE7', iconBg: '#16A34A' },
+  success: { bg: '#EFF6FF', text: '#1E3A8A', border: '#DBEAFE', iconBg: '#1D4ED8' },
   ai: { bg: 'var(--bg-overlay)', text: 'var(--secondary)', border: 'var(--border)', iconBg: 'var(--secondary)' },
 };
 

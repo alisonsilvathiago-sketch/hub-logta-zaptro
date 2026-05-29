@@ -73,7 +73,6 @@ const CRM = () => {
     { id: 'clientes', label: 'Clientes', shortLabel: 'Clientes', icon: Users, path: '/crm/clientes' },
     { id: 'vendas', label: 'Vendas', shortLabel: 'Vendas', icon: KanbanSquare, path: '/crm/vendas' },
     { id: 'operacoes', label: 'Operações', shortLabel: 'Oper.', icon: Truck, path: '/crm/operacoes' },
-    { id: 'financeiro', label: 'Financeiro', shortLabel: 'Financ.', icon: DollarSign, path: '/crm/financeiro' },
     { id: 'inteligencia', label: 'BI', shortLabel: 'BI', icon: BarChart3, path: '/crm/inteligencia' },
   ];
 
@@ -219,8 +218,6 @@ const CRM = () => {
     e.preventDefault();
     if (!config?.id) return;
 
-    // Redireciona para o módulo de fretes para criação real ou simula aqui se necessário
-    // Por enquanto, apenas alerta para usar o módulo de fretes
     if ((window as any).showToast) {
       (window as any).showToast('info', 'Por favor, utilize o módulo de Fretes para cadastrar novas operações reais.', 'Redirecionamento');
     }
@@ -229,7 +226,7 @@ const CRM = () => {
 
   if (isDetailPage) {
     return (
-      <div className="logta-page h-full w-full animate-in fade-in duration-500 overflow-y-auto text-left scrollbar-hide">
+      <div className="logta-page logta-page--flush h-full w-full animate-in fade-in duration-500 overflow-y-auto text-left scrollbar-hide">
         <Routes>
           <Route path="clientes/:id" element={<ClientePerfilView />} />
           <Route path="comercial/:id" element={<ComercialColaboradorPerfilView />} />
@@ -267,7 +264,6 @@ const CRM = () => {
         }}
       />
 
-      {/* Dynamic Content via Router */}
       <div className="logta-page__body animate-in fade-in slide-in-from-bottom-2 duration-500">
         <Routes>
           <Route index element={<Navigate to="/crm/clientes" replace />} />
@@ -275,7 +271,7 @@ const CRM = () => {
           <Route path="clientes/:id" element={<ClientePerfilView />} />
           <Route path="vendas" element={<VendasKanban cards={cards} setCards={setCards} setIsAddLeadModalOpen={setIsAddLeadModalOpen} setNewLeadForm={setNewLeadForm} />} />
           <Route path="operacoes" element={<OperacoesKanban opCards={opCards} setOpCards={setOpCards} setSelectedOpCard={setSelectedOpCard} setIsAddOpModalOpen={setIsAddOpModalOpen} setNewOpForm={setNewOpForm} />} />
-          <Route path="financeiro" element={<CrmFinanceiroView />} />
+          <Route path="financeiro" element={<Navigate to="/financeiro" replace />} />
           <Route path="inteligencia" element={<InteligenciaView />} />
           <Route path="orcamentos" element={<OrcamentoDashboardView />} />
           <Route path="orcamentos/:id" element={<OrcamentoDetailView />} />
@@ -955,6 +951,7 @@ const ClientePerfilView = () => {
           status: shipmentStatusLabel(x.status),
           value: `R$ ${Number(x.metadata?.valor_frete || 0).toLocaleString('pt-BR')}`,
           date: new Date(x.created_at).toLocaleDateString('pt-BR'),
+          carga: x.metadata?.carga || x.tipo_carga || 'Produto não especificado'
         }));
 
         const activeFretesCount = (f ?? []).filter(
@@ -1076,7 +1073,7 @@ const ClientePerfilView = () => {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 text-left">
+    <div className="logta-page-content space-y-8 animate-in fade-in duration-500 text-left">
       {/* Return Button */}
       <button 
         onClick={() => navigate('/crm/clientes')}
@@ -1177,7 +1174,7 @@ const ClientePerfilView = () => {
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-normal">
                       <th className="px-6 py-4">ID do Frete</th>
-                      <th className="px-6 py-4">Rota</th>
+                      <th className="px-6 py-4">Rota / Carga</th>
                       <th className="px-6 py-4">Status</th>
                       <th className="px-6 py-4 text-right">Valor</th>
                     </tr>
@@ -1190,7 +1187,10 @@ const ClientePerfilView = () => {
                         className="hover:bg-gray-50 transition-colors cursor-pointer"
                       >
                         <td className="px-6 py-4 text-primary">{f.id}</td>
-                        <td className="px-6 py-4">{f.origin} → {f.dest}</td>
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-gray-900">{f.origin} → {f.dest}</p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-normal mt-0.5">{f.carga}</p>
+                        </td>
                         <td className="px-6 py-4">
                           <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-normal ${
                             f.status === 'Entregue' ? 'bg-green-100 text-green-700' : 

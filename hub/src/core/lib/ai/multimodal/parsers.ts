@@ -39,7 +39,7 @@ export async function parseImageOCR(file: MultimodalFile): Promise<MultimodalPar
 
   if (nameLower.includes('erro') || nameLower.includes('print') || nameLower.includes('bug')) {
     extracted = "Alison, detectei falha de autenticação API no módulo financeiro (Status 401 Unauthorized).";
-    route = "#/master/ia-gateway";
+    route = "#/master/logta";
     entities = ["API Error", "Auth Fail"];
   } else if (nameLower.includes('placa') || nameLower.includes('caminhao') || nameLower.includes('carro')) {
     extracted = "Alison, identificada placa de veículo: BRA2E19 (Volvo FH540). Licenciamento regularizado.";

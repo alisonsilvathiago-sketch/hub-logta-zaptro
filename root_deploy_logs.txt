@@ -1,0 +1,103 @@
+> [debug] [2026-05-10T04:45:13.863Z] Found config in file "/Volumes/PODCAST/PROJETOS/hub-logta-zaptro/vercel.json"
+> [debug] [2026-05-10T04:45:13.872Z] Vercel CLI 52.0.0
+> [debug] [2026-05-10T04:45:13.920Z] Agent/TTY/nonInteractive: isAgent=true agentName=antigravity stdin.isTTY=true --non-interactive=false explicitFalse=false => nonInteractive=false
+> [debug] [2026-05-10T04:45:13.923Z] user supplied a possible target for deployment or an extension
+> [debug] [2026-05-10T04:45:13.951Z] failed to find extension command with name "vercel---prod"
+> [debug] [2026-05-10T04:45:14.066Z] Setting target to production
+> [debug] [2026-05-10T04:45:14.095Z] Spinner invoked (Retrieving project…) with a 1000ms delay
+> [debug] [2026-05-10T04:45:14.099Z] Valid access token, skipping token refresh.
+> [debug] [2026-05-10T04:45:14.196Z] #1 → GET https://api.vercel.com/teams/team_bufEwvRw60uJbU0iejmMAnbh?teamId=team_bufEwvRw60uJbU0iejmMAnbh
+> [debug] [2026-05-10T04:45:14.202Z] #2 → GET https://api.vercel.com/v9/projects/prj_d0GcOpKwPhxz8SbYUezoAL1kdOjx?teamId=team_bufEwvRw60uJbU0iejmMAnbh
+> [debug] [2026-05-10T04:45:14.884Z] #1 ← 200 OK: sfo1::vvvzk-1778388315046-d99c3d634d1d [687ms]
+> [debug] [2026-05-10T04:45:14.915Z] #2 ← 200 OK: sfo1::6ffvd-1778388315055-d533b9071781 [712ms]
+> [debug] [2026-05-10T04:45:14.931Z] Read local config from root directory (hub)
+> [debug] [2026-05-10T04:45:15.534Z] Spinner invoked (Deploying alisons-projects-9c220824/hub) with a 0ms delay
+[client-debug] 2026-05-10T04:45:15.536Z Creating deployment...
+[client-debug] 2026-05-10T04:45:15.536Z Provided 'path' is a directory.
+[client-debug] 2026-05-10T04:45:15.545Z Found 26 rules in .vercelignore
+[client-debug] 2026-05-10T04:45:15.545Z Building file tree...
+[client-debug] 2026-05-10T04:45:16.840Z Found 2615 files in the specified directory
+[client-debug] 2026-05-10T04:45:20.339Z Yielding a 'hashes-calculated' event with 1056 hashes
+> [debug] [2026-05-10T04:45:20.345Z] #3 → GET https://api.vercel.com/v9/projects/hub?teamId=team_bufEwvRw60uJbU0iejmMAnbh
+> [debug] [2026-05-10T04:45:20.612Z] #3 ← 200 OK: sfo1::hwwhz-1778388320763-2cf4e10af292 [267ms]
+[client-debug] 2026-05-10T04:45:20.620Z Using provided API URL: https://api.vercel.com
+[client-debug] 2026-05-10T04:45:20.620Z Using provided user agent: vercel 52.0.0 node-v25.9.0 darwin (x64)
+[client-debug] 2026-05-10T04:45:20.620Z Setting platform version to harcoded value 2
+[client-debug] 2026-05-10T04:45:20.620Z Creating the deployment and starting upload...
+[client-debug] 2026-05-10T04:45:20.622Z Determining necessary files for upload...
+[client-debug] 2026-05-10T04:45:20.623Z Creating deployment
+[client-debug] 2026-05-10T04:45:20.668Z Sending deployment creation API request
+[client-debug] 2026-05-10T04:45:22.186Z Deployment response: {"error":{"code":"missing_files","message":"Missing files","missing":["16693638d25df61392d6c6e16dd6447f60d57721"]}}
+[client-debug] 2026-05-10T04:45:22.186Z Error: Deployment request status is 400
+[client-debug] 2026-05-10T04:45:22.186Z 1 files are required to upload
+[client-debug] 2026-05-10T04:45:22.187Z Yielding a 'file-count' event
+> [debug] [2026-05-10T04:45:22.187Z] Total files 1056, 1 changed
+> [debug] [2026-05-10T04:45:22.190Z] Spinner invoked (Uploading [--------------------] (0.0B/1.8KB)) with a 0ms delay
+[client-debug] 2026-05-10T04:45:22.192Z Building an upload list...
+[client-debug] 2026-05-10T04:45:22.195Z Starting upload
+[client-debug] 2026-05-10T04:45:22.196Z POST https://api.vercel.com/v2/files?teamId=team_bufEwvRw60uJbU0iejmMAnbh
+> [debug] [2026-05-10T04:45:22.204Z] Spinner invoked (Uploading [====================] (1.8KB/1.8KB)) with a 0ms delay
+[client-debug] 2026-05-10T04:45:22.537Z DONE in 341ms: POST https://api.vercel.com/v2/files?teamId=team_bufEwvRw60uJbU0iejmMAnbh
+[client-debug] 2026-05-10T04:45:22.537Z File 16693638d25df61392d6c6e16dd6447f60d57721 (/Volumes/PODCAST/PROJETOS/hub-logta-zaptro/root_deploy_logs.txt) uploaded
+[client-debug] 2026-05-10T04:45:22.537Z Yielding a 'file-uploaded' event
+> [debug] [2026-05-10T04:45:22.537Z] Uploaded: /Volumes/PODCAST/PROJETOS/hub-logta-zaptro/root_deploy_logs.txt (1.79KB)
+[client-debug] 2026-05-10T04:45:22.538Z All files uploaded
+[client-debug] 2026-05-10T04:45:22.538Z Yielding a 'all-files-uploaded' event
+[client-debug] 2026-05-10T04:45:22.538Z Starting deployment creation
+[client-debug] 2026-05-10T04:45:22.538Z Creating deployment
+[client-debug] 2026-05-10T04:45:22.574Z Sending deployment creation API request
+[client-debug] 2026-05-10T04:45:25.237Z Deployment response: {"alias":["hub-alisons-projects-9c220824.vercel.app","hub-alisonsilvathiago-5810-alisons-projects-9c220824.vercel.app"],"aliasAssigned":false,"automaticAliases":["hub-alisons-projects-9c220824.vercel.app","hub-alisonsilvathiago-5810-alisons-projects-9c220824.vercel.app"],"bootedAt":1778388324656,"buildingAt":1778388324656,"buildSkipped":false,"createdAt":1778388324656,"creator":{"uid":"VyynuiCAp7KCgg806gadHXYr","username":"alisonsilvathiago-5810"},"id":"dpl_9fxMeMGEPBWNgsKTEtS9x1Yu5tms","name":"hub","meta":{"githubCommitAuthorName":"Alison Thiago","githubCommitAuthorEmail":"alisonsilvathiago@gmail.com","githubCommitMessage":"chore: expand gitignore and untrack artifacts; hub, zaptro, logta, shared updates","githubCommitOrg":"alisonsilvathiago-sketch","githubCommitRef":"main","githubCommitRepo":"hub-logta-zaptro","githubCommitSha":"0fe0bb7b08f8c475c357a8c187588c487916f1fd","githubDeployment":"1","githubOrg":"alisonsilvathiago-sketch","githubRepo":"hub-logta-zaptro","gitDirty":"1","actor":"antigravity"},"originCacheRegion":"iad1","project":{"id":"prj_d0GcOpKwPhxz8SbYUezoAL1kdOjx","name":"hub","framework":"vite"},"public":false,"readyState":"INITIALIZING","readySubstate":"STAGED","regions":["iad1"],"source":"cli","status":"INITIALIZING","target":"production","team":{"id":"team_bufEwvRw60uJbU0iejmMAnbh","name":"Alison Projetos","slug":"alisons-projects-9c220824","avatar":"8015838237ddddd528193e85f56cbb3fc694c741"},"type":"LAMBDAS","url":"hub-dhop5r95p-alisons-projects-9c220824.vercel.app","version":2,"previewCommentsEnabled":true,"oidcTokenClaims":{"sub":"owner:alisons-projects-9c220824:project:hub:environment:production","iss":"https://oidc.vercel.com/alisons-projects-9c220824","scope":"owner:alisons-projects-9c220824:project:hub:environment:production","aud":"https://vercel.com/alisons-projects-9c220824","owner":"alisons-projects-9c220824","owner_id":"team_bufEwvRw60uJbU0iejmMAnbh","project":"hub","project_id":"prj_d0GcOpKwPhxz8SbYUezoAL1kdOjx","environment":"production","plan":"hobby"},"lambdas":[{"id":"bld_hj5s1we4r","createdAt":1778388325072,"entrypoint":".","readyState":"READY","readyStateAt":1778388325072,"output":[]}],"aliasAssignedAt":null,"build":{"env":[]},"builds":[],"createdIn":"sfo1","env":[],"functions":null,"inspectorUrl":"https://vercel.com/alisons-projects-9c220824/hub/9fxMeMGEPBWNgsKTEtS9x1Yu5tms","isInConcurrentBuildsQueue":false,"isInSystemBuildsQueue":true,"ownerId":"team_bufEwvRw60uJbU0iejmMAnbh","plan":"hobby","projectId":"prj_d0GcOpKwPhxz8SbYUezoAL1kdOjx","projectSettings":{"buildCommand":"npm run build","devCommand":null,"framework":"vite","commandForIgnoringBuildStep":null,"installCommand":"npm ci","outputDirectory":"dist","speedInsights":{"id":"FMNLjsvd0N4raB4R64fzt7gFkZK","hasData":false},"webAnalytics":{"id":"AgLJvfzaLLhSeqozE2hvdOb99"},"nodeVersion":"24.x"},"routes":[{"handle":"filesystem"},{"src":"^/api/ai(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?$","dest":"http://108.174.151.98:11434/$1","check":true},{"src":"^(?:/(.*))$","dest":"/index.html","check":true}],"config":{"version":1,"secureComputePrimaryRegion":null,"secureComputeFallbackRegion":null,"functionTimeout":300,"functionType":"fluid","functionMemoryType":"standard","isUsingActiveCPU":true,"resourceConfig":{"buildQueue":{"configuration":"SKIP_NAMESPACE_QUEUE"}}},"attribution":{"commitMeta":{"name":"Alison Thiago","email":"alisonsilvathiago@gmail.com","isVerified":false}}}
+[client-debug] 2026-05-10T04:45:25.239Z Deployment created
+[client-debug] 2026-05-10T04:45:25.239Z Yielding a 'created' event
+Inspect: https://vercel.com/alisons-projects-9c220824/hub/9fxMeMGEPBWNgsKTEtS9x1Yu5tms [10s]
+Production: https://hub-dhop5r95p-alisons-projects-9c220824.vercel.app [10s]
+https://hub-dhop5r95p-alisons-projects-9c220824.vercel.app> [debug] [2026-05-10T04:45:25.245Z] Spinner invoked (Building...) with a 0ms delay
+> [debug] [2026-05-10T04:45:25.246Z] #4 → GET https://api.vercel.com/v2/user
+[client-debug] 2026-05-10T04:45:25.247Z Waiting for deployment to be ready...
+[client-debug] 2026-05-10T04:45:25.248Z Waiting for builds and the deployment to complete...
+> [debug] [2026-05-10T04:45:25.498Z] #4 ← 200 OK: sfo1::9lcvj-1778388325663-4b221888a91b [252ms]
+> [debug] [2026-05-10T04:45:25.516Z] #5 → GET https://api.vercel.com/v3/now/deployments/dpl_9fxMeMGEPBWNgsKTEtS9x1Yu5tms/events?direction=forward&follow=1&format=lines&teamId=team_bufEwvRw60uJbU0iejmMAnbh
+[client-debug] 2026-05-10T04:45:27.084Z Deployment state changed to BUILDING
+[client-debug] 2026-05-10T04:45:27.084Z Yielding a 'building' event
+> [debug] [2026-05-10T04:45:27.084Z] Spinner invoked (Building...) with a 0ms delay
+> [debug] [2026-05-10T04:45:28.951Z] #5 ← 200 OK: sfo1::ghbwz-1778388325930-3a4daf73f1d3 [3.44s]
+> [debug] [2026-05-10T04:45:28.954Z] Spinner invoked (Building: Running build in Washington, D.C., USA (East) – iad1) with a 0ms delay
+> [debug] [2026-05-10T04:45:28.955Z] Spinner invoked (Building: Build machine configuration: 2 cores, 8 GB) with a 0ms delay
+> [debug] [2026-05-10T04:45:28.955Z] Spinner invoked (Building: Retrieving list of deployment files...) with a 0ms delay
+> [debug] [2026-05-10T04:45:28.955Z] Spinner invoked (Building: Previous build caches not available.) with a 0ms delay
+> [debug] [2026-05-10T04:45:28.955Z] Spinner invoked (Building: Downloading 2615 deployment files...) with a 0ms delay
+> [debug] [2026-05-10T04:45:38.169Z] Spinner invoked (Building: Running "vercel build") with a 0ms delay
+> [debug] [2026-05-10T04:45:38.169Z] Spinner invoked (Building: Vercel CLI 53.3.1) with a 0ms delay
+> [debug] [2026-05-10T04:45:39.200Z] Spinner invoked (Building: Running "install" command: `npm ci`...) with a 0ms delay
+> [debug] [2026-05-10T04:45:45.406Z] Spinner invoked (Building: added 89 packages, and audited 90 packages in 5s) with a 0ms delay
+> [debug] [2026-05-10T04:45:45.406Z] Spinner invoked (Building: 12 packages are looking for funding) with a 0ms delay
+> [debug] [2026-05-10T04:45:45.406Z] Spinner invoked (Building: run `npm fund` for details) with a 0ms delay
+> [debug] [2026-05-10T04:45:45.406Z] Spinner invoked (Building: found 0 vulnerabilities) with a 0ms delay
+> [debug] [2026-05-10T04:45:45.406Z] Spinner invoked (Building: > logta-master@1.0.0 build) with a 0ms delay
+> [debug] [2026-05-10T04:45:45.406Z] Spinner invoked (Building: > vite build) with a 0ms delay
+> [debug] [2026-05-10T04:45:45.406Z] Spinner invoked (Building: vite v8.0.10 building client environment for production...) with a 0ms delay
+> [debug] [2026-05-10T04:45:46.429Z] Spinner invoked (Building: transforming...✓ 2799 modules transformed.) with a 0ms delay
+> [debug] [2026-05-10T04:45:46.429Z] Spinner invoked (Building: rendering chunks...) with a 0ms delay
+[client-debug] 2026-05-10T04:45:47.081Z Yielding a 'error' event
+> [debug] [2026-05-10T04:45:47.101Z] Error: Error: Command "npm run build" exited with 1
+Error: Command "npm run build" exited with 1
+    at Now.handleDeploymentError (file:///usr/local/lib/node_modules/vercel/dist/chunks/chunk-HUUTUVP5.js:4756:12)
+    at processDeployment (file:///usr/local/lib/node_modules/vercel/dist/chunks/chunk-HUUTUVP5.js:4499:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Now.create (file:///usr/local/lib/node_modules/vercel/dist/chunks/chunk-HUUTUVP5.js:4647:24)
+    at async createDeploy (file:///usr/local/lib/node_modules/vercel/dist/commands/deploy/index.js:180:12)
+    at async handleDefaultDeploy (file:///usr/local/lib/node_modules/vercel/dist/commands/deploy/index.js:1615:18)
+    at async _Span.trace (/usr/local/lib/node_modules/vercel/node_modules/@vercel/build-utils/dist/index.js:32191:14)
+    at async main (file:///usr/local/lib/node_modules/vercel/dist/index.js:24394:18)
+> [debug] [2026-05-10T04:45:47.101Z] handling error: Error: Command "npm run build" exited with 1
+    at Now.handleDeploymentError (file:///usr/local/lib/node_modules/vercel/dist/chunks/chunk-HUUTUVP5.js:4756:12)
+    at processDeployment (file:///usr/local/lib/node_modules/vercel/dist/chunks/chunk-HUUTUVP5.js:4499:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Now.create (file:///usr/local/lib/node_modules/vercel/dist/chunks/chunk-HUUTUVP5.js:4647:24)
+    at async createDeploy (file:///usr/local/lib/node_modules/vercel/dist/commands/deploy/index.js:180:12)
+    at async handleDefaultDeploy (file:///usr/local/lib/node_modules/vercel/dist/commands/deploy/index.js:1615:18)
+    at async _Span.trace (/usr/local/lib/node_modules/vercel/node_modules/@vercel/build-utils/dist/index.js:32191:14)
+    at async main (file:///usr/local/lib/node_modules/vercel/dist/index.js:24394:18)
+Error: Command "npm run build" exited with 1
+> [debug] [2026-05-10T04:45:49.152Z] Telemetry subprocess killed due to timeout
+> [debug] [2026-05-10T04:45:49.173Z] Telemetry subprocess exited with code null

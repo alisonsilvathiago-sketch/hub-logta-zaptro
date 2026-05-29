@@ -64,56 +64,39 @@ function LogtaAlertInlineCard({ alert, onDismiss, Icon = AlertTriangle }: CardPr
   const s = priorityStyles[alert.priority];
 
   return (
-    <div className={`rounded-2xl border p-4 ${s.border} ${s.bg}`}>
-      <div className="flex gap-4">
-        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ${s.icon}`}>
-          <Icon size={22} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span className={`rounded-lg px-2 py-0.5 text-[9px] font-black uppercase ${s.badge}`}>
-              {priorityLabels[alert.priority]}
-            </span>
-            <span className="flex items-center gap-1 text-[9px] font-bold uppercase text-gray-400">
-              <Bell size={10} /> Aviso operacional
-            </span>
-          </div>
-          <h4 className="text-sm font-bold text-gray-900">{alert.title}</h4>
-          <p className="mt-1 text-xs font-medium leading-relaxed text-gray-600">{alert.message}</p>
-          {alert.impacto ? (
-            <p className="mt-2 text-[11px] font-medium text-gray-500">
-              <strong className="text-gray-700">Impacto:</strong> {alert.impacto}
-            </p>
-          ) : null}
-          {alert.recomendacao ? (
-            <p className="mt-1 text-[11px] font-medium text-gray-500">
-              <strong className="text-gray-700">Ação recomendada:</strong> {alert.recomendacao}
-            </p>
-          ) : null}
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => navigate(alert.actionPath)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-[10px] font-bold uppercase text-white hover:opacity-90"
-            >
-              {alert.actionLabel} <ArrowRight size={12} />
-            </button>
-            <button
-              type="button"
-              onClick={onDismiss}
-              className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-[10px] font-bold uppercase text-gray-600 hover:bg-gray-50"
-            >
-              Dispensar
-            </button>
-          </div>
-        </div>
+    <div
+      className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 shadow-md ${s.border} ${s.bg}`}
+      data-logta-operational-strip="active"
+    >
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <span className="rounded-lg bg-primary px-2 py-0.5 text-[9px] font-black uppercase text-white">IA ativa</span>
+        <span className="relative flex h-2.5 w-2.5 shrink-0">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+          <span className="relative h-2.5 w-2.5 rounded-full bg-primary" />
+        </span>
+        <span className={`rounded-lg px-2 py-0.5 text-[9px] font-black uppercase ${s.badge}`}>
+          {priorityLabels[alert.priority]}
+        </span>
+        <span className="text-xs font-bold text-gray-900 truncate max-w-[200px] sm:max-w-xs md:max-w-md">
+          {alert.title} · <span className="font-medium text-gray-500">{alert.message}</span>
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => navigate(alert.actionPath)}
+          className="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-[9px] font-bold text-white hover:opacity-90 cursor-pointer"
+        >
+          <Icon size={12} />
+          {alert.actionLabel}
+        </button>
         <button
           type="button"
           onClick={onDismiss}
-          className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-white hover:text-gray-700"
-          aria-label="Dispensar alerta"
+          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[9px] font-bold text-gray-700 hover:bg-gray-50 cursor-pointer"
         >
-          <X size={16} />
+          <X size={12} />
+          Dispensar
         </button>
       </div>
     </div>

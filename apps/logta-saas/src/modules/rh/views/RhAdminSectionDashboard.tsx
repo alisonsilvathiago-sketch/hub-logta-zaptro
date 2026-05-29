@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Activity,
@@ -7,6 +7,7 @@ import {
   ChevronRight,
   ClipboardList,
   MessageSquare,
+  Search,
   Sparkles,
   Target,
   TrendingUp,
@@ -77,16 +78,24 @@ export function RhAdminSectionDashboard({
   colaboradoresCount = 0,
   motoristasCount = 0,
 }: Props) {
+  const [search, setSearch] = useState('');
   const section = getRhSectionById(sectionId);
   const meta = SECTION_META[sectionId];
-  const Icon = meta.icon;
+  const Icon = meta?.icon || Users;
   const basePath = '/rh/administrativo';
 
   const modules = useMemo(() => {
     return getRhModulesByCategory('admin').filter((m) => m.sectionId === sectionId);
   }, [sectionId]);
 
+  const filteredModules = useMemo(() => {
+    if (!search.trim()) return modules;
+    const q = search.toLowerCase();
+    return modules.filter((m) => m.title.toLowerCase().includes(q) || m.description.toLowerCase().includes(q));
+  }, [modules, search]);
+
   const kpis = useMemo(() => {
+    if (!meta) return [];
     const list = [...meta.kpis];
     if (sectionId === 'pessoas' && colaboradoresCount > 0) {
       list[0] = { ...list[0], value: String(colaboradoresCount) };
@@ -95,12 +104,12 @@ export function RhAdminSectionDashboard({
       list[2] = { ...list[2], value: String(Math.min(3, 2 + (motoristasCount > 0 ? 1 : 0))) };
     }
     return list;
-  }, [meta.kpis, sectionId, colaboradoresCount, motoristasCount]);
+  }, [meta, sectionId, colaboradoresCount, motoristasCount]);
 
-  if (!section) return null;
+  if (!section || !meta) return null;
 
   return (
-    <div className="space-y-8 text-left animate-in fade-in duration-500">
+    <div className="space-y-8 text-left">
       <Link
         to={basePath}
         className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 transition-colors hover:text-primary"
@@ -121,6 +130,39 @@ export function RhAdminSectionDashboard({
         <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-normal text-primary">
           <Sparkles size={12} /> Dashboard da área
         </span>
+      </div>
+
+      <div className="logta-panel-card flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-8">
+        <div className="relative min-w-0 w-full max-w-xl flex-1">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input 
+            placeholder="Buscar módulo..." 
+            className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-gray-900 shadow-sm outline-none transition-all focus:border-primary/50" 
+            type="search" 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex max-h-[120px] shrink-0 flex-wrap items-center justify-end gap-2 overflow-y-auto pl-2 scrollbar-hide sm:max-w-[55%]">
+          {filteredModules.map((mod) => {
+            const ModIcon = mod.icon;
+            const href = mod.externalPath ?? `${basePath}/${mod.slug}`;
+            return (
+              <Link 
+                key={mod.slug}
+                to={href}
+                title={mod.title}
+                aria-label={mod.title}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm transition-all hover:bg-primary hover:text-white border border-primary/20 bg-primary/5 text-primary"
+              >
+                <ModIcon size={18} />
+              </Link>
+            );
+          })}
+          {filteredModules.length === 0 && (
+            <span className="text-xs text-gray-500">Nenhum módulo encontrado.</span>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -181,39 +223,6 @@ export function RhAdminSectionDashboard({
         </ul>
       </div>
 
-      <section>
-        <h3 className="logta-panel-section-title mb-4">Módulos desta área</h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {modules.map((mod) => {
-            const ModIcon = mod.icon;
-            const href = mod.externalPath ?? `${basePath}/${mod.slug}`;
-
-            return (
-              <Link
-                key={mod.slug}
-                to={href}
-                className="logta-panel-card group flex flex-col p-6 transition-all hover:border-primary/30 hover:shadow-md"
-              >
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
-                    <ModIcon size={22} strokeWidth={2} />
-                  </div>
-                  {mod.iaEnabled ? (
-                    <span className="flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-1 text-[9px] font-black uppercase tracking-normal text-primary">
-                      <Sparkles size={10} /> IA
-                    </span>
-                  ) : null}
-                </div>
-                <h4 className="logta-card-heading mb-2 group-hover:text-primary">{mod.title}</h4>
-                <p className="mb-4 flex-1 text-xs font-medium leading-relaxed text-gray-500">{mod.description}</p>
-                <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-normal text-primary">
-                  Abrir módulo <ChevronRight size={14} className="transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
     </div>
   );
 }

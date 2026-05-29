@@ -23,7 +23,11 @@ export const GATEWAY_TELEMETRY: GatewayTelemetry = {
     financeiro: 0,
     atendimento: 0,
     whatsapp: 0,
-    master: 0
+    master: 0,
+    logta: 0,
+    zaptro: 0,
+    logdock: 0,
+    'ia-gateway': 0,
   },
   activeProvider: 'Ollama-VPS'
 };

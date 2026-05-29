@@ -322,7 +322,7 @@ const styles: Record<string, any> = {
   tabBtnCompact: { 
     display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '4px', 
     padding: '10px 16px', borderRadius: '14px', border: 'none', backgroundColor: 'transparent', 
-    fontWeight: '700', color: '#94A3B8', cursor: 'pointer', transition: 'all 0.2s', 
+    fontWeight: '700', color: '#949494', cursor: 'pointer', transition: 'all 0.2s', 
     minWidth: '80px', fontSize: '11px' 
   },
   tabBtnActive: { backgroundColor: 'white', color: 'var(--primary)', boxShadow: 'var(--shadow-md)', border: '1px solid var(--border)' },
@@ -339,7 +339,7 @@ const styles: Record<string, any> = {
   logoSection: { display: 'flex', flexDirection: 'column' as const, gap: '12px' },
   logoUploadArea: { display: 'flex', alignItems: 'center', gap: '20px' },
   logoPreview: { width: '80px', height: '80px', borderRadius: '16px', objectFit: 'contain' as const, backgroundColor: '#ebebeb', border: '1px solid var(--border)' },
-  logoPlaceholder: { width: '80px', height: '80px', borderRadius: '16px', backgroundColor: '#ebebeb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' },
+  logoPlaceholder: { width: '80px', height: '80px', borderRadius: '16px', backgroundColor: '#ebebeb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#949494' },
   uploadControls: { display: 'flex', flexDirection: 'column' as const, gap: '4px' },
   uploadBtn: { padding: '8px 16px', backgroundColor: '#ebebeb', borderRadius: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
   uSub: { fontSize: '11px', color: 'var(--text-muted)' },

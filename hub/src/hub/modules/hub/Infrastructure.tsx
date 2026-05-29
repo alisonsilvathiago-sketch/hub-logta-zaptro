@@ -32,6 +32,7 @@ import { supabaseZaptro as supabase } from '@core/lib/supabase-zaptro';
 import LogtaModal from '@shared/components/Modal';
 import Button from '@shared/components/Button';
 import HubMetricCard from '@shared/components/HubMetricCard';
+import HubSupabaseChart from '@shared/components/HubSupabaseChart';
 import { forceGlobalSync } from '@core/lib/masterIntelligence';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import { checkAllSystemsConnectivity, type ConnectivityStatus } from '@core/lib/hubConnectivityService';
@@ -63,7 +64,7 @@ const INFRA_TOP_STATS: InfraTopStat[] = [
     value: '99.9 %',
     Icon: Wifi,
     variant: 'solid',
-    accent: '#10B981',
+    accent: '#0061FF',
   },
   {
     label: 'Banco de Dados',
@@ -108,7 +109,7 @@ const INFRA_TOP_STATS: InfraTopStat[] = [
     value: '99.98%',
     Icon: Activity,
     variant: 'solid',
-    accent: '#10B981',
+    accent: '#0061FF',
   },
 ];
 
@@ -180,7 +181,7 @@ const InfrastructureManagement: React.FC = () => {
 
   const autonomousServices = [
     { name: 'Navegador Logístico', description: 'Otimização de rotas e custos.', icon: <Zap size={24} />, color: '#0061FF' },
-    { name: 'Guardião de Entregas', description: 'Segurança e prevenção de falhas.', icon: <ShieldCheck size={24} />, color: '#10B981' },
+    { name: 'Guardião de Entregas', description: 'Segurança e prevenção de falhas.', icon: <ShieldCheck size={24} />, color: '#0061FF' },
     { name: 'Talent Scout AI', description: 'Gestão inteligente de talentos.', icon: <Search size={24} />, color: '#F59E0B' },
     { name: 'Auditor Operacional', description: 'Auditoria fiscal e operacional.', icon: <Terminal size={24} />, color: '#EF4444' },
   ];
@@ -228,7 +229,7 @@ const InfrastructureManagement: React.FC = () => {
   };
 
   const getStatusColor = (status?: string) => {
-    if (!status) return '#10B981';
+    if (!status) return '#0061FF';
     switch (status.toUpperCase()) {
       case 'ACTIVE':
       case 'ATIVO':
@@ -237,7 +238,7 @@ const InfrastructureManagement: React.FC = () => {
       case 'OK':
       case 'STABLE':
       case 'UP':
-        return '#10B981';
+        return '#0061FF';
       case 'PENDING':
       case 'MAINTENANCE':
       case 'DEGRADED':
@@ -253,7 +254,7 @@ const InfrastructureManagement: React.FC = () => {
     }
   };
 
-  /** Evita ponto vermelho com halo verde: `statusDot` fixa box-shadow em #10B981 */
+  /** Evita ponto vermelho com halo verde: `statusDot` fixa box-shadow em #0061FF */
   const statusDotWithGlow = (color: string) => ({
     ...styles.statusDot,
     backgroundColor: color,
@@ -288,7 +289,7 @@ const InfrastructureManagement: React.FC = () => {
         </div>
         <div style={styles.headerActions}>
           <div style={styles.statusBadgeGlobal}>
-            <div style={statusDotWithGlow('#10B981')} />
+            <div style={statusDotWithGlow('#0061FF')} />
             SISTEMA OPERANTE
           </div>
           <Button 
@@ -311,51 +312,26 @@ const InfrastructureManagement: React.FC = () => {
         </div>
       </header>
 
-      {/* HORIZONTAL TABS */}
-      <nav style={styles.tabNav}>
-        {[
-          { id: 'saude', label: 'Saúde & vps', icon: <Activity size={18} /> },
-          { id: 'apis', label: 'APIs & gateways', icon: <Layers size={18} /> },
-          { id: 'seguranca', label: 'Segurança', icon: <ShieldCheck size={18} /> },
-          { id: 'logs', label: 'Logs do sistema', icon: <Terminal size={18} /> },
-          { id: 'comandos', label: 'VPS & ollama', icon: <Zap size={18} /> },
-          { id: 'backup', label: 'Backup & storage', icon: <HardDrive size={18} /> },
-        ].map(tab => (
-          <button 
-            key={tab.id}
-            onClick={() => handleTabChange(tab.id)}
-            style={{
-              ...styles.tabBtn,
-              borderBottom: activeTab === tab.id ? '3px solid var(--accent)' : '3px solid transparent',
-              color: activeTab === tab.id ? 'var(--accent)' : '#64748B',
-              opacity: activeTab === tab.id ? 1 : 0.7
-            }}
-          >
-            {tab.icon} {tab.label}
-          </button>
-        ))}
-      </nav>
+      <div style={{ paddingTop: 4 }}>
 
-      <div style={styles.statsGrid}>
-        {INFRA_TOP_STATS.map((stat, i) => (
-          <HubMetricCard
-            key={`${stat.label}-${i}`}
-            className="hub-metric-card premium-card hub-metric-card--elevated"
-            hover={false}
-            label={stat.label}
-            value={stat.value}
-            icon={stat.Icon}
-            iconVariant={stat.variant}
-            accent={stat.accent}
-            softBg={stat.softBg}
-          />
-        ))}
-      </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+            <HubSupabaseChart label="PROCESSAMENTO GLOBAL" value="14.2%" data={[40, 50, 60, 50, 40, 50, 60, 50, 40, 50]} />
+            <HubSupabaseChart label="DISPONIBILIDADE" value="99.9%" data={[98, 99, 100, 100, 99, 100, 100, 99, 100, 100]} />
+            <HubSupabaseChart label="BANCO DE DADOS" value="24.5 GB" data={[30, 40, 50, 60, 70, 80, 70, 60, 50, 40]} />
+            <HubSupabaseChart label="EVENTOS CRÍTICOS" value="0" data={[0, 0, 0, 1, 0, 0, 0, 0, 0, 0]} />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+            <HubSupabaseChart label="EVENTOS / 24H" value="1284" data={[20, 30, 40, 50, 60, 70, 80, 90, 80, 70]} />
+            <HubSupabaseChart label="BLOQUEIOS ATIVOS" value="42" data={[10, 15, 20, 25, 30, 35, 40, 42, 40, 38]} />
+            <HubSupabaseChart label="ALERTAS SUSPEITOS" value="15" data={[5, 10, 8, 12, 10, 8, 6, 10, 12, 15]} />
+            <HubSupabaseChart label="COMPLIANCE GLOBAL" value="99.98%" data={[99, 99, 100, 100, 99, 99, 100, 100, 99, 99]} />
+          </div>
 
       {activeTab === 'saude' && (
         <div style={styles.healthSection}>
           <div style={styles.sectionHeaderInner}>
-            <h3 style={styles.sectionTitle}>Módulos & Micro-serviços Ativos</h3>
+            <h3 style={styles.sectionTitle}>Módulos &amp; Micro-serviços Ativos</h3>
             <span style={styles.aiStatusBadge}>{activeServices.length} MÓDULOS EM TEMPO REAL</span>
           </div>
 
@@ -420,11 +396,11 @@ const InfrastructureManagement: React.FC = () => {
                       ].map((api, i) => (
                         <tr key={i} style={styles.tr}>
                            <td style={styles.td}><code style={{...styles.logIp, fontSize: '13px'}}>{api.path}</code></td>
-                           <td style={styles.td}><span style={{...styles.logAction, color: api.method === 'POST' ? '#0061FF' : '#10B981'}}>{api.method}</span></td>
+                           <td style={styles.td}><span style={{...styles.logAction, color: api.method === 'POST' ? '#0061FF' : '#64748B'}}>{api.method}</span></td>
                            <td style={styles.td}><span style={styles.moduleBadge}>{api.version}</span></td>
                            <td style={styles.td}>
-                              <div style={{...styles.statusTag, color: api.status === 'CRITICAL' ? '#EF4444' : api.status === 'MAINTENANCE' ? '#F59E0B' : '#10B981'}}>
-                                 <div style={statusDotWithGlow(api.status === 'CRITICAL' ? '#EF4444' : api.status === 'MAINTENANCE' ? '#F59E0B' : '#10B981')} />
+                              <div style={{...styles.statusTag, color: api.status === 'CRITICAL' ? '#EF4444' : api.status === 'MAINTENANCE' ? '#F59E0B' : '#0061FF'}}>
+                                 <div style={statusDotWithGlow(api.status === 'CRITICAL' ? '#EF4444' : api.status === 'MAINTENANCE' ? '#F59E0B' : '#0061FF')} />
                                  {api.status}
                               </div>
                            </td>
@@ -447,13 +423,13 @@ const InfrastructureManagement: React.FC = () => {
               { label: 'Eventos / 24h', value: securityStats.attempts || 1284, icon: <ShieldCheck size={20} />, color: 'var(--accent)', bg: 'rgba(99, 102, 241, 0.1)' },
               { label: 'Bloqueios Ativos', value: securityStats.blocks || 42, icon: <Lock size={20} />, color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)' },
               { label: 'Alertas Suspeitos', value: securityStats.alerts || 15, icon: <ShieldAlert size={20} />, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' },
-              { label: 'Compliance Global', value: '99.98%', icon: <Activity size={20} />, color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' },
+              { label: 'Compliance Global', value: '99.98%', icon: <Activity size={20} />, color: '#0061FF', bg: 'rgba(0, 97, 255, 0.1)' },
             ].map((m, i) => (
               <div key={i} style={styles.metricCard}>
                 <div style={{...styles.metricIconBox, backgroundColor: m.bg, color: m.color}}>{m.icon}</div>
                 <div style={styles.metricInfo}>
                   <p style={styles.metricLabel}>{m.label}</p>
-                  <h3 style={{...styles.metricValue, color: m.label === 'Compliance Global' ? '#10B981' : '#0F172A'}}>{m.value}</h3>
+                  <h3 style={{...styles.metricValue, color: m.label === 'Compliance Global' ? '#0061FF' : '#0F172A'}}>{m.value}</h3>
                 </div>
               </div>
             ))}
@@ -508,8 +484,8 @@ const InfrastructureManagement: React.FC = () => {
                         <span style={{
                           fontSize: '10px',
                           fontWeight: '800',
-                          backgroundColor: tok.status === 'ALTA GOVERNANÇA' ? '#FEE2E2' : '#ECFDF5',
-                          color: tok.status === 'ALTA GOVERNANÇA' ? '#EF4444' : '#10B981',
+                          backgroundColor: tok.status === 'ALTA GOVERNANÇA' ? '#FEE2E2' : '#EFF6FF',
+                          color: tok.status === 'ALTA GOVERNANÇA' ? '#EF4444' : '#0061FF',
                           padding: '4px 10px',
                           borderRadius: '12px'
                         }}>{tok.status}</span>
@@ -534,7 +510,7 @@ const InfrastructureManagement: React.FC = () => {
                       <div key={ip.id} style={styles.ipItem}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <code style={{ fontWeight: '800', fontFamily: 'monospace', fontSize: '13px', color: 'var(--accent)' }}>{ip.ip_address}</code>
-                          <div style={statusDotWithGlow('#10B981')} />
+                          <div style={statusDotWithGlow('#0061FF')} />
                         </div>
                         <div style={{ fontSize: '11px', color: '#64748B', marginTop: '6px', fontWeight: '600' }}>{ip.description}</div>
                       </div>
@@ -560,8 +536,8 @@ const InfrastructureManagement: React.FC = () => {
                     <span style={styles.hmacBadge}>x-hub-internal-token</span>
                   </div>
                   <div style={styles.secureBanner}>
-                    <ShieldCheck size={18} color="#10B981" />
-                    <span style={{ fontSize: '11px', fontWeight: '800', color: '#166534' }}>VALIDADOR HMAC: ATIVO</span>
+                    <ShieldCheck size={18} color="#0061FF" />
+                    <span style={{ fontSize: '11px', fontWeight: '800', color: '#1E3A8A' }}>VALIDADOR HMAC: ATIVO</span>
                   </div>
                 </div>
               </div>
@@ -588,8 +564,8 @@ const InfrastructureManagement: React.FC = () => {
                         <span style={{
                           fontSize: '10px',
                           fontWeight: '800',
-                          backgroundColor: fw.status === 'ATIVO' ? '#ECFDF5' : '#F1F5F9',
-                          color: fw.status === 'ATIVO' ? '#10B981' : '#64748B',
+                          backgroundColor: fw.status === 'ATIVO' ? '#EFF6FF' : '#F1F5F9',
+                          color: fw.status === 'ATIVO' ? '#0061FF' : '#64748B',
                           padding: '4px 10px',
                           borderRadius: '12px'
                         }}>{fw.status}</span>
@@ -635,10 +611,10 @@ const InfrastructureManagement: React.FC = () => {
                 </div>
                 <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   <div style={styles.secureBanner}>
-                    <ShieldCheck size={24} color="#10B981" />
+                    <ShieldCheck size={24} color="#0061FF" />
                     <div>
-                      <div style={{ fontSize: '14px', fontWeight: '800', color: '#166534' }}>POLÍTICA GLOBAL DE 2FA: RECOMENDADA</div>
-                      <div style={{ fontSize: '12px', color: '#166534', opacity: 0.8 }}>78% dos administradores possuem 2FA ativo.</div>
+                      <div style={{ fontSize: '14px', fontWeight: '800', color: '#1E3A8A' }}>POLÍTICA GLOBAL DE 2FA: RECOMENDADA</div>
+                      <div style={{ fontSize: '12px', color: '#1E3A8A', opacity: 0.8 }}>78% dos administradores possuem 2FA ativo.</div>
                     </div>
                   </div>
                   
@@ -659,7 +635,7 @@ const InfrastructureManagement: React.FC = () => {
                       {['MASTER_ADMIN', 'ADMIN', 'FINANCEIRO'].map(role => (
                         <div key={role} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #E2E8F0' }}>
                           <span style={{ fontSize: '13px', fontWeight: '600', color: '#334155' }}>{role}</span>
-                          <span style={{ fontSize: '11px', fontWeight: '800', color: '#10B981' }}>OBRIGATÓRIO</span>
+                          <span style={{ fontSize: '11px', fontWeight: '800', color: '#0061FF' }}>OBRIGATÓRIO</span>
                         </div>
                       ))}
                     </div>
@@ -722,8 +698,8 @@ const InfrastructureManagement: React.FC = () => {
                               <span style={{
                                 fontSize: '11px',
                                 fontWeight: '800',
-                                color: '#166534',
-                                backgroundColor: '#DCFCE7',
+                                color: '#1E3A8A',
+                                backgroundColor: '#DBEAFE',
                                 padding: '4px 8px',
                                 borderRadius: '6px'
                               }}>{route.jwt}</span>
@@ -749,7 +725,7 @@ const InfrastructureManagement: React.FC = () => {
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 0' }}><ArrowDownRight size={16} color="var(--accent)" /></div>
                     <div style={{...styles.proxyNode, backgroundColor: '#0F172A', color: 'white', borderColor: '#1E293B'}}>Gateway Central 🔐</div>
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 0' }}><ArrowDownRight size={16} color="var(--accent)" /></div>
-                    <div style={styles.proxyNode}>VPS Ollama <span style={{ fontSize: '11px', color: '#10B981', fontWeight: '800' }}>(IP OCULTO)</span></div>
+                    <div style={styles.proxyNode}>VPS Ollama <span style={{ fontSize: '11px', color: '#0061FF', fontWeight: '800' }}>(IP OCULTO)</span></div>
                   </div>
                 </div>
 
@@ -757,10 +733,10 @@ const InfrastructureManagement: React.FC = () => {
                   <h3 style={styles.sidebarTitle}>CORS & White-labeled Domains</h3>
                   <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '16px' }}>Somente as origens oficiais autenticadas possuem permissão de requisição no gateway.</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {['*.logta.com (Oficial SaaS)', '*.zaptro.com (Oficial)', 'localhost:5173 (Dev)', 'localhost:5174', 'localhost:5175'].map((dom, i) => (
+                    {['*.logta.com (SaaS Logta)', 'localhost:5173 (Dev Logta)', 'localhost:5175 (Hub Master)'].map((dom, i) => (
                       <div key={i} style={styles.corsItem}>
                         <code style={{ fontSize: '12px', color: '#0F172A', fontWeight: '700' }}>{dom}</code>
-                        <CheckCircle2 size={14} color="#10B981" />
+                        <CheckCircle2 size={14} color="#0061FF" />
                       </div>
                     ))}
                   </div>
@@ -807,8 +783,8 @@ const InfrastructureManagement: React.FC = () => {
                             <span style={{
                               fontSize: '11px',
                               fontWeight: '800',
-                              color: item.infra === 'SIM' ? '#166534' : item.infra === 'LEITURA' ? '#9A3412' : '#991B1B',
-                              backgroundColor: item.infra === 'SIM' ? '#DCFCE7' : item.infra === 'LEITURA' ? '#FFEDD5' : '#FEE2E2',
+                              color: item.infra === 'SIM' ? '#1E3A8A' : item.infra === 'LEITURA' ? '#9A3412' : '#991B1B',
+                              backgroundColor: item.infra === 'SIM' ? '#DBEAFE' : item.infra === 'LEITURA' ? '#FFEDD5' : '#FEE2E2',
                               padding: '4px 8px',
                               borderRadius: '6px'
                             }}>{item.infra}</span>
@@ -817,16 +793,16 @@ const InfrastructureManagement: React.FC = () => {
                             <span style={{
                               fontSize: '11px',
                               fontWeight: '800',
-                              color: item.ia === 'SIM' ? '#166534' : item.ia === 'LEITURA' ? '#9A3412' : '#991B1B',
-                              backgroundColor: item.ia === 'SIM' ? '#DCFCE7' : item.ia === 'LEITURA' ? '#FFEDD5' : '#FEE2E2',
+                              color: item.ia === 'SIM' ? '#1E3A8A' : item.ia === 'LEITURA' ? '#9A3412' : '#991B1B',
+                              backgroundColor: item.ia === 'SIM' ? '#DBEAFE' : item.ia === 'LEITURA' ? '#FFEDD5' : '#FEE2E2',
                               padding: '4px 8px',
                               borderRadius: '6px'
                             }}>{item.ia}</span>
                           </td>
                           <td style={styles.td}><span style={styles.moduleBadge}>{item.client}</span></td>
                           <td style={styles.td}>
-                            <div style={{...styles.statusTag, color: '#10B981'}}>
-                              <div style={statusDotWithGlow('#10B981')} />
+                            <div style={{...styles.statusTag, color: '#0061FF'}}>
+                              <div style={statusDotWithGlow('#0061FF')} />
                               {item.status}
                             </div>
                           </td>
@@ -936,7 +912,7 @@ const InfrastructureManagement: React.FC = () => {
                       <td style={styles.td}><span style={styles.logTime}>{new Date(log.created_at).toLocaleString()}</span></td>
                       <td style={styles.td}>
                         {log.success ? (
-                          <div style={{...styles.statusTag, color: '#10B981'}}><CheckCircle2 size={14} /> SUCESSO</div>
+                          <div style={{...styles.statusTag, color: '#0061FF'}}><CheckCircle2 size={14} /> SUCESSO</div>
                         ) : (
                           <div style={{...styles.statusTag, color: '#EF4444'}}><AlertCircle size={14} /> FALHA</div>
                         )}
@@ -978,7 +954,7 @@ const InfrastructureManagement: React.FC = () => {
 
           <div style={{ marginTop: '48px' }}>
             <h3 style={styles.sectionTitle}>Barramento de Eventos (Event Bridge)</h3>
-            <p style={styles.subtitle}>Fluxo de eventos em tempo real entre HUB, Zaptro e Logta.</p>
+            <p style={styles.subtitle}>Fluxo de eventos em tempo real entre Hub Master e tenants Logta.</p>
             
             <div style={{ 
               marginTop: '20px', 
@@ -1102,7 +1078,7 @@ const InfrastructureManagement: React.FC = () => {
                       <td style={styles.td}><span style={styles.logTime}>{snap.date}</span></td>
                       <td style={styles.td}><span style={styles.moduleBadge}>{snap.dest}</span></td>
                       <td style={styles.td}>
-                        <div style={{...styles.statusTag, color: '#10B981'}}><CheckCircle2 size={14} /> {snap.status}</div>
+                        <div style={{...styles.statusTag, color: '#0061FF'}}><CheckCircle2 size={14} /> {snap.status}</div>
                       </td>
                     </tr>
                   ))}
@@ -1112,6 +1088,7 @@ const InfrastructureManagement: React.FC = () => {
           </div>
         </div>
       )}
+      </div>{/* end paddingTop */}
 
       {/* MODALS */}
       <LogtaModal 
@@ -1199,11 +1176,11 @@ const styles: Record<string, any> = {
   },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '48px' },
   headerTitleGroup: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  title: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0 },
   subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '16px', alignItems: 'center' },
   statusBadgeGlobal: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#F0FDFA', color: '#0D9488', padding: '10px 20px', borderRadius: '14px', fontSize: '11px', fontWeight: '800', border: '1px solid #CCFBF1' },
-  statusDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px #10B981' },
+  statusDot: { width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF', boxShadow: '0 0 8px #0061FF' },
 
   tabNav: { display: 'flex', gap: '40px', marginBottom: '48px', borderBottom: '1px solid var(--border)', paddingBottom: '0' },
   tabBtn: { border: 'none', background: 'none', padding: '16px 4px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '-1px', outline: 'none' },
@@ -1223,7 +1200,7 @@ const styles: Record<string, any> = {
   serviceCard: { backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '24px', border: '1px solid #F1F5F9', boxShadow: '0 8px 16px rgba(0, 0, 0, 0.04)', cursor: 'pointer', transition: 'all 0.2s ease' },
   svcHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' },
   svcIcon: { width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' },
-  svcStatus: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: '800', color: '#10B981' },
+  svcStatus: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: '800', color: '#0061FF' },
   svcName: { fontSize: '15px', fontWeight: '800', color: '#1E293B', marginBottom: '16px', margin: 0 },
   svcMetrics: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', paddingTop: '16px', borderTop: '1px solid #F1F5F9' },
   svcMetric: { display: 'flex', flexDirection: 'column', gap: '4px' },
@@ -1260,8 +1237,8 @@ const styles: Record<string, any> = {
   sidebarSection: { backgroundColor: '#FFFFFF', padding: '32px', borderRadius: '24px', border: '1px solid #F1F5F9', boxShadow: '0 8px 16px rgba(0, 0, 0, 0.04)', transition: 'all 0.2s ease' },
   sidebarTitle: { fontSize: '18px', fontWeight: '800', color: '#0F172A', marginBottom: '24px' },
   threatMapMini: { height: '200px', backgroundColor: '#0F172A', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' },
-  liveTag: { position: 'absolute', top: '16px', right: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: '800', color: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '6px 12px', borderRadius: '20px' },
-  liveDot: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px #10B981' },
+  liveTag: { position: 'absolute', top: '16px', right: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: '800', color: '#0061FF', backgroundColor: 'rgba(0, 97, 255, 0.1)', padding: '6px 12px', borderRadius: '20px' },
+  liveDot: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0061FF', boxShadow: '0 0 8px #0061FF' },
   ipItem: { padding: '16px', backgroundColor: '#FFF', borderRadius: '16px', border: '1px solid #F1F5F9', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' },
 
   fullCard: { backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #F1F5F9', overflow: 'hidden', boxShadow: '0 8px 16px rgba(0, 0, 0, 0.04)' },
@@ -1315,7 +1292,7 @@ const styles: Record<string, any> = {
     textOverflow: 'ellipsis',
   },
   autonomousAction: { flexShrink: 0 },
-  statusBadgeActive: { padding: '8px 16px', backgroundColor: '#F0FDF4', color: '#166534', borderRadius: '20px', fontSize: '11px', fontWeight: '800', border: '1px solid #DCFCE7' },
+  statusBadgeActive: { padding: '8px 16px', backgroundColor: '#EFF6FF', color: '#1E3A8A', borderRadius: '20px', fontSize: '11px', fontWeight: '800', border: '1px solid #DBEAFE' },
   masterCommandBtn: { display: 'flex', alignItems: 'center', gap: '16px', padding: '20px', backgroundColor: '#FFF', border: '1px solid var(--border)', borderRadius: '20px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' },
   masterCommandLabel: { fontSize: '14px', fontWeight: '800', color: '#0F172A' },
   masterCommandSub: { fontSize: '12px', color: '#64748B', marginTop: '2px' },
@@ -1353,10 +1330,10 @@ const styles: Record<string, any> = {
   specLabel: { fontSize: '11px', color: '#64748B', fontWeight: '700', textTransform: 'uppercase' },
   specVal: { fontSize: '12px', color: '#0F172A', fontWeight: '800' },
   sidebarCardSecurity: { backgroundColor: '#FFFFFF', padding: '32px', borderRadius: '24px', border: '1px solid #F1F5F9', boxShadow: '0 8px 16px rgba(0, 0, 0, 0.04)', transition: 'all 0.2s ease' },
-  ipItemLocal: { padding: '16px', backgroundColor: '#F0FDF4', borderRadius: '16px', border: '1px solid #DCFCE7' },
+  ipItemLocal: { padding: '16px', backgroundColor: '#EFF6FF', borderRadius: '16px', border: '1px solid #DBEAFE' },
   hmacBadgeWrapper: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' },
   hmacBadge: { padding: '6px 12px', backgroundColor: '#F1F5F9', color: '#475569', borderRadius: '8px', fontFamily: 'monospace', fontSize: '11px', fontWeight: '700' },
-  secureBanner: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#F0FDF4', border: '1px solid #DCFCE7', padding: '12px', borderRadius: '14px', marginTop: '16px' },
+  secureBanner: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#EFF6FF', border: '1px solid #DBEAFE', padding: '12px', borderRadius: '14px', marginTop: '16px' },
   proxyMapBox: { display: 'flex', flexDirection: 'column', gap: '4px', backgroundColor: '#F8FAFC', padding: '20px', borderRadius: '20px', border: '1px solid #E2E8F0' },
   proxyNode: { padding: '12px 16px', backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: '12px', fontSize: '13px', fontWeight: '700', color: '#334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   corsItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px' },

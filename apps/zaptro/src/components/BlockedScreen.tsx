@@ -54,7 +54,7 @@ const BlockedScreen: React.FC<BlockedScreenProps> = ({ reason }) => {
         </h1>
 
         <p style={{
-          color: '#94A3B8',
+          color: '#949494',
           fontSize: '15px',
           lineHeight: '1.6',
           marginBottom: '32px'
@@ -92,7 +92,7 @@ const BlockedScreen: React.FC<BlockedScreenProps> = ({ reason }) => {
           <button 
             style={{
               backgroundColor: 'transparent',
-              color: '#94A3B8',
+              color: '#949494',
               border: '1px solid rgba(148, 163, 184, 0.2)',
               padding: '16px',
               borderRadius: '16px',
@@ -114,7 +114,7 @@ const BlockedScreen: React.FC<BlockedScreenProps> = ({ reason }) => {
           justifyContent: 'center',
           gap: '24px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B', fontSize: '11px', fontWeight: '600' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#949494', fontSize: '11px', fontWeight: '600' }}>
             <Lock size={14} /> HUB BRAIN PROTECTED
           </div>
         </div>

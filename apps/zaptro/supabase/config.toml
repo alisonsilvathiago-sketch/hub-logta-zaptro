@@ -1,0 +1,10 @@
+# Supabase CLI — projeto Zaptro WhatsApp / Evolution
+project_id = "rrjnkmgkhbtapumgmhhr"
+
+# Webhook da Evolution não envia JWT — rotas públicas; auth manual nas rotas protegidas da evolution-api.
+[functions.evolution-api]
+verify_jwt = false
+
+# Função dedicada só ao webhook (URL curta para a Evolution GO).
+[functions.evolution-webhook]
+verify_jwt = false

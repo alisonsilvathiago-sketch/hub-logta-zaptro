@@ -142,7 +142,7 @@ const ZaptroCompanyLogin: React.FC = () => {
           fontFamily: 'inherit',
         }}
       >
-        <Loader2 className="animate-spin" size={32} color="#64748b" />
+        <Loader2 className="animate-spin" size={32} color="#949494" />
       </div>
     );
   }
@@ -218,7 +218,7 @@ const ZaptroCompanyLogin: React.FC = () => {
       >
         {busy ? <Loader2 className="animate-spin" size={20} style={{ margin: '0 auto' }} /> : 'Entrar'}
       </button>
-      <p style={{ margin: 0, fontSize: 11, color: '#64748b', textAlign: 'center', fontWeight: 600 }}>
+      <p style={{ margin: 0, fontSize: 11, color: '#949494', textAlign: 'center', fontWeight: 600 }}>
         Login da equipa <strong style={{ color: '#0f172a' }}>{row.name}</strong> ·{' '}
         <a href="/login" style={{ color: sec, fontWeight: 600 }}>
           Acesso Zaptro global
@@ -261,7 +261,7 @@ const ZaptroCompanyLogin: React.FC = () => {
               <span style={{ fontWeight: 700, fontSize: 18, color: '#0f172a' }}>{row.name}</span>
             )}
             <h1 style={{ margin: '14px 0 6px', fontSize: 24, fontWeight: 700, color: '#0f172a' }}>Bem-vindo</h1>
-            <p style={{ margin: 0, fontSize: 14, color: '#64748b', fontWeight: 600 }}>Entre com o e-mail da equipa.</p>
+            <p style={{ margin: 0, fontSize: 14, color: '#949494', fontWeight: 600 }}>Entre com o e-mail da equipa.</p>
           </div>
           {formBlock}
         </div>

@@ -5,7 +5,7 @@ import {
   ChevronRight, Calendar, DollarSign,
   Filter, MoreVertical, MessageSquare,
   Clock, CheckCircle, AlertCircle, 
-  Layout, List, Kanban, ArrowUpRight,
+  ArrowUpRight,
   Star, Zap, Shield, Trash2,
   TrendingDown, UserPlus, FileText,
   Smartphone, ExternalLink, MailQuestion
@@ -21,7 +21,7 @@ import { HubMetricCard, HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetr
 import Button from '@shared/components/Button';
 import Pagination from '@shared/components/Pagination';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
-import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
+import { HUB_PAGE_TITLE, HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 import Kbd from '@shared/components/Kbd';
 import { getPlatform } from '@core/lib/platform';
@@ -57,7 +57,7 @@ const MasterCRM: React.FC = () => {
     { id: 'contato', name: 'Qualificação', color: '#0061FF' },
     { id: 'negociacao', name: 'Negociação', color: '#f59e0b' },
     { id: 'proposta', name: 'Apresentação', color: '#38bdf8' },
-    { id: 'fechamento', name: 'Fechado / Ganho', color: '#10b981' }
+    { id: 'fechamento', name: 'Fechado / Ganho', color: '#0061FF' }
   ];
 
   const fetchLeads = async () => {
@@ -95,6 +95,18 @@ const MasterCRM: React.FC = () => {
   useEffect(() => {
     fetchLeads();
   }, [currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === '1') setViewMode('kanban');
+      if (e.key === '2') setViewMode('list');
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const handleAddLead = async () => {
     const tid = toastLoading('Registrando oportunidade no pipeline...');
@@ -140,51 +152,30 @@ const MasterCRM: React.FC = () => {
 
   return (
     <div style={styles.container} className="animate-fade-in">
-      <header style={styles.header}>
+      <header style={{ ...styles.header, alignItems: 'center', marginLeft: 15, marginRight: 15 }}>
         <div>
-          <h1 className="h1-style" style={{ margin: 0 }}>Gestão de Expansão & Vendas</h1>
-          <p style={HUB_PAGE_SUBTITLE}>Centralize leads e negociações em um único ecossistema.</p>
+          <h1 className="h1-style" style={{ ...HUB_PAGE_TITLE, margin: 0 }}>
+            Leads &amp; CRM comercial
+          </h1>
         </div>
         <div style={styles.headerActions}>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <div style={styles.viewToggle}>
-              <button 
-                style={{...styles.toggleBtn, ...(viewMode === 'kanban' ? styles.toggleActive : {})}}
-                onClick={() => setViewMode('kanban')}
-              >
-                <Kanban size={14} /> 
-                <span>Kanban</span>
-                <Kbd style={{ fontSize: '9px', marginLeft: '6px', opacity: 0.6 }}>1</Kbd>
-              </button>
-              <button 
-                style={{...styles.toggleBtn, ...(viewMode === 'list' ? styles.toggleActive : {})}}
-                onClick={() => setViewMode('list')}
-              >
-                <List size={14} /> 
-                <span>Lista</span>
-                <Kbd style={{ fontSize: '9px', marginLeft: '6px', opacity: 0.6 }}>2</Kbd>
-              </button>
-            </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <ShortcutTooltip shortcut="n" ctrl>
-                <Button 
-                  variant="primary" 
-                  icon={<Plus size={18} />} 
-                  label={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>Nova Lead</span>
-                      <div style={{ display: 'flex', gap: '2px', opacity: 0.8 }}>
-                        <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '9px', padding: '0 4px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF' }}>{platform.cmd}</Kbd>
-                        <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '9px', padding: '0 4px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF' }}>N</Kbd>
-                      </div>
-                    </div>
-                  } 
-                  onClick={() => setIsLeadModalOpen(true)} 
-                  style={{ color: '#FFFFFF' }}
-                />
-              </ShortcutTooltip>
-            </div>
-          </div>
+          <ShortcutTooltip shortcut="n" ctrl>
+            <Button
+              variant="primary"
+              size="md"
+              icon={<Plus size={16} />}
+              label={
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: 600 }}>Nova Lead</span>
+                  <div style={{ display: 'flex', gap: '2px', opacity: 0.85 }}>
+                    <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '9px', padding: '0 4px', background: 'rgba(255,255,255,0.22)', border: 'none', color: '#FFF' }}>{platform.cmd}</Kbd>
+                    <Kbd style={{ height: '16px', minWidth: '16px', fontSize: '9px', padding: '0 4px', background: 'rgba(255,255,255,0.22)', border: 'none', color: '#FFF' }}>N</Kbd>
+                  </div>
+                </div>
+              }
+              onClick={() => setIsLeadModalOpen(true)}
+            />
+          </ShortcutTooltip>
         </div>
       </header>
 
@@ -202,7 +193,7 @@ const MasterCRM: React.FC = () => {
                 gap: 4,
                 fontSize: 14,
                 fontWeight: 800,
-                color: '#10B981',
+                color: '#0061FF',
               }}
             >
               +12% <ArrowUpRight size={12} />
@@ -498,21 +489,18 @@ const MasterCRM: React.FC = () => {
 };
 
 const styles = {
-  container: { padding: '0', backgroundColor: 'transparent', minHeight: '100vh' },
+  container: {
+    padding: '37px var(--hub-shell-space-page-x, 24px) 64px',
+    backgroundColor: '#FFFFFF',
+    minHeight: '100vh',
+    width: '100%',
+    boxSizing: 'border-box' as const,
+  },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '48px' },
   bread: { fontSize: '10px', fontWeight: '700', color: '#0061FF', marginBottom: '8px', letterSpacing: '1px', textTransform: 'uppercase' as const },
-  title: { fontSize: '29px', fontWeight: '600', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '600', color: '#000000', margin: 0, letterSpacing: 0 },
   subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '20px', alignItems: 'center' },
-  addBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 28px', backgroundColor: '#111827', color: '#FFFFFF', border: 'none', borderRadius: '16px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)', transition: 'all 0.2s', letterSpacing: '0.4px' },
-  
-  tabSwitch: { display: 'flex', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '16px', gap: '4px' },
-  tabBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', border: 'none', borderRadius: '12px', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '700', color: '#64748b', transition: 'all 0.2s' },
-  tabActive: { backgroundColor: 'white', color: '#111827', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' },
-
-  viewToggle: { display: 'flex', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '12px' },
-  toggleBtn: { display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', border: 'none', borderRadius: '8px', background: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#64748b', transition: 'all 0.2s' },
-  toggleActive: { backgroundColor: 'white', color: '#111827', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' },
 
   statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' },
   statCard: { 

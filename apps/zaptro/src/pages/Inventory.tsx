@@ -126,13 +126,17 @@ const Inventory: React.FC = () => {
                    <AlertCircle size={24} color="#ef4444" />
                  </div>
               </div>
-              <div style={styles.chartCard}><div style={styles.cardHeader}><h3>Movimentação Semanal</h3></div><div style={{padding:'24px', height:'300px', backgroundColor:'#f4f4f4', borderRadius:'16px', display:'flex', alignItems:'center', justifyContent:'center', color:'#94a3b8'}}>Gráfico de Movimentação</div></div>
+              <div style={styles.chartCard}><div style={styles.cardHeader}><h3>Movimentação Semanal</h3></div><div style={{padding:'24px', height:'300px', backgroundColor:'#f4f4f4', borderRadius:'16px', display:'flex', alignItems:'center', justifyContent:'center', color:'#949494'}}>Gráfico de Movimentação</div></div>
            </div>
         )}
 
         {activeTab === 'estoque' && (
            <div style={styles.tabContent}>
-              <div style={styles.actionBar}><button style={styles.btnPrimary} onClick={() => setIsCreateModalOpen(true)}><Plus size={18} /> Novo Item</button></div>
+              <div style={styles.actionBar}>
+                <button className="hub-premium-pill primary" onClick={() => setIsCreateModalOpen(true)}>
+                  <Plus size={18} /> Novo Item
+                </button>
+              </div>
               <div style={styles.tableCard}>
                  <table style={styles.table}>
                     <thead><tr><th style={styles.th}>Produto</th><th style={styles.th}>SKU</th><th style={styles.th}>Qtd</th><th style={styles.th}>Local</th><th style={styles.th}>Ações</th></tr></thead>
@@ -224,7 +228,7 @@ const Inventory: React.FC = () => {
             </div>
           </div>
 
-          <button type="submit" style={{...styles.btnPrimary, height: '56px', marginTop: '10px', justifyContent: 'center'}} disabled={loadingAction}>
+          <button type="submit" className="hub-premium-pill primary" style={{ width: '100%', height: '56px', marginTop: '10px' }} disabled={loadingAction}>
             {loadingAction ? 'Salvando...' : 'Cadastrar Produto'}
           </button>
         </form>
@@ -235,7 +239,7 @@ const Inventory: React.FC = () => {
             <div style={{padding: '24px'}}>
                <div style={{display:'flex', gap:'20px', alignItems:'center', marginBottom:'32px'}}>
                   <div style={{width:'64px', height:'64px', backgroundColor:'var(--primary-light)', borderRadius:'16px', display:'flex', alignItems:'center', justifyContent:'center'}}><Package size={32} color="var(--primary)" /></div>
-                  <div><h2 style={{margin:0}}>{selectedItem.name}</h2><p style={{margin:0, color:'#64748b'}}>SKU: {selectedItem.sku}</p></div>
+                  <div><h2 style={{margin:0}}>{selectedItem.name}</h2><p style={{margin:0, color:'#949494'}}>SKU: {selectedItem.sku}</p></div>
                </div>
                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px'}}>
                   <div><label style={styles.labelSimple}>Quantidade Atual</label><strong>{selectedItem.quantity} {selectedItem.unit}</strong></div>
@@ -253,17 +257,17 @@ const styles: Record<string, any> = {
   kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' },
   kpiCard: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   kpiInfo: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  kpiLabel: { fontSize: '12px', fontWeight: '700', color: '#94a3b8', margin: 0 },
+  kpiLabel: { fontSize: '12px', fontWeight: '700', color: '#949494', margin: 0 },
   chartCard: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid #e2e8f0', overflow: 'hidden' },
   cardHeader: { padding: '20px 24px', borderBottom: '1px solid #e8e8e8' },
   actionBar: { display: 'flex', justifyContent: 'flex-end' },
   btnPrimary: { padding: '10px 20px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
   tableCard: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid #e2e8f0', overflow: 'hidden' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  th: { textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', borderBottom: '1px solid #e8e8e8' },
+  th: { textAlign: 'left', padding: '16px 24px', fontSize: '11px', fontWeight: '600', color: '#949494', textTransform: 'uppercase', borderBottom: '1px solid #e8e8e8' },
   td: { padding: '16px 24px', fontSize: '14px', borderBottom: '1px solid #e8e8e8', color: '#475569' },
-  iconBtnTable: { padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: '#f4f4f4', cursor: 'pointer', color: '#64748B' },
-  labelSimple: { fontSize: '11px', fontWeight: '700', color: '#94a3b8', display: 'block', marginBottom: '4px' }
+  iconBtnTable: { padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: '#f4f4f4', cursor: 'pointer', color: '#949494' },
+  labelSimple: { fontSize: '11px', fontWeight: '700', color: '#949494', display: 'block', marginBottom: '4px' }
 };
 
 export default Inventory;

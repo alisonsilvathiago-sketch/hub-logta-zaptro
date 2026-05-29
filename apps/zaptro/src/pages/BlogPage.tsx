@@ -67,7 +67,7 @@ const BlogPage: React.FC = () => {
            <p style={styles.subtitle}>Estratégias, tendências e inovação para transformar sua transportadora em uma potência tecnológica.</p>
            
            <div style={styles.searchBox}>
-              <Search size={20} color="#94a3b8" />
+              <Search size={20} color="#949494" />
               <input 
                  placeholder="O que você deseja aprender hoje?" 
                  style={styles.searchInput}
@@ -161,7 +161,7 @@ const styles: Record<string, any> = {
   heroContent: { maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '24px' },
   badge: { fontSize: '11px', fontWeight: '700', color: 'var(--primary)', letterSpacing: '2px', backgroundColor: 'rgba(217, 255, 0, 0.15)', padding: '6px 16px', borderRadius: '30px' },
   title: { fontSize: '48px', fontWeight: '700', letterSpacing: '-2px', margin: 0 },
-  subtitle: { fontSize: '18px', color: '#94A3B8', lineHeight: '1.6' },
+  subtitle: { fontSize: '18px', color: '#949494', lineHeight: '1.6' },
   searchBox: { 
      width: '100%', maxWidth: '600px', backgroundColor: 'white', borderRadius: '20px', 
      padding: '8px 12px 8px 24px', display: 'flex', alignItems: 'center', gap: '16px', marginTop: '20px' 
@@ -170,7 +170,7 @@ const styles: Record<string, any> = {
   searchBtn: { backgroundColor: 'var(--primary)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '14px', fontWeight: '700', cursor: 'pointer' },
 
   categoryNav: { display: 'flex', justifyContent: 'center', gap: '12px', padding: '32px 40px', borderBottom: '1px solid #E2E8F0', backgroundColor: 'white' },
-  catBtn: { padding: '10px 20px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#64748B', fontWeight: '700', fontSize: '14px', cursor: 'pointer', transition: '0.2s' },
+  catBtn: { padding: '10px 20px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: 'white', color: '#949494', fontWeight: '700', fontSize: '14px', cursor: 'pointer', transition: '0.2s' },
 
   main: { maxWidth: '1200px', margin: '60px auto', padding: '0 40px', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '40px' },
   articleGrid: { display: 'flex', flexDirection: 'column' as const, gap: '32px' },
@@ -178,9 +178,9 @@ const styles: Record<string, any> = {
   cardInfo: { padding: '40px', display: 'flex', flexDirection: 'column' as const, gap: '20px' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   cardCat: { fontSize: '11px', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
-  meta: { fontSize: '12px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px' },
+  meta: { fontSize: '12px', color: '#949494', display: 'flex', alignItems: 'center', gap: '6px' },
   cardTitle: { fontSize: '24px', fontWeight: '700', color: '#0F172A', margin: 0, lineHeight: '1.3' },
-  cardExcerpt: { fontSize: '15px', color: '#64748B', lineHeight: '1.6', margin: 0 },
+  cardExcerpt: { fontSize: '15px', color: '#949494', lineHeight: '1.6', margin: 0 },
   cardFooter: { marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '24px', borderTop: '1px solid #e8e8e8' },
   authorArea: { display: 'flex', alignItems: 'center', gap: '10px' },
   authorAvatar: { width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#ebebeb', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700' },
@@ -197,13 +197,13 @@ const styles: Record<string, any> = {
   ctaBtn: { width: '100%', height: '50px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '14px', fontWeight: '600', cursor: 'pointer' },
   
   newsletter: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', border: '1px solid #E2E8F0' },
-  newsDesc: { fontSize: '14px', color: '#64748B', lineHeight: '1.5', marginBottom: '20px' },
+  newsDesc: { fontSize: '14px', color: '#949494', lineHeight: '1.5', marginBottom: '20px' },
   newsFlex: { display: 'flex', gap: '8px' },
   newsInput: { flex: 1, height: '44px', padding: '0 16px', borderRadius: '12px', border: '1px solid #E2E8F0', outline: 'none' },
   newsBtn: { width: '44px', height: '44px', backgroundColor: '#0F172A', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer' },
 
   footer: { padding: '60px 40px', textAlign: 'center' as const, borderTop: '1px solid #E2E8F0' },
-  footerLinks: { display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '16px', fontSize: '13px', color: '#94A3B8' }
+  footerLinks: { display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '16px', fontSize: '13px', color: '#949494' }
 };
 
 export default BlogPage;

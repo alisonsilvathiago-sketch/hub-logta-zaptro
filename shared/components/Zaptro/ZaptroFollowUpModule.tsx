@@ -170,7 +170,7 @@ export const ZaptroFollowUpModule: React.FC<ZaptroFollowUpModuleProps> = ({
                   <>
                     <button
                       onClick={() => onStatusChange(fu.id, 'concluido')}
-                      style={{ padding: '8px 12px', borderRadius: 10, border: 'none', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
+                      style={{ padding: '8px 12px', borderRadius: 10, border: 'none', backgroundColor: 'rgba(0, 97, 255, 0.1)', color: '#0061FF', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
                     >
                       <CheckCircle2 size={16} style={{ marginBottom: -3, marginRight: 4 }} /> Concluir
                     </button>
@@ -183,7 +183,7 @@ export const ZaptroFollowUpModule: React.FC<ZaptroFollowUpModuleProps> = ({
                   </>
                 )}
                 {fu.status === 'concluido' && (
-                  <span style={{ color: '#10b981', fontWeight: 800, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>CONCLUÍDO</span>
+                  <span style={{ color: '#0061FF', fontWeight: 800, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>CONCLUÍDO</span>
                 )}
                 {fu.status === 'cancelado' && (
                   <span style={{ color: muted, fontWeight: 800, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>CANCELADO</span>

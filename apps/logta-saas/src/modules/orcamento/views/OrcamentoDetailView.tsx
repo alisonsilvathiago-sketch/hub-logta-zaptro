@@ -21,7 +21,7 @@ export function OrcamentoDetailView() {
 
   if (!orc) {
     return (
-      <div className="space-y-6">
+      <div className="logta-page-content space-y-6">
         <button type="button" onClick={() => navigate('/crm/orcamentos')} className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-primary">
           <ArrowLeft size={16} /> Voltar
         </button>
@@ -47,7 +47,7 @@ export function OrcamentoDetailView() {
   };
 
   return (
-    <div className="space-y-8 text-left">
+    <div className="logta-page-content space-y-8 text-left">
       <button type="button" onClick={() => navigate('/crm/orcamentos')} className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-primary">
         <ArrowLeft size={16} /> Voltar para orçamentos
       </button>

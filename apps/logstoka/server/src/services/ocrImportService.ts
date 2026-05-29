@@ -1,8 +1,6 @@
 import type { LogstokaConfig } from '../config.js';
 import { parseReportCsv, type ReportRow } from './importParser.js';
-
-const DEFAULT_OLLAMA = 'http://108.174.151.98:11434';
-const DEFAULT_MODEL = 'llama3.2';
+import { generateOllamaJson } from '../modules/ai/ollamaService.js';
 
 export async function parseExcelBuffer(buffer: Buffer): Promise<ReportRow[]> {
   const XLSX = await import('xlsx');
@@ -58,28 +56,13 @@ export async function extractRowsWithOllama(
   cfg: LogstokaConfig,
   rawText: string,
 ): Promise<ReportRow[]> {
-  const base = process.env.LOGSTOKA_OLLAMA_URL?.trim() || DEFAULT_OLLAMA;
-  const model = process.env.LOGSTOKA_OLLAMA_MODEL?.trim() || DEFAULT_MODEL;
-
   const prompt = `Extraia linhas de relatório de estoque/marketplace do texto abaixo.
 Retorne APENAS JSON array: [{"sku":"...","quantity":number,"marketplace":"...","store":"..."}]
 Texto:
 ${rawText.slice(0, 12000)}`;
 
-  const res = await fetch(`${base.replace(/\/$/, '')}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, prompt, stream: false, format: 'json' }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Ollama indisponível (${res.status})`);
-  }
-
-  const data = (await res.json()) as { response?: string };
-  const jsonText = data.response ?? '[]';
-  const parsed = JSON.parse(jsonText) as ReportRow[];
-  return parsed.filter((r) => r.sku && r.quantity > 0);
+  const parsed = await generateOllamaJson<ReportRow[]>(cfg, prompt);
+  return (Array.isArray(parsed) ? parsed : []).filter((r) => r.sku && r.quantity > 0);
 }
 
 export async function ocrImageBase64(cfg: LogstokaConfig, base64: string, mimeType: string): Promise<ReportRow[]> {

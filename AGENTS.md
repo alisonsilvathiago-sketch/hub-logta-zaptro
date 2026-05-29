@@ -78,10 +78,28 @@ Para trabalhar no Zaptro completo (UI + envio de e-mail), rode frontend e `apps/
   - fallback automático para fila em memória com retry exponencial quando Redis/BullMQ não estiver disponível.
 - O frontend consome essa API por `VITE_ZAPTRO_MAIL_API_URL` (`apps/zaptro/src/lib/zaptroMailApi.ts`).
 
+### Disponibilidade crítica (Evolution Go + Llama 3.2)
+- **Evolution Go** e **Llama 3.2 (Ollama)** são serviços essenciais — devem permanecer **online 24/7** na VPS.
+- Não desactivar, pausar ou desconectar em operação normal; preferir retry, health checks e reconexão automática.
+- Falhas: recuperação automática + log. Regra Cursor: `.cursor/rules/zaptro-service-availability.mdc`.
+- Ollama: proxy dev `/ollama-api` → `OLLAMA_PROXY_TARGET` · modelo `llama3.2` · doc `apps/zaptro/OLLAMA_SETUP.md`.
+- Evolution: proxy dev `/evolution-api` · webhook `evolution-webhook` no Supabase.
+
 ### Vite aliases and shared code
 - `@` aponta para `src` de cada app.
 - `@shared` aponta para `shared` (ou `../shared` no `hub`).
 - `hub` expõe aliases adicionais (`@core`, `@hub`) úteis para navegação e refactors internos.
+
+### LogStoka (`apps/logstoka`) — PIM + Hub multicanal
+- App WMS em React/Vite (porta **5177**): `npm run dev --prefix apps/logstoka`.
+- **Fonte da verdade de produtos**: SKU mestre no LogStoka; mesmo SKU em Shopee, ML, Amazon, TikTok, Magalu.
+- **Hub operacional por marketplace**: `/app/mercadolivre`, `/app/shopee`, etc. (`MarketplaceHubPage`, `marketplaceHub.ts`).
+- **Catálogo**: `modules/products/`, demo em `logstokaDemoSeed.ts`.
+- **Integrações / config**: `modules/settings/`, `SettingsIntegrationsPanel.tsx`.
+- Regra Cursor PIM + catálogo mestre: `.cursor/rules/logstoka-master-catalog-pim-hub.mdc`.
+- Regra Cursor integrações + webhooks (coração do produto): `.cursor/rules/logstoka-integrations-webhooks-hub.mdc`.
+- Regra Cursor cadastro universal PIM: `.cursor/rules/logstoka-universal-product-catalog.mdc`.
+- Regra Cursor publicação por loja/grupo: `.cursor/rules/logstoka-publication-flow.mdc`.
 
 ### Notes that matter when editing
 - Produto isolado é regra: `apps/logta`, `apps/zaptro` e `hub` não devem importar código de domínio uns dos outros; integrações entre produtos devem ocorrer por API/evento, não por import direto de arquivos.

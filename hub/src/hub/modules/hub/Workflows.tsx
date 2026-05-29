@@ -15,7 +15,27 @@ import { useAuth } from '@core/context/AuthContext';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import LogtaModal from '@shared/components/Modal';
 import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
-import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
+import { HUB_PAGE_SUBTITLE, HUB_SIDEBAR_NAV_LABEL } from '@hub/styles/hubPageTypography';
+import { HUB_MASTER_SECTION_NAV } from '@hub/styles/hubMasterSectionNavStyles';
+
+export type WorkflowSectionId = 'workflows' | 'notifications' | 'events' | 'executions';
+
+export const WORKFLOW_SECTIONS: {
+  id: WorkflowSectionId;
+  label: string;
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number }>;
+}[] = [
+  { id: 'workflows', label: 'Fluxos operacionais', icon: Cpu },
+  { id: 'notifications', label: 'Matriz de e-mails (Brain)', icon: BellRing },
+  { id: 'events', label: 'Eventos, filas & SLA', icon: Layers },
+  { id: 'executions', label: 'Histórico de execuções', icon: Activity },
+];
+
+type WorkflowManagementProps = {
+  embedded?: boolean;
+  activeSection?: WorkflowSectionId;
+  onSectionChange?: (id: WorkflowSectionId) => void;
+};
 
 interface Workflow {
   id: string;
@@ -37,9 +57,18 @@ interface NotificationSetting {
   target_role: string;
 }
 
-const WorkflowManagement: React.FC = () => {
+const WorkflowManagement: React.FC<WorkflowManagementProps> = ({
+  embedded = false,
+  activeSection,
+  onSectionChange,
+}) => {
   const { profile } = useAuth();
-  const [activeTab, setActiveTab] = useState<'workflows' | 'notifications' | 'events' | 'executions'>('workflows');
+  const [internalTab, setInternalTab] = useState<WorkflowSectionId>('workflows');
+  const activeTab = embedded && activeSection ? activeSection : internalTab;
+  const setActiveTab = (id: WorkflowSectionId) => {
+    if (embedded && onSectionChange) onSectionChange(id);
+    else setInternalTab(id);
+  };
   const [loading, setLoading] = useState(true);
   
   // States for Workflows
@@ -224,58 +253,36 @@ const WorkflowManagement: React.FC = () => {
 
   return (
     <div style={styles.container} className="animate-fade-in">
-      <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Fluxos & Notificações (Brain)</h1>
-          <p style={styles.subtitle}>Gerencie a inteligência operacional e a matriz de comunicação global do ecossistema.</p>
-        </div>
-        <div style={styles.headerActions}>
-           <button style={styles.refreshBtn} onClick={fetchData} title="Sincronizar Matriz">
-              <RefreshCw size={18} />
-           </button>
-           <button style={{ ...styles.primaryBtn, backgroundColor: '#10B981' }} onClick={() => setIsOptionalModalOpen(true)} title="Fluxos Opcionais">
-              <Layers size={18} /> Fluxos Opcionais
-           </button>
-           <button style={styles.primaryBtn} onClick={() => { setSelectedWorkflow({}); setIsModalOpen(true); }}>
-              <Plus size={18} /> Novo Workflow
-           </button>
-        </div>
-      </header>
-
-      <nav style={styles.tabContainer} aria-label="Seções de automação">
-         <button 
-            type="button"
-            style={{...styles.tab, ...(activeTab === 'workflows' ? styles.tabActive : {})}}
-            onClick={() => setActiveTab('workflows')}
-            aria-current={activeTab === 'workflows' ? 'page' : undefined}
-         >
-            <Cpu size={18} strokeWidth={activeTab === 'workflows' ? 2.25 : 2} /> Fluxos operacionais
-         </button>
-         <button 
-            type="button"
-            style={{...styles.tab, ...(activeTab === 'notifications' ? styles.tabActive : {})}}
-            onClick={() => setActiveTab('notifications')}
-            aria-current={activeTab === 'notifications' ? 'page' : undefined}
-         >
-            <BellRing size={18} strokeWidth={activeTab === 'notifications' ? 2.25 : 2} /> Matriz de e-mails (Brain)
-         </button>
-         <button 
-            type="button"
-            style={{...styles.tab, ...(activeTab === 'events' ? styles.tabActive : {})}}
-            onClick={() => setActiveTab('events')}
-            aria-current={activeTab === 'events' ? 'page' : undefined}
-         >
-            <Layers size={18} strokeWidth={activeTab === 'events' ? 2.25 : 2} /> Eventos, filas & SLA
-         </button>
-         <button 
-            type="button"
-            style={{...styles.tab, ...(activeTab === 'executions' ? styles.tabActive : {})}}
-            onClick={() => setActiveTab('executions')}
-            aria-current={activeTab === 'executions' ? 'page' : undefined}
-         >
-            <Activity size={18} strokeWidth={activeTab === 'executions' ? 2.25 : 2} /> Histórico de execuções
-         </button>
-      </nav>
+      <div style={HUB_MASTER_SECTION_NAV.mainInner}>
+            <header style={{ ...styles.header, marginBottom: embedded ? 24 : 32 }}>
+              <div>
+                <h1 style={{ ...styles.title, fontSize: embedded ? 22 : 29 }}>Fluxos & Notificações (Brain)</h1>
+                <p style={styles.subtitle}>Gerencie a inteligência operacional e a matriz de comunicação global do ecossistema.</p>
+              </div>
+              <div style={styles.headerActions}>
+                <button type="button" style={styles.refreshBtn} onClick={fetchData} title="Sincronizar Matriz">
+                  <RefreshCw size={18} />
+                </button>
+                <button
+                  type="button"
+                  style={{ ...styles.primaryBtn, backgroundColor: '#0061FF' }}
+                  onClick={() => setIsOptionalModalOpen(true)}
+                  title="Fluxos Opcionais"
+                >
+                  <Layers size={18} /> Fluxos Opcionais
+                </button>
+                <button
+                  type="button"
+                  style={styles.primaryBtn}
+                  onClick={() => {
+                    setSelectedWorkflow({});
+                    setIsModalOpen(true);
+                  }}
+                >
+                  <Plus size={18} /> Novo Workflow
+                </button>
+              </div>
+            </header>
 
       {activeTab === 'workflows' && (
         <>
@@ -301,7 +308,7 @@ const WorkflowManagement: React.FC = () => {
               label="Execuções / 24h"
               icon={Activity}
               iconVariant="solid"
-              accent="#10B981"
+              accent="#0061FF"
               iconSize={20}
               value="1,284"
             />
@@ -335,7 +342,7 @@ const WorkflowManagement: React.FC = () => {
                     <Zap size={18} color="white" />
                   </div>
                   <div style={styles.wfStatus}>
-                    <div style={{...styles.statusDot, backgroundColor: wf.is_active ? '#10b981' : '#f43f5e'}} />
+                    <div style={{...styles.statusDot, backgroundColor: wf.is_active ? '#0061FF' : '#f43f5e'}} />
                     {wf.is_active ? 'ATIVO' : 'PAUSADO'}
                   </div>
                 </div>
@@ -415,10 +422,10 @@ const WorkflowManagement: React.FC = () => {
                     </div>
                     <div style={styles.notifActions}>
                        <div style={styles.toggleWrapper} onClick={() => toggleNotification(n.id, n.is_active, n.event_type)}>
-                          <div style={{...styles.toggleBg, backgroundColor: n.is_active ? '#10b981' : '#cbd5e1'}}>
+                          <div style={{...styles.toggleBg, backgroundColor: n.is_active ? '#0061FF' : '#cbd5e1'}}>
                              <div style={{...styles.toggleDot, transform: n.is_active ? 'translateX(18px)' : 'translateX(2px)'}} />
                           </div>
-                          <span style={{fontSize: '11px', fontWeight: '600', color: n.is_active ? '#10b981' : '#94a3b8'}}>
+                          <span style={{fontSize: '11px', fontWeight: '600', color: n.is_active ? '#0061FF' : '#94a3b8'}}>
                              {n.is_active ? 'ATIVO' : 'OFF'}
                           </span>
                        </div>
@@ -455,9 +462,9 @@ const WorkflowManagement: React.FC = () => {
                  <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: '700' }}>Fila Principal (BullMQ / Redis)</h4>
                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {[
-                      { name: 'Envio de E-mails Transacionais', count: '0 pendentes', status: 'Ativo', color: '#10b981' },
+                      { name: 'Envio de E-mails Transacionais', count: '0 pendentes', status: 'Ativo', color: '#0061FF' },
                       { name: 'Processamento de Webhooks Asaas', count: '2 na fila', status: 'Processando', color: '#f59e0b' },
-                      { name: 'Sincronização de Logs de Auditoria', count: '0 pendentes', status: 'Ativo', color: '#10b981' },
+                      { name: 'Sincronização de Logs de Auditoria', count: '0 pendentes', status: 'Ativo', color: '#0061FF' },
                     ].map((f, i) => (
                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                           <div>
@@ -525,7 +532,7 @@ const WorkflowManagement: React.FC = () => {
                           <td style={{ padding: '16px 24px', fontSize: '12px' }}><code style={{ fontFamily: 'monospace', color: 'var(--primary)', fontWeight: '700' }}>{ex.trigger}</code></td>
                           <td style={{ padding: '16px 24px', fontSize: '13px', color: '#64748B', fontWeight: '500' }}>{ex.duration}</td>
                           <td style={{ padding: '16px 24px', fontSize: '12px' }}>
-                             <span style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', backgroundColor: '#ecfdf5', color: '#10b981' }}>{ex.status}</span>
+                             <span style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', backgroundColor: '#EFF6FF', color: '#0061FF' }}>{ex.status}</span>
                           </td>
                           <td style={{ padding: '16px 24px', fontSize: '13px', color: '#94a3b8', textAlign: 'right', fontWeight: '500' }}>{ex.time}</td>
                        </tr>
@@ -535,7 +542,7 @@ const WorkflowManagement: React.FC = () => {
            </div>
         </div>
       )}
-
+      </div>
 
       {/* MODAL WORKFLOW */}
       <LogtaModal 
@@ -632,7 +639,7 @@ const WorkflowManagement: React.FC = () => {
           {optionalPresets.map((preset, idx) => (
             <div key={idx} style={{ padding: '24px', backgroundColor: '#F8FAFC', borderRadius: '24px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '10px', fontWeight: '800', backgroundColor: '#ECFDF5', color: '#10B981', padding: '4px 10px', borderRadius: '12px', letterSpacing: '0.8px' }}>
+                <span style={{ fontSize: '10px', fontWeight: '800', backgroundColor: '#EFF6FF', color: '#0061FF', padding: '4px 10px', borderRadius: '12px', letterSpacing: '0.8px' }}>
                   OPCIONAL PRESET
                 </span>
                 <span style={{ fontSize: '11px', fontWeight: '600', color: '#64748B' }}>
@@ -644,7 +651,7 @@ const WorkflowManagement: React.FC = () => {
                 Gatilho associado: <code style={{ fontFamily: 'monospace', color: '#0061FF', fontWeight: '700' }}>{preset.trigger}</code>
               </p>
               <button 
-                style={{ ...styles.primaryBtn, width: '100%', backgroundColor: '#10B981', marginTop: 'auto', justifyContent: 'center' }}
+                style={{ ...styles.primaryBtn, width: '100%', backgroundColor: '#0061FF', marginTop: 'auto', justifyContent: 'center' }}
                 onClick={() => handleInstallOptional(preset)}
               >
                 <Plus size={16} /> ATIVAR ESTE FLUXO
@@ -661,7 +668,7 @@ const WorkflowManagement: React.FC = () => {
 const styles: Record<string, any> = {
   container: { padding: '0' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-  title: { fontSize: '29px', fontWeight: '600', color: '#000000', letterSpacing: 0, margin: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '600', color: '#000000', letterSpacing: 0, margin: 0 },
   subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '12px' },
   refreshBtn: { width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', color: 'var(--text-muted)' },
@@ -753,7 +760,7 @@ const styles: Record<string, any> = {
   guardTitle: { margin: 0, color: '#f8fafc', fontSize: '18px', fontWeight: '500', letterSpacing: '0.4px' },
   guardSub: { margin: '4px 0 0', color: '#94a3b8', fontSize: '13px', fontWeight: '400', letterSpacing: '0.2px' },
   guardLabel: { fontSize: '10px', color: 'var(--primary)', fontWeight: '700', marginBottom: '6px', letterSpacing: '1px' },
-  guardBadge: { color: '#10b981', fontWeight: '600', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '6px 14px', borderRadius: '20px' },
+  guardBadge: { color: '#0061FF', fontWeight: '600', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(0, 97, 255, 0.1)', padding: '6px 14px', borderRadius: '20px' },
   integrationGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
   card: { backgroundColor: 'var(--bg-card, #fff)', padding: '32px', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: 'none', display: 'flex', flexDirection: 'column' },
   cardHeader: { display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '32px' },

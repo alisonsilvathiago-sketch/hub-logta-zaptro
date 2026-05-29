@@ -137,7 +137,7 @@ const styles = {
   },
   heroTitle: { fontSize: '56px', fontWeight: '700', color: '#1e293b', marginTop: '24px', letterSpacing: '-2px', lineHeight: '1.1' },
   highlight: { color: 'var(--primary)' },
-  heroSubtitle: { fontSize: '20px', color: '#64748b', marginTop: '24px', lineHeight: '1.6', maxWidth: '700px', margin: '24px auto' },
+  heroSubtitle: { fontSize: '20px', color: '#949494', marginTop: '24px', lineHeight: '1.6', maxWidth: '700px', margin: '24px auto' },
   heroActions: { display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '40px' },
   primaryBtn: { padding: '16px 32px', backgroundColor: 'var(--primary)', color: 'white', borderRadius: '16px', border: 'none', fontWeight: '600', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(37, 99, 235, 0.2)' },
   secondaryBtn: { padding: '16px 32px', backgroundColor: '#ebebeb', color: '#1e293b', borderRadius: '16px', border: 'none', fontWeight: '600', cursor: 'pointer' },
@@ -152,7 +152,7 @@ const styles = {
   catalogSection: { padding: '100px 40px', maxWidth: '1200px', margin: '0 auto' },
   sectionHeader: { textAlign: 'center' as const, marginBottom: '64px' },
   sectionTitle: { fontSize: '36px', fontWeight: '700', color: '#1e293b' },
-  sectionDesc: { fontSize: '18px', color: '#64748b', marginTop: '12px' },
+  sectionDesc: { fontSize: '18px', color: '#949494', marginTop: '12px' },
   
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '32px' },
   card: { 
@@ -172,9 +172,9 @@ const styles = {
   cardBody: { padding: '28px', display: 'flex', flexDirection: 'column' as const, gap: '16px' },
   category: { fontSize: '11px', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase' as const },
   cTitle: { fontSize: '20px', fontWeight: '600', color: '#1e293b', letterSpacing: '-0.5px' },
-  cDesc: { fontSize: '15px', color: '#64748b', lineHeight: '1.6' },
+  cDesc: { fontSize: '15px', color: '#949494', lineHeight: '1.6' },
   cardMeta: { display: 'flex', gap: '24px', alignItems: 'center' },
-  mItem: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '700', color: '#94a3b8' },
+  mItem: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '700', color: '#949494' },
   
   buyBtn: { 
     marginTop: '12px', padding: '16px', backgroundColor: '#1e293b', 
@@ -184,7 +184,7 @@ const styles = {
   },
   
   loader: { padding: '100px', textAlign: 'center' as const, color: 'var(--primary)', fontWeight: '600' },
-  empty: { textAlign: 'center' as const, gridColumn: '1 / -1', padding: '100px', color: '#94a3b8' },
+  empty: { textAlign: 'center' as const, gridColumn: '1 / -1', padding: '100px', color: '#949494' },
 
   trustSection: { padding: '100px 40px', backgroundColor: '#fcfcfd' },
   trustCard: { 
@@ -192,7 +192,7 @@ const styles = {
     padding: '60px', borderRadius: '40px', textAlign: 'center' as const,
     boxShadow: '0 4px 6px -1px rgba(0,0,0,0.01)', border: '1px solid #e8e8e8'
   },
-  paymentIcons: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginTop: '24px', fontWeight: '700', color: '#64748b' },
+  paymentIcons: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginTop: '24px', fontWeight: '700', color: '#949494' },
 
   corporateLead: { 
     padding: '100px 40px', backgroundColor: 'var(--primary)', 

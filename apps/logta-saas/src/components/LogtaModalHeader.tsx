@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type LogtaModalHeaderProps = {
-  icon: LucideIcon;
+  icon: any;
   title: React.ReactNode;
   dotClassName?: string;
   onClose?: () => void;
@@ -22,7 +22,13 @@ export const LogtaModalHeader: React.FC<LogtaModalHeaderProps> = ({
       <div className="logta-modal-header__main">
         <div className="logta-modal-header__icon-cluster">
           <span className={`logta-modal-header__icon-dot ${dotClassName}`} aria-hidden />
-          <Icon size={20} strokeWidth={2} className="logta-modal-header__icon" />
+          {Icon ? (
+            React.isValidElement(Icon) ? (
+              Icon
+            ) : (
+              <Icon size={20} strokeWidth={2} className="logta-modal-header__icon" />
+            )
+          ) : null}
         </div>
         <h3 className="logta-modal-heading">{title}</h3>
       </div>

@@ -213,7 +213,7 @@ const AcademyCheckout: React.FC = () => {
                           value={formData.cardNumber}
                           onChange={e => setFormData({...formData, cardNumber: maskCard(e.target.value)})}
                         />
-                        <Lock size={16} color="#94a3b8" />
+                        <Lock size={16} color="#949494" />
                      </div>
                   </div>
                   <div style={styles.field}>

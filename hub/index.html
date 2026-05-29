@@ -8,6 +8,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+      (function () {
+        try {
+          var k = 'hub-master-theme-mode';
+          var m = localStorage.getItem(k);
+          var resolved = 'light';
+          if (m === 'dark') resolved = 'dark';
+          else if (m === 'system') resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          else if (m === 'light') resolved = 'light';
+          document.documentElement.setAttribute('data-hub-theme', resolved);
+          document.documentElement.style.colorScheme = resolved;
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

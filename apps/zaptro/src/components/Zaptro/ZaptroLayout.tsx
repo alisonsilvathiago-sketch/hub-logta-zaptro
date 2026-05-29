@@ -32,6 +32,8 @@ import {
   BarChart3,
   Car,
   Trophy,
+  Smartphone,
+  Brain,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -40,7 +42,12 @@ import { supabaseZaptro } from '../../lib/supabase-zaptro';
 import { ZAPTRO_ROUTES } from '../../constants/zaptroRoutes';
 import { ZAPTRO_SHADOW } from '../../constants/zaptroShadows';
 import { zaptroCardSurfaceStyle } from '../../constants/zaptroCardSurface';
-import { ZAPTRO_FIELD_BG, ZAPTRO_SECTION_BORDER, ZAPTRO_SOFT_NEUTRAL_MUTED } from '../../constants/zaptroUi';
+import {
+  ZAPTRO_AUX_TEXT,
+  ZAPTRO_FIELD_BG,
+  ZAPTRO_SECTION_BORDER,
+  ZAPTRO_SOFT_NEUTRAL_MUTED,
+} from '../../constants/zaptroUi';
 import { ZaptroThemeProvider, useZaptroTheme } from '../../context/ZaptroThemeContext';
 import { hasZaptroGranularPermission, isZaptroTenantAdminRole } from '../../utils/zaptroPermissions';
 import { zaptroMenuPathToPageId } from '../../utils/zaptroPagePermissionMap';
@@ -55,6 +62,7 @@ import { playWaIncomingMessageSound, showWaDesktopNotificationIfAllowed } from '
 import NotificationCenter from '../NotificationCenter';
 
 import { getContext, isZaptroProductPath } from '../../utils/domains';
+import { isZaptroLocalhost } from '../../utils/zaptroDevBypass';
 
 interface ZaptroLayoutProps {
   children: React.ReactNode;
@@ -311,7 +319,8 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
   const [isHubOpen, setIsHubOpen] = useState(false);
   const [isNewsOpen, setIsNewsOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [railHover, setRailHover] = useState(false);
+  /** Label flutuante do item sob o cursor (desktop — rail fixo, sem expandir a barra). */
+  const [navHoverKey, setNavHoverKey] = useState<string | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const [isActivationModalOpen, setIsActivationModalOpen] = useState(false);
@@ -401,7 +410,7 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
       if (!mobile) setIsMenuOpen(false);
-      if (mobile) setRailHover(false);
+      if (mobile) setNavHoverKey(null);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -418,6 +427,8 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
       { icon: Truck, label: 'Motoristas', path: ZAPTRO_ROUTES.DRIVERS },
       { icon: Car, label: 'Frota', path: ZAPTRO_ROUTES.FLEET },
       { icon: MessageSquare, label: 'WhatsApp', path: ZAPTRO_ROUTES.CHAT },
+      { icon: Smartphone, label: 'Whatsapp Hub', path: ZAPTRO_ROUTES.WHATSAPP_HUB },
+      { icon: Brain, label: 'IA Gateway', path: ZAPTRO_ROUTES.IA_GATEWAY },
       { icon: Users, label: 'Clientes', path: ZAPTRO_ROUTES.CLIENTS },
       { icon: Settings, label: 'Ajustes', path: `${ZAPTRO_ROUTES.SETTINGS_ALIAS}?tab=config` },
     ];
@@ -444,11 +455,33 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
 
   /** Rail fixo só com ícones (desktop); ao hover expande à direita (labels); drawer largo no telemóvel. */
   const RAIL_WIDTH = 76;
-  const RAIL_WIDTH_EXPANDED = 232;
   const RAIL_MARGIN = 12;
   const RAIL_AFTER_GAP = 20;
   const mainMarginDesktop = hideSidebar ? 0 : RAIL_MARGIN + RAIL_WIDTH + RAIL_AFTER_GAP;
-  const railExpandedLabels = isMobile || railHover;
+  const showSidebarInlineLabels = isMobile;
+  /** Alias legado — evita `ReferenceError` se algum trecho/HMR ainda referir `railExpandedLabels`. */
+  const railExpandedLabels = showSidebarInlineLabels;
+
+  const sidebarFlyoutStyle = useMemo((): React.CSSProperties => {
+    const dark = palette.mode === 'dark';
+    return {
+      position: 'absolute',
+      left: 'calc(100% + 10px)',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      zIndex: 1200,
+      pointerEvents: 'none',
+      padding: '6px 11px',
+      borderRadius: 10,
+      whiteSpace: 'nowrap',
+      ...ZAPTRO_AUX_TEXT.label,
+      fontWeight: 700,
+      backgroundColor: dark ? '#111111' : '#ffffff',
+      color: 'rgba(186, 186, 186, 1)',
+      border: `1px solid ${palette.sidebarBorder}`,
+      boxShadow: dark ? '0 8px 28px rgba(0,0,0,0.45)' : '0 10px 28px rgba(15, 23, 42, 0.14)',
+    };
+  }, [palette.mode, palette.sidebarBorder]);
 
   const railDivider = (key: string) => (
     <div
@@ -482,64 +515,83 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
           : true);
       const Icon = item.icon;
       const expanded = railExpandedLabels;
+      const flyout = !isMobile && navHoverKey === item.path;
       const activeFg =
         isActive && palette.mode === 'light' ? '#000000' : isActive ? palette.text : palette.mode === 'light' ? '#374151' : palette.textMuted;
       return (
-        <button
+        <div
           key={item.path}
-          type="button"
-          className="zaptro-sidebar-nav-btn"
-          title={item.label}
-          aria-label={item.label}
-          aria-current={isActive ? 'page' : undefined}
-          onClick={() => {
-            navigate(item.path);
-            if (isMobile) setIsMenuOpen(false);
-          }}
           style={{
-            border: 'none',
-            cursor: 'pointer',
+            position: 'relative',
+            width: expanded ? '100%' : 'auto',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: expanded ? 'flex-start' : 'center',
-            gap: expanded ? 14 : 0,
-            width: expanded ? '100%' : 44,
-            height: expanded ? 'auto' : 44,
-            minHeight: expanded ? 48 : 44,
-            padding: expanded ? '12px 14px' : 0,
-            marginLeft: expanded ? 0 : 'auto',
-            marginRight: expanded ? 0 : 'auto',
-            borderRadius: 12,
-            background: item.label === 'WhatsApp' ? '#000000' : 'unset',
-            backgroundColor: item.label === 'WhatsApp' ? '#000000' : isActive ? palette.navActiveBg : 'transparent',
-            color: item.label === 'WhatsApp' ? palette.lime : activeFg,
-            flexShrink: 0,
-            boxSizing: 'border-box',
-            transition: 'background-color 0.2s ease, color 0.2s ease',
-            boxShadow: item.label === 'WhatsApp' ? '0 4px 12px rgba(217, 255, 0, 0.15)' : 'none',
+            justifyContent: 'center',
+          }}
+          onMouseEnter={() => {
+            if (!isMobile) setNavHoverKey(item.path);
+          }}
+          onMouseLeave={() => {
+            if (!isMobile) setNavHoverKey(null);
           }}
         >
-          {item.label === 'WhatsApp' ? (
-            <Zap 
-              size={20} 
-              strokeWidth={2.4} 
-              fill={palette.lime} 
-              color={palette.lime} 
-              style={{ filter: 'drop-shadow(0 0 6px rgba(217, 255, 0, 0.4))' }} 
-            />
-          ) : (
-            <Icon size={20} strokeWidth={isActive ? 2.35 : 2} color="currentColor" />
-          )}
-          {expanded && (
-            <span style={{ 
-              ...styles.navLabel, 
-              color: item.label === 'WhatsApp' ? '#FFFFFF' : 'inherit',
-              fontWeight: item.label === 'WhatsApp' ? 900 : 'inherit'
-            }}>
-              {item.label}
-            </span>
-          )}
-        </button>
+          <button
+            type="button"
+            className="zaptro-sidebar-nav-btn"
+            title={isMobile ? item.label : undefined}
+            aria-label={item.label}
+            aria-current={isActive ? 'page' : undefined}
+            onClick={() => {
+              navigate(item.path);
+              if (isMobile) setIsMenuOpen(false);
+            }}
+            style={{
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: expanded ? 'flex-start' : 'center',
+              gap: expanded ? 14 : 0,
+              width: expanded ? '100%' : 44,
+              height: expanded ? 'auto' : 44,
+              minHeight: expanded ? 48 : 44,
+              padding: expanded ? '12px 14px' : 0,
+              marginLeft: expanded ? 0 : 'auto',
+              marginRight: expanded ? 0 : 'auto',
+              borderRadius: 12,
+              background: item.label === 'WhatsApp' ? '#000000' : 'unset',
+              backgroundColor: item.label === 'WhatsApp' ? '#000000' : isActive ? palette.navActiveBg : 'transparent',
+              color: item.label === 'WhatsApp' ? palette.lime : activeFg,
+              flexShrink: 0,
+              boxSizing: 'border-box',
+              transition: 'background-color 0.2s ease, color 0.2s ease',
+              boxShadow: item.label === 'WhatsApp' ? '0 4px 12px rgba(217, 255, 0, 0.15)' : 'none',
+            }}
+          >
+            {item.label === 'WhatsApp' ? (
+              <Zap
+                size={20}
+                strokeWidth={2.4}
+                fill={palette.lime}
+                color={palette.lime}
+                style={{ filter: 'drop-shadow(0 0 6px rgba(217, 255, 0, 0.4))' }}
+              />
+            ) : (
+              <Icon size={20} strokeWidth={isActive ? 2.35 : 2} color="currentColor" />
+            )}
+            {expanded && (
+              <span
+                style={{
+                  ...styles.navLabel,
+                  color: item.label === 'WhatsApp' ? '#FFFFFF' : 'inherit',
+                  fontWeight: item.label === 'WhatsApp' ? 900 : 'inherit',
+                }}
+              >
+                {item.label}
+              </span>
+            )}
+          </button>
+          {flyout ? <span role="tooltip" style={sidebarFlyoutStyle}>{item.label}</span> : null}
+        </div>
       );
     },
     [
@@ -550,8 +602,11 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
       palette.navActiveBg,
       palette.text,
       palette.textMuted,
+      palette.lime,
       isMobile,
-      railExpandedLabels,
+      showSidebarInlineLabels,
+      navHoverKey,
+      sidebarFlyoutStyle,
     ],
   );
 
@@ -798,19 +853,13 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
 
       {!hideSidebar && (
         <aside
-          onMouseEnter={() => {
-            if (!isMobile) setRailHover(true);
-          }}
-          onMouseLeave={() => setRailHover(false)}
           style={{
             position: 'fixed',
             zIndex: 200,
             display: 'flex',
             flexDirection: 'column',
             boxSizing: 'border-box',
-            transition: isMobile
-              ? 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-              : 'width 0.28s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.28s ease',
+            transition: isMobile ? 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : undefined,
             ...(isMobile
               ? {
                   top: 0,
@@ -819,31 +868,21 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
                   width: '280px',
                   backgroundColor: palette.sidebarBg,
                   borderRight: `1px solid ${palette.sidebarBorder}`,
+                  overflow: 'hidden',
                 }
               : {
                   top: RAIL_MARGIN,
                   bottom: RAIL_MARGIN,
                   left: RAIL_MARGIN,
-                  width: railHover ? RAIL_WIDTH_EXPANDED : RAIL_WIDTH,
+                  width: RAIL_WIDTH,
                   borderRadius: 22,
                   backgroundColor: palette.sidebarBg,
                   border: `1px solid ${palette.sidebarBorder}`,
-                  boxShadow: isDark
-                    ? railHover
-                      ? '0 16px 48px rgba(0,0,0,0.55)'
-                      : '0 12px 40px rgba(0,0,0,0.5)'
-                    : railHover
-                      ? '0 12px 36px rgba(15, 23, 42, 0.14)'
-                      : '0 4px 28px rgba(15, 23, 42, 0.09)',
-                  overflow: 'hidden',
+                  boxShadow: isDark ? '0 12px 40px rgba(0,0,0,0.5)' : '0 4px 28px rgba(15, 23, 42, 0.09)',
+                  overflow: 'visible',
                 }),
           }}
         >
-          <style>{`
-            .zaptro-sidebar-nav-btn { transition: transform 0.2s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.2s ease; }
-            .zaptro-sidebar-nav-btn:hover { transform: translateY(-3px) scale(1.06); box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12); }
-            .zaptro-sidebar-nav-btn:active { transform: translateY(-1px) scale(1.03); }
-          `}</style>
           <div
             style={{
               flex: 1,
@@ -851,65 +890,78 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
               display: 'flex',
               flexDirection: 'column',
               width: '100%',
-              padding: isMobile ? '20px 20px 16px' : railHover ? '12px 12px 14px' : '12px 8px 14px',
+              padding: isMobile ? '20px 20px 16px' : '0 8px 14px',
               boxSizing: 'border-box',
-              transition: isMobile ? undefined : 'padding 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
             }}
           >
             <div
               style={{
                 display: 'flex',
-                justifyContent: isMobile || railHover ? 'flex-start' : 'center',
+                justifyContent: 'center',
                 alignItems: 'center',
                 paddingBottom: 4,
                 flexShrink: 0,
               }}
             >
-              <button
-                type="button"
-                className={!isMobile ? 'zaptro-sidebar-nav-btn' : undefined}
-                onClick={() => {
-                  navigate(ZAPTRO_ROUTES.DASHBOARD);
-                  if (isMobile) setIsMenuOpen(false);
+              <div
+                style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}
+                onMouseEnter={() => {
+                  if (!isMobile) setNavHoverKey('__logo__');
                 }}
-                aria-label="Início Zaptro"
-                title="Início"
-                style={{
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderRadius: 14,
-                  backgroundColor: '#000000',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: isMobile || railHover ? 'flex-start' : 'center',
-                  padding: isMobile ? '10px 16px' : railHover ? '10px 12px' : 0,
-                  gap: isMobile || railHover ? 10 : 0,
-                  width: isMobile ? '100%' : railHover ? '100%' : 44,
-                  height: isMobile ? 'auto' : 44,
-                  minHeight: isMobile ? 48 : 44,
-                  boxSizing: 'border-box',
+                onMouseLeave={() => {
+                  if (!isMobile) setNavHoverKey(null);
                 }}
               >
-                <Zap
-                  size={22}
-                  color="rgba(217, 255, 0, 1)"
-                  strokeWidth={2}
-                  fill="rgba(217, 255, 0, 1)"
-                  aria-hidden
-                  style={{ filter: 'drop-shadow(0 0 10px rgba(217, 255, 0, 0.35))' }}
-                />
-                {(isMobile || railHover) && <span style={{ ...styles.logoMain, color: '#ffffff', fontSize: 18 }}>ZAPTRO</span>}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate(ZAPTRO_ROUTES.DASHBOARD);
+                    if (isMobile) setIsMenuOpen(false);
+                  }}
+                  aria-label="Início Zaptro"
+                  title={isMobile ? 'Início' : undefined}
+                  style={{
+                    border: 'none',
+                    cursor: 'pointer',
+                    borderRadius: 14,
+                    backgroundColor: '#000000',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: isMobile ? 'flex-start' : 'center',
+                    padding: isMobile ? '10px 16px' : 0,
+                    gap: isMobile ? 10 : 0,
+                    width: isMobile ? '100%' : 44,
+                    height: isMobile ? 'auto' : 44,
+                    minHeight: isMobile ? 48 : 44,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <Zap
+                    size={22}
+                    color="rgba(217, 255, 0, 1)"
+                    strokeWidth={2}
+                    fill="rgba(217, 255, 0, 1)"
+                    aria-hidden
+                    style={{ filter: 'drop-shadow(0 0 10px rgba(217, 255, 0, 0.35))' }}
+                  />
+                  {isMobile && <span style={{ ...styles.logoMain, color: '#ffffff', fontSize: 18 }}>ZAPTRO</span>}
+                </button>
+                {!isMobile && navHoverKey === '__logo__' ? (
+                  <span role="tooltip" style={sidebarFlyoutStyle}>
+                    ZAPTRO
+                  </span>
+                ) : null}
+              </div>
             </div>
 
             {railDivider('rail-1')}
 
             <div style={{ ...styles.navColumn, padding: 0 }}>
-              <div style={{ ...styles.navCenterWrap, alignItems: isMobile || railHover ? 'stretch' : 'center' }}>
+              <div style={{ ...styles.navCenterWrap, alignItems: isMobile ? 'stretch' : 'center' }}>
                 <div
                   style={{
                     ...styles.nav,
-                    alignItems: isMobile || railHover ? 'stretch' : 'center',
+                    alignItems: isMobile ? 'stretch' : 'center',
                     gap: 6,
                     padding: '8px 0',
                   }}
@@ -921,36 +973,52 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
 
             {railDivider('rail-2')}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 2, flexShrink: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 2, flexShrink: 0, alignItems: isMobile ? 'stretch' : 'center' }}>
               {sidebarSettingsItem ? renderSidebarNavButton(sidebarSettingsItem) : null}
-              <button
-                type="button"
-                className="zaptro-sidebar-nav-btn"
-                title="Sair do sistema"
-                aria-label="Sair do sistema"
-                onClick={() => void signOut()}
-                style={{
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: isMobile || railHover ? 'flex-start' : 'center',
-                  gap: isMobile || railHover ? 14 : 0,
-                  width: isMobile ? '100%' : railHover ? '100%' : 44,
-                  height: isMobile ? 'auto' : 44,
-                  minHeight: isMobile ? 48 : railHover ? 48 : 44,
-                  padding: isMobile ? '12px 14px' : railHover ? '12px 14px' : 0,
-                  marginLeft: isMobile || railHover ? 0 : 'auto',
-                  marginRight: isMobile || railHover ? 0 : 'auto',
-                  borderRadius: 12,
-                  background: 'transparent',
-                  color: '#EF4444',
-                  boxSizing: 'border-box',
+              <div
+                style={{ position: 'relative', display: 'flex', justifyContent: 'center', width: isMobile ? '100%' : 'auto' }}
+                onMouseEnter={() => {
+                  if (!isMobile) setNavHoverKey('__logout__');
+                }}
+                onMouseLeave={() => {
+                  if (!isMobile) setNavHoverKey(null);
                 }}
               >
-                <LogOut size={20} strokeWidth={2} />
-                {(isMobile || railHover) && <span style={{ fontWeight: 700, fontSize: 15 }}>Sair do Sistema</span>}
-              </button>
+                <button
+                  type="button"
+                  title={isMobile ? 'Sair do sistema' : undefined}
+                  aria-label="Sair do sistema"
+                  onClick={() => void signOut()}
+                  style={{
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: isMobile ? 'flex-start' : 'center',
+                    gap: isMobile ? 14 : 0,
+                    width: isMobile ? '100%' : 44,
+                    height: isMobile ? 'auto' : 44,
+                    minHeight: isMobile ? 48 : 44,
+                    padding: isMobile ? '12px 14px' : 0,
+                    marginLeft: isMobile ? 0 : 'auto',
+                    marginRight: isMobile ? 0 : 'auto',
+                    borderRadius: 12,
+                    background: 'transparent',
+                    color: '#EF4444',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <LogOut size={20} strokeWidth={2} />
+                  {isMobile && (
+                    <span style={{ ...styles.navLabel, fontWeight: 700, fontSize: 15, color: '#EF4444' }}>Sair do Sistema</span>
+                  )}
+                </button>
+                {!isMobile && navHoverKey === '__logout__' ? (
+                  <span role="tooltip" style={sidebarFlyoutStyle}>
+                    Sair do Sistema
+                  </span>
+                ) : null}
+              </div>
             </div>
 
             {!isMobile && railDivider('rail-3')}
@@ -959,74 +1027,78 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
               <div
                 style={{
                   display: 'flex',
-                  justifyContent: railHover ? 'flex-start' : 'center',
+                  justifyContent: 'center',
                   paddingTop: 6,
                   flexShrink: 0,
                   width: '100%',
                 }}
               >
-                <button
-                  type="button"
-                  className="zaptro-sidebar-nav-btn"
-                  title="Minha conta"
-                  aria-label="Abrir perfil"
-                  onClick={() => navigate(ZAPTRO_ROUTES.PROFILE)}
-                  style={{
-                    border: 'none',
-                    padding: railHover ? '6px 8px 6px 6px' : 0,
-                    cursor: 'pointer',
-                    width: railHover ? '100%' : 44,
-                    height: railHover ? 'auto' : 44,
-                    minHeight: 44,
-                    borderRadius: railHover ? 14 : 999,
-                    overflow: 'hidden',
-                    background: palette.profileBg,
-                    borderWidth: 2,
-                    borderStyle: 'solid',
-                    borderColor: palette.sidebarBorder,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: railHover ? 'flex-start' : 'center',
-                    gap: railHover ? 12 : 0,
-                    boxSizing: 'border-box',
-                  }}
+                <div
+                  style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}
+                  onMouseEnter={() => setNavHoverKey('__profile__')}
+                  onMouseLeave={() => setNavHoverKey(null)}
                 >
-                  <span
+                  <button
+                    type="button"
+                    title={undefined}
+                    aria-label="Abrir perfil"
+                    onClick={() => navigate(ZAPTRO_ROUTES.PROFILE)}
                     style={{
-                      width: 40,
-                      height: 40,
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                      width: 44,
+                      height: 44,
+                      minHeight: 44,
                       borderRadius: 999,
                       overflow: 'hidden',
-                      flexShrink: 0,
-                      display: 'block',
+                      background: palette.profileBg,
+                      borderWidth: 2,
+                      borderStyle: 'solid',
+                      borderColor: palette.sidebarBorder,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxSizing: 'border-box',
                     }}
                   >
-                    {sessionAvatarSrc ? (
-                      <img src={sessionAvatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    ) : (
-                      <span
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '100%',
-                          height: '100%',
-                          fontSize: 16,
-                          fontWeight: 700,
-                          color: palette.text,
-                          background: palette.profileBg,
-                        }}
-                      >
-                        {profile?.full_name?.[0] ?? 'U'}
-                      </span>
-                    )}
-                  </span>
-                  {railHover && (
-                    <span style={{ fontWeight: 700, fontSize: 13, color: palette.text, textAlign: 'left', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 999,
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        display: 'block',
+                      }}
+                    >
+                      {sessionAvatarSrc ? (
+                        <img src={sessionAvatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      ) : (
+                        <span
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '100%',
+                            height: '100%',
+                            fontSize: 16,
+                            fontWeight: 700,
+                            color: palette.text,
+                            background: palette.profileBg,
+                          }}
+                        >
+                          {profile?.full_name?.[0] ?? 'U'}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                  {navHoverKey === '__profile__' ? (
+                    <span role="tooltip" style={sidebarFlyoutStyle}>
                       Minha conta
                     </span>
-                  )}
-                </button>
+                  ) : null}
+                </div>
               </div>
             )}
           </div>
@@ -1087,14 +1159,25 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
               <div style={{ position: 'relative' }}>
                 {/* ── SISTEMA STATUS BUTTON ── */}
                 {(() => {
-                  const status: 'ativo' | 'suspenso' | 'bloqueado' =
-                    !company ? 'bloqueado' :
-                    company.billing_status === 'blocked' || company.billing_status === 'overdue' ? 'bloqueado' :
-                    company.status === 'suspended' || company.status === 'SUSPENSO' ? 'suspenso' :
-                    company.status === 'blocked'   || company.status === 'BLOQUEADO' ? 'bloqueado' : 'ativo';
+                  const norm = (v?: string) => (v ?? '').trim().toLowerCase();
+
+                  const status: 'ativo' | 'suspenso' | 'bloqueado' = (() => {
+                    if (tenantLoading) return 'ativo';
+                    if (!company) {
+                      if (profile?.company_id || user?.id) return 'ativo';
+                      return 'bloqueado';
+                    }
+                    const billing = norm(company.billing_status);
+                    if (billing === 'blocked') return 'bloqueado';
+                    if (billing === 'overdue') return 'suspenso';
+                    const st = norm(company.status);
+                    if (st === 'suspenso' || st === 'suspended') return 'suspenso';
+                    if (st === 'bloqueado' || st === 'blocked') return 'bloqueado';
+                    return 'ativo';
+                  })();
 
                   const statusCfg = {
-                    ativo:    { color: '#fff', bg: '#22c55e', dot: '#fff', label: 'SISTEMA ATIVO', pulse: 'zaptro-layout-pulse' },
+                    ativo:    { color: '#fff', bg: '#22c55e', dot: '#fff', label: 'ATIVO', pulse: 'zaptro-layout-pulse' },
                     suspenso: { color: '#000', bg: '#fbbf24', dot: '#b45309', label: 'PENDENTE',   pulse: 'zaptro-layout-pulse' },
                     bloqueado:{ color: '#fff', bg: '#ef4444', dot: '#fff',    label: 'BLOQUEADO',  pulse: '' },
                   }[status];
@@ -1171,7 +1254,7 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
 
                             {/* Credits */}
                             <div style={{ padding: '16px 20px' }}>
-                              <div style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>📊 Créditos do Plano</div>
+                              <div style={{ fontSize: 11, fontWeight: 800, color: '#949494', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>📊 Créditos do Plano</div>
 
                               {/* Progress bar */}
                               <div style={{ marginBottom: 16 }}>
@@ -1205,7 +1288,7 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
                               {/* Plan info */}
                               <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 12, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                 <div>
-                                  <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>PLANO ATUAL</div>
+                                  <div style={{ fontSize: 11, fontWeight: 700, color: '#949494' }}>PLANO ATUAL</div>
                                   <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', textTransform: 'uppercase' }}>
                                     {(company as any)?.plan || 'Starter'}
                                   </div>
@@ -1597,6 +1680,35 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
                         )}
                       </div>
 
+                      {isZaptroLocalhost() ? (
+                        <>
+                          <div style={{ height: 1, backgroundColor: palette.searchBorder }} />
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              window.location.href = 'http://localhost:5175/master';
+                            }}
+                            style={{
+                              ...styles.profileMenuItem,
+                              color: '#0061FF',
+                              borderRadius: 0,
+                              padding: '14px 18px',
+                              fontWeight: 800,
+                              backgroundColor: 'rgba(0, 97, 255, 0.05)',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(0, 97, 255, 0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(0, 97, 255, 0.05)';
+                            }}
+                          >
+                            <LayoutDashboard size={18} strokeWidth={2.2} color="#0061FF" />
+                            Painel Master (Hub)
+                          </button>
+                        </>
+                      ) : null}
                       <div style={{ height: 1, backgroundColor: palette.searchBorder }} />
                       <button
                         type="button"
@@ -1647,6 +1759,8 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
             className="zaptro-scroll-area"
             style={{
               ...styles.contentInner,
+              paddingLeft: 0,
+              paddingRight: 0,
               scrollbarWidth: 'thin',
               scrollbarColor: isDark ? 'rgba(148, 163, 184, 0.45) transparent' : 'rgba(100, 116, 139, 0.4) transparent',
               ...(contentFullWidth
@@ -1655,9 +1769,6 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
                     width: '100%',
                     marginLeft: 0,
                     marginRight: 0,
-                    paddingLeft: 'clamp(10px, 1.25vw, 20px)',
-                    paddingRight: 'clamp(10px, 1.25vw, 20px)',
-                    /** Coluna encosta à altura útil; rolagem fica nos filhos (ex. inbox), não no `main`. */
                     height: '100%',
                     minHeight: 0,
                     display: 'flex',
@@ -1669,46 +1780,21 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
                 : {}),
             }}
           >
-            {isImpersonating && (
-              <div style={{
-                backgroundColor: '#000000',
-                color: '#D9FF00',
-                padding: '12px 24px',
-                marginBottom: 20,
-                borderRadius: 20,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                fontSize: '13px',
-                fontWeight: '800',
-                boxShadow: '0 10px 30px rgba(217, 255, 0, 0.1)',
-                border: '1px solid rgba(217, 255, 0, 0.2)',
-                flexShrink: 0
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <ShieldCheck size={16} color="#D9FF00" />
-                  <span>MODO MASTER ATIVO: Administrando {company?.name || 'Empresa'}</span>
-                </div>
-                <button 
-                  onClick={() => stopImpersonating?.()}
-                  style={{
-                    backgroundColor: '#D9FF00',
-                    color: '#000000',
-                    border: 'none',
-                    borderRadius: '10px',
-                    padding: '6px 16px',
-                    fontSize: '11px',
-                    fontWeight: '900',
-                    cursor: 'pointer',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em'
-                  }}
-                >
-                  ENCERRAR ACESSO
-                </button>
-              </div>
-            )}
+            <div
+              className="zaptro-scroll-area-inner"
+              style={{
+                boxSizing: 'border-box',
+                width: '100%',
+                paddingLeft: contentFullWidth ? 'clamp(10px, 1.25vw, 20px)' : 24,
+                paddingRight: contentFullWidth ? 'clamp(10px, 1.25vw, 20px)' : 24,
+                ...(contentFullWidth
+                  ? { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
+                  : {}),
+              }}
+            >
+
             {children}
+            </div>
           </div>
         </div>
       </main>
@@ -1726,22 +1812,14 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
           -webkit-box-shadow: 0 0 0 50px ${isDark ? '#000000' : ZAPTRO_FIELD_BG} inset !important;
           -webkit-text-fill-color: ${palette.text} !important;
         }
-        .zaptro-scroll-area::-webkit-scrollbar { width: 8px; }
-        .zaptro-scroll-area::-webkit-scrollbar-track { background: transparent; }
-        .zaptro-scroll-area::-webkit-scrollbar-thumb { 
-          background: ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}; 
-          border-radius: 10px;
-          border: 2px solid transparent;
-          background-clip: content-box;
-        }
-        .zaptro-scroll-area::-webkit-scrollbar-thumb:hover { background: ${isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'}; background-clip: content-box; }
+        .zaptro-scroll-area::-webkit-scrollbar { width: 6px; }
         .zaptro-scroll-area::-webkit-scrollbar-track { background: transparent; }
         .zaptro-scroll-area::-webkit-scrollbar-thumb {
-          background-color: ${isDark ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.2)'};
-          border-radius: 999px;
+          background-color: ${isDark ? 'rgba(255,255,255,0.22)' : 'rgba(15,23,42,0.22)'};
+          border-radius: 0;
         }
         .zaptro-scroll-area::-webkit-scrollbar-thumb:hover {
-          background-color: ${isDark ? 'rgba(255,255,255,0.35)' : 'rgba(15,23,42,0.38)'};
+          background-color: ${isDark ? 'rgba(255,255,255,0.38)' : 'rgba(15,23,42,0.38)'};
         }
       `}</style>
 
@@ -1863,7 +1941,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'stretch',
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   nav: {
     flex: '0 1 auto',
@@ -1889,7 +1967,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '15px',
     fontWeight: 600,
   },
-  navLabel: { whiteSpace: 'nowrap' },
+  navLabel: { ...ZAPTRO_AUX_TEXT.label, whiteSpace: 'nowrap' },
   sidebarFooter: { padding: '20px' },
   logoutBtn: {
     border: 'none',
@@ -1983,7 +2061,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   hubHeader: { display: 'flex', gap: '15px', marginBottom: '20px' },
   hubTitle: { margin: 0, fontSize: '16px', fontWeight: 700 },
-  hubDesc: { margin: '4px 0 0 0', fontSize: '13px', color: '#94A3B8', fontWeight: 600 },
+  hubDesc: { margin: '4px 0 0 0', fontSize: '13px', color: '#949494', fontWeight: 600 },
   hubFooter: { borderTop: '1px solid #e8e8e8', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' },
   supportBtn: {
     padding: '12px',
@@ -2107,7 +2185,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: 0,
     margin: 0,
     overflow: 'hidden',
-    padding: '24px 0 32px',
+    padding: '0 0 32px',
     boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
@@ -2118,8 +2196,6 @@ const styles: Record<string, React.CSSProperties> = {
     maxWidth: 'min(100%, 1720px)',
     marginLeft: 'auto',
     marginRight: 'auto',
-    paddingLeft: 24,
-    paddingRight: 24,
     boxSizing: 'border-box',
     flex: 1,
     minHeight: 0,

@@ -116,7 +116,7 @@ const ZaptroHealthGuard: React.FC<ZaptroHealthGuardProps> = ({ error, children }
               onClick={handleCopy}
               style={{
                 ...styles.copyBtn,
-                backgroundColor: copied ? '#10B981' : '#000',
+                backgroundColor: copied ? '#0061FF' : '#000',
               }}
             >
               {copied ? <Check size={16} /> : <Copy size={16} />}
@@ -182,7 +182,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   subtitle: {
     fontSize: '15px',
-    color: '#64748B',
+    color: '#949494',
     fontWeight: 600,
     lineHeight: 1.6,
     margin: '0 0 32px 0',

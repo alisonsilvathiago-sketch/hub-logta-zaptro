@@ -49,7 +49,7 @@ const ModuleLayout: React.FC<ModuleLayoutProps> = ({
               >
                 <div style={{
                   ...styles.iconWrapper,
-                  color: isActive ? 'var(--primary)' : '#64748b',
+                  color: isActive ? 'var(--primary)' : '#949494',
                 }}>
                   <item.icon size={20} />
                 </div>

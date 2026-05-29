@@ -14,6 +14,18 @@ export function zaptroNormWaPhone(phone: string): string {
   return d;
 }
 
+const WA_CONV_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Chave para abrir o inbox: UUID da conversa (`wa-<uuid>`) ou telefone normalizado. */
+export function crmLeadWaThreadKey(lead: Pick<CrmLeadLike, 'id' | 'phone'>): string {
+  if (lead.id.startsWith('wa-')) {
+    const convId = lead.id.slice(3).trim();
+    if (WA_CONV_UUID_RE.test(convId)) return convId;
+  }
+  return zaptroNormWaPhone(lead.phone);
+}
+
 export type CrmLeadLike = {
   id: string;
   clientName: string;

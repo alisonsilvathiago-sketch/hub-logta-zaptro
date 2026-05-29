@@ -19,12 +19,7 @@ import { supabaseZaptro } from '../lib/supabase-zaptro';
 import { buildLogtaMasterCheckoutUrl } from '../utils/logtaMasterCheckout';
 import { toastError } from '../lib/toast';
 
-// Dados fictícios para demonstração
-const invoices = [
-  { id: 'INV-1029', date: '15 Abr 2026', amount: 'R$ 297,00', method: 'Cartão •••• 4412', status: 'pago' },
-  { id: 'INV-1028', date: '15 Mar 2026', amount: 'R$ 297,00', method: 'Cartão •••• 4412', status: 'pago' },
-  { id: 'INV-1027', date: '15 Fev 2026', amount: 'R$ 247,00', method: 'Boleto Bancário', status: 'pago' },
-];
+const invoices: any[] = [];
 
 type BillingSubscription = { plan_name?: string | null };
 
@@ -122,7 +117,7 @@ const ZaptroBilling: React.FC = () => {
                     cursor: 'pointer',
                     backgroundColor: !isAnnual ? 'white' : 'transparent',
                     boxShadow: !isAnnual ? ZAPTRO_SHADOW.sm : 'none',
-                    color: !isAnnual ? '#000' : '#64748B'
+                    color: !isAnnual ? '#000' : '#949494'
                   }}
                 >
                   Mensal
@@ -138,7 +133,7 @@ const ZaptroBilling: React.FC = () => {
                     cursor: 'pointer',
                     backgroundColor: isAnnual ? 'white' : 'transparent',
                     boxShadow: isAnnual ? ZAPTRO_SHADOW.sm : 'none',
-                    color: isAnnual ? '#000' : '#64748B'
+                    color: isAnnual ? '#000' : '#949494'
                   }}
                 >
                   Anual (-20%)
@@ -155,7 +150,7 @@ const ZaptroBilling: React.FC = () => {
                 <MessageSquare size={20} color="#D9FF00" />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#94A3B8' }}>Créditos WhatsApp</h3>
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#949494' }}>Créditos WhatsApp</h3>
                 <p style={{ margin: '4px 0 0', fontSize: '28px', fontWeight: '900', color: '#fff' }}>{company?.wa_credits ?? 0}</p>
               </div>
             </div>
@@ -170,7 +165,7 @@ const ZaptroBilling: React.FC = () => {
                 <Zap size={20} color="#10B981" />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#94A3B8' }}>Créditos IA (Zaptro Brain)</h3>
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#949494' }}>Créditos IA (Zaptro Brain)</h3>
                 <p style={{ margin: '4px 0 0', fontSize: '28px', fontWeight: '900', color: '#fff' }}>{company?.ai_credits ?? 0}</p>
               </div>
             </div>
@@ -191,7 +186,7 @@ const ZaptroBilling: React.FC = () => {
                }}>
                   <div style={styles.planHeader}>
                      <div style={{...styles.planIcon, backgroundColor: isCurrent ? '#D9FF00' : '#F1F5F9'}}>
-                        <Zap size={24} color={isCurrent ? "#000" : "#64748B"} />
+                        <Zap size={24} color={isCurrent ? "#000" : "#949494"} />
                      </div>
                      <div>
                         <h3 style={styles.planTitle}>{plan.name}</h3>
@@ -212,7 +207,7 @@ const ZaptroBilling: React.FC = () => {
                   </ul>
                   <button
                     type="button"
-                    style={{...styles.upgradeBtn, backgroundColor: isCurrent ? '#F1F5F9' : '#000', color: isCurrent ? '#64748B' : '#D9FF00'}}
+                    style={{...styles.upgradeBtn, backgroundColor: isCurrent ? '#F1F5F9' : '#000', color: isCurrent ? '#949494' : '#D9FF00'}}
                     disabled={isCurrent}
                     onClick={() => {
                       if (isCurrent) return;
@@ -294,7 +289,7 @@ const styles: Record<string, any> = {
   container: { padding: '0px' },
   header: { marginBottom: '40px' },
   title: { fontSize: '32px', fontWeight: '700', color: '#000', margin: 0, letterSpacing: '-1.5px' },
-  subtitle: { fontSize: '15px', color: '#64748B', fontWeight: '500', margin: '4px 0 0 0' },
+  subtitle: { fontSize: '15px', color: '#949494', fontWeight: '500', margin: '4px 0 0 0' },
   
   mainGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '32px' },
   card: { backgroundColor: 'white', border: '1px solid #EBEBEC', borderRadius: '24px', padding: '32px', boxShadow: ZAPTRO_SHADOW.xs },
@@ -308,7 +303,7 @@ const styles: Record<string, any> = {
   planDetails: { display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px', padding: '24px', backgroundColor: '#FBFBFC', borderRadius: '18px' },
   planPrice: { display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '24px' },
   priceVal: { fontSize: '32px', fontWeight: '700', color: '#000' },
-  priceUnit: { fontSize: '14px', color: '#64748B', fontWeight: '700' },
+  priceUnit: { fontSize: '14px', color: '#949494', fontWeight: '700' },
   featureList: { listStyle: 'none', padding: 0, margin: '0 0 32px 0', display: 'flex', flexDirection: 'column', gap: '12px' },
   featureItem: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#1E293B', fontWeight: '600' },
   upgradeBtn: { width: '100%', padding: '16px', backgroundColor: 'rgba(217, 255, 0, 0.14)', color: '#000', border: '1px solid rgba(217, 255, 0, 1)', borderRadius: '16px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' },
@@ -316,9 +311,9 @@ const styles: Record<string, any> = {
   cardTitle: { fontSize: '18px', fontWeight: '700', color: '#000', marginBottom: '24px', letterSpacing: '-0.5px' },
   cardBox: { display: 'flex', alignItems: 'center', gap: '20px', padding: '24px', border: '1px solid #EBEBEC', borderRadius: '18px', marginBottom: '20px' },
   cardText: { margin: 0, fontSize: '15px', fontWeight: '700', color: '#000' },
-  cardExpiry: { margin: 0, fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
+  cardExpiry: { margin: 0, fontSize: '12px', color: '#949494', fontWeight: '600' },
   editCardBtn: { background: 'none', border: 'none', color: '#000', fontWeight: '700', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' },
-  securitySeal: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: '700', color: '#64748B' },
+  securitySeal: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: '700', color: '#949494' },
 
   tableWrapper: { overflowX: 'auto' },
   table: { width: '100%', borderCollapse: 'collapse' },
@@ -330,7 +325,7 @@ const styles: Record<string, any> = {
   downBtn: { display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', backgroundColor: '#ebebeb', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '700', cursor: 'pointer' },
 
   upsellBanner: { marginTop: '40px', padding: '32px', backgroundColor: '#111', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '20px' },
-  upsellText: { margin: 0, color: '#94A3B8', fontSize: '15px', fontWeight: '600' },
+  upsellText: { margin: 0, color: '#949494', fontSize: '15px', fontWeight: '600' },
 };
 
 export default ZaptroBilling;

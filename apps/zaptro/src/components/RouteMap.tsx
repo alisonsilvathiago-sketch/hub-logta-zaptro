@@ -54,7 +54,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ stops, center = [-23.5505, -46.6333
               <div style={{ padding: '4px' }}>
                 <strong style={{ display: 'block', fontSize: '14px', marginBottom: '4px' }}>Parada {index + 1}</strong>
                 <span>{stop.client?.name || 'Cliente'}</span>
-                <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>{stop.description || 'Entrega agendada'}</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#949494' }}>{stop.description || 'Entrega agendada'}</p>
               </div>
             </Popup>
           </Marker>

@@ -1,8 +1,13 @@
 import React, { useRef, useState } from 'react';
+import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
 import { FileUp } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import BarcodeScanner from '@/components/ui/BarcodeScanner';
+import ClickableTableRow from '@/components/ui/ClickableTableRow';
 import { logstokaApi } from '@/lib/logstokaApi';
+import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
+import { DEMO_MOVEMENTS, movementTypeLabel, marketplaceLabel } from '@/lib/logstokaDemoSeed';
+import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 
 const tabs = [
   { id: 'entry', label: 'Entrada' },
@@ -12,14 +17,27 @@ const tabs = [
 ] as const;
 
 const MovementsPage: React.FC = () => {
+  const { companyId } = useLogstokaTenant();
+  const demo = isLogstokaDemoCompany(companyId);
   const [tab, setTab] = useState<(typeof tabs)[number]['id']>('entry');
   const [lastScan, setLastScan] = useState('');
   const [quantity, setQuantity] = useState(1);
   const xmlRef = useRef<HTMLInputElement>(null);
 
+  const filteredMovements = DEMO_MOVEMENTS.filter((m) => {
+    if (tab === 'entry') return m.movement_type === 'entry';
+    if (tab === 'exit') return m.movement_type === 'exit';
+    if (tab === 'transfer') return m.movement_type === 'transfer';
+    return m.movement_type === 'damage';
+  });
+
   const quickRegister = async () => {
     if (!lastScan) {
       toast.error('Leia ou digite um SKU/código primeiro');
+      return;
+    }
+    if (demo) {
+      toast.success(`[Demo] ${tabs.find((t) => t.id === tab)?.label} registrada: ${lastScan} × ${quantity}`);
       return;
     }
     try {
@@ -40,6 +58,10 @@ const MovementsPage: React.FC = () => {
   };
 
   const handleXml = async (file: File) => {
+    if (demo) {
+      toast.success(`[Demo] NF-e ${file.name} importada — 12 produtos`);
+      return;
+    }
     try {
       const xml = await file.text();
       const result = await logstokaApi.importXml(xml);
@@ -52,7 +74,7 @@ const MovementsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-black">Movimentações</h2>
+        <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Movimentações</h2>
         <p className="text-sm text-slate-500">Entradas, saídas, transferências e avarias com baixa automática</p>
       </div>
 
@@ -63,7 +85,7 @@ const MovementsPage: React.FC = () => {
             type="button"
             onClick={() => setTab(t.id)}
             className={`rounded-xl px-4 py-2 text-sm font-bold ${
-              tab === t.id ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'
+              tab === t.id ? 'bg-orange-600 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'
             }`}
           >
             {t.label}
@@ -74,7 +96,7 @@ const MovementsPage: React.FC = () => {
       {tab === 'entry' && (
         <div className="ls-card">
           <div className="mb-3 flex items-center gap-2 font-black">
-            <FileUp size={18} className="text-emerald-600" />
+            <FileUp size={18} className="text-orange-600" />
             Entrada por NF-e (XML)
           </div>
           <input
@@ -123,18 +145,51 @@ const MovementsPage: React.FC = () => {
           <h3 className="mb-2 font-black">Webhook de venda</h3>
           <p className="text-sm text-slate-600">
             Vendas de marketplace disparam baixa automática via{' '}
-            <code className="rounded bg-slate-100 px-1">POST /webhooks/orders</code> com header{' '}
-            <code className="rounded bg-slate-100 px-1">x-company-id</code>.
+            <code className="rounded bg-slate-100 px-1">POST /webhooks/orders</code>
           </p>
-          <pre className="mt-3 overflow-x-auto rounded-xl bg-slate-950 p-3 text-xs text-emerald-300">
+          <pre className="mt-3 overflow-x-auto rounded-xl bg-slate-950 p-3 text-xs text-orange-300">
 {`{
   "event": "order.paid",
   "marketplace": "shopee",
   "store": "Stock Express",
-  "items": [{ "sku": "ABC-001", "quantity": 2 }]
+  "items": [{ "sku": "PLM-FRD-P", "quantity": 2 }]
 }`}
           </pre>
         </div>
+      </div>
+
+      <div className="ls-table-wrap">
+        <table className="ls-table">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>SKU / Produto</th>
+              <th>Depósito</th>
+              <th>Canal</th>
+              <th>Referência</th>
+              <th>Qtd</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredMovements.map((m) => (
+              <ClickableTableRow key={m.id} to={`/app/movements/${m.id}`}>
+                <td>
+                  <span className="ls-badge bg-orange-50 text-orange-700">{movementTypeLabel(m.movement_type)}</span>
+                </td>
+                <td>
+                  <p className="font-bold">{m.sku}</p>
+                  <p className="text-xs text-slate-500">{m.product_name}</p>
+                </td>
+                <td>{m.warehouse_name}</td>
+                <td>{marketplaceLabel(m.marketplace)}</td>
+                <td>{m.reference_code}</td>
+                <td className="font-black text-orange-700">{m.total_quantity}</td>
+                <td className="text-xs">{new Date(m.created_at).toLocaleString('pt-BR')}</td>
+              </ClickableTableRow>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

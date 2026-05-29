@@ -5,7 +5,7 @@ import {
   Activity, Download, FileText, BarChart2, Target, Navigation2,
   Calculator, UserPlus, Briefcase, Box, MessageCircle, BarChart as ChartIcon,
   Smartphone, Database, Shield, Layout, Settings as SettingsIcon, Filter as FilterIcon,
-  ChevronLeft, PieChart as PieIcon, GraduationCap
+  ChevronLeft, PieChart as PieIcon, GraduationCap, RefreshCw
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -18,11 +18,10 @@ import { supabase } from '../lib/supabase';
 import { useRealtime } from '../hooks/useRealtime';
 import { seedDatabase } from '../lib/seed';
 import ExportButton from '../components/ExportButton';
-import { toastSuccess, toastError, toastLoading, toastDismiss } from '../lib/toast';
+import { toastSuccess, toastError } from '../lib/toast';
 import Modal from '../components/Modal';
 import { getSegmentConfig } from '../utils/segmentLabels';
 import FinanceCalculator from '../components/FinanceCalculator';
-import { Thermometer } from 'lucide-react';
 import { FuelDashboardCard } from '@shared/components/FuelIntelligence';
 
 import { 
@@ -32,16 +31,6 @@ import {
   CRMDashboard, 
   InventoryDashboard 
 } from '../components/RoleDashboards';
-
-const dataLabels = [
-  { name: 'Seg', entregas: 45, receita: 4000 },
-  { name: 'Ter', entregas: 52, receita: 4500 },
-  { name: 'Qua', entregas: 48, receita: 4200 },
-  { name: 'Qui', entregas: 61, receita: 5800 },
-  { name: 'Sex', entregas: 55, receita: 5100 },
-  { name: 'Sáb', entregas: 42, receita: 3800 },
-  { name: 'Dom', entregas: 30, receita: 2500 },
-];
 
 const Dashboard: React.FC = () => {
   const { profile } = useAuth();
@@ -63,11 +52,12 @@ const Dashboard: React.FC = () => {
     receivedAmount: 0,
     expectedRevenue: 0
   });
+
+  const [chartData, setChartData] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [fuelPrices, setFuelPrices] = useState<any[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
-  const [calcDisplay, setCalcDisplay] = useState('0');
 
   const fetchActivities = useCallback(async () => {
     if (!profile?.company_id) return;
@@ -77,7 +67,7 @@ const Dashboard: React.FC = () => {
         .select('*')
         .eq('company_id', profile.company_id)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(6);
 
       if (error) throw error;
       setActivities(data || []);
@@ -89,7 +79,10 @@ const Dashboard: React.FC = () => {
   const fetchMetrics = useCallback(async () => {
     if (!profile?.company_id) return;
     try {
+      setLoading(true);
       const today = new Date().toISOString().split('T')[0];
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
       const [
         routesRes, 
@@ -100,29 +93,30 @@ const Dashboard: React.FC = () => {
         fleetRes,
         inventoryRes,
         employeesRes,
-        leadsRes
+        leadsRes,
+        weeklyShipments
       ] = await Promise.all([
         supabase.from('routes').select('*', { count: 'exact', head: true }).eq('company_id', profile.company_id).eq('status', 'EM_ANDAMENTO'),
         supabase.from('shipments').select('*', { count: 'exact', head: true }).eq('company_id', profile.company_id).gte('created_at', today),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('company_id', profile.company_id).eq('role', 'MOTORISTA'),
-        supabase.from('transactions').select('amount, type, status').eq('company_id', profile.company_id),
+        supabase.from('transactions').select('amount, type, status, created_at').eq('company_id', profile.company_id),
         supabase.from('clients').select('*', { count: 'exact', head: true }).eq('company_id', profile.company_id),
         supabase.from('vehicles').select('*', { count: 'exact', head: true }).eq('company_id', profile.company_id),
         supabase.from('inventory').select('*', { count: 'exact', head: true }).eq('company_id', profile.company_id),
         supabase.from('employees').select('*', { count: 'exact', head: true }).eq('company_id', profile.company_id),
-        supabase.from('leads').select('*', { count: 'exact', head: true }).eq('company_id', profile.company_id).eq('source', 'CRM')
+        supabase.from('leads').select('*', { count: 'exact', head: true }).eq('company_id', profile.company_id).eq('source', 'CRM'),
+        supabase.from('shipments').select('created_at, amount').eq('company_id', profile.company_id).gte('created_at', sevenDaysAgo.toISOString())
       ]);
 
       const paid = financeRes.data?.filter(t => t.type === 'EXPENSE' && t.status === 'PAID').reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
       const received = financeRes.data?.filter(t => t.type === 'INCOME' && t.status === 'PAID').reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
-      const totalRevenue = received;
       const expected = financeRes.data?.filter(t => t.type === 'INCOME' && t.status === 'PENDING').reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
 
       setMetrics({
         todayDeliveries: shipmentsRes.count || 0,
         activeRoutes: routesRes.count || 0,
         activeDrivers: driversRes.count || 0,
-        monthlyRevenue: totalRevenue,
+        monthlyRevenue: received,
         totalClients: clientsRes.count || 0,
         totalFleet: fleetRes.count || 0,
         inventoryCount: inventoryRes.count || 0,
@@ -134,113 +128,168 @@ const Dashboard: React.FC = () => {
         pendingInvoices: financeRes.data?.filter(t => t.status === 'PENDING').length || 0
       });
 
-      // Fetch Calendar Events for Mini Calendar
-      const { data: events } = await supabase
-        .from('calendar_events')
-        .select('start_date')
-        .eq('company_id', profile.company_id);
-      
+      // Graph logic
+      const daysShort = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      const last7Days = Array.from({length: 7}, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return { 
+          name: daysShort[d.getDay()], 
+          date: d.toISOString().split('T')[0],
+          entregas: 0, 
+          receita: 0 
+        };
+      });
+
+      weeklyShipments.data?.forEach(s => {
+        const sDate = s.created_at.split('T')[0];
+        const dayObj = last7Days.find(d => d.date === sDate);
+        if (dayObj) {
+          dayObj.entregas += 1;
+          dayObj.receita += Number(s.amount || 0);
+        }
+      });
+      setChartData(last7Days);
+
+      const { data: events } = await supabase.from('calendar_events').select('start_date').eq('company_id', profile.company_id);
       setCalendarEvents(events || []);
 
-      // Fetch Fuel Prices
       const { data: fuelData } = await supabase.from('fuel_prices').select('*').limit(4);
       setFuelPrices(fuelData || []);
     } catch (err) {
-      console.error('Error fetching admin metrics:', err);
+      console.error('Error fetching dashboard data:', err);
     } finally {
       setLoading(false);
     }
   }, [profile?.company_id]);
 
   useEffect(() => {
-    // Redirecionamento automático para a URL específica da Role (UX Profissional)
     const currentPath = window.location.pathname;
     if (currentPath === '/dashboard' && profile?.role) {
-      if (profile.role === 'RH') navigate('/rh/dashboard', { replace: true });
-      else if (profile.role === 'LOGISTICA') navigate('/logistica/dashboard', { replace: true });
-      else if (profile.role === 'FINANCEIRO') navigate('/financeiro/dashboard', { replace: true });
-      else if (profile.role === 'CRM') navigate('/crm/dashboard', { replace: true });
-      else if (profile.role === 'ESTOQUE') navigate('/estoque/dashboard', { replace: true });
-      else if (profile.role === 'ADMIN' || profile.role === 'MASTER_ADMIN') navigate('/admin/dashboard', { replace: true });
+      const routes: any = { RH: '/rh/dashboard', LOGISTICA: '/logistica/dashboard', FINANCEIRO: '/financeiro/dashboard', CRM: '/crm/dashboard', ESTOQUE: '/estoque/dashboard', ADMIN: '/admin/dashboard', MASTER_ADMIN: '/admin/dashboard' };
+      if (routes[profile.role]) navigate(routes[profile.role], { replace: true });
     }
-
     fetchMetrics();
     fetchActivities();
   }, [fetchMetrics, fetchActivities, profile?.role, navigate]);
 
-  // Sincronização em Tempo Real
   useRealtime('shipments', profile?.company_id, fetchMetrics);
   useRealtime('routes', profile?.company_id, fetchMetrics);
   useRealtime('transactions', profile?.company_id, fetchMetrics);
   useRealtime('audit_logs', profile?.company_id, fetchActivities);
 
-  const { company: tenantCompany } = useTenant();
-  const segment = getSegmentConfig(tenantCompany?.segment);
+  const segment = getSegmentConfig(company?.segment);
 
   const kpis = [
-    { label: segment.primaryLabel, value: metrics.todayDeliveries, sub: `${metrics.activeRoutes} ${segment.terminology.fleet.toLowerCase()} on`, Icon: segment.mainIcon, color: '#D9FF00', trend: '+14%' },
-    { label: segment.terminology.drivers, value: metrics.activeDrivers, sub: `${metrics.teamTotal} no total`, Icon: Users, color: '#10b981', trend: '+8%' },
-    { label: segment.specialKpi, value: segment.specialKpi.includes('Temp') ? '4.5°C' : (metrics.monthlyRevenue / 1000).toFixed(1) + 'k', sub: segment.terminology.load, Icon: segment.specialKpiIcon, color: '#f59e0b', trend: 'Ok' },
-    { label: 'Relacionamento (CRM)', value: metrics.totalClients, sub: `${metrics.activeLeads} novos leads`, Icon: UserPlus, color: '#D9FF00', trend: 'Crescente' },
-    { label: 'Estoque Central', value: metrics.inventoryCount, sub: 'Itens em almoxarifado', Icon: Package, color: '#D9FF00', trend: 'Equilibrado' },
-    { label: 'Logta Academy', value: '45', sub: 'Treinamentos concluídos', Icon: GraduationCap, color: '#f43f5e', trend: 'Alto Comprometimento' },
-    { label: 'Frota & Ativos', value: metrics.totalFleet, sub: 'Veículos cadastrados', Icon: Truck, color: '#06b6d4', trend: '100% Up' },
-    { label: 'Agenda Operacional', value: 'CALENDARIO', sub: 'Compromissos críticos', Icon: Calendar, color: '#ef4444', trend: 'Monitorado' },
+    { label: segment.primaryLabel, value: metrics.todayDeliveries, sub: `${metrics.activeRoutes} em rota`, Icon: segment.mainIcon, color: '#D9FF00' },
+    { label: segment.terminology.drivers, value: metrics.activeDrivers, sub: `${metrics.teamTotal} equipe total`, Icon: Users, color: '#10b981' },
+    { label: 'Clientes', value: metrics.totalClients, sub: `${metrics.activeLeads} leads ativos`, Icon: UserPlus, color: '#0061FF' },
+    { label: 'Agenda', value: 'CALENDARIO', sub: 'Eventos críticos', Icon: Calendar, color: '#ef4444' },
   ];
 
-  const clientData = [
-    { name: 'Jan', ativos: 400 },
-    { name: 'Fev', ativos: 600 },
-    { name: 'Mar', ativos: 800 },
-    { name: 'Abr', ativos: 1000 },
-    { name: 'Mai', ativos: 1300 },
-    { name: 'Jun', ativos: 1540 },
-  ];
+  const renderAdminView = () => (
+    <div style={styles.adminView}>
+      <div style={styles.kpiGrid}>
+        {kpis.map((kpi, idx) => (
+          <div key={idx} style={styles.kpiCard}>
+            {kpi.value === 'CALENDARIO' ? (
+              <div style={styles.miniCalContainer}><MiniCalendar events={calendarEvents} /></div>
+            ) : (
+              <>
+                <div style={{ ...styles.kpiIcon, backgroundColor: `${kpi.color}15`, color: kpi.color }}><kpi.Icon size={24} /></div>
+                <div style={styles.kpiContent}>
+                  <p style={styles.kpiLabel}>{kpi.label}</p>
+                  <h3 style={styles.kpiValue}>{loading ? '...' : kpi.value}</h3>
+                  <p style={styles.kpiSub}>{kpi.sub}</p>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+        <FuelDashboardCard prices={fuelPrices} onClick={() => navigate('/logistica/dashboard')} />
+      </div>
 
-  const handleCalcClick = (val: string) => {
-    if (val === 'C') setCalcDisplay('0');
-    else if (val === '=') {
-      try { setCalcDisplay(eval(calcDisplay).toString()); } catch { setCalcDisplay('Erro'); }
-    } else {
-      setCalcDisplay(prev => prev === '0' ? val : prev + val);
-    }
-  };
+      <div style={styles.chartsGrid}>
+        <div style={styles.chartCard}>
+          <div style={styles.cardHeader}><h3 style={styles.cardTitle}>Performance (7 dias)</h3></div>
+          <div style={{ height: 260 }}>
+            <ResponsiveContainer>
+              <AreaChart data={chartData}>
+                <defs><linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#D9FF00" stopOpacity={0.3}/><stop offset="95%" stopColor="#D9FF00" stopOpacity={0}/></linearGradient></defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#949494', fontSize: 11}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#949494', fontSize: 11}} />
+                <Tooltip contentStyle={styles.tooltip} />
+                <Area type="monotone" dataKey="entregas" stroke="#D9FF00" strokeWidth={3} fill="url(#grad1)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-  const renderCalculator = () => (
-    <Modal isOpen={isCalculatorOpen} onClose={() => setIsCalculatorOpen(false)} title="Calculadora Financeira Avançada (Nuvem Logta)" width="1100px">
-       <FinanceCalculator />
-    </Modal>
+        <div style={styles.chartCard}>
+          <div style={styles.cardHeader}><h3 style={styles.cardTitle}>Receita (7 dias)</h3></div>
+          <div style={{ height: 260 }}>
+            <ResponsiveContainer>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#949494', fontSize: 11}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#949494', fontSize: 11}} />
+                <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={styles.tooltip} />
+                <Bar dataKey="receita" fill="#0061FF" radius={[6, 6, 0, 0]} barSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.bottomSection}>
+        <div style={styles.activityCard}>
+          <div style={styles.cardHeader}><h3 style={styles.cardTitle}>Feed de Atividades</h3><div style={styles.liveBadge}><div style={styles.liveDot} /> Live</div></div>
+          <div style={styles.activityList}>
+            {activities.length === 0 ? <p style={styles.emptyText}>Sem atividades recentes.</p> : activities.map(a => (
+              <div key={a.id} style={styles.activityItem}>
+                <div style={styles.activityMain}><p style={styles.activityAction}>{a.action}</p><span style={styles.activityTime}>{new Date(a.created_at).toLocaleTimeString()}</span></div>
+                <p style={styles.activityDetails}>{a.details}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={styles.financeSummary}>
+          <div style={styles.finBox}>
+            <p style={styles.finLabel}>RECEBIDO (MÊS)</p>
+            <h4 style={styles.finValue}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.receivedAmount)}</h4>
+          </div>
+          <div style={styles.finBox}>
+            <p style={styles.finLabel}>PREVISTO</p>
+            <h4 style={{ ...styles.finValue, color: '#0061FF' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.expectedRevenue)}</h4>
+          </div>
+          <div style={styles.healthCard}>
+            <div style={styles.healthCircle}><h2>100%</h2><p>Uptime</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 
-  const MiniCalendar = () => {
+  const MiniCalendar = ({ events }: { events: any[] }) => {
     const today = new Date();
     const days = [];
-    const date = new Date(today.getFullYear(), today.getMonth(), 1);
-    const startDay = date.getDay();
-    
-    for (let i = 0; i < startDay; i++) days.push(null);
-    while (date.getMonth() === today.getMonth()) {
-      days.push(new Date(date));
-      date.setDate(date.getDate() + 1);
-    }
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    for (let i = 1; i <= lastDay; i++) days.push(new Date(today.getFullYear(), today.getMonth(), i));
 
     return (
-      <div style={styles.miniCal}>
-        <div style={styles.miniCalHeader}>
-           <span style={styles.miniMonth}>{today.toLocaleString('pt-BR', { month: 'short' }).toUpperCase()}</span>
-           <div style={styles.miniNav}><ChevronLeft size={12} /><ChevronRight size={12} /></div>
-        </div>
-        <div style={styles.miniGrid}>
-          {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => <div key={d} style={styles.miniWeekDay}>{d}</div>)}
+      <div style={styles.calendar}>
+        <div style={styles.calHeader}>{today.toLocaleString('pt-BR', { month: 'short' }).toUpperCase()} {today.getFullYear()}</div>
+        <div style={styles.calGrid}>
+          {['D','S','T','Q','Q','S','S'].map(d => <div key={d} style={styles.calWeekDay}>{d}</div>)}
           {days.slice(0, 14).map((d, i) => {
-            const hasEvent = d && calendarEvents.some(e => new Date(e.start_date).toDateString() === d.toDateString());
-            const isToday = d && d.toDateString() === today.toDateString();
+            const isToday = d?.toDateString() === today.toDateString();
+            const hasEvent = d && events.some(e => new Date(e.start_date).toDateString() === d.toDateString());
             return (
-              <div key={i} style={{
-                ...styles.miniDay,
-                ...(isToday ? styles.miniToday : {}),
-                ...(hasEvent ? styles.miniEvent : {})
-              }}>
+              <div key={i} style={{ ...styles.calDay, ...(isToday ? styles.calToday : {}), ...(hasEvent ? styles.calEvent : {}) }}>
                 {d ? d.getDate() : ''}
               </div>
             );
@@ -250,321 +299,86 @@ const Dashboard: React.FC = () => {
     );
   };
 
-  const handleSeed = async () => {
-    if (!profile?.company_id) return;
-    const ok = await seedDatabase(profile.company_id);
-    if (ok) {
-       toastSuccess('Dados de teste gerados com sucesso!');
-       fetchMetrics();
-       fetchActivities();
-    }
-  };
-
-  if (loading || !profile) return null;
-
-  // --- RENDERIZADOR POR CONTEXTO DE CARGO ---
-  const renderContent = () => {
-    switch (profile?.role) {
-      case 'RH': return <RHDashboard />;
-      case 'LOGISTICA': return <LogisticsDashboard />;
-      case 'FINANCEIRO': return <FinanceDashboard />;
-      case 'CRM': return <CRMDashboard />;
-      case 'ESTOQUE': return <InventoryDashboard />;
-      case 'ADMIN':
-      case 'MASTER_ADMIN':
-        return renderAdminView();
-      default:
-        return (
-          <div style={{ textAlign: 'center', padding: '100px' }}>
-            <Activity size={64} color="var(--primary-light)" style={{ marginBottom: '20px' }} />
-            <h2>Preparando seu ambiente...</h2>
-            <p style={{ color: 'var(--text-secondary)' }}>Estamos configurando as ferramentas do seu setor.</p>
-          </div>
-        );
-    }
-  };
-
-  const renderAdminView = () => (
-    <>
-      {/* KPI Row */}
-      <div style={styles.kpiGrid}>
-        {kpis.map((kpi, index) => (
-          <div key={index} style={styles.kpiCard}>
-            {kpi.value === 'CALENDARIO' ? (
-              <div style={styles.calendarMiniCard}><MiniCalendar /></div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', width: '100%', position: 'relative' }}>
-                <div style={{ ...styles.kpiIconBox, backgroundColor: `${kpi.color}15`, color: kpi.color, flexShrink: 0 }}>
-                  <kpi.Icon size={24} />
-                </div>
-                <div style={styles.kpiInfo}>
-                  <p style={styles.kpiLabel}>{kpi.label}</p>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                    <h3 style={styles.kpiValue}>{loading ? '...' : kpi.value}</h3>
-                    <span style={{ fontSize: '11px', fontWeight: '600', color: '#10b981' }}>{kpi.trend}</span>
-                  </div>
-                  <p style={styles.kpiSub}>{kpi.sub}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-        <FuelDashboardCard 
-          prices={fuelPrices} 
-          onClick={() => window.open('http://localhost:5175/master/logistica?tab=combustivel', '_blank')} 
-        />
-      </div>
-
-      {/* Charts Row */}
-      <div style={styles.chartsGrid}>
-        <div style={styles.chartCard} className="card">
-          <div style={styles.cardHeader}>
-            <h3 style={styles.cardTitle}>Performance da Semana</h3>
-            <div style={styles.cardBadge}>Inteligência Logta</div>
-          </div>
-          <div style={{ width: '100%', height: 260 }}>
-            <ResponsiveContainer>
-              <AreaChart data={dataLabels}>
-                <defs>
-                  <linearGradient id="colorEntregas" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#D9FF00" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#D9FF00" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: 'var(--shadow-lg)' }}
-                />
-                <Area type="monotone" dataKey="entregas" stroke="#D9FF00" strokeWidth={3} fillOpacity={1} fill="url(#colorEntregas)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div style={styles.chartCard} className="card">
-          <div style={styles.cardHeader}>
-            <h3 style={styles.cardTitle}>Financeiro Previsto</h3>
-          </div>
-          <div style={{ width: '100%', height: 260 }}>
-            <ResponsiveContainer>
-              <BarChart data={dataLabels}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} />
-                <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: 'var(--shadow-md)' }} />
-                <Bar dataKey="receita" fill="#C084FC" radius={[6, 6, 0, 0]} barSize={16} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div style={styles.chartCard} className="card">
-          <div style={styles.cardHeader}>
-            <h3 style={styles.cardTitle}>Clientes Ativos</h3>
-          </div>
-          <div style={{ width: '100%', height: 260 }}>
-            <ResponsiveContainer>
-              <AreaChart data={clientData}>
-                <defs>
-                   <linearGradient id="colorClients" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                   </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} />
-                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none' }} />
-                <Area type="step" dataKey="ativos" stroke="#10b981" fill="url(#colorClients)" strokeWidth={3} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Admin Financial Deep Dive */}
-      <div style={styles.adminFinGrid}>
-         <div style={styles.finCard}>
-            <p style={styles.finLabel}>TOTAL RECEBIDO (MÊS)</p>
-            <h4 style={styles.finValue}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.receivedAmount)}</h4>
-            <div style={styles.finBar}><div style={{...styles.finFill, width: '70%', backgroundColor: '#10b981'}} /></div>
-         </div>
-         <div style={styles.finCard}>
-            <p style={styles.finLabel}>TOTAL PAGO (MÊS)</p>
-            <h4 style={styles.finValue}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.paidAmount)}</h4>
-            <div style={styles.finBar}><div style={{...styles.finFill, width: '40%', backgroundColor: '#ef4444'}} /></div>
-         </div>
-         <div style={styles.finCard}>
-            <p style={styles.finLabel}>FATURAMENTO PREVISTO</p>
-            <h4 style={{...styles.finValue, color: 'var(--primary)'}}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.expectedRevenue)}</h4>
-            <div style={styles.finBar}><div style={{...styles.finFill, width: '100%', backgroundColor: 'var(--primary)'}} /></div>
-         </div>
-      </div>
-
-      {/* Recent Alerts & Status */}
-      <div style={styles.bottomGrid}>
-        <div style={styles.activityCard}>
-          <div style={styles.cardHeader}>
-            <h3 style={styles.cardTitle}>Atividade Recente (Global)</h3>
-            <div style={styles.liveTag}><div style={styles.liveDot} /> Sincronizado</div>
-          </div>
-          <div style={styles.alertList}>
-             {activities.length === 0 ? (
-               <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>Nenhuma atividade registrada.</p>
-             ) : activities.map((log) => (
-               <div key={log.id} style={styles.alertItem}>
-                  <div style={{ ...styles.logIconBox, backgroundColor: log.type === 'LOGISTICS' ? '#ecfdf5' : '#fef2f2' }}>
-                     {log.type === 'LOGISTICS' ? <Truck size={16} color="#10b981" /> : <Package size={16} color="#ef4444" />}
-                  </div>
-                  <div style={styles.alertContent}>
-                     <p style={styles.alertText}>{log.action}: {log.details}</p>
-                     <span style={styles.alertTime}>{new Date(log.created_at).toLocaleTimeString()} • {log.type}</span>
-                  </div>
-               </div>
-             ))}
-          </div>
-        </div>
-
-        <div style={styles.secondaryCard}>
-          <div style={styles.cardHeader}>
-            <h3 style={styles.cardTitle}>Health Check</h3>
-          </div>
-          <div style={styles.fleetGauge}>
-             <div style={styles.gaugeCenter}>
-                <h2 style={styles.gaugeValue}>100%</h2>
-                <p style={styles.gaugeLabel}>Uptime</p>
-             </div>
-          </div>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center' }}>Todos os módulos sincronizados com o Sistema Mãe.</p>
-        </div>
-      </div>
-    </>
-  );
+  if (!profile) return null;
 
   return (
     <div className="animate-fade-in" style={styles.container}>
-      {/* Header */}
       <header style={styles.header}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-           <div>
-              <h1 style={styles.title}>
-                 {profile?.role === 'ADMIN' || profile?.role === 'MASTER_ADMIN' ? (
-                   `Olá, ${profile?.full_name?.split(' ')[0]}`
-                 ) : (
-                   `Olá, ${profile?.full_name?.split(' ')[0]}`
-                 )}
-              </h1>
-              <p style={styles.subtitle}>Visão Administrativa 360º de todas as operações.</p>
-           </div>
+        <div>
+          <h1 style={styles.title}>Olá, {profile?.full_name?.split(' ')[0]}</h1>
+          <p style={styles.subtitle}>Gerenciamento inteligente do ecossistema {company?.name}.</p>
         </div>
         <div style={styles.headerActions}>
-           <div style={styles.kpiPill}>
-              <Users size={14} />
-              <span>{metrics.teamTotal} Equipe</span>
-           </div>
-           <div style={styles.kpiPill}>
-              <BarChart2 size={14} />
-              <span>{metrics.pendingInvoices} Relatórios</span>
-           </div>
-          <button style={styles.secondaryBtn} onClick={handleSeed}>Seed (Test)</button>
-          <div style={styles.datePicker}>
-            <Calendar size={18} />
-            <span>Hoje, {new Date().toLocaleDateString('pt-BR')}</span>
-          </div>
-          <button 
-             style={{
-               ...styles.secondaryBtn, 
-               color: '#10b981', 
-               fontWeight: '700', 
-               backgroundColor: '#ecfdf5', 
-               border: '1px solid rgba(16, 185, 129, 0.2)',
-               display: 'flex',
-               alignItems: 'center',
-               gap: '8px'
-             }} 
-             onClick={() => setIsCalculatorOpen(true)}
-          >
-             <Calculator size={18} /> Calculadora
+          <button className="hub-premium-pill secondary" onClick={fetchMetrics} style={{ padding: '8px 16px' }}>
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Sync
           </button>
-          <ExportButton filename={`Relatorio-Dashboard-${company?.name}`} />
-          <button style={styles.primaryBtn} onClick={() => navigate('/relatorios')}>Relatório Full</button>
+          <button className="hub-premium-pill secondary" onClick={() => setIsCalculatorOpen(true)} style={{ padding: '8px 16px' }}>
+            <Calculator size={16} /> Calculadora
+          </button>
+          <button className="hub-premium-pill primary" onClick={() => navigate('/relatorios')}>
+            Dashboard Full
+          </button>
         </div>
       </header>
 
-      {renderCalculator()}
-      {renderContent()}
+      <Modal isOpen={isCalculatorOpen} onClose={() => setIsCalculatorOpen(false)} title="Calculadora Financeira" width="1000px"><FinanceCalculator /></Modal>
+
+      {profile.role === 'RH' && <RHDashboard />}
+      {profile.role === 'LOGISTICA' && <LogisticsDashboard />}
+      {profile.role === 'FINANCEIRO' && <FinanceDashboard />}
+      {profile.role === 'CRM' && <CRMDashboard />}
+      {profile.role === 'ESTOQUE' && <InventoryDashboard />}
+      {(profile.role === 'ADMIN' || profile.role === 'MASTER_ADMIN') && renderAdminView()}
     </div>
   );
 };
 
 const styles = {
-  container: { padding: '0', minHeight: '100vh', backgroundColor: 'transparent' },
+  container: { padding: '24px 0', minHeight: '100vh' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-  title: { fontSize: '28px', fontWeight: '800', color: '#1F2937', letterSpacing: '-1.5px' },
-  subtitle: { color: '#6B7280', fontSize: '15px', marginTop: '4px', fontWeight: '500' },
-  headerActions: { display: 'flex', gap: '12px', alignItems: 'center' },
-  datePicker: { display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#FFFFFF', padding: '10px 16px', borderRadius: '12px', border: '1px solid #E5E7EB', fontSize: '14px', color: '#1F2937', fontWeight: '600', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  primaryBtn: { backgroundColor: '#0061FF', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0, 97, 255, 0.2)' },
-  secondaryBtn: { backgroundColor: '#FFFFFF', color: '#1F2937', border: '1px solid #E5E7EB', padding: '10px 20px', borderRadius: '12px', fontWeight: '700', fontSize: '13px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' },
-  kpiCard: { backgroundColor: '#FFFFFF', padding: '20px', borderRadius: '12px', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', minHeight: '110px' },
-  kpiInfo: { display: 'flex', flexDirection: 'column' as const, gap: '2px' },
-  kpiLabel: { fontSize: '11px', color: '#6B7280', fontWeight: '800', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
-  kpiValue: { fontSize: '24px', fontWeight: '800', color: '#1F2937', margin: 0, letterSpacing: '-1px' },
-  kpiSub: { fontSize: '11px', color: '#9CA3AF', margin: 0, fontWeight: '500' },
-  kpiIconBox: { width: '52px', height: '52px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  calendarMiniCard: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  chartsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '32px' },
-  chartCard: { backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
-  cardTitle: { fontSize: '16px', fontWeight: '800', color: '#1F2937' },
-  cardBadge: { padding: '5px 12px', backgroundColor: '#0061FF15', color: '#0061FF', borderRadius: '8px', fontSize: '11px', fontWeight: '800' },
-  
-  // Mini Calendar Styles
-  miniCal: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
-  miniCalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  miniMonth: { fontSize: '10px', fontWeight: '800', color: '#0061FF', letterSpacing: '1px' },
-  miniNav: { display: 'flex', gap: '8px', color: '#9CA3AF' },
-  miniGrid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' },
-  miniWeekDay: { fontSize: '9px', fontWeight: '800', color: '#9CA3AF', textAlign: 'center' as const },
-  miniDay: { fontSize: '10px', fontWeight: '800', color: '#1F2937', textAlign: 'center' as const, height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px' },
-  miniToday: { backgroundColor: '#0061FF', color: '#FFFFFF' },
-  miniEvent: { backgroundColor: '#FEE2E2', color: '#EF4444' },
-
-  // Admin Finance Grid
-  adminFinGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '32px' },
-  finCard: { backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  finLabel: { fontSize: '10px', fontWeight: '800', color: '#9CA3AF', letterSpacing: '1px', marginBottom: '12px' },
-  finValue: { fontSize: '24px', fontWeight: '800', color: '#1F2937', marginBottom: '16px', letterSpacing: '-1px' },
-  finBar: { width: '100%', height: '6px', backgroundColor: '#F3F4F6', borderRadius: '10px', overflow: 'hidden' },
-  finFill: { height: '100%', borderRadius: '10px' },
-
-  // Header Elements
-  calcTrigger: { width: '48px', height: '48px', borderRadius: '12px', border: '1px solid #E5E7EB', backgroundColor: '#FFFFFF', color: '#1F2937', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' },
-  kpiPill: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', fontSize: '12px', fontWeight: '700', color: '#6B7280', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-
-  // Calculator Styles
-  calcBody: { display: 'flex', flexDirection: 'column' as const, gap: '16px' },
-  calcScreen: { width: '100%', padding: '20px', backgroundColor: '#1F2937', borderRadius: '12px', color: 'white', fontSize: '24px', fontWeight: '600', textAlign: 'right' as const, overflow: 'hidden' },
-  calcGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' },
-  calcBtn: { padding: '16px', borderRadius: '12px', border: '1px solid #E5E7EB', backgroundColor: '#FFFFFF', fontSize: '16px', fontWeight: '600', cursor: 'pointer' },
-
-  bottomGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' },
-  activityCard: { backgroundColor: '#FFFFFF', padding: '28px', borderRadius: '12px', border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  secondaryCard: { backgroundColor: '#FFFFFF', padding: '28px', borderRadius: '12px', border: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  liveTag: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '800', color: '#10B981', backgroundColor: '#10B98115', padding: '6px 12px', borderRadius: '10px' },
-  liveDot: { width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' },
-  alertList: { display: 'flex', flexDirection: 'column' as const, gap: '16px' },
-  alertItem: { display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', borderRadius: '12px', backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB' },
-  logIconBox: { width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  alertContent: { flex: 1 },
-  alertText: { fontSize: '14px', fontWeight: '700', color: '#1F2937' },
-  alertTime: { fontSize: '12px', color: '#9CA3AF', fontWeight: '500' },
-  fleetGauge: { width: '180px', height: '180px', borderRadius: '50%', border: '12px solid #F3F4F6', borderTopColor: '#0061FF', position: 'relative' as const, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' },
-  gaugeCenter: { textAlign: 'center' as const },
-  gaugeValue: { fontSize: '32px', fontWeight: '800', color: '#1F2937', marginBottom: '0' },
-  gaugeLabel: { fontSize: '14px', color: '#6B7280', fontWeight: '600' },
+  title: { fontSize: '28px', fontWeight: '900', color: '#111827', letterSpacing: '-1px' },
+  subtitle: { color: '#6B7280', fontSize: '15px', marginTop: '4px' },
+  headerActions: { display: 'flex', gap: '12px' },
+  btnPrimary: { backgroundColor: '#0061FF', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' },
+  btnSecondary: { backgroundColor: '#fff', color: '#374151', border: '1px solid #E5E7EB', padding: '10px 18px', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
+  adminView: { display: 'flex', flexDirection: 'column' as const, gap: '24px' },
+  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' },
+  kpiCard: { backgroundColor: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
+  kpiIcon: { width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  kpiContent: { flex: 1 },
+  kpiLabel: { fontSize: '11px', fontWeight: '800', color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
+  kpiValue: { fontSize: '22px', fontWeight: '900', color: '#111827', margin: '2px 0' },
+  kpiSub: { fontSize: '11px', color: '#6B7280' },
+  miniCalContainer: { width: '100%' },
+  calendar: { width: '100%' },
+  calHeader: { fontSize: '10px', fontWeight: '900', color: '#0061FF', marginBottom: '8px', textAlign: 'center' as const },
+  calGrid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' },
+  calWeekDay: { fontSize: '9px', fontWeight: '800', color: '#D1D5DB', textAlign: 'center' as const },
+  calDay: { fontSize: '10px', fontWeight: '700', color: '#4B5563', textAlign: 'center' as const, height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  calToday: { backgroundColor: '#0061FF', color: '#fff', borderRadius: '4px' },
+  calEvent: { borderBottom: '2px solid #ef4444' },
+  chartsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
+  chartCard: { backgroundColor: '#fff', padding: '24px', borderRadius: '20px', border: '1px solid #F3F4F6' },
+  cardHeader: { marginBottom: '20px' },
+  cardTitle: { fontSize: '16px', fontWeight: '800', color: '#111827' },
+  tooltip: { borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' },
+  bottomSection: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' },
+  activityCard: { backgroundColor: '#fff', padding: '24px', borderRadius: '20px', border: '1px solid #F3F4F6' },
+  liveBadge: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '800', color: '#10B981', backgroundColor: '#ECFDF5', padding: '4px 10px', borderRadius: '20px' },
+  liveDot: { width: '6px', height: '6px', backgroundColor: '#10B981', borderRadius: '50%', animation: 'pulse 2s infinite' },
+  activityList: { display: 'flex', flexDirection: 'column' as const, gap: '16px', marginTop: '16px' },
+  activityItem: { padding: '12px', borderRadius: '12px', backgroundColor: '#F9FAFB' },
+  activityMain: { display: 'flex', justifyContent: 'space-between', marginBottom: '4px' },
+  activityAction: { fontSize: '14px', fontWeight: '700', color: '#111827' },
+  activityTime: { fontSize: '11px', color: '#9CA3AF' },
+  activityDetails: { fontSize: '12px', color: '#6B7280' },
+  emptyText: { textAlign: 'center' as const, color: '#9CA3AF', padding: '20px' },
+  financeSummary: { display: 'flex', flexDirection: 'column' as const, gap: '16px' },
+  finBox: { backgroundColor: '#fff', padding: '20px', borderRadius: '16px', border: '1px solid #F3F4F6' },
+  finLabel: { fontSize: '10px', fontWeight: '800', color: '#9CA3AF', marginBottom: '8px' },
+  finValue: { fontSize: '20px', fontWeight: '900', color: '#111827' },
+  healthCard: { backgroundColor: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid #F3F4F6', display: 'flex', justifyContent: 'center' },
+  healthCircle: { width: '120px', height: '120px', borderRadius: '50%', border: '8px solid #F3F4F6', borderTopColor: '#10B981', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center' },
 };
 
 export default Dashboard;

@@ -156,7 +156,7 @@ function MarkerWithDriverPopup({
       <Popup>
         <div style={{ minWidth: 200, maxWidth: 260 }}>
           <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>{name}</div>
-          <div style={{ fontSize: 12, color: '#334155', lineHeight: 1.35 }}>
+          <div style={{ fontSize: 12, color: '#6B6B6B', lineHeight: 1.35 }}>
             <div>
               <strong style={{ fontWeight: 600 }}>Rota:</strong> {routeLabel}
             </div>
@@ -435,7 +435,7 @@ const DashboardMonochromeMap: React.FC<DashboardMonochromeMapProps> = ({ isDark,
                 <Popup>
                   <div style={{ minWidth: 180 }}>
                     <div style={{ fontWeight: 800, fontSize: 14, color: '#000', marginBottom: 4 }}>{v.plate}</div>
-                    <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginBottom: 8 }}>{v.model} ({v.brand})</div>
+                    <div style={{ fontSize: 12, color: '#949494', fontWeight: 600, marginBottom: 8 }}>{v.model} ({v.brand})</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
                       <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: v.status === 'disponivel' ? '#22c55e' : (v.status === 'em_rota' ? '#3b82f6' : '#ef4444') }} />
                       <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>{v.status.replace('_', ' ')}</span>

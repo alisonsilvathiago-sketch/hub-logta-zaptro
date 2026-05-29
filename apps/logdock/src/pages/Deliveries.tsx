@@ -19,14 +19,27 @@ const DeliveriesPage: React.FC = () => {
 
   const fetchDeliveries = async () => {
     try {
-      // Simulação enquanto as tabelas novas não são migradas no Supabase real
-      const mockDeliveries: Delivery[] = [
-        { id: '1', order_number: 'ENT-882', origin: 'São Paulo, SP', destination: 'Rio de Janeiro, RJ', status: 'EM_TRANSITO', delivery_date: '2026-05-01' },
-        { id: '2', order_number: 'ENT-883', origin: 'Curitiba, PR', destination: 'Joinville, SC', status: 'PENDENTE', delivery_date: '2026-05-02' },
-        { id: '3', order_number: 'ENT-881', origin: 'Belo Horizonte, MG', destination: 'Vitória, ES', status: 'ENTREGUE', delivery_date: '2026-04-30' },
-      ];
-      setDeliveries(mockDeliveries);
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('fretes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setDeliveries(data.map((f: any) => ({
+          id: f.id,
+          order_number: `ENT-${f.id.toString().slice(0, 4).toUpperCase()}`,
+          origin: f.origem,
+          destination: f.destino,
+          status: f.status?.toUpperCase() || 'PENDENTE',
+          delivery_date: f.data_saida || new Date().toISOString(),
+          client_name: f.cliente_nome
+        })));
+      }
     } catch (error) {
+      console.error('Erro ao buscar entregas:', error);
       toast.error('Erro ao carregar entregas');
     } finally {
       setLoading(false);
@@ -49,7 +62,7 @@ const DeliveriesPage: React.FC = () => {
     <div style={styles.container}>
       <div style={styles.header}>
         <h2 style={styles.title}>Monitoramento de Entregas</h2>
-        <button style={styles.addBtn} onClick={() => toast.success('Módulo de nova entrega em breve')}>
+        <button className="hub-premium-pill primary" onClick={() => toast.success('Módulo de nova entrega em breve')}>
           <Plus size={18} /> Nova Entrega
         </button>
       </div>
@@ -59,7 +72,7 @@ const DeliveriesPage: React.FC = () => {
           <Search size={18} color="#94A3B8" />
           <input type="text" placeholder="Buscar por pedido ou destino..." style={styles.searchInput} />
         </div>
-        <button style={styles.filterBtn}><Filter size={18} /> Filtros</button>
+        <button className="hub-premium-pill secondary"><Filter size={18} /> Filtros</button>
       </div>
 
       <div style={styles.deliveryGrid}>

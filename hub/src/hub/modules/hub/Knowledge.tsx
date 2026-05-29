@@ -85,7 +85,7 @@ export const MasterKnowledge: React.FC = () => {
       <header style={styles.header}>
         <div>
           <h1 style={styles.title}>Biblioteca Central Unificada</h1>
-          <p style={styles.subtitle}>Gestão de conhecimento, documentações, logs e mídias integradas entre Zaptro, Logta e LogDock.</p>
+          <p style={styles.subtitle}>Gestão de conhecimento, documentação e materiais do produto Logta.</p>
         </div>
         <div style={styles.headerActions}>
            <button style={styles.catBtn} onClick={() => setActiveTab(activeTab === 'articles' ? 'categories' : 'articles')}>
@@ -100,7 +100,7 @@ export const MasterKnowledge: React.FC = () => {
 
       <div style={HUB_METRIC_GRID_STYLE}>
          <HubMetricCard label="Total de Artigos" value={articles.length} icon={FileText} accent="#0061FF" />
-         <HubMetricCard label="Categorias Ativas" value={categories.length} icon={Layers} accent="#10B981" />
+         <HubMetricCard label="Categorias Ativas" value={categories.length} icon={Layers} accent="#0061FF" />
          <HubMetricCard label="Visualizações (30d)" value="1.2k" icon={Eye} accent="#F59E0B" />
       </div>
 
@@ -124,8 +124,8 @@ export const MasterKnowledge: React.FC = () => {
                <div style={styles.cardHeader}>
                   <div style={{ display: 'flex', gap: '6px' }}>
                      <div style={styles.cardCategory}>{art.kb_categories?.name?.toUpperCase()}</div>
-                     <div style={{ ...styles.cardCategory, backgroundColor: art.system === 'logta' ? 'rgba(0, 97, 255, 0.12)' : art.system === 'zaptro' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)', color: art.system === 'logta' ? '#0061FF' : art.system === 'zaptro' ? '#10B981' : '#F59E0B' }}>
-                       {(art.system || 'logdock').toUpperCase()}
+                     <div style={{ ...styles.cardCategory, backgroundColor: 'rgba(0, 97, 255, 0.12)', color: '#0061FF' }}>
+                       {(art.system || 'logta').toUpperCase()}
                      </div>
                   </div>
                   <div style={styles.cardActions}>
@@ -177,11 +177,9 @@ export const MasterKnowledge: React.FC = () => {
                </div>
                <div style={styles.fGroup}>
                   <label style={styles.fLabel}>Sistema Vinculado</label>
-                  <select style={styles.input} value={(newArticle as any).system || 'logdock'} onChange={e => setNewArticle({...newArticle, system: e.target.value} as any)}>
-                     <option value="logdock">LogDock Central</option>
+                  <select style={styles.input} value={(newArticle as any).system || 'logta'} onChange={e => setNewArticle({...newArticle, system: e.target.value} as any)}>
                      <option value="logta">Logta SaaS</option>
-                     <option value="zaptro">Zaptro CRM</option>
-                     <option value="all">Unificados (Todos)</option>
+                     <option value="all">Geral Hub Master</option>
                   </select>
                </div>
             </div>
@@ -200,7 +198,7 @@ const styles: Record<string, any> = {
   container: { padding: '0', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '40px' },
   bread: { fontSize: '11px', fontWeight: '700', color: 'var(--primary)', letterSpacing: '1px', marginBottom: '8px' },
-  title: { fontSize: '29px', fontWeight: '700', color: '#000000', letterSpacing: 0, marginBottom: '8px', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '700', color: '#000000', letterSpacing: 0, marginBottom: '8px' },
   subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '12px' },
   addBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '24px', fontWeight: '600', cursor: 'pointer' },
@@ -221,7 +219,7 @@ const styles: Record<string, any> = {
   cardTitle: { fontSize: '18px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '12px', lineHeight: '1.4' },
   cardSnippet: { fontSize: '13px', color: '#64748b', lineHeight: '1.6', flex: 1, marginBottom: '20px' },
   cardFooter: { display: 'flex', justifyContent: 'space-between', paddingTop: '16px', borderTop: '1px solid #e8e8e8' },
-  cardStatus: { fontSize: '11px', fontWeight: '700', color: '#10b981' },
+  cardStatus: { fontSize: '11px', fontWeight: '700', color: '#0061FF' },
   cardDate: { fontSize: '11px', color: '#94a3b8' },
 
   list: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden' },

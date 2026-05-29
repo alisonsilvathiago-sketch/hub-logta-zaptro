@@ -48,6 +48,8 @@ import {
   findShipmentForDetail,
   normalizeFreteDetail,
 } from '../lib/freteDetailNormalize';
+import { VehicleTollTagBadge } from '../components/VehicleTollTagBadge';
+import { getVehicleTollTag } from '../lib/vehicleTollTag';
 import { getSandboxOperationalBundle, resolveDemoCompanyId } from '../lib/seed';
 import {
   appendFreteAuditEntry,
@@ -222,14 +224,13 @@ const Fretes = () => {
     { id: 'operacional', label: 'Operacional', shortLabel: 'Oper.', icon: Truck, path: '/fretes/operacional' },
     { id: 'kanban', label: 'Kanban', shortLabel: 'Kanban', icon: Activity, path: '/fretes/kanban' },
     { id: 'mapa', label: 'Mapa', shortLabel: 'Mapa', icon: MapIcon, path: '/fretes/mapa' },
-    { id: 'financeiro', label: 'Financeiro', shortLabel: 'Financ.', icon: DollarSign, path: '/fretes/financeiro' },
     { id: 'central', label: 'Central', shortLabel: 'Central', icon: AlertCircle, path: '/fretes/central' },
   ];
 
   if (isDetailPage) {
     return (
       <FretesIntelligenceProvider shipments={shipmentsNorm} motoristas={drivers} vehicles={vehicles} loading={dataLoading} autoPopup={false}>
-        <div className="logta-page h-full w-full animate-in fade-in duration-500 overflow-y-auto text-left scrollbar-hide">
+        <div className="logta-page logta-page--flush h-full w-full animate-in fade-in duration-500 overflow-y-auto text-left scrollbar-hide">
           <Routes>
             <Route path="lista/:id" element={<FreteDetalheView />} />
             <Route path="operacional/:id" element={<FreteDetalheView />} />
@@ -265,7 +266,7 @@ const Fretes = () => {
           <Route path="kanban" element={<FretesKanbanView />} />
           <Route path="mapa" element={<FretesRastreamentoView />} />
           <Route path="rastreamento" element={<Navigate to="/fretes/mapa" replace />} />
-          <Route path="financeiro" element={<FretesFinanceiroInteligente />} />
+          <Route path="financeiro" element={<Navigate to="/financeiro" replace />} />
           <Route path="central" element={<FretesCentralOperacional />} />
         </Routes>
       </div>
@@ -696,6 +697,7 @@ const FreteDetalheView = () => {
   const [eta, setEta] = React.useState('');
   const [status, setStatus] = React.useState('');
   const [logs, setLogs] = React.useState<FreteAuditDisplayLog[]>([]);
+  const [expandedLogId, setExpandedLogId] = React.useState<string | null>(null);
   const [isSimulating, setIsSimulating] = React.useState(false);
   const [cteNumber, setCteNumber] = React.useState('---');
   const [cteStatus, setCteStatus] = React.useState('Autorizado SEFAZ');
@@ -857,6 +859,14 @@ const FreteDetalheView = () => {
     }
   }, [frete?.id, companyId, freteStorageId, refreshAuditLogs, pushAudit]);
 
+  const vehiclePlate = React.useMemo(() => {
+    if (!frete) return '';
+    const norm = normalizeFreteDetail(frete as Record<string, unknown>, id);
+    return norm?.veiculos?.placa || norm?.vehicles?.plate || '---';
+  }, [frete, id]);
+
+  const vehicleTollTag = React.useMemo(() => getVehicleTollTag(vehiclePlate), [vehiclePlate]);
+
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 py-40">
@@ -899,6 +909,8 @@ const FreteDetalheView = () => {
     driverCnh: frete.motoristas?.cnh || '---',
     cargoType: frete.tipo_carga,
     weight: frete.peso_kg ? `${frete.peso_kg} kg` : '--- kg',
+    ajudantes: frete.metadata?.ajudantes || 0,
+    diariasCost: frete.metadata?.diarias_alimentacao ? `R$ ${Number(frete.metadata.diarias_alimentacao).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ 0,00',
     insurance: 'Logta Seguros',
     policy: '#LOGTA-998',
     driverCost: `R$ ${(Number(frete.valor_frete) * 0.6).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
@@ -1050,7 +1062,7 @@ const FreteDetalheView = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 text-left">
+    <div className="logta-page-content space-y-8 animate-in fade-in duration-500 text-left">
       {/* Back Link */}
       <button 
         onClick={() => {
@@ -1114,15 +1126,20 @@ const FreteDetalheView = () => {
       </div>
 
       {/* Tracking and Progress Simulator */}
-      <div className="bg-white border border-gray-200 rounded-[40px] p-8 shadow-sm space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-sm font-black text-gray-400 uppercase tracking-normal">Acompanhamento de Rota</h3>
-            <p className="text-[21px] font-black leading-tight text-gray-900">{frete.origin} → {frete.dest}</p>
+      <div className="space-y-6 rounded-[40px] border border-gray-200 bg-white px-[51px] py-8 shadow-sm">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <h3 className="logta-panel-eyebrow">Acompanhamento de Rota</h3>
+            <p className="py-[5px] text-[21px] font-black leading-tight text-gray-900">
+              {frete.origin} → {frete.dest}
+            </p>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-gray-400 font-bold uppercase">Previsão / ETA</p>
-            <p className="text-lg font-black text-primary">{eta}</p>
+          <div className="flex shrink-0 flex-col items-stretch gap-4 sm:items-end">
+            <div className="text-right">
+              <p className="text-xs font-bold uppercase text-gray-400">Previsão / ETA</p>
+              <p className="text-lg font-black text-primary">{eta}</p>
+            </div>
+            <VehicleTollTagBadge plate={currentFrete.plate} tag={vehicleTollTag} compact showLinks={false} />
           </div>
         </div>
 
@@ -1149,17 +1166,23 @@ const FreteDetalheView = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* LEFT CARD: DRIVER & VEHICLE */}
-        <div className="bg-white border border-gray-200 rounded-[40px] p-8 shadow-sm space-y-6">
-          <h3 className="text-lg font-black text-gray-900 border-b border-gray-50 pb-4">Motorista & Veículo</h3>
+        <div className="space-y-6 rounded-[40px] border border-gray-200 bg-white px-[51px] py-8 shadow-sm">
+          <h3 className="border-b border-gray-50 pb-4 text-lg font-black text-gray-900">Motorista & Veículo</h3>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-500">
               <User size={24} />
             </div>
             <div>
               <p className="text-sm font-black text-gray-900">{frete.driver}</p>
-              <p className="text-xs text-gray-400 font-bold uppercase">Placa: {frete.plate}</p>
+              <Link
+                to={`/frota/veiculos/${encodeURIComponent(frete.plate)}`}
+                className="text-xs font-bold uppercase text-primary hover:underline"
+              >
+                Placa: {frete.plate}
+              </Link>
             </div>
           </div>
+          <VehicleTollTagBadge plate={currentFrete.plate} tag={vehicleTollTag} showLinks />
           <div className="space-y-4 pt-4 border-t border-gray-50 text-xs">
             <div className="flex justify-between items-center">
               <span className="text-gray-400 font-bold uppercase tracking-normal">Telefone:</span>
@@ -1177,12 +1200,16 @@ const FreteDetalheView = () => {
               <span className="text-gray-400 font-bold uppercase tracking-normal">Peso Total:</span>
               <span className="font-bold text-gray-700">{frete.weight}</span>
             </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400 font-bold uppercase tracking-normal">Ajudantes na Viagem:</span>
+              <span className="font-bold text-gray-700">{frete.ajudantes > 0 ? `${frete.ajudantes} ajudante(s)` : 'Nenhum'}</span>
+            </div>
           </div>
         </div>
 
         {/* MIDDLE CARD: FINANCIAL BREAKDOWN */}
-        <div className="bg-white border border-gray-200 rounded-[40px] p-8 shadow-sm space-y-6">
-          <h3 className="text-lg font-black text-gray-900 border-b border-gray-50 pb-4">Custos & Financeiro</h3>
+        <div className="space-y-6 rounded-[40px] border border-gray-200 bg-white px-[51px] py-8 shadow-sm">
+          <h3 className="border-b border-gray-50 pb-4 text-lg font-black text-gray-900">Custos & Financeiro</h3>
           <div className="space-y-4 text-xs font-medium">
             <div className="flex justify-between items-center py-2 border-b border-gray-50">
               <span className="text-gray-400 font-bold uppercase">Frete Motorista</span>
@@ -1196,6 +1223,10 @@ const FreteDetalheView = () => {
               <span className="text-gray-400 font-bold uppercase">Adiantamento Diesel</span>
               <span className="font-bold text-red-500">{frete.dieselCost}</span>
             </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+              <span className="text-gray-400 font-bold uppercase">Diárias / Alimentação</span>
+              <span className="font-bold text-red-500">{frete.diariasCost}</span>
+            </div>
             <div className="flex justify-between items-center py-2 text-sm font-black">
               <span className="text-gray-900 font-bold uppercase">Saldo de Viagem</span>
               <span className="text-primary">{frete.balance}</span>
@@ -1204,8 +1235,8 @@ const FreteDetalheView = () => {
         </div>
 
         {/* RIGHT CARD: FISCAL & SAFETY */}
-        <div className="bg-white border border-gray-200 rounded-[40px] p-8 shadow-sm space-y-6">
-          <h3 className="text-lg font-black text-gray-900 border-b border-gray-50 pb-4">Documentação Fiscal</h3>
+        <div className="space-y-6 rounded-[40px] border border-gray-200 bg-white px-[51px] py-8 shadow-sm">
+          <h3 className="border-b border-gray-50 pb-4 text-lg font-black text-gray-900">Documentação Fiscal</h3>
           <div className="space-y-4">
             <div className="p-4 bg-gray-50/50 rounded-2xl border border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1290,26 +1321,43 @@ const FreteDetalheView = () => {
             logs.map((log) => (
               <div
                 key={log.id}
-                className="flex items-start gap-4 rounded-2xl border border-gray-100 bg-white p-4"
+                className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-4 cursor-pointer hover:border-primary/30 transition-colors"
+                onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Clock size={14} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[9px] font-black uppercase text-gray-400">{log.time}</span>
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[8px] font-black uppercase text-primary">
-                      {log.status}
-                    </span>
+                <div className="flex items-start gap-4">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Clock size={14} />
                   </div>
-                  <p className="mt-1 text-xs font-bold text-gray-800">{log.text}</p>
-                  <p className="mt-1 text-[10px] font-medium text-gray-500">
-                    Por: <span className="font-bold text-gray-700">{log.actor}</span>
-                    {log.action !== 'ephemeral' ? (
-                      <span className="ml-2 text-gray-400">· {log.action}</span>
-                    ) : null}
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[9px] font-black uppercase text-gray-400">{log.time}</span>
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[8px] font-black uppercase text-primary">
+                        {log.status}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs font-bold text-gray-800">{log.text}</p>
+                    <p className="mt-1 text-[10px] font-medium text-gray-500">
+                      Por: <span className="font-bold text-gray-700">{log.actor}</span>
+                      {log.action !== 'ephemeral' ? (
+                        <span className="ml-2 text-gray-400">· {log.action}</span>
+                      ) : null}
+                    </p>
+                  </div>
                 </div>
+                {expandedLogId === log.id && (
+                  <div className="mt-2 ml-12 p-3 bg-gray-50 rounded-xl border border-gray-100 text-[10px] font-mono text-gray-600 shadow-inner">
+                    <div className="flex items-center gap-2 mb-2 font-sans font-black uppercase text-gray-400">
+                      <Lock size={10} /> Metadados da Trilha
+                    </div>
+                    <div className="space-y-1">
+                      <p><span className="text-gray-400">Evento ID:</span> {log.id}</p>
+                      <p><span className="text-gray-400">Categoria:</span> {log.status}</p>
+                      <p><span className="text-gray-400">Assinatura:</span> {log.action}</p>
+                      <p><span className="text-gray-400">Responsável:</span> {log.actor}</p>
+                      <p><span className="text-gray-400">Data e Hora:</span> {log.time}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             ))
           )}

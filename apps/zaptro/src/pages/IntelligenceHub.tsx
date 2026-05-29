@@ -3,11 +3,12 @@ import {
   Briefcase, DollarSign, Heart, Truck, Package, 
   GraduationCap, ShieldCheck, MessageSquare, 
   TrendingUp, Users, AlertCircle, Clock, 
-  ArrowUpRight, LayoutGrid, Activity
+  ArrowUpRight, LayoutGrid, Activity, Brain, ArrowLeft, Zap
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import IAAssistant from '@shared/components/IAAssistant';
 
 const MODULE_WIDGETS: Record<string, any> = {
   crm: {
@@ -61,7 +62,7 @@ const MODULE_WIDGETS: Record<string, any> = {
   auditoria: {
     title: 'Trilha de Segurança',
     icon: ShieldCheck,
-    color: '#64748b',
+    color: '#949494',
     path: '/auditoria',
     kpi: 'Logs Estáveis',
     sub: 'Último acesso: há 2 min'
@@ -104,6 +105,7 @@ const IntelligenceHub: React.FC = () => {
   const navigate = useNavigate();
   const [allowedModules, setAllowedModules] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -125,6 +127,28 @@ const IntelligenceHub: React.FC = () => {
 
   if (loading) return <div style={styles.loading}>Sincronizando Central de Inteligência...</div>;
 
+  if (showChat) {
+    return (
+      <div style={styles.container}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+          <button 
+            onClick={() => setShowChat(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', color: '#949494', fontWeight: 700, cursor: 'pointer' }}
+          >
+            <ArrowLeft size={18} /> Voltar para o Hub
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 16px', backgroundColor: '#F0F7FF', borderRadius: '100px' }}>
+             <Brain size={16} color="#0061FF" />
+             <span style={{ fontSize: '11px', fontWeight: 900, color: '#0061FF', textTransform: 'uppercase', letterSpacing: '1px' }}>Zaptro Intelligence Assist</span>
+          </div>
+        </div>
+        <div style={{ height: 'calc(100vh - 160px)' }}>
+          <IAAssistant appContext="Zaptro" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -132,9 +156,17 @@ const IntelligenceHub: React.FC = () => {
           <h1 style={styles.title}>Central de Inteligência Operacional</h1>
           <p style={styles.subtitle}>Painel dinâmico moldado às suas permissões de acesso.</p>
         </div>
-        <div style={styles.statusBox}>
-          <Activity size={16} color="var(--primary)" />
-          <span style={{fontSize: '12px', fontWeight: '600'}}>Sistema Adaptativo On</span>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button 
+            onClick={() => setShowChat(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 24px', backgroundColor: '#0061FF', color: '#FFF', border: 'none', borderRadius: '16px', fontWeight: 800, fontSize: '14px', cursor: 'pointer', boxShadow: '0 8px 20px rgba(0, 97, 255, 0.2)' }}
+          >
+            <Brain size={18} /> IA Assistente
+          </button>
+          <div style={styles.statusBox}>
+            <Activity size={16} color="var(--primary)" />
+            <span style={{fontSize: '12px', fontWeight: '600'}}>Sistema Adaptativo On</span>
+          </div>
         </div>
       </header>
 
@@ -150,7 +182,7 @@ const IntelligenceHub: React.FC = () => {
                <div style={styles.cardContent}>
                   <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px'}}>
                      <h3 style={styles.cardTitle}>{mod.title}</h3>
-                     <ArrowUpRight size={16} color="#94a3b8" />
+                     <ArrowUpRight size={16} color="#949494" />
                   </div>
                   <h4 style={{...styles.kpi, color: mod.color}}>{mod.kpi}</h4>
                   <p style={styles.sub}>{mod.sub}</p>
@@ -206,7 +238,7 @@ const IntelligenceHub: React.FC = () => {
                 <div key={modId} style={styles.activityItem} onClick={() => navigate(MODULE_WIDGETS[modId].path)}>
                    <div style={styles.dot} />
                    <p style={{margin: 0, fontSize: '13px', fontWeight: '700'}}>Você acessou <strong>{MODULE_WIDGETS[modId].title}</strong> recentemente.</p>
-                   <span style={{fontSize: '11px', color: '#94a3b8', marginLeft: 'auto'}}>há 5 min</span>
+                   <span style={{fontSize: '11px', color: '#949494', marginLeft: 'auto'}}>há 5 min</span>
                 </div>
               ))}
            </div>
@@ -228,7 +260,7 @@ const styles: Record<string, any> = {
   cardContent: { flex: 1 },
   cardTitle: { fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', margin: 0 },
   kpi: { fontSize: '20px', fontWeight: '700', margin: '4px 0' },
-  sub: { fontSize: '11px', color: '#94a3b8', margin: 0, fontWeight: '700' },
+  sub: { fontSize: '11px', color: '#949494', margin: 0, fontWeight: '700' },
   progress: { height: '3px', borderRadius: '4px', width: '100%', marginTop: '8px' },
   progressBar: { height: '100%', borderRadius: '4px' },
   emptyState: { gridColumn: '1 / -1', padding: '80px', textAlign: 'center', backgroundColor: '#f4f4f4', borderRadius: '32px', border: '2px dashed #e2e8f0', color: 'var(--text-muted)' },
@@ -248,7 +280,7 @@ const styles: Record<string, any> = {
   metricsCardTitle: { fontSize: '14px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px' },
   statsRow: { display: 'flex', justifyContent: 'space-between', gap: '12px' },
   statItem: { display: 'flex', flexDirection: 'column', gap: '2px' },
-  statLabel: { fontSize: '11px', color: '#94a3b8', fontWeight: '700' },
+  statLabel: { fontSize: '11px', color: '#949494', fontWeight: '700' },
   statValue: { fontSize: '16px', fontWeight: '700', color: 'var(--text-main)' }
 };
 

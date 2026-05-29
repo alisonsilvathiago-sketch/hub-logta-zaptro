@@ -4,6 +4,7 @@ import { requireAuth, type AuthedRequest } from '../middleware/auth.js';
 import { getSupabaseAdmin } from '../lib/supabaseAdmin.js';
 import { registerImportRoutes, registerStockMovementRoutes } from './importRoutes.js';
 import { registerOperationsRoutes } from './operationsRoutes.js';
+import { registerAiRoutes } from './aiRoutes.js';
 
 export function registerApiV1Routes(app: Express, cfg: LogstokaConfig) {
   const auth = requireAuth(cfg);
@@ -11,6 +12,7 @@ export function registerApiV1Routes(app: Express, cfg: LogstokaConfig) {
   registerStockMovementRoutes(app, cfg);
   registerImportRoutes(app, cfg);
   registerOperationsRoutes(app, cfg);
+  registerAiRoutes(app, cfg);
 
   app.get('/v1/products', auth, async (req: AuthedRequest, res) => {
     const admin = getSupabaseAdmin(cfg);

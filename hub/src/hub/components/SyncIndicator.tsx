@@ -15,7 +15,7 @@ const SyncIndicator: React.FC = () => {
         };
       case 'success':
         return { 
-          color: '#10B981', 
+          color: '#0061FF', 
           icon: <Check size={18} />, 
           text: 'Dados sincronizados com sucesso!' 
         };

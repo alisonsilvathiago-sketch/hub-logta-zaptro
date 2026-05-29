@@ -326,7 +326,7 @@ const CompanyProfile: React.FC = () => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <h1 style={styles.companyName}>{company.name}</h1>
-              <span style={{...styles.statusBadge, backgroundColor: company.status === 'active' ? '#ECFDF5' : '#FEF2F2', color: company.status === 'active' ? '#10B981' : '#EF4444'}}>
+              <span style={{...styles.statusBadge, backgroundColor: company.status === 'active' ? '#EFF6FF' : '#FEF2F2', color: company.status === 'active' ? '#0061FF' : '#EF4444'}}>
                 {company.status === 'active' ? 'Ativo' : 'Suspenso'}
               </span>
             </div>
@@ -385,7 +385,7 @@ const CompanyProfile: React.FC = () => {
           label="Clientes Base"
           value={company.clients_count || 0}
           icon={Database}
-          accent="#10B981"
+          accent="#0061FF"
         />
         <HubMetricCard
           label="Veículos Ativos"
@@ -450,7 +450,7 @@ const CompanyProfile: React.FC = () => {
               {extraData.whatsapp.map((wa: any) => (
                 <div key={wa.id} style={styles.waCard}>
                   <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-                    <div style={{...styles.statusDot, backgroundColor: wa.status === 'open' ? '#10B981' : '#EF4444'}} />
+                    <div style={{...styles.statusDot, backgroundColor: wa.status === 'open' ? '#0061FF' : '#EF4444'}} />
                     <span style={{fontWeight: '800'}}>{wa.instance_name}</span>
                   </div>
                   <div style={{fontSize: '12px', color: '#64748B', marginTop: '8px'}}>{wa.phone || 'Pendente'}</div>
@@ -528,8 +528,8 @@ const CompanyProfile: React.FC = () => {
                       <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '500' }}>Operação e Rotas</span>
                     </div>
                   </div>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700', backgroundColor: extraData.routes.length > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)', color: extraData.routes.length > 0 ? '#10B981' : '#64748B' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: extraData.routes.length > 0 ? '#10B981' : '#64748B', display: 'inline-block' }} />
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700', backgroundColor: extraData.routes.length > 0 ? 'rgba(0, 97, 255, 0.1)' : 'rgba(148, 163, 184, 0.1)', color: extraData.routes.length > 0 ? '#0061FF' : '#64748B' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: extraData.routes.length > 0 ? '#0061FF' : '#64748B', display: 'inline-block' }} />
                     {extraData.routes.length > 0 ? 'Online' : 'Ocioso'}
                   </span>
                 </div>
@@ -545,8 +545,8 @@ const CompanyProfile: React.FC = () => {
                       <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '500' }}>WhatsApp Gateway</span>
                     </div>
                   </div>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700', backgroundColor: extraData.whatsapp.some((w:any) => w.status === 'open') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)', color: extraData.whatsapp.some((w:any) => w.status === 'open') ? '#10B981' : '#F43F5E' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: extraData.whatsapp.some((w:any) => w.status === 'open') ? '#10B981' : '#F43F5E', display: 'inline-block' }} />
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700', backgroundColor: extraData.whatsapp.some((w:any) => w.status === 'open') ? 'rgba(0, 97, 255, 0.1)' : 'rgba(244, 63, 94, 0.1)', color: extraData.whatsapp.some((w:any) => w.status === 'open') ? '#0061FF' : '#F43F5E' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: extraData.whatsapp.some((w:any) => w.status === 'open') ? '#0061FF' : '#F43F5E', display: 'inline-block' }} />
                     {extraData.whatsapp.some((w:any) => w.status === 'open') ? 'Conectado' : 'Desconectado'}
                   </span>
                 </div>
@@ -554,16 +554,16 @@ const CompanyProfile: React.FC = () => {
                 {/* SYSTEM 3 */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '16px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', transition: '0.2s', width: '100%', boxSizing: 'border-box' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '12px', backgroundColor: 'rgba(16, 185, 129, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Zap size={16} color="#10B981" />
+                    <div style={{ width: '36px', height: '36px', borderRadius: '12px', backgroundColor: 'rgba(0, 97, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Zap size={16} color="#0061FF" />
                     </div>
                     <div>
                       <p style={{ fontSize: '13px', fontWeight: '700', color: '#0F172A', margin: 0 }}>Sincronia Rubi</p>
                       <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '500' }}>Realtime Mirroring</span>
                     </div>
                   </div>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }} />
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(0, 97, 255, 0.1)', color: '#0061FF' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0061FF', display: 'inline-block' }} />
                     Ativa
                   </span>
                 </div>
@@ -576,7 +576,7 @@ const CompanyProfile: React.FC = () => {
                 <div style={styles.waCard}>
                   <div style={{display: 'flex', justifyContent: 'space-between'}}>
                     <span style={styles.infoLabel}>Backup Cloud</span>
-                    <Shield size={16} color={company.backup_enabled ? '#10B981' : '#94A3B8'} />
+                    <Shield size={16} color={company.backup_enabled ? '#0061FF' : '#94A3B8'} />
                   </div>
                   <div style={{fontSize: '18px', fontWeight: '800', marginTop: '10px'}}>
                     {company.backup_enabled ? 'Ativo' : 'Pendente'}
@@ -684,7 +684,7 @@ const CompanyProfile: React.FC = () => {
                         <td style={styles.td}><strong>{inv.description || 'Assinatura'}</strong></td>
                         <td style={styles.td}>R$ {inv.amount}</td>
                         <td style={styles.td}>{new Date(inv.created_at).toLocaleDateString()}</td>
-                        <td style={styles.td}><span style={{...styles.statusBadge, color: inv.status === 'pago' ? '#10B981' : '#F59E0B'}}>{inv.status}</span></td>
+                        <td style={styles.td}><span style={{...styles.statusBadge, color: inv.status === 'pago' ? '#0061FF' : '#F59E0B'}}>{inv.status}</span></td>
                       </tr>
                     ))}
                     {extraData.invoices.length === 0 && (
@@ -692,7 +692,7 @@ const CompanyProfile: React.FC = () => {
                         <td style={styles.td}>Assinatura Hub ({company.plan})</td>
                         <td style={styles.td}>R$ {company.plan === 'OURO' ? '997,00' : '497,00'}</td>
                         <td style={styles.td}>Recorrente</td>
-                        <td style={styles.td}><span style={{...styles.statusBadge, color: '#10B981'}}>Ativo</span></td>
+                        <td style={styles.td}><span style={{...styles.statusBadge, color: '#0061FF'}}>Ativo</span></td>
                       </tr>
                     )}
                   </tbody>
@@ -731,8 +731,8 @@ const CompanyProfile: React.FC = () => {
               </div>
               <button style={styles.primaryBtn} onClick={() => handleRubyAction('FORCE_SYNC')}>Sincronizar</button>
             </div>
-            <div style={{...styles.adminActionCard, borderLeft: '4px solid #10B981'}}>
-              <CreditCard color="#10B981" size={24} />
+            <div style={{...styles.adminActionCard, borderLeft: '4px solid #0061FF'}}>
+              <CreditCard color="#0061FF" size={24} />
               <div>
                 <h4>Adicionar Créditos</h4>
                 <p>Injetar créditos de uso (WhatsApp/IA) manualmente nesta empresa.</p>
@@ -918,7 +918,7 @@ const styles: Record<string, any> = {
   backBtn: { width: '40px', height: '40px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
   avatar: { width: '64px', height: '64px', borderRadius: '20px', backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E2E8F0', overflow: 'hidden' },
   logoImg: { width: '100%', height: '100%', objectFit: 'cover' },
-  companyName: { fontSize: '29px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: 0, lineHeight: '1.2', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  companyName: { fontSize: '29px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: 0, lineHeight: '1.2' },
   statusBadge: { padding: '4px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', letterSpacing: '0.4px' },
   metaRow: { display: 'flex', gap: '16px', marginTop: '4px' },
   metaItem: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#64748B', fontWeight: '500' },

@@ -10,33 +10,15 @@ import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetr
 import { toastSuccess } from '@core/lib/toast';
 import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 
-const MOCK_CLIENTS: Record<string, any> = {
-  '1': { 
-    id: '1', 
-    name: 'Transportadora Falcão', 
-    email: 'contato@falcao.com.br', 
-    plan: 'Enterprise', 
-    status: 'active',
-    cnpj: '12.345.678/0001-90',
-    phone: '(11) 98765-4321',
-    address: 'Av. das Indústrias, 1200 - São Paulo, SP',
-    responsible: 'Ricardo Falcão',
-    storageUsed: '1.2 TB',
-    nodes: 'AWS / GCP / Azure',
-    collaborators: [
-      { id: 1, name: 'João Silva', role: 'DevOps', lastLogin: 'Há 2h' },
-    ],
-    backups: [
-      { id: 1, name: 'Full Backup - ERP Database', size: '250 GB', date: 'Hoje, 02:00', status: 'Success' },
-      { id: 2, name: 'Incremental - Fileshare', size: '12 GB', date: 'Hoje, 08:00', status: 'Success' },
-    ]
-  },
-};
+const MOCK_CLIENTS: Record<string, any> = {};
 
 const BackupsClientProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const client = MOCK_CLIENTS[id || '1'] || MOCK_CLIENTS['1'];
+  const client = MOCK_CLIENTS[id || '1'];
+  if (!client) {
+    return <div style={{ padding: 40 }}>Nenhum dado real disponível. (Mocks removidos)</div>;
+  }
 
   const [activeTab, setActiveTab] = useState<'infra' | 'cadastro' | 'snapshots' | 'seguranca'>('infra');
   const [isEditing, setIsEditing] = useState(false);
@@ -72,7 +54,7 @@ const BackupsClientProfile: React.FC = () => {
               ) : (
                 <h1 style={s.clientName}>{editForm.name}</h1>
               )}
-              <span style={{ ...s.statusBadge, backgroundColor: '#F0FDF4', color: '#10B981' }}>✓ Ativo</span>
+              <span style={{ ...s.statusBadge, backgroundColor: '#EFF6FF', color: '#0061FF' }}>✓ Ativo</span>
             </div>
             <p style={s.clientSub}>{editForm.email} · Backups {editForm.plan}</p>
           </div>
@@ -80,7 +62,7 @@ const BackupsClientProfile: React.FC = () => {
         <div style={s.headerActions}>
           {isEditing ? (
             <>
-              <button style={{ ...s.editBtn, backgroundColor: '#10B981' }} onClick={handleSave}>
+              <button style={{ ...s.editBtn, backgroundColor: '#0061FF' }} onClick={handleSave}>
                 <CheckCircle2 size={18} /> Salvar
               </button>
               <button style={{ ...s.deleteBtn, backgroundColor: '#F1F5F9', color: '#64748B' }} onClick={() => setIsEditing(false)}>
@@ -131,9 +113,9 @@ const BackupsClientProfile: React.FC = () => {
           <div style={s.tabContent}>
             <div style={HUB_METRIC_GRID_STYLE}>
               <HubMetricCard label="Total Armazenado" value={client.storageUsed} icon={HardDrive} accent="#0061FF" softBg="#EFF6FF" />
-              <HubMetricCard label="Nodes Ativos" value="3" icon={Database} accent="#10B981" softBg="#F0FDF4" />
+              <HubMetricCard label="Nodes Ativos" value="3" icon={Database} accent="#0061FF" softBg="#EFF6FF" />
               <HubMetricCard label="Último Backup" value="Há 2h" icon={Clock} accent="#8B5CF6" softBg="#F5F3FF" />
-              <HubMetricCard label="Saúde Global" value="100%" icon={CheckCircle2} accent="#10B981" softBg="#F0FDF4" />
+              <HubMetricCard label="Saúde Global" value="100%" icon={CheckCircle2} accent="#0061FF" softBg="#EFF6FF" />
             </div>
 
             <div style={s.card}>
@@ -146,7 +128,7 @@ const BackupsClientProfile: React.FC = () => {
                       <p style={s.snapTitle}>{p}</p>
                       <p style={s.snapSub}>Status: Operacional</p>
                     </div>
-                    <span style={{ color: '#10B981', fontWeight: '800', fontSize: '12px' }}>ONLINE</span>
+                    <span style={{ color: '#0061FF', fontWeight: '800', fontSize: '12px' }}>ONLINE</span>
                   </div>
                 ))}
               </div>
@@ -228,7 +210,7 @@ const BackupsClientProfile: React.FC = () => {
                     <p style={s.snapTitle}>{b.name} · {b.size}</p>
                     <p style={s.snapSub}>{b.date}</p>
                   </div>
-                  <span style={{ fontSize: '11px', fontWeight: '800', backgroundColor: '#F0FDF4', color: '#10B981', padding: '4px 10px', borderRadius: '6px' }}>{b.status}</span>
+                  <span style={{ fontSize: '11px', fontWeight: '800', backgroundColor: '#EFF6FF', color: '#0061FF', padding: '4px 10px', borderRadius: '6px' }}>{b.status}</span>
                 </div>
               ))}
             </div>
@@ -246,7 +228,7 @@ const BackupsClientProfile: React.FC = () => {
                     <p style={s.snapTitle}>Autenticação de Dois Fatores (2FA)</p>
                     <p style={s.snapSub}>Necessário para operações de restauração (Restore).</p>
                   </div>
-                  <button style={{ ...s.addSmallBtn, backgroundColor: '#F0FDF4', color: '#10B981' }} onClick={() => toastSuccess('2FA Ativado!')}>Ativar 2FA</button>
+                  <button style={{ ...s.addSmallBtn, backgroundColor: '#EFF6FF', color: '#0061FF' }} onClick={() => toastSuccess('2FA Ativado!')}>Ativar 2FA</button>
                 </div>
                 <div style={s.securityItem}>
                   <div style={s.securityIcon}><Lock size={20} color="#EF4444" /></div>

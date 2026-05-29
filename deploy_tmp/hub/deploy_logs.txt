@@ -1,0 +1,15 @@
+> [debug] [2026-05-10T04:38:08.911Z] Found config in file "/Volumes/PODCAST/PROJETOS/hub-logta-zaptro/hub/vercel.json"
+> [debug] [2026-05-10T04:38:08.913Z] Vercel CLI 52.0.0
+> [debug] [2026-05-10T04:38:08.948Z] Agent/TTY/nonInteractive: isAgent=true agentName=antigravity stdin.isTTY=true --non-interactive=false explicitFalse=false => nonInteractive=false
+> [debug] [2026-05-10T04:38:08.949Z] user supplied a possible target for deployment or an extension
+> [debug] [2026-05-10T04:38:08.963Z] failed to find extension command with name "vercel---prod"
+> [debug] [2026-05-10T04:38:09.092Z] Setting target to production
+> [debug] [2026-05-10T04:38:09.113Z] Spinner invoked (Retrieving project…) with a 1000ms delay
+> [debug] [2026-05-10T04:38:09.117Z] Valid access token, skipping token refresh.
+> [debug] [2026-05-10T04:38:09.200Z] #1 → GET https://api.vercel.com/teams/team_bufEwvRw60uJbU0iejmMAnbh?teamId=team_bufEwvRw60uJbU0iejmMAnbh
+> [debug] [2026-05-10T04:38:09.203Z] #2 → GET https://api.vercel.com/v9/projects/prj_d0GcOpKwPhxz8SbYUezoAL1kdOjx?teamId=team_bufEwvRw60uJbU0iejmMAnbh
+> [debug] [2026-05-10T04:38:09.866Z] #1 ← 200 OK: sfo1::qch6p-1778387890035-5e117a8d3595 [666ms]
+> [debug] [2026-05-10T04:38:09.904Z] #2 ← 200 OK: sfo1::vk67q-1778387890026-4a5045d06005 [701ms]
+Error: The provided path “/Volumes/PODCAST/PROJETOS/hub-logta-zaptro/hub/hub” does not exist. To change your Project Settings, go to https://vercel.com/alisons-projects-9c220824/hub/settings
+> [debug] [2026-05-10T04:38:11.950Z] Telemetry subprocess killed due to timeout
+> [debug] [2026-05-10T04:38:11.967Z] Telemetry subprocess exited with code null

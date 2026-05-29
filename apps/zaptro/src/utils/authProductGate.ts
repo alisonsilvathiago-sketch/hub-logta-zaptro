@@ -24,21 +24,60 @@ const moduleFlag = (p: AccessSlice, key: 'logta' | 'whatsapp' | 'academy'): bool
   return toBool(v);
 };
 
+export const profileHasZaptroWhatsappEntitlement = (p: AccessSlice): boolean => {
+  if (!p) return false;
+  if (isMaster(p.role)) return true;
+
+  const status = String(p?.status_zaptro || '').trim().toLowerCase();
+  if (status === 'bloqueado') return false;
+
+  const byExplicitFlag = toBool(p?.tem_zaptro);
+  if (byExplicitFlag === true) return true;
+  if (byExplicitFlag === false) return false;
+
+  const byMetadata = moduleFlag(p, 'whatsapp');
+  if (byMetadata === true) return true;
+  if (byMetadata === false) return false;
+
+  const role = String(p?.role || '').toUpperCase();
+  const hasCompany = Boolean(String(p?.company_id || '').trim());
+  if (
+    hasCompany &&
+    (role === 'ADMIN' || role === 'COMPANY_ADMIN' || role === 'OWNER' || role === 'USER')
+  ) {
+    if (status === 'pendente') return false;
+    return true;
+  }
+
+  return false;
+};
+
 /**
- * Produto Zaptro (WaaS WhatsApp) só libera com entitlement ativo.
+ * Produto Zaptro (WaaS WhatsApp) — rotas gerais do app (`/inicio`, CRM, etc.).
  */
 export const profileHasZaptroProductAccess = (p: AccessSlice): boolean => {
   if (!p) return false;
   if (isMaster(p.role)) return true;
 
   const status = String(p?.status_zaptro || '').trim().toLowerCase();
-  if (status === 'bloqueado' || status === 'pendente') return false;
+  if (status === 'bloqueado') return false;
 
   const byExplicitFlag = toBool(p?.tem_zaptro);
-  if (byExplicitFlag != null) return byExplicitFlag;
+  if (byExplicitFlag === true) return true;
+  if (byExplicitFlag === false) return false;
 
   const byMetadata = moduleFlag(p, 'whatsapp');
-  if (byMetadata != null) return byMetadata;
+  if (byMetadata === true) return true;
+
+  const role = String(p?.role || '').toUpperCase();
+  const hasCompany = Boolean(String(p?.company_id || '').trim());
+  if (
+    hasCompany &&
+    (role === 'ADMIN' || role === 'COMPANY_ADMIN' || role === 'OWNER' || role === 'USER')
+  ) {
+    if (status === 'pendente') return false;
+    return true;
+  }
 
   return false;
 };

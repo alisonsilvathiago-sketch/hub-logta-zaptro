@@ -21,6 +21,9 @@ export type PontoSectorQr = {
 export type PontoConfig = {
   id: string;
   companyId: string;
+  /** Quando false, link/QR públicos e batidas ficam bloqueados até o RH ativar. */
+  isActive: boolean;
+  activatedAt?: string;
   unitName: string;
   operationalHoursStart: string;
   operationalHoursEnd: string;

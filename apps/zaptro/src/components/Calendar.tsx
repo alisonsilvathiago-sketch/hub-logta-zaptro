@@ -154,7 +154,7 @@ const LogtaCalendar: React.FC = () => {
           </div>
           <div style={styles.headerRight}>
              <div style={styles.searchWrap}>
-                <Search size={16} color="#94a3b8" />
+                <Search size={16} color="#949494" />
                 <input 
                   style={styles.searchInp} 
                   placeholder="Buscar evento..." 
@@ -273,7 +273,7 @@ const styles = {
   headerLeft: { display: 'flex', alignItems: 'center', gap: '40px' },
   title: { fontSize: '24px', fontWeight: '600', color: '#000000' },
   filterGroup: { display: 'flex', gap: '8px', backgroundColor: '#ebebeb', padding: '4px', borderRadius: '10px' },
-  filterBtn: { padding: '6px 12px', borderRadius: '8px', border: 'none', background: 'none', fontSize: '13px', fontWeight: '600', color: '#64748b', cursor: 'pointer' },
+  filterBtn: { padding: '6px 12px', borderRadius: '8px', border: 'none', background: 'none', fontSize: '13px', fontWeight: '600', color: '#949494', cursor: 'pointer' },
   filterActive: { backgroundColor: 'white', color: '#000000', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' },
   headerRight: {},
   searchWrap: { display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid #e2e8f0', padding: '8px 16px', borderRadius: '12px', backgroundColor: 'white' },
@@ -283,10 +283,10 @@ const styles = {
   calNav: { padding: '24px', borderBottom: '1px solid #e8e8e8', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   navLeft: { display: 'flex', alignItems: 'center', gap: '16px' },
   dateBox: { padding: '8px', border: '1px solid #e2e8f0', borderRadius: '10px', textAlign: 'center' as const, minWidth: '50px' },
-  dateDay: { fontSize: '10px', fontWeight: '600', color: '#94a3b8', display: 'block' },
+  dateDay: { fontSize: '10px', fontWeight: '600', color: '#949494', display: 'block' },
   dateNum: { fontSize: '18px', fontWeight: '700', color: '#000000' },
   monthTitle: { fontSize: '18px', fontWeight: '600', color: '#000000' },
-  dateRange: { fontSize: '13px', color: '#64748b' },
+  dateRange: { fontSize: '13px', color: '#949494' },
   
   navRight: { display: 'flex', alignItems: 'center', gap: '16px' },
   arrows: { display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden' },
@@ -295,9 +295,9 @@ const styles = {
   addBtn: { backgroundColor: '#000000', color: 'white', padding: '10px 20px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', fontWeight: '700', cursor: 'pointer' },
   
   grid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', backgroundColor: '#f4f4f4' },
-  weekdayLabel: { padding: '12px', textAlign: 'center' as const, fontSize: '12px', fontWeight: '700', color: '#64748b', borderBottom: '1px solid #e2e8f0' },
+  weekdayLabel: { padding: '12px', textAlign: 'center' as const, fontSize: '12px', fontWeight: '700', color: '#949494', borderBottom: '1px solid #e2e8f0' },
   dayCell: { minHeight: '120px', backgroundColor: 'white', borderRight: '1px solid #e8e8e8', borderBottom: '1px solid #e8e8e8', padding: '8px' },
-  dayNumber: { fontSize: '12px', fontWeight: '700', color: '#64748b', marginBottom: '8px', display: 'block' },
+  dayNumber: { fontSize: '12px', fontWeight: '700', color: '#949494', marginBottom: '8px', display: 'block' },
   todayCell: { backgroundColor: '#fcfcfc' },
   todayNum: { backgroundColor: '#000000', color: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   eventStack: { display: 'flex', flexDirection: 'column' as const, gap: '4px' },

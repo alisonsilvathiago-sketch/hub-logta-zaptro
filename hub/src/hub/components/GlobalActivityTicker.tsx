@@ -98,10 +98,10 @@ const GlobalActivityTicker: React.FC = () => {
         navigate('/master/billing/planos');
         break;
       case 'audit':
-        navigate('/master/infrastructure');
+        navigate('/master/settings');
         break;
       default:
-        navigate('/master/notifications');
+        navigate('/master/settings?tab=notificacoes');
     }
   };
 
@@ -132,7 +132,7 @@ const GlobalActivityTicker: React.FC = () => {
           <div style={styles.toastBody}>
             <div style={styles.iconBox}>
               {activity.type === 'company' && <Building2 size={16} color="#0061FF" />}
-              {activity.type === 'payment' && <DollarSign size={16} color="#10B981" />}
+              {activity.type === 'payment' && <DollarSign size={16} color="#0061FF" />}
               {activity.type === 'plan' && <Briefcase size={16} color="#F59E0B" />}
               {activity.type === 'audit' && <Bell size={16} color="#F59E0B" />}
             </div>

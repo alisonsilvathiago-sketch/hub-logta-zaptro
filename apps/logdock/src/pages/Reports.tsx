@@ -13,10 +13,10 @@ export const ReportsPage: React.FC = () => {
           <p style={styles.subtitle}>Visão financeira, ranking de motoristas, performance de entregas e exportação.</p>
         </div>
         <div style={styles.headerActions}>
-          <button style={styles.exportBtn} onClick={() => alert('Download do relatório em PDF iniciado!')}>
+          <button className="hub-premium-pill primary" onClick={() => alert('Download do relatório em PDF iniciado!')}>
             <FileText size={18} /> Exportar PDF
           </button>
-          <button style={{ ...styles.exportBtn, backgroundColor: '#10B981', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }} onClick={() => alert('Download do relatório em Excel iniciado!')}>
+          <button className="hub-premium-pill success" onClick={() => alert('Download do relatório em Excel iniciado!')}>
             <Download size={18} /> Exportar Excel
           </button>
         </div>

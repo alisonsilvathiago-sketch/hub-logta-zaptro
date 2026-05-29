@@ -1,0 +1,17 @@
+/**
+ * Títulos de página (H1) na área /app — padrão «Clientes»
+ * 30px · 700 · #000 · letter-spacing -0.02em
+ * Exclui nomes de entidade em fichas (cliente, lead, motorista…).
+ */
+.zaptro-app-content h1:not(.zaptro-client-profile__name):not(.zaptro-lead-profile__name):not(.zhome-title) {
+  font-size: 30px !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+  letter-spacing: -0.02em !important;
+  color: #000000 !important;
+  line-height: 1.2 !important;
+}
+
+[data-theme='dark'] .zaptro-app-content h1:not(.zaptro-client-profile__name):not(.zaptro-lead-profile__name):not(.zhome-title) {
+  color: #fafafa !important;
+}

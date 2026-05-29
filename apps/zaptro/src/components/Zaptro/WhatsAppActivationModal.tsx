@@ -113,7 +113,7 @@ export const WhatsAppActivationModal: React.FC<WhatsAppActivationModalProps> = (
             <h2 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: '0 0 12px', letterSpacing: '-0.02em' }}>
               Conecte seu WhatsApp
             </h2>
-            <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6, margin: '0 0 32px', fontWeight: 600 }}>
+            <p style={{ fontSize: 14, color: '#949494', lineHeight: 1.6, margin: '0 0 32px', fontWeight: 600 }}>
               Você ainda não conectou seu WhatsApp. Sem isso, várias funções importantes de logística e automação não vão funcionar.
             </p>
 
@@ -144,7 +144,7 @@ export const WhatsAppActivationModal: React.FC<WhatsAppActivationModalProps> = (
                 marginTop: 20,
                 background: 'none',
                 border: 'none',
-                color: '#94A3B8',
+                color: '#949494',
                 fontSize: 13,
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -163,7 +163,7 @@ export const WhatsAppActivationModal: React.FC<WhatsAppActivationModalProps> = (
             <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', marginBottom: 8 }}>
               Escaneando ambiente...
             </h3>
-            <p style={{ fontSize: 14, color: '#64748B', fontWeight: 600 }}>
+            <p style={{ fontSize: 14, color: '#949494', fontWeight: 600 }}>
               Iniciando conexão segura com seu WhatsApp.
             </p>
           </div>
@@ -188,7 +188,7 @@ export const WhatsAppActivationModal: React.FC<WhatsAppActivationModalProps> = (
                 onConnected={handleConnected}
               />
             </div>
-            <p style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>
+            <p style={{ fontSize: 12, color: '#949494', fontWeight: 600 }}>
               Aguardando conexão real com sua instância...
             </p>
           </div>
@@ -234,7 +234,7 @@ export const WhatsAppActivationModal: React.FC<WhatsAppActivationModalProps> = (
             <p style={{ fontSize: 16, color: '#0F172A', fontWeight: 700, marginBottom: 4 }}>
               Seu WhatsApp foi conectado com sucesso.
             </p>
-            <p style={{ fontSize: 13, color: '#64748B', fontWeight: 600 }}>
+            <p style={{ fontSize: 13, color: '#949494', fontWeight: 600 }}>
               O sistema está sendo atualizado...
             </p>
           </div>

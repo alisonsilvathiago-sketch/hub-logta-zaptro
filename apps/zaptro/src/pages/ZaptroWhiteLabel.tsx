@@ -67,7 +67,7 @@ export const ZaptroWhiteLabelInner: React.FC<ZaptroWhiteLabelInnerProps> = ({ em
   const card = {
     padding: '28px 32px',
     borderRadius: '28px',
-    border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`,
+    border: `1px solid ${isDark ? '#6B6B6B' : '#E2E8F0'}`,
     backgroundColor: isDark ? '#111111' : '#FFFFFF',
     marginBottom: '20px',
   } as const;
@@ -207,7 +207,7 @@ export const ZaptroWhiteLabelInner: React.FC<ZaptroWhiteLabelInnerProps> = ({ em
         </p>
       </div>
 
-      <div style={{ marginTop: 36, paddingTop: 28, borderTop: `1px solid ${isDark ? '#334155' : '#E2E8F0'}` }}>
+      <div style={{ marginTop: 36, paddingTop: 28, borderTop: `1px solid ${isDark ? '#6B6B6B' : '#E2E8F0'}` }}>
         <ZaptroCompanyBrandingEditor showHeading />
       </div>
     </div>

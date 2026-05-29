@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo } from 'react';
-import { useAuth } from '@shared/context/AuthContext';
+import { useAuth } from '@/context/LogstokaAuthProvider';
 import { resolveRole } from '@/lib/permissions';
 import type { LogstokaRoleCode } from '@/types';
 

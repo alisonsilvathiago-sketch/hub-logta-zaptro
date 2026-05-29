@@ -11,6 +11,7 @@ type LogtaLogDockUploadModalProps = {
   title?: string;
   category?: LogDockSyncCategory;
   accept?: string;
+  children?: React.ReactNode;
 };
 
 export function LogtaLogDockUploadModal({
@@ -19,6 +20,7 @@ export function LogtaLogDockUploadModal({
   title = 'Enviar documento',
   category = 'xmls',
   accept = '.xml,.pdf,.zip,image/*',
+  children,
 }: LogtaLogDockUploadModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -59,6 +61,8 @@ export function LogtaLogDockUploadModal({
         <p className="mb-6 text-sm font-medium text-neutral-400">
           Os arquivos entram na biblioteca da conta (LogDock) e ficam disponíveis no Hub · LogDock Drive.
         </p>
+
+        {children}
 
         <input
           ref={inputRef}

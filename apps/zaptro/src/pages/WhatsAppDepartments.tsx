@@ -210,7 +210,7 @@ const styles: Record<string, any> = {
   container: { backgroundColor: '#FFFFFF' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' },
   title: { fontSize: '32px', fontWeight: '700', color: '#000', margin: 0, letterSpacing: '-1.5px' },
-  subtitle: { color: '#94A3B8', fontSize: '15px', marginTop: '6px', fontWeight: '500' },
+  subtitle: { color: '#949494', fontSize: '15px', marginTop: '6px', fontWeight: '500' },
   addBtn: { backgroundColor: '#000', color: '#FFF', border: 'none', padding: '16px 28px', borderRadius: '18px', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '700', cursor: 'pointer' },
   
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' },
@@ -227,11 +227,11 @@ const styles: Record<string, any> = {
   form: { display: 'flex', flexDirection: 'column', gap: '20px' },
   label: { fontSize: '11px', fontWeight: '700', color: '#000000' },
   input: { padding: '16px 20px', borderRadius: '18px', border: '1px solid #EBEBEC', fontSize: '15px', fontWeight: '600', outline: 'none', backgroundColor: '#FBFBFC' },
-  hint: { fontSize: '12px', color: '#94A3B8', margin: 0, fontWeight: '500', lineHeight: '1.4' },
+  hint: { fontSize: '12px', color: '#949494', margin: 0, fontWeight: '500', lineHeight: '1.4' },
   formActions: { display: 'flex', gap: '15px', marginTop: '10px' },
   saveBtn: { flex: 1, backgroundColor: '#000', color: '#D9FF00', border: 'none', padding: '18px', borderRadius: '18px', fontWeight: '700', cursor: 'pointer' },
-  cancelBtn: { padding: '18px 24px', backgroundColor: '#ebebeb', border: 'none', borderRadius: '18px', fontWeight: '700', color: '#64748B', cursor: 'pointer' },
-  empty: { gridColumn: '1 / -1', padding: '80px', textAlign: 'center', backgroundColor: '#FBFBFC', borderRadius: '40px', color: '#94A3B8', fontWeight: '600' }
+  cancelBtn: { padding: '18px 24px', backgroundColor: '#ebebeb', border: 'none', borderRadius: '18px', fontWeight: '700', color: '#949494', cursor: 'pointer' },
+  empty: { gridColumn: '1 / -1', padding: '80px', textAlign: 'center', backgroundColor: '#FBFBFC', borderRadius: '40px', color: '#949494', fontWeight: '600' }
 };
 
 export default WhatsAppDepartments;

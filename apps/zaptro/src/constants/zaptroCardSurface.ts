@@ -8,9 +8,13 @@ export const ZAPTRO_CARD_RADIUS_PX = 28;
 
 export const ZAPTRO_CARD_SHADOW_LIGHT = '0 4px 24px rgba(15, 23, 42, 0.06)' as const;
 
-/** Orbe de ícone KPI / destaque — preto quase absoluto + ícone em lime. */
-export const ZAPTRO_ICON_ORB_BG = 'rgba(13, 13, 13, 1)' as const;
-export const ZAPTRO_ICON_ORB_FG = '#D9FF00' as const;
+/** Orbe de ícone KPI / destaque — neutro claro + ícone escuro (visual mais clean). */
+export const ZAPTRO_ICON_ORB_BG = 'rgba(248, 250, 252, 1)' as const;
+export const ZAPTRO_ICON_ORB_FG = 'rgba(107, 107, 107, 1)' as const;
+
+/** Orbes do painel Resultados (ZaptroDashboardContent) — fundo creme + ícone cinza. */
+export const ZAPTRO_DASH_ICON_ORB_BG = 'rgba(248, 251, 229, 1)' as const;
+export const ZAPTRO_DASH_ICON_ORB_FG = 'rgba(121, 127, 139, 1)' as const;
 
 /** Fundo painel escuro — identidade preto absoluto (não slate). */
 export const ZAPTRO_CARD_BG_DARK = 'rgba(13, 13, 13, 1)' as const;
@@ -45,10 +49,29 @@ export function zaptroIconOrbStyle(options: { size?: number; rounded?: 'circle' 
     height: size,
     borderRadius: rounded === 'circle' ? 999 : 14,
     background: ZAPTRO_ICON_ORB_BG,
+    border: '1px solid rgba(15, 23, 42, 0.08)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: ZAPTRO_ICON_ORB_FG,
     flexShrink: 0,
+  };
+}
+
+/** KPIs do dashboard Resultados — 100×100, creme + cinza (inspeção do layout). */
+export function zaptroDashboardIconOrbStyle(options?: { size?: number }): CSSProperties {
+  const size = options?.size ?? 100;
+  return {
+    width: size,
+    height: size,
+    minHeight: size,
+    borderRadius: 999,
+    background: ZAPTRO_DASH_ICON_ORB_BG,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: ZAPTRO_DASH_ICON_ORB_FG,
+    flexShrink: 0,
+    boxSizing: 'border-box',
   };
 }

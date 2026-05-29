@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Users, Search, Filter, Mail, Building2,
-  CheckCircle, XCircle, Shield, MoreVertical,
-  RefreshCw, Loader2, UserCheck, UserX, ExternalLink,
-  ShieldCheck, ShieldAlert, Zap
-} from 'lucide-react';
+import { Search, Mail, Building2, Shield, RefreshCw, Loader2, ExternalLink } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
-import { setSharedCookie, removeSharedCookie } from '@core/lib/cookies';
+import { setSharedCookie } from '@core/lib/cookies';
 import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
 
 interface UserProfile {
@@ -16,9 +11,7 @@ interface UserProfile {
   full_name: string | null;
   role: string;
   company_id: string | null;
-  tem_zaptro: boolean;
   tem_logta: boolean;
-  status_zaptro: string | null;
   company_name?: string;
 }
 
@@ -26,7 +19,7 @@ const UserManagement: React.FC<{ embedded?: boolean }> = ({ embedded = false }) 
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterProduct, setFilterProduct] = useState<'all' | 'zaptro' | 'logta'>('all');
+  const [filterProduct, setFilterProduct] = useState<'all' | 'logta' | 'no_logta'>('all');
 
   const fetchData = async () => {
     setLoading(true);
@@ -34,8 +27,8 @@ const UserManagement: React.FC<{ embedded?: boolean }> = ({ embedded = false }) 
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select(`
-          id, email, full_name, role, company_id, 
-          tem_zaptro, tem_logta, status_zaptro,
+          id, email, full_name, role, company_id,
+          tem_logta,
           companies ( name )
         `)
         .order('email', { ascending: true });
@@ -44,7 +37,7 @@ const UserManagement: React.FC<{ embedded?: boolean }> = ({ embedded = false }) 
 
       const formatted = (profiles || []).map((p: any) => ({
         ...p,
-        company_name: p.companies?.name || 'Sem Empresa'
+        company_name: p.companies?.name || 'Sem Empresa',
       }));
 
       setUsers(formatted);
@@ -59,40 +52,18 @@ const UserManagement: React.FC<{ embedded?: boolean }> = ({ embedded = false }) 
     fetchData();
   }, []);
 
-  const toggleZaptro = async (userId: string, current: boolean, name: string) => {
-    const tid = toastLoading(`Modificando permissões Zaptro para ${name}...`);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          tem_zaptro: !current,
-          status_zaptro: !current ? 'autorizado' : 'pendente'
-        })
-        .eq('id', userId);
-
-      if (error) throw error;
-      toastSuccess(`Acesso Zaptro ${!current ? 'concedido' : 'revogado'} para ${name}.`);
-      fetchData();
-    } catch (err) {
-      toastError('Erro de Segurança: Falha ao modificar privilégios Zaptro.');
-    } finally {
-      toastDismiss(tid);
-    }
-  };
-
   const toggleLogta = async (userId: string, current: boolean, name: string) => {
     const tid = toastLoading(`Modificando permissões Logta para ${name}...`);
     try {
-      // Usando settings do profile para armazenar permissão logta se não houver coluna dedicada
       const { error } = await supabase
         .from('profiles')
         .update({
-          tem_logta: !current
+          tem_logta: !current,
         })
         .eq('id', userId);
 
       if (error) throw error;
-      toastSuccess(`Acesso Logta ${!current ? 'concedido' : 'revogado'} para ${name}.`);
+      toastSuccess(`Acesso Logta ERP ${!current ? 'concedido' : 'revogado'} para ${name}.`);
       fetchData();
     } catch (err) {
       toastError('Erro de Segurança: Falha ao modificar privilégios Logta.');
@@ -101,45 +72,46 @@ const UserManagement: React.FC<{ embedded?: boolean }> = ({ embedded = false }) 
     }
   };
 
-  const impersonate = (companyId: string, type: 'logta' | 'zaptro') => {
+  const impersonate = (companyId: string) => {
     if (!companyId) {
       toastError('Este usuário não possui uma empresa vinculada para impersonate.');
       return;
     }
     setSharedCookie('hub-impersonate-tenant', companyId);
-    toastSuccess(`Modo Impersonate Ativo! Direcionando para ${type.toUpperCase()}...`);
-    
+    toastSuccess('Modo impersonate Logta ativo! Abrindo o app…');
+
     setTimeout(() => {
-      const url = type === 'logta' ? 'http://localhost:5173' : 'http://localhost:5174';
-      window.open(url, '_blank');
+      window.open('http://localhost:5173', '_blank');
     }, 1500);
   };
 
-  const filteredUsers = users.filter(u => {
+  const filteredUsers = users.filter((u) => {
     const matchesSearch =
       (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.company_name || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-    if (filterProduct === 'zaptro') return matchesSearch && u.tem_zaptro;
-    if (filterProduct === 'logta') return matchesSearch && !u.tem_zaptro;
+    if (filterProduct === 'logta') return matchesSearch && u.tem_logta;
+    if (filterProduct === 'no_logta') return matchesSearch && !u.tem_logta;
     return matchesSearch;
   });
 
   return (
     <div style={styles.container} className={embedded ? undefined : 'animate-fade-in'}>
       {!embedded && (
-      <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Gestão Unificada de Usuários</h1>
-          <p style={styles.subtitle}>Controle granular de acesso e distribuição de produtos no ecossistema.</p>
-        </div>
-        <div style={styles.headerActions}>
-          <button style={styles.refreshBtn} onClick={fetchData} title="Sincronizar Agora">
-            <RefreshCw size={18} />
-          </button>
-        </div>
-      </header>
+        <header style={styles.header}>
+          <div>
+            <h1 style={styles.title}>Gestão de usuários Master</h1>
+            <p style={styles.subtitle}>
+              Controle de acesso ao Logta ERP a partir do Hub Master.
+            </p>
+          </div>
+          <div style={styles.headerActions}>
+            <button style={styles.refreshBtn} onClick={fetchData} title="Sincronizar Agora">
+              <RefreshCw size={18} />
+            </button>
+          </div>
+        </header>
       )}
 
       <div style={styles.statsRow}>
@@ -148,12 +120,12 @@ const UserManagement: React.FC<{ embedded?: boolean }> = ({ embedded = false }) 
           <span style={styles.statMiniValue}>{users.length}</span>
         </div>
         <div style={styles.statMini}>
-          <span style={styles.statMiniLabel}>Licenças Zaptro</span>
-          <span style={{ ...styles.statMiniValue, color: '#10b981' }}>{users.filter(u => u.tem_zaptro).length}</span>
+          <span style={styles.statMiniLabel}>Com Logta ERP</span>
+          <span style={{ ...styles.statMiniValue, color: '#0061FF' }}>{users.filter((u) => u.tem_logta).length}</span>
         </div>
         <div style={styles.statMini}>
-          <span style={styles.statMiniLabel}>Apenas Logta</span>
-          <span style={{ ...styles.statMiniValue, color: 'var(--text-muted)' }}>{users.filter(u => !u.tem_zaptro).length}</span>
+          <span style={styles.statMiniLabel}>Sem Logta ERP</span>
+          <span style={{ ...styles.statMiniValue, color: 'var(--text-muted)' }}>{users.filter((u) => !u.tem_logta).length}</span>
         </div>
       </div>
 
@@ -173,15 +145,21 @@ const UserManagement: React.FC<{ embedded?: boolean }> = ({ embedded = false }) 
           <button
             style={{ ...styles.filterTab, ...(filterProduct === 'all' ? styles.activeFilter : {}) }}
             onClick={() => setFilterProduct('all')}
-          >Todos</button>
-          <button
-            style={{ ...styles.filterTab, ...(filterProduct === 'zaptro' ? styles.activeFilter : {}) }}
-            onClick={() => setFilterProduct('zaptro')}
-          ><Zap size={14} /> Zaptro</button>
+          >
+            Todos
+          </button>
           <button
             style={{ ...styles.filterTab, ...(filterProduct === 'logta' ? styles.activeFilter : {}) }}
             onClick={() => setFilterProduct('logta')}
-          ><Shield size={14} /> Logta</button>
+          >
+            <Shield size={14} /> Com Logta
+          </button>
+          <button
+            style={{ ...styles.filterTab, ...(filterProduct === 'no_logta' ? styles.activeFilter : {}) }}
+            onClick={() => setFilterProduct('no_logta')}
+          >
+            Sem Logta
+          </button>
         </div>
       </div>
 
@@ -198,92 +176,95 @@ const UserManagement: React.FC<{ embedded?: boolean }> = ({ embedded = false }) 
                 <th style={styles.th}>IDENTIDADE DO USUÁRIO</th>
                 <th style={styles.th}>VÍNCULO CORPORATIVO</th>
                 <th style={styles.th}>PRIVILÉGIO</th>
-                <th style={styles.th}>MODO ZAPTRO</th>
+                <th style={styles.th}>LOGTA ERP</th>
                 <th style={{ ...styles.th, textAlign: 'right' }}>AÇÕES MASTER</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.length === 0 ? (
-                <tr><td colSpan={5} style={styles.emptyTd}>Nenhum registro encontrado para esta busca.</td></tr>
-              ) : filteredUsers.map(user => (
-                <tr
-                  key={user.id}
-                  style={{ ...styles.tr, cursor: 'pointer' }}
-                  className="hover-scale"
-                >
-                  <td style={styles.td}>
-                    <div style={styles.userInfo}>
-                      <div style={styles.avatar}>{(user.full_name || user.email)[0].toUpperCase()}</div>
-                      <div>
-                        <div style={styles.userName}>{user.full_name || 'Usuário Sem Nome'}</div>
-                        <div style={styles.userEmail}><Mail size={12} /> {user.email}</div>
+                <tr>
+                  <td colSpan={5} style={styles.emptyTd}>
+                    Nenhum registro encontrado para esta busca.
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((user) => (
+                  <tr key={user.id} style={{ ...styles.tr, cursor: 'pointer' }} className="hover-scale">
+                    <td style={styles.td}>
+                      <div style={styles.userInfo}>
+                        <div style={styles.avatar}>{(user.full_name || user.email)[0].toUpperCase()}</div>
+                        <div>
+                          <div style={styles.userName}>{user.full_name || 'Usuário Sem Nome'}</div>
+                          <div style={styles.userEmail}>
+                            <Mail size={12} /> {user.email}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td style={styles.td}>
-                    <div style={styles.companyBadge}>
-                      <Building2 size={14} />
-                      <span>{user.company_name}</span>
-                    </div>
-                  </td>
-                  <td style={styles.td}>
-                    <span style={{
-                      ...styles.roleBadge,
-                      backgroundColor: user.role === 'ADMIN' ? '#fef2f2' : user.role.startsWith('MASTER') ? '#eff6ff' : '#f1f5f9',
-                      color: user.role === 'ADMIN' ? '#b91c1c' : user.role.startsWith('MASTER') ? 'var(--primary)' : '#475569'
-                    }}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td style={styles.td}>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <div
+                    </td>
+                    <td style={styles.td}>
+                      <div style={styles.companyBadge}>
+                        <Building2 size={14} />
+                        <span>{user.company_name}</span>
+                      </div>
+                    </td>
+                    <td style={styles.td}>
+                      <span
                         style={{
-                          ...styles.zaptroStatus,
-                          backgroundColor: user.tem_zaptro ? '#ecfdf5' : '#f8fafc',
-                          color: user.tem_zaptro ? '#10b981' : '#94a3b8',
-                          borderColor: user.tem_zaptro ? '#d1fae5' : 'var(--border)',
-                          cursor: 'pointer'
+                          ...styles.roleBadge,
+                          backgroundColor:
+                            user.role === 'ADMIN'
+                              ? '#fef2f2'
+                              : user.role.startsWith('MASTER')
+                                ? '#eff6ff'
+                                : '#f1f5f9',
+                          color:
+                            user.role === 'ADMIN'
+                              ? '#b91c1c'
+                              : user.role.startsWith('MASTER')
+                                ? 'var(--primary)'
+                                : '#475569',
                         }}
-                        onClick={() => toggleZaptro(user.id, user.tem_zaptro, user.full_name || user.email)}
-                        title="Alternar Acesso Zaptro"
                       >
-                        {user.tem_zaptro ? <Zap size={14} /> : <Zap size={14} opacity={0.3} />}
-                        <span>ZAPTRO</span>
-                      </div>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
                       <div
                         style={{
-                          ...styles.zaptroStatus,
+                          ...styles.accessStatus,
                           backgroundColor: user.tem_logta ? '#eff6ff' : '#f8fafc',
                           color: user.tem_logta ? 'var(--primary)' : '#94a3b8',
                           borderColor: user.tem_logta ? '#dbeafe' : 'var(--border)',
-                          cursor: 'pointer'
+                          cursor: 'pointer',
                         }}
                         onClick={() => toggleLogta(user.id, user.tem_logta, user.full_name || user.email)}
-                        title="Alternar Acesso Logta"
+                        title="Alternar acesso ao Logta ERP"
                       >
                         {user.tem_logta ? <Shield size={14} /> : <Shield size={14} opacity={0.3} />}
                         <span>LOGTA</span>
                       </div>
-                    </div>
-                  </td>
-                  <td style={{ ...styles.td, textAlign: 'right' }}>
-                    <div style={styles.actions}>
-                      <button style={styles.actionBtn} title="Editar Segurança"><Shield size={16} /></button>
-                      <button 
-                        style={styles.actionBtn} 
-                        title="Logs / Acessar Dashboard"
-                        onClick={() => {
-                          const opt = window.confirm("Deseja entrar no dashboard deste usuário?\nOK para LOGTA, Cancelar para apenas ver logs.");
-                          if(opt) impersonate(user.company_id || '', 'logta');
-                        }}
-                      >
-                        <ExternalLink size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td style={{ ...styles.td, textAlign: 'right' }}>
+                      <div style={styles.actions}>
+                        <button style={styles.actionBtn} title="Editar Segurança">
+                          <Shield size={16} />
+                        </button>
+                        <button
+                          style={styles.actionBtn}
+                          title="Abrir Logta como tenant"
+                          onClick={() => {
+                            if (window.confirm('Abrir o app Logta com o tenant deste usuário?')) {
+                              impersonate(user.company_id || '');
+                            }
+                          }}
+                        >
+                          <ExternalLink size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         )}
@@ -295,46 +276,200 @@ const UserManagement: React.FC<{ embedded?: boolean }> = ({ embedded = false }) 
 const styles: Record<string, any> = {
   container: { padding: '0', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-  title: { fontSize: '29px', fontWeight: '500', color: '#000000', letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '500', color: '#000000', letterSpacing: 0 },
   subtitle: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '12px' },
-  refreshBtn: { width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', color: 'var(--text-muted)', transition: 'all 0.2s' },
+  refreshBtn: {
+    width: '44px',
+    height: '44px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    border: '1px solid var(--border)',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    color: 'var(--text-muted)',
+    transition: 'all 0.2s',
+  },
 
   statsRow: { display: 'flex', gap: '20px', marginBottom: '32px' },
-  statMini: { backgroundColor: 'white', padding: '20px 24px', borderRadius: '24px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', minWidth: '180px', boxShadow: 'var(--shadow-sm)' },
-  statMiniLabel: { fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' },
-  statMiniValue: { fontSize: '26px', fontWeight: '500', color: 'var(--primary)', letterSpacing: '0.2px', marginTop: '4px' },
+  statMini: {
+    backgroundColor: 'white',
+    padding: '20px 24px',
+    borderRadius: '24px',
+    border: '1px solid var(--border)',
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: '180px',
+    boxShadow: 'var(--shadow-sm)',
+  },
+  statMiniLabel: {
+    fontSize: '11px',
+    fontWeight: '600',
+    color: 'var(--text-muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.8px',
+  },
+  statMiniValue: {
+    fontSize: '26px',
+    fontWeight: '500',
+    color: 'var(--primary)',
+    letterSpacing: '0.2px',
+    marginTop: '4px',
+  },
 
   controls: { display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'center' },
-  searchBox: { flex: 1, display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'white', padding: '12px 20px', borderRadius: '14px', border: '1px solid var(--border)' },
-  searchInput: { border: 'none', outline: 'none', width: '100%', fontSize: '14px', fontWeight: '500', color: 'var(--text-main)', letterSpacing: '0.2px' },
+  searchBox: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    backgroundColor: 'white',
+    padding: '12px 20px',
+    borderRadius: '14px',
+    border: '1px solid var(--border)',
+  },
+  searchInput: {
+    border: 'none',
+    outline: 'none',
+    width: '100%',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: 'var(--text-main)',
+    letterSpacing: '0.2px',
+  },
 
-  filterGroup: { display: 'flex', backgroundColor: 'var(--bg-overlay)', padding: '4px', borderRadius: '12px', gap: '4px' },
-  filterTab: { padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '500', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', background: 'none', transition: 'all 0.2s', letterSpacing: '0.3px' },
+  filterGroup: {
+    display: 'flex',
+    backgroundColor: 'var(--bg-overlay)',
+    padding: '4px',
+    borderRadius: '12px',
+    gap: '4px',
+  },
+  filterTab: {
+    padding: '8px 16px',
+    borderRadius: '8px',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontWeight: '500',
+    color: 'var(--text-muted)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    background: 'none',
+    transition: 'all 0.2s',
+    letterSpacing: '0.3px',
+  },
   activeFilter: { backgroundColor: 'white', color: 'var(--primary)', boxShadow: 'var(--shadow-sm)' },
 
-  listCard: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' },
+  listCard: {
+    backgroundColor: 'white',
+    borderRadius: '24px',
+    border: '1px solid var(--border)',
+    overflow: 'hidden',
+    boxShadow: 'var(--shadow-lg)',
+  },
   table: { width: '100%', borderCollapse: 'collapse' },
   tableHead: { backgroundColor: 'var(--bg-overlay)', borderBottom: '1px solid var(--border)' },
-  th: { padding: '16px 24px', textAlign: 'left', fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' },
+  th: {
+    padding: '16px 24px',
+    textAlign: 'left',
+    fontSize: '11px',
+    fontWeight: '600',
+    color: 'var(--text-muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.8px',
+  },
   tr: { borderBottom: '1px solid var(--border)', transition: 'background 0.2s' },
   td: { padding: '18px 24px' },
   emptyTd: { padding: '64px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '500', fontSize: '15px' },
 
-  loadingBox: { padding: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '15px' },
+  loadingBox: {
+    padding: '80px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '16px',
+    color: 'var(--text-muted)',
+    fontWeight: '500',
+    fontSize: '15px',
+  },
 
   userInfo: { display: 'flex', alignItems: 'center', gap: '12px' },
-  avatar: { width: '40px', height: '40px', borderRadius: '12px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', fontSize: '16px' },
-  userName: { fontSize: '15px', fontWeight: '500', color: 'var(--text-main)', letterSpacing: '0.2px' },
-  userEmail: { fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px', fontWeight: '400', letterSpacing: '0.2px' },
+  avatar: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '12px',
+    backgroundColor: 'var(--primary-light)',
+    color: 'var(--primary)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: '600',
+    fontSize: '16px',
+  },
+  userName: {
+    fontSize: '15px',
+    fontWeight: '500',
+    color: 'var(--text-main)',
+    letterSpacing: '0.2px',
+  },
+  userEmail: {
+    fontSize: '12px',
+    color: 'var(--text-muted)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    marginTop: '2px',
+    fontWeight: '400',
+    letterSpacing: '0.2px',
+  },
 
-  companyBadge: { display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: '#f8fafc', borderRadius: '10px', color: 'var(--text-muted)', fontSize: '12px', fontWeight: '600', border: '1px solid var(--border)', letterSpacing: '0.3px' },
+  companyBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '6px 12px',
+    backgroundColor: '#f8fafc',
+    borderRadius: '10px',
+    color: 'var(--text-muted)',
+    fontSize: '12px',
+    fontWeight: '600',
+    border: '1px solid var(--border)',
+    letterSpacing: '0.3px',
+  },
   roleBadge: { padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: '600', letterSpacing: '0.5px' },
 
-  zaptroStatus: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '24px', fontSize: '11px', fontWeight: '600', border: '1px solid', width: 'fit-content', transition: 'all 0.2s', letterSpacing: '0.4px' },
+  accessStatus: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '8px 16px',
+    borderRadius: '24px',
+    fontSize: '11px',
+    fontWeight: '600',
+    border: '1px solid',
+    width: 'fit-content',
+    transition: 'all 0.2s',
+    letterSpacing: '0.4px',
+  },
 
   actions: { display: 'flex', gap: '8px', justifyContent: 'flex-end' },
-  actionBtn: { width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', borderRadius: '10px', background: 'white', color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s' }
+  actionBtn: {
+    width: '36px',
+    height: '36px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: '1px solid var(--border)',
+    borderRadius: '10px',
+    background: 'white',
+    color: 'var(--text-muted)',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
 };
 
 export default UserManagement;

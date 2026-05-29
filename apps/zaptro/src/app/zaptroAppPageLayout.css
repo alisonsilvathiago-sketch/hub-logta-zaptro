@@ -1,0 +1,52 @@
+/**
+ * Alinhamento lateral das páginas /app ao modelo Clientes.
+ * Respiro interno padrão: `.zaptro-app-content-gutter` (35px top · 30px lat · 20px bottom · margin-left 10px).
+ * Estas regras evitam max-width/padding extra que “comem” o gutter.
+ */
+.zaptro-app-content:not(.zaptro-app-content--edge-to-edge) .zaptro-app-module-page,
+.zaptro-app-content:not(.zaptro-app-content--edge-to-edge) .zaptro-app-settings-page,
+.zaptro-app-content:not(.zaptro-app-content--edge-to-edge) .zaptro-app-clients-page,
+.zaptro-app-content:not(.zaptro-app-content--edge-to-edge) .zaptro-quotes-page {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Motoristas · Frota · Ajudantes */
+.zaptro-app-content:not(.zaptro-app-content--edge-to-edge) .zaptro-fleet-module {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Membros */
+.zaptro-app-content:not(.zaptro-app-content--edge-to-edge) .zaptro-team-page {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Configurações — respiro via gutter global */
+.zaptro-app-content--settings .zaptro-app-settings-page {
+  padding: 0;
+}
+
+.zaptro-app-content:not(.zaptro-app-content--edge-to-edge) .zaptro-settings-shell {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Orçamentos — largura total; respiro só no shell */
+.zaptro-app-content:not(.zaptro-app-content--edge-to-edge) .zaptro-quotes-page {
+  max-width: 100%;
+  padding: 0;
+}
+
+.zaptro-app-content:not(.zaptro-app-content--edge-to-edge) .zaptro-quotes-page__inner {
+  padding-left: 0;
+  padding-right: 0;
+}

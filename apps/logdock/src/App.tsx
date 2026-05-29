@@ -11,8 +11,8 @@ import {
   UserPlus, Star, Clock, Laptop, X, Link as LinkIcon, Edit3, Copy, ArrowRight, Info, AlertTriangle, Check, Send, CheckCircle2, BoxSelect,
   Bell, Layout, PanelLeft, MessageSquare, Gift, ChevronLeft, Edit2, Sun, Moon, ChevronUp, ChevronDown,
   Truck, Users as UsersIcon, ShieldAlert, Activity, Calendar, MapPin,
-  Home, Files, Image, Mail, Phone, Sparkles, Mic, ArrowUp, Camera,
-  FolderPlus, Brain, Tag, FolderOpen, Cpu, AlertCircle
+  Home, Files, Image, Mail, Phone, Sparkles, Mic, ArrowUp, ArrowDown, Camera,
+  FolderPlus, Brain, Tag, FolderOpen, Cpu, AlertCircle, Monitor
 } from 'lucide-react';
 import { supabase } from '@shared/lib/supabase';
 import { useAuth } from '@shared/context/AuthContext';
@@ -723,6 +723,15 @@ const ProfilePopup: React.FC<{ profile: any, storage: any, theme?: string, setTh
           </div>
         ))}
         <div 
+          style={{ ...styles.popupItem, color: '#0061FF', backgroundColor: 'rgba(0, 97, 255, 0.05)' }} 
+          onClick={() => window.location.href = 'http://localhost:5175/master'}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(0, 97, 255, 0.1)'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(0, 97, 255, 0.05)'}
+        >
+          Painel Master (Hub)
+          <LayoutDashboard size={14} color="#0061FF" />
+        </div>
+        <div 
           style={styles.popupItem} 
           onClick={() => window.open('/download', '_blank')}
           onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
@@ -1135,12 +1144,15 @@ const DashboardView: React.FC<DashboardProps> = ({
     }
   }, [currentIndex]);
 
-  const filesList = [
-    { name: 'Project Brief.docx', owner: 'Shared', ownerImg: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&auto=format&fit=crop&q=60', dateUploaded: 'Sep 26, 2025', lastModified: 'Sep 28, 2025', size: '5 MB', type: 'doc' },
-    { name: 'Project Details.xls', owner: 'Shared', ownerImg: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&auto=format&fit=crop&q=60', dateUploaded: 'Sep 27, 2025', lastModified: 'Sep 27, 2025', size: '1.2 MB', type: 'excel' },
-    { name: 'Cloud Dashboard.fig', owner: 'Restricted', ownerImg: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&auto=format&fit=crop&q=60', dateUploaded: 'Sep 27, 2025', lastModified: 'Sep 28, 2025', size: '1 GB', type: 'figma' },
-    { name: 'Design Notes.docx', owner: 'Shared', ownerImg: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=60&auto=format&fit=crop&q=60', dateUploaded: 'Sep 27, 2025', lastModified: 'Sep 28, 2025', size: '20 MB', type: 'doc' }
-  ];
+  const filesList = files.slice(0, 4).map(f => ({
+    name: f.name,
+    owner: f.user_id === profile?.id ? 'Meu' : 'Compartilhado',
+    ownerImg: profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&auto=format&fit=crop&q=60',
+    dateUploaded: f.created_at ? new Date(f.created_at).toLocaleDateString('pt-BR') : 'Recent',
+    lastModified: f.updated_at ? new Date(f.updated_at).toLocaleDateString('pt-BR') : 'Recent',
+    size: (f.size / (1024 * 1024)).toFixed(1) + ' MB',
+    type: f.type?.includes('image') ? 'image' : f.type?.includes('pdf') ? 'doc' : 'file'
+  }));
 
   return (
     <div style={{ flex: 1, height: '100%', overflowY: 'auto', padding: '0 32px', backgroundColor: 'transparent' }}>
@@ -1274,14 +1286,9 @@ const DashboardView: React.FC<DashboardProps> = ({
         }}
       >
 
-        {(files.length > 0 ? files : [
-          { name: 'Contrato Logística.pdf', type: 'doc', important: true },
-          { name: 'Relatório Financeiro.xls', type: 'excel' },
-          { name: 'Notas Fiscais Outubro.zip', type: 'archive' },
-          { name: 'Comprovantes SP.pdf', type: 'doc' },
-          { name: 'Manifesto de Carga.pdf', type: 'doc' },
-          { name: 'Tabela de Fretes.xls', type: 'excel' },
-        ]).map((item, idx) => (
+        {(files.length > 0 ? files.slice(0, 6) : [
+          { name: 'Nenhum arquivo recente', type: 'none' }
+        ]).map((item: any, idx: number) => (
           <div key={idx} 
             onClick={() => { if (!isDraggingRecent) setActiveTab('arquivos'); }}
             style={{ 
@@ -1382,14 +1389,9 @@ const DashboardView: React.FC<DashboardProps> = ({
           userSelect: 'none'
         }}
       >
-        {[
-          { name: 'Dashboard Designs', meta: '62 files, 2.6 GB', active: true },
-          { name: 'Figma Files', meta: '202 files, 2.6 GB', active: false },
-          { name: 'Project Documents', meta: '12 files, 502 MB', active: false },
-          { name: 'KDS Dashboard', meta: '12 Sketch files, 52.4 MB', active: false },
-          { name: 'Mobile App - UI', meta: '102 files, 3.2 GB', active: false },
-          { name: 'Finance Assets', meta: '45 files, 1.1 GB', active: false },
-        ].map((folder, idx) => (
+        {(folders.length > 0 ? folders.slice(0, 6) : [
+          { name: 'Raiz', meta: '0 arquivos', active: true }
+        ]).map((folder: any, idx: number) => (
           <div key={idx} 
             onClick={() => setActiveTab('arquivos')}
             style={{ position: 'relative', height: '210px', minWidth: '280px', cursor: 'pointer', scrollSnapAlign: 'start', marginTop: '20px' }}
@@ -2337,12 +2339,7 @@ const LogDockDashboard: React.FC = () => {
   const [isOrganizingModalOpen, setIsOrganizingModalOpen] = useState(false);
   const [isAutomatedFolderModalOpen, setIsAutomatedFolderModalOpen] = useState(false);
 
-  const collaborators = [
-    { id: 1, name: 'Ana Lima', email: 'ana.lima@empresa.com', phone: '(11) 98765-4321', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&auto=format&fit=crop&q=60', role: 'Designer', files: ['Dashboard Designs.fig', 'Cloud Dashboard.fig', 'Mobile App UI.fig'] },
-    { id: 2, name: 'Carlos Souza', email: 'carlos@empresa.com', phone: '(21) 91234-5678', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&auto=format&fit=crop&q=60', role: 'Desenvolvedor', files: ['Project Brief.docx', 'Project Details.xls'] },
-    { id: 3, name: 'Mariana Costa', email: 'mariana@empresa.com', phone: '(31) 99876-5432', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=60&auto=format&fit=crop&q=60', role: 'Gerente', files: ['Project Brief.docx', 'Design Notes.docx', 'Project Details.xls'] },
-    { id: 4, name: 'Felipe Rocha', email: 'felipe@empresa.com', phone: '(51) 98888-1234', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&auto=format&fit=crop&q=60', role: 'Analista', files: ['Design Notes.docx'] },
-  ];
+  const [collaborators, setCollaborators] = useState<any[]>([]);
 
   const selectedCollab = collaborators.find(c => c.id === activeCollab);
   const [folderActionModal, setFolderActionModal] = useState<any | null>(null);
@@ -2576,8 +2573,8 @@ const LogDockDashboard: React.FC = () => {
   const [newSectionName, setNewSectionName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
-  const [storageStats, setStorageStats] = useState({ used: 48000000000, total: 50 * 1024 * 1024 * 1024, percent: 96 });
-  const [globalStats, setGlobalStats] = useState({ containers: 0, filesToday: 0, pending: 3, space: '48 GB' });
+  const [storageStats, setStorageStats] = useState({ used: 0, total: 100 * 1024 * 1024 * 1024, percent: 0 });
+  const [globalStats, setGlobalStats] = useState({ containers: 0, filesToday: 0, pending: 0, space: '0 GB' });
   const [activeFilter, setActiveFilter] = useState<'recent' | 'favorites' | 'all'>('all');
   const [sections, setSections] = useState<{ id: string, name: string }[]>([]);
 
@@ -2698,6 +2695,26 @@ const LogDockDashboard: React.FC = () => {
       });
 
       setFolders(mergedFolders);
+
+      // Update Real Stats
+      const totalUsed = (fileData || []).reduce((acc: number, f: any) => acc + Number(f.size || 0), 0);
+      const totalGB = (totalUsed / (1024 ** 3)).toFixed(1);
+      const limitBytes = 100 * 1024 * 1024 * 1024; // 100GB
+      setStorageStats({
+        used: totalUsed,
+        total: limitBytes,
+        percent: Math.min(100, (totalUsed / limitBytes) * 100)
+      });
+      setGlobalStats({
+        containers: mergedFolders.length,
+        filesToday: (fileData || []).filter((f: any) => new Date(f.created_at).toDateString() === new Date().toDateString()).length,
+        pending: 0,
+        space: `${totalGB} GB`
+      });
+
+      // Fetch Collaborators (Profiles from same company)
+      const { data: profileData } = await supabase.from('profiles').select('*').eq('company_id', profile.company_id);
+      setCollaborators(profileData || []);
 
       // Set Recent Files for Dashboard
       if (fileData) {
@@ -4050,9 +4067,8 @@ const LogDockDashboard: React.FC = () => {
               {/* ACTION: MUDAR DE PLANO */}
               <button 
                 onClick={() => navigate('/plans')}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 24px', backgroundColor: '#0061FF', color: '#FFFFFF', border: 'none', borderRadius: '16px', fontSize: '13px', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 12px rgba(181, 217, 0, 0.15)', transition: 'all 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#A3C200'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0061FF'}
+                className="hub-premium-pill primary"
+                style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
               >
                 <Zap size={16} />
                 <span>Fazer upgrade</span>

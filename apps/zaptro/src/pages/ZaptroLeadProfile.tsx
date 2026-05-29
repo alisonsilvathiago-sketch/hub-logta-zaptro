@@ -11,6 +11,8 @@ import { useZaptroTheme } from '../context/ZaptroThemeContext';
 import { ZAPTRO_SHADOW } from '../constants/zaptroShadows';
 import { notifyZaptro } from '../components/Zaptro/ZaptroNotificationSystem';
 import { ZAPTRO_ROUTES } from '../constants/zaptroRoutes';
+import { supabase } from '../lib/supabase';
+import { Activity } from 'lucide-react';
 
 const ZaptroLeadProfile: React.FC = () => {
   const { id } = useParams();
@@ -21,33 +23,106 @@ const ZaptroLeadProfile: React.FC = () => {
   const surface = d ? 'rgba(255,255,255,0.04)' : '#FFFFFF';
   const surface2 = d ? 'rgba(255,255,255,0.06)' : '#F8FAFC';
 
-  // Mock Lead Data
-  const lead = {
-    id: id || 'l1',
-    name: 'Transportes Transville',
-    phone: '(11) 98877-6655',
-    email: 'contato@transville.com.br',
-    location: 'São Paulo, SP',
-    stage: 'negociacao',
-    value: 'R$ 12.500,00',
-    date: '2024-04-23',
-    tags: ['Urgente', 'Alto Valor', 'Frota Própria'],
-    owner: 'Alison Silva',
-    history: [
-      { id: 1, type: 'msg', sender: 'lead', text: 'Olá, gostaria de um orçamento para transporte de carga refrigerada para o Sul.', time: '10:30' },
-      { id: 2, type: 'msg', sender: 'me', text: 'Com certeza! Quais seriam as dimensões e o destino exato?', time: '10:32' },
-      { id: 3, type: 'note', text: 'Lead demonstrou interesse em contrato recorrente mensal.', time: '10:45', author: 'Alison' },
-      { id: 4, type: 'quote', text: 'Orçamento #4452 enviado: R$ 12.500,00', time: '11:00' },
-    ]
-  };
-
+  const [lead, setLead] = useState<any>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
-  const handleSendMessage = () => {
-    if (!message.trim()) return;
-    notifyZaptro('success', 'Mensagem enviada', 'Sua resposta foi enviada via WhatsApp.');
-    setMessage('');
+  const fetchLeadData = React.useCallback(async () => {
+    if (!id) return;
+    try {
+      setLoading(true);
+      
+      // 1. Fetch Lead Info
+      const { data: l, error: lErr } = await supabase
+        .from('crm_leads')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (lErr) throw lErr;
+
+      if (l) {
+        setLead({
+          id: l.id,
+          name: l.nome,
+          phone: l.telefone || '—',
+          email: l.email || '—',
+          location: l.endereco || 'Local não informado',
+          stage: l.status || 'novo',
+          value: l.valor ? `R$ ${Number(l.valor).toLocaleString('pt-BR')}` : '—',
+          date: l.created_at,
+          tags: l.tags || [],
+          owner: l.responsavel_nome || 'Sistema'
+        });
+
+        // 2. Fetch History (Messages)
+        if (l.telefone) {
+          const cleanPhone = l.telefone.replace(/\D/g, '');
+          const { data: msgs } = await supabase
+            .from('zaptro_mensagens')
+            .select('*')
+            .eq('contato_numero', cleanPhone)
+            .order('created_at', { ascending: true });
+
+          if (msgs) {
+            setHistory(msgs.map(m => ({
+              id: m.id,
+              type: 'msg',
+              sender: m.direcao === 'saida' ? 'me' : 'lead',
+              text: m.conteudo,
+              time: new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            })));
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao buscar dados do lead:', err);
+      notifyZaptro('error', 'Erro', 'Não foi possível carregar os dados do lead.');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  React.useEffect(() => {
+    fetchLeadData();
+  }, [fetchLeadData]);
+
+  const handleSendMessage = async () => {
+    if (!message.trim() || !lead?.phone) return;
+    
+    try {
+      const cleanPhone = lead.phone.replace(/\D/g, '');
+      const { error } = await supabase
+        .from('zaptro_mensagens')
+        .insert({
+          contato_numero: cleanPhone,
+          conteudo: message,
+          direcao: 'saida',
+          status_envio: 'pendente'
+        });
+
+      if (error) throw error;
+
+      notifyZaptro('success', 'Mensagem enviada', 'Sua resposta foi agendada para envio.');
+      setMessage('');
+      fetchLeadData(); // Refresh history
+    } catch (err) {
+      console.error('Erro ao enviar mensagem:', err);
+      notifyZaptro('error', 'Erro', 'Falha ao enviar mensagem.');
+    }
   };
+
+  if (loading || !lead) {
+    return (
+      <ZaptroLayout>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 16 }}>
+          <Activity className="animate-spin" size={48} color={palette.lime} />
+          <span style={{ fontSize: 16, fontWeight: 700, color: palette.textMuted }}>Sincronizando dados do lead...</span>
+        </div>
+      </ZaptroLayout>
+    );
+  }
 
   return (
     <ZaptroLayout>
@@ -136,7 +211,7 @@ const ZaptroLeadProfile: React.FC = () => {
                 <div>
                   <label style={{ display: 'block', fontSize: 10, fontWeight: 800, color: palette.textMuted, letterSpacing: '0.1em', marginBottom: 12, textTransform: 'uppercase' }}>Etiquetas</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {lead.tags.map(tag => (
+                    {lead.tags.map((tag: any) => (
                       <span key={tag} style={{ fontSize: 11, fontWeight: 700, padding: '6px 14px', borderRadius: 10, backgroundColor: surface2, color: palette.text, border: `1px solid ${border}` }}>
                         {tag}
                       </span>
@@ -150,7 +225,7 @@ const ZaptroLeadProfile: React.FC = () => {
             <div style={{ backgroundColor: surface, border: `1px solid ${border}`, borderRadius: 28, padding: 24 }}>
               <h4 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 800, color: palette.text }}>Resumo do Lead (AI)</h4>
               <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: palette.textMuted, lineHeight: 1.6 }}>
-                Interessado em transporte refrigerado recorrente. Volume estimado de 4 viagens/mês. Orçamento enviado aguardando aprovação da diretoria.
+                {lead.observacoes || 'Sem observações adicionais para este lead.'}
               </p>
             </div>
           </div>
@@ -171,7 +246,12 @@ const ZaptroLeadProfile: React.FC = () => {
 
               {/* Feed de Mensagens */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '32px', display: 'flex', flexDirection: 'column', gap: 24, backgroundColor: surface2 }}>
-                {lead.history.map((item: any) => (
+                {history.length === 0 ? (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, opacity: 0.5 }}>
+                    <MessageSquare size={48} />
+                    <span style={{ fontWeight: 700 }}>Sem mensagens registradas</span>
+                  </div>
+                ) : history.map((item: any) => (
                   <div key={item.id} style={{ alignSelf: item.sender === 'me' ? 'flex-end' : 'flex-start', maxWidth: '85%', minWidth: '200px' }}>
                     {item.type === 'msg' ? (
                       <div style={{ 
@@ -196,7 +276,7 @@ const ZaptroLeadProfile: React.FC = () => {
                         <div>
                           <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 800 }}>Nota de Equipe</p>
                           <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{item.text}</p>
-                          <span style={{ display: 'block', fontSize: 10, marginTop: 8, opacity: 0.8, fontWeight: 700 }}>{item.author.toUpperCase()} · {item.time}</span>
+                          <span style={{ display: 'block', fontSize: 10, marginTop: 8, opacity: 0.8, fontWeight: 700 }}>{item.author?.toUpperCase()} · {item.time}</span>
                         </div>
                       </div>
                     ) : (

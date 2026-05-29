@@ -43,6 +43,7 @@ export const validateTenantAccess = async (companyId: string): Promise<AccessSta
 
     return { allowed: true };
   } catch (err) {
-    return { allowed: true };
+    console.error('[validateTenantAccess] fail-closed:', err);
+    return { allowed: false, reason: 'Não foi possível validar o acesso da empresa' };
   }
 };

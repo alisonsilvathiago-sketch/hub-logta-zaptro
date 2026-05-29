@@ -226,7 +226,7 @@ const FinanceCalculator: React.FC = () => {
     container: { display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', minHeight: '400px' },
     calcWrap: { backgroundColor: '#f4f4f4', padding: '16px', borderRadius: '20px', border: '1px solid #E2E8F0' },
     displayArea: { backgroundColor: '#0F172A', color: 'white', padding: '16px', borderRadius: '14px', textAlign: 'right' as const, marginBottom: '16px', minHeight: '80px', display: 'flex', flexDirection: 'column' as const, justifyContent: 'flex-end', gap: '4px' },
-    exprLabel: { fontSize: '13px', color: '#94A3B8', fontFamily: 'monospace' },
+    exprLabel: { fontSize: '13px', color: '#949494', fontFamily: 'monospace' },
     resLabel: { fontSize: '24px', fontWeight: '700', fontFamily: 'monospace' },
     
     grid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' },
@@ -251,7 +251,7 @@ const FinanceCalculator: React.FC = () => {
     }),
     hContent: { flex: 1 },
     hH3: { fontSize: '13px', fontWeight: '600', margin: '0 0 2px 0', color: '#1E293B' },
-    hExpr: { fontSize: '11px', color: '#64748B', fontFamily: 'monospace', marginBottom: '4px', display: 'block' },
+    hExpr: { fontSize: '11px', color: '#949494', fontFamily: 'monospace', marginBottom: '4px', display: 'block' },
     hRes: { fontSize: '14px', fontWeight: '700', color: 'var(--primary)' },
     
     shareBox: { backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD', padding: '12px', borderRadius: '16px', marginTop: 'auto' },
@@ -307,7 +307,7 @@ const FinanceCalculator: React.FC = () => {
              {history.length > 0 && (
                 <button 
                   onClick={() => saveHistory([])} 
-                  style={{border: 'none', background: 'none', color: '#94A3B8', fontSize: '11px', fontWeight: '600', cursor: 'pointer'}}
+                  style={{border: 'none', background: 'none', color: '#949494', fontSize: '11px', fontWeight: '600', cursor: 'pointer'}}
                 >
                   Limpar Tudo
                 </button>
@@ -316,7 +316,7 @@ const FinanceCalculator: React.FC = () => {
 
           <div style={styles.hList}>
              {history.length === 0 ? (
-                <div style={{textAlign: 'center', padding: '40px', color: '#94A3B8'}}>
+                <div style={{textAlign: 'center', padding: '40px', color: '#949494'}}>
                    <Calculator size={48} opacity={0.2} style={{marginBottom: '16px'}} />
                    <p>Nenhum cálculo salvo ainda.</p>
                 </div>
@@ -328,7 +328,7 @@ const FinanceCalculator: React.FC = () => {
                    <div style={styles.hContent}>
                       <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
                          <h4 style={styles.hH3}>{item.title}</h4>
-                         <span style={{fontSize: '10px', color: '#94A3B8'}}>{item.date}</span>
+                         <span style={{fontSize: '10px', color: '#949494'}}>{item.date}</span>
                       </div>
                       <span style={styles.hExpr}>{item.expression}</span>
                       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
@@ -340,7 +340,7 @@ const FinanceCalculator: React.FC = () => {
                            <Trash2 size={14} />
                          </button>
                       </div>
-                      {item.description && <p style={{fontSize: '11px', color: '#64748B', marginTop: '8px', borderTop: '1px dashed #E2E8F0', paddingTop: '8px'}}>{item.description}</p>}
+                      {item.description && <p style={{fontSize: '11px', color: '#949494', marginTop: '8px', borderTop: '1px dashed #E2E8F0', paddingTop: '8px'}}>{item.description}</p>}
                    </div>
                 </div>
              ))}
@@ -367,7 +367,7 @@ const FinanceCalculator: React.FC = () => {
                       <input readOnly value={sharedLink} style={{...styles.input, flex: 1, height: '44px'}} />
                       <button onClick={copyLink} style={{...styles.btn, height: '44px', width: '44px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><Copy size={18} /></button>
                    </div>
-                   <p style={{fontSize: '10px', color: '#64748B', marginTop: '8px'}}>Qualquer pessoa com este link poderá ver os itens selecionados.</p>
+                   <p style={{fontSize: '10px', color: '#949494', marginTop: '8px'}}>Qualquer pessoa com este link poderá ver os itens selecionados.</p>
                 </>
              )}
           </div>

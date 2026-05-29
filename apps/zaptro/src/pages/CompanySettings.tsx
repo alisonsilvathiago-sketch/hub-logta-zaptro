@@ -8,6 +8,7 @@ import { useTenant } from '../context/TenantContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Navigate } from 'react-router-dom';
+import { ZAPTRO_APP_ROUTES } from '../app/zaptroAppRoutes';
 
 const CompanySettings: React.FC = () => {
   const { company, setCompany } = useTenant();
@@ -102,36 +103,148 @@ const CompanySettings: React.FC = () => {
   };
 
   if (profile && profile.role !== 'ADMIN' && profile.role !== 'MASTER_ADMIN') {
-    return <Navigate to="/perfil" replace />;
+    return <Navigate to={ZAPTRO_APP_ROUTES.PROFILE} replace />;
   }
 
   return (
-    <div style={styles.container} className="animate-fade-in">
-      <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Minha Empresa</h1>
-          <p style={styles.subtitle}>Gerencie a identidade visual, dados contratuais e APIs da organização.</p>
-        </div>
-        <button 
-          style={{
-            ...styles.primaryBtn,
-            backgroundColor: saveSuccess ? '#10B981' : 'var(--primary)',
-          }} 
-          onClick={handleSave} 
-          disabled={loading}
-        >
-          {loading ? 'Salvando...' : saveSuccess ? <><Check size={18} /> Salvo!</> : <><Save size={18} /> Salvar Alterações</>}
-        </button>
+    <div className="zaptro-company-page animate-fade-in">
+      <style>{`
+        .zaptro-company-page{
+          padding: 28px;
+          box-sizing: border-box;
+        }
+        .zaptro-company-page__head{
+          margin-bottom: 18px;
+        }
+        .zaptro-company-page__title{
+          margin: 0;
+          font-size: 28px;
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          color: var(--text-main);
+        }
+        .zaptro-company-page__subtitle{
+          margin: 6px 0 0;
+          font-size: 13px;
+          font-weight: 650;
+          color: var(--text-muted);
+          line-height: 1.45;
+        }
+        .zaptro-company-page__layout{
+          display: grid;
+          grid-template-columns: 260px minmax(0, 1fr);
+          gap: 18px;
+          align-items: start;
+        }
+        .zaptro-company-side{
+          border-radius: 22px;
+          border: 1px solid var(--border);
+          background: var(--bg-card);
+          box-shadow: var(--shadow-premium);
+          padding: 10px;
+        }
+        .zaptro-company-side__item{
+          width: 100%;
+          border: none;
+          background: transparent;
+          cursor: pointer;
+          padding: 12px 12px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-family: inherit;
+          color: var(--text-muted);
+          font-weight: 800;
+          font-size: 13px;
+        }
+        .zaptro-company-side__item.is-active{
+          background: linear-gradient(180deg, rgba(10,10,10,1) 0%, rgba(0,0,0,1) 100%);
+          color: #d9ff00;
+          box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+        }
+        .zaptro-company-panel{
+          border-radius: 28px;
+          border: 1px solid var(--border);
+          background: var(--bg-card);
+          box-shadow: var(--shadow-premium);
+          overflow: hidden;
+          min-height: 520px;
+          display: flex;
+          flex-direction: column;
+        }
+        .zaptro-company-panel__inner{
+          padding: 22px;
+          flex: 1 1 auto;
+          min-height: 0;
+        }
+        .zaptro-company-panel__foot{
+          padding: 16px 22px;
+          border-top: 1px solid var(--border);
+          display: flex;
+          justify-content: flex-end;
+        }
+        .zaptro-company-save{
+          border: none;
+          cursor: pointer;
+          height: 44px;
+          padding: 0 18px;
+          border-radius: 16px;
+          font-family: inherit;
+          font-weight: 900;
+          font-size: 13px;
+          background: linear-gradient(180deg, rgba(10,10,10,1) 0%, rgba(0,0,0,1) 100%);
+          color: #d9ff00;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+        }
+        .zaptro-company-save:disabled{
+          opacity: .6;
+          cursor: default;
+        }
+        @media (max-width: 980px){
+          .zaptro-company-page{ padding: 18px; }
+          .zaptro-company-page__layout{ grid-template-columns: minmax(0, 1fr); }
+          .zaptro-company-side{ position: sticky; top: 12px; }
+        }
+      `}</style>
+
+      <header className="zaptro-company-page__head">
+        <h1 className="zaptro-company-page__title">Minha Empresa</h1>
+        <p className="zaptro-company-page__subtitle">
+          Gerencie a identidade visual, dados contratuais e APIs da organização.
+        </p>
       </header>
 
-      {/* Tabs Layout solicitado */}
-      <div style={styles.tabsContainer}>
-        <button style={{...styles.tabBtn, borderBottomColor: activeTab === 'geral' ? 'var(--primary)' : 'transparent', color: activeTab === 'geral' ? 'var(--primary)' : 'var(--text-muted)'}} onClick={() => setActiveTab('geral')}>Geral</button>
-        <button style={{...styles.tabBtn, borderBottomColor: activeTab === 'white' ? 'var(--primary)' : 'transparent', color: activeTab === 'white' ? 'var(--primary)' : 'var(--text-muted)'}} onClick={() => setActiveTab('white')}>White Label</button>
-        <button style={{...styles.tabBtn, borderBottomColor: activeTab === 'api' ? 'var(--primary)' : 'transparent', color: activeTab === 'api' ? 'var(--primary)' : 'var(--text-muted)'}} onClick={() => setActiveTab('api')}>APIs & Webhooks</button>
-      </div>
+      <div className="zaptro-company-page__layout">
+        <aside className="zaptro-company-side" aria-label="Menu da empresa">
+          <button
+            type="button"
+            className={`zaptro-company-side__item${activeTab === 'geral' ? ' is-active' : ''}`}
+            onClick={() => setActiveTab('geral')}
+          >
+            <Building2 size={18} /> Dados da empresa
+          </button>
+          <button
+            type="button"
+            className={`zaptro-company-side__item${activeTab === 'white' ? ' is-active' : ''}`}
+            onClick={() => setActiveTab('white')}
+          >
+            <Palette size={18} /> White label
+          </button>
+          <button
+            type="button"
+            className={`zaptro-company-side__item${activeTab === 'api' ? ' is-active' : ''}`}
+            onClick={() => setActiveTab('api')}
+          >
+            <Globe size={18} /> Integrações / API
+          </button>
+        </aside>
 
-      <div style={styles.contentArea}>
+        <section className="zaptro-company-panel" aria-label="Conteúdo">
+          <div className="zaptro-company-panel__inner">
         {activeTab === 'geral' && (
           <div style={styles.grid}>
              <div style={styles.card}>
@@ -188,6 +301,24 @@ const CompanySettings: React.FC = () => {
              </div>
           </div>
         )}
+          </div>
+
+          <div className="zaptro-company-panel__foot">
+            <button className="zaptro-company-save" onClick={handleSave} disabled={loading}>
+              {loading ? (
+                'Salvando...'
+              ) : saveSuccess ? (
+                <>
+                  <Check size={18} /> Salvo!
+                </>
+              ) : (
+                <>
+                  <Save size={18} /> Salvar dados da empresa
+                </>
+              )}
+            </button>
+          </div>
+        </section>
       </div>
     </div>
   );

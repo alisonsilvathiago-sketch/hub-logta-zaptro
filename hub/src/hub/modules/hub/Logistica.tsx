@@ -22,12 +22,13 @@ import HubMetricCard from '@shared/components/HubMetricCard';
 import { FuelPump } from '@shared/components/FuelIntelligence';
 import type { LucideIcon } from 'lucide-react';
 import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
-import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
+import { HUB_PAGE_SUBTITLE, HUB_SIDEBAR_NAV_LABEL } from '@hub/styles/hubPageTypography';
+import { HUB_MASTER_SECTION_NAV } from '@hub/styles/hubMasterSectionNavStyles';
 
 // --- STYLES & HELPERS ---
 const getStatusStyles = (status: string) => {
   switch (status?.toLowerCase()) {
-    case 'finalizada': return { backgroundColor: '#D1FAE5', color: '#065F46' };
+    case 'finalizada': return { backgroundColor: '#BFDBFE', color: '#065F46' };
     case 'problema': return { backgroundColor: '#FEE2E2', color: '#991B1B' };
     case 'atraso': return { backgroundColor: '#FEF3C7', color: '#92400E' };
     default: return { backgroundColor: '#E0E7FF', color: '#3730A3' };
@@ -72,7 +73,7 @@ const LogisticsMonitoring: React.FC = () => {
     total_routes: 0,
     active_vehicles: 0,
     alerts_critical: 0,
-    estimated_cost: 15400
+    estimated_cost: 0
   });
 
   const [trackingData, setTrackingData] = useState<any[]>([]);
@@ -110,122 +111,19 @@ const LogisticsMonitoring: React.FC = () => {
         supabase.from('logistics_route_optimizations').select('*').order('created_at', { ascending: false }).limit(3)
       ]);
 
-      const defaultVehicles = [
-        {
-          id: 'mock-1',
-          asset_name: 'Caminhão Mercedes-Benz Axor (Placa: ABC-1234)',
-          asset_type: 'caminhao',
-          product_source: 'logta',
-          status: 'em_rota',
-          lat: -23.5489,
-          lng: -46.6388,
-          progress: 82.5,
-          company: { name: 'Transportadora Alfa' }
-        },
-        {
-          id: 'mock-2',
-          asset_name: 'Furgão Fiat Ducato (Placa: XYZ-9876)',
-          asset_type: 'van',
-          product_source: 'logta',
-          status: 'atraso',
-          lat: -23.5612,
-          lng: -46.6554,
-          progress: 45.0,
-          company: { name: 'Logta Central' }
-        },
-        {
-          id: 'mock-3',
-          asset_name: 'Carro de Entrega Rápida Chevrolet Spin (Placa: MNO-5678)',
-          asset_type: 'veiculo',
-          product_source: 'zaptro',
-          status: 'em_rota',
-          lat: -23.5321,
-          lng: -46.6211,
-          progress: 90.2,
-          company: { name: 'Alison Thiago Zap' }
-        },
-        {
-          id: 'mock-4',
-          asset_name: 'Scania R440 Heavy Truck (Placa: KJH-4321)',
-          asset_type: 'caminhao',
-          product_source: 'logta',
-          status: 'problema',
-          lat: -23.5599,
-          lng: -46.6432,
-          progress: 15.4,
-          company: { name: 'teste transporte' }
-        },
-        {
-          id: 'mock-5',
-          asset_name: 'Vans de Distribuição de Encomendas (Placa: QWE-6543)',
-          asset_type: 'van',
-          product_source: 'zaptro',
-          status: 'em_rota',
-          lat: -23.5721,
-          lng: -46.6710,
-          progress: 68.1,
-          company: { name: 'Logta Logistics' }
-        },
-        {
-          id: 'mock-6',
-          asset_name: 'Caminhão Cargo (Placa: ZXC-8765)',
-          asset_type: 'caminhao',
-          product_source: 'zaptro',
-          status: 'offline',
-          lat: -23.5212,
-          lng: -46.6012,
-          progress: 0.0,
-          company: { name: 'Transportadora Alfa' }
-        }
-      ];
-
-      const mergedVehicles = [...(tRes.data || []), ...defaultVehicles];
+      const mergedVehicles = [...(tRes.data || [])];
 
       if (rRes.data) {
         setRoutes(rRes.data);
         setTotalCount(rRes.count || 0);
       }
       
-      const defaultAlerts = [
-        {
-          type: 'critical',
-          created_at: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-          title: 'Desvio de Rota Crítico',
-          message: 'Veículo ABC-1234 (Mercedes Axor) desviou mais de 15km da rota autorizada.'
-        },
-        {
-          type: 'warning',
-          created_at: new Date(Date.now() - 1000 * 60 * 24).toISOString(),
-          title: 'Atraso IA Previsível',
-          message: 'Tráfego intenso detectado na BR-116. Atraso estimado de 25 minutos.'
-        },
-        {
-          type: 'critical',
-          created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-          title: 'Anomalia de Temperatura',
-          message: 'Baú refrigerado do furgão XYZ-9876 subiu temporariamente para 6.8°C.'
-        }
-      ];
-      const activeAlerts = (aRes.data && aRes.data.length > 0) ? aRes.data : defaultAlerts;
+      const activeAlerts = aRes.data || [];
       setAlerts(activeAlerts);
 
       setTrackingData(mergedVehicles);
 
-      const defaultOptimizations = [
-        {
-          title: 'Consolidação Leste',
-          suggestion: 'Rotas sobrepostas de 2 filiais na Zona Leste detectadas. Sugere-se consolidação para economizar R$ 840,00.',
-          impact: '6.4% economia diesel',
-          status: 'PENDING'
-        },
-        {
-          title: 'Otimização de Retorno (Backhaul)',
-          suggestion: 'Caminhão KJH-4321 retornará vazio de Campinas. Encaixar carga de devolução pendente economizaria R$ 1.100,00.',
-          impact: 'Aproveitamento 100% de frota',
-          status: 'PENDING'
-        }
-      ];
-      const activeOptimizations = (oRes.data && oRes.data.length > 0) ? oRes.data : defaultOptimizations;
+      const activeOptimizations = oRes.data || [];
       setOptimizations(activeOptimizations);
 
       setStats(prev => ({
@@ -251,36 +149,68 @@ const LogisticsMonitoring: React.FC = () => {
   }, [currentPage, itemsPerPage]);
 
   const handleRunOptimizer = async () => {
-    const tid = toastLoading('Navigator AI calculando novas rotas...');
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const tid = toastLoading('Navigator AI analisando dados da malha...');
     try {
-      const newOpt = {
-        title: 'Otimização de Carga Ativada',
-        suggestion: '3 empresas na região Leste estão com rotas sobrepostas. Consolidação de carga ativada com economia estimada em R$ 1.480,00 hoje.',
-        impact: '12% redução de emissão CO₂ e 8% diesel',
-        status: 'ACTIVE',
-        created_at: new Date().toISOString()
-      };
+      // Chamada real para a IA (Ollama via Proxy)
+      const prompt = `Analise a situação logística atual: ${stats.total_routes} rotas ativas, ${stats.active_vehicles} veículos online e ${stats.alerts_critical} alertas críticos. 
+      Gere uma sugestão curta (máximo 200 caracteres) de otimização logística de alto impacto. 
+      Retorne APENAS um JSON no formato: {"title": "Título Curto", "suggestion": "Descrição da sugestão", "impact": "Impacto estimado"}`;
+
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'qwen2:0.5b', // Modelo leve para resposta rápida
+          prompt: prompt,
+          stream: false,
+          format: 'json'
+        })
+      });
+
+      let newOpt;
+      if (response.ok) {
+        const data = await response.json();
+        const aiResponse = JSON.parse(data.response);
+        newOpt = {
+          title: aiResponse.title || 'Otimização Estratégica',
+          suggestion: aiResponse.suggestion || 'Consolidação de carga detectada.',
+          impact: aiResponse.impact || 'Economia estimada de 10%',
+          status: 'ACTIVE',
+          created_at: new Date().toISOString()
+        };
+      } else {
+        throw new Error('AI offline');
+      }
       
       try {
         await supabase.from('logistics_route_optimizations').insert([newOpt]);
       } catch (err) {
-        console.warn('Database insert failed, falling back to local state simulation:', err);
+        console.warn('Database insert failed, falling back to local state:', err);
       }
       
       setOptimizations(prev => [newOpt, ...prev]);
-      toastSuccess('Novas sugestões de otimização disponíveis com IA!');
+      toastSuccess('Novas sugestões de inteligência disponíveis!');
 
-      // Mostra o painel por alguns segundos e some (não fica "salvo" ocupando espaço).
       setShowAiInsights(true);
       if (hideAiInsightsTimerRef.current) {
         window.clearTimeout(hideAiInsightsTimerRef.current);
       }
       hideAiInsightsTimerRef.current = window.setTimeout(() => {
         setShowAiInsights(false);
-      }, 7000);
+      }, 10000);
     } catch (err) {
-      toastError('Erro ao rodar otimizador.');
+      console.error('AI Error:', err);
+      // Fallback para simulação se a IA falhar
+      const fallbackOpt = {
+        title: 'Otimização de Carga (Simulado)',
+        suggestion: 'Consolidação inteligente de rotas na região metropolitana detectada pela malha.',
+        impact: 'Economia estimada em R$ 1.250,00',
+        status: 'ACTIVE',
+        created_at: new Date().toISOString()
+      };
+      setOptimizations(prev => [fallbackOpt, ...prev]);
+      setShowAiInsights(true);
+      toastInfo('Sugestão gerada via motor de regras local (IA Indisponível).');
     } finally {
       toastDismiss(tid);
     }
@@ -339,10 +269,14 @@ const LogisticsMonitoring: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button style={styles.refreshBtn} onClick={fetchData}>
+          <button className="hub-premium-pill secondary" onClick={fetchData} style={{ padding: '8px 16px' }}>
             <RefreshCw size={18} />
           </button>
-          <button style={styles.alertBtn}>
+          <button className="hub-premium-pill secondary" style={{ padding: '8px 16px' }} onClick={() => {
+            const sidebar = document.getElementById('logistics-sidebar');
+            if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth' });
+            toastInfo(`Existem ${stats.alerts_critical} alertas críticos aguardando sua ação.`);
+          }}>
             <Bell size={18} />
             <div style={styles.alertBadge}>{stats.alerts_critical}</div>
           </button>
@@ -360,7 +294,7 @@ const LogisticsMonitoring: React.FC = () => {
         <div style={styles.contentCol}>
           <div style={styles.controlBar}>
             <div style={styles.filterTabsSmall}>
-              {['Tudo', 'Logta', 'Zaptro', 'Problemas'].map(tab => (
+              {['Tudo', 'Logta', 'Problemas'].map((tab) => (
                 <button
                   key={tab}
                   style={{
@@ -395,7 +329,7 @@ const LogisticsMonitoring: React.FC = () => {
                         <div style={styles.popupContainer}>
                           <h4 style={styles.popupTitle}>{v.asset_name || 'Equipamento'}</h4>
                           <p style={styles.popupSub}>{(v.company?.name || 'Geral')} • {v.product_source?.toUpperCase() || 'HUB'}</p>
-                          <div style={{ ...styles.statusTag, backgroundColor: v.status === 'problema' ? '#FEE2E2' : '#D1FAE5' }}>
+                          <div style={{ ...styles.statusTag, backgroundColor: v.status === 'problema' ? '#FEE2E2' : '#BFDBFE' }}>
                             {v.status?.toUpperCase() || 'OFFLINE'}
                           </div>
                           <button style={styles.popupAction} onClick={() => navigate(`/master/clientes?id=${v.id}`)}>Detalhes do Asset</button>
@@ -425,8 +359,8 @@ const LogisticsMonitoring: React.FC = () => {
                           <div style={styles.companyCell}>
                             <div style={{
                               ...styles.sourceTag,
-                              backgroundColor: v.product_source === 'zaptro' ? '#EEF2FF' : '#ECFDF5',
-                              color: v.product_source === 'zaptro' ? '#4F46E5' : '#059669',
+                              backgroundColor: v.product_source === 'logta' ? '#EFF6FF' : '#EEF2FF',
+                              color: v.product_source === 'logta' ? '#059669' : '#4F46E5',
                               padding: '4px 8px',
                               borderRadius: '8px',
                               fontSize: '10px',
@@ -474,7 +408,7 @@ const LogisticsMonitoring: React.FC = () => {
           </div>
         </div>
 
-        <aside style={styles.sidebar}>
+        <aside id="logistics-sidebar" style={styles.sidebar}>
           <div style={styles.sidebarSection}>
             <h3 style={styles.sidebarTitle}>Alertas Críticos</h3>
             <div style={styles.alertList}>
@@ -593,14 +527,14 @@ const LogisticsDestinations: React.FC = () => {
             <p style={styles.destinosPageSub}>Gerenciamento estratégico de pontos de entrega e CDs Logta.</p>
           </div>
         </div>
-        <button style={styles.addBtn} onClick={() => setIsModalOpen(true)}>Novo Destino +</button>
+        <button className="hub-premium-pill primary" onClick={() => setIsModalOpen(true)}>Novo Destino +</button>
       </header>
 
       <section style={styles.destinosClientPanel} aria-label="Saúde dos clientes na malha">
         <div style={styles.destinosClientPanelHead}>
           <div style={styles.destinosClientPanelTitle}>Clientes na malha</div>
           <div style={styles.destinosClientSummary}>
-            <CheckCircle2 size={18} color="#10B981" strokeWidth={2.5} />
+            <CheckCircle2 size={18} color="#0061FF" strokeWidth={2.5} />
             <span style={styles.destinosClientSummaryText}>
               <strong>{okCount}</strong> de {clientesMalha.length} com operação OK
             </span>
@@ -640,7 +574,7 @@ const LogisticsDestinations: React.FC = () => {
               }}
             >
               {c.ok ? (
-                <CheckCircle2 size={16} color="#10B981" strokeWidth={2.5} aria-hidden />
+                <CheckCircle2 size={16} color="#0061FF" strokeWidth={2.5} aria-hidden />
               ) : (
                 <AlertTriangle size={16} color="#F59E0B" strokeWidth={2.5} aria-hidden />
               )}
@@ -655,7 +589,7 @@ const LogisticsDestinations: React.FC = () => {
                 style={{
                   ...styles.destinosClientBadge,
                   color: c.ok ? '#047857' : '#B45309',
-                  backgroundColor: c.ok ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.14)',
+                  backgroundColor: c.ok ? 'rgba(0, 97, 255, 0.12)' : 'rgba(245, 158, 11, 0.14)',
                 }}
               >
                 {c.ok ? 'OK' : 'Atenção'}
@@ -717,7 +651,7 @@ const LogisticsDestinations: React.FC = () => {
               style={{
                 ...styles.statusBadge,
                 flexShrink: 0,
-                backgroundColor: destino.status === 'Ativo' ? '#D1FAE5' : '#FEE2E2',
+                backgroundColor: destino.status === 'Ativo' ? '#BFDBFE' : '#FEE2E2',
                 color: destino.status === 'Ativo' ? '#047857' : '#BE123C',
               }}
             >
@@ -852,16 +786,48 @@ const LogisticsIntelligence: React.FC<{ deliveryActions: any[], refresh: () => v
           </div>
         </div>
         <div style={styles.headerActions}>
-           <div style={styles.statusBadgeActive}><Activity size={14} color="#10B981" /> CÉREBRO ATIVO</div>
+           <div style={styles.statusBadgeActive}><Activity size={14} color="#0061FF" /> CÉREBRO ATIVO</div>
            <button onClick={refresh} style={styles.refreshBtn}><RefreshCw size={18} /></button>
         </div>
       </header>
 
       <div style={styles.kpiRow}>
-        <KPIItem label="Economia ROI" value="R$ 23.640" trend="+18.4%" trendUp={true} icon={DollarSign} color="#10B981" iconSize={24} />
-        <KPIItem label="Risco (Guardian)" value="92%" trend="+5.2%" trendUp={true} icon={ShieldCheck} color="#0061FF" iconSize={24} />
-        <KPIItem label="Compliance Frota" value="98.4%" trend="+0.8%" trendUp={true} icon={Users} color="#F59E0B" iconSize={24} />
-        <KPIItem label="Produtividade IA" value="14.2x" trend="+2.1x" trendUp={true} icon={Zap} color="#D9FF00" iconSize={24} />
+        <KPIItem 
+          label="Economia ROI Est." 
+          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(deliveryActions?.length * 150 || 0)} 
+          trend="+12%" 
+          trendUp={true} 
+          icon={DollarSign} 
+          color="#0061FF" 
+          iconSize={24} 
+        />
+        <KPIItem 
+          label="Segurança (Guardian)" 
+          value="98.2%" 
+          trend="+2.1%" 
+          trendUp={true} 
+          icon={ShieldCheck} 
+          color="#0061FF" 
+          iconSize={24} 
+        />
+        <KPIItem 
+          label="Performance IA" 
+          value={`${((deliveryActions?.length || 1) * 1.2).toFixed(1)}x`} 
+          trend="+0.5x" 
+          trendUp={true} 
+          icon={Zap} 
+          color="#D9FF00" 
+          iconSize={24} 
+        />
+        <KPIItem 
+          label="Uso da Malha" 
+          value={`${Math.min(100, (deliveryActions?.length || 0) * 5)}%`} 
+          trend="+4%" 
+          trendUp={true} 
+          icon={Activity} 
+          color="#F59E0B" 
+          iconSize={24} 
+        />
       </div>
 
       <div style={styles.splitGrid}>
@@ -910,8 +876,8 @@ const LogisticsIntelligence: React.FC<{ deliveryActions: any[], refresh: () => v
           <div style={{ ...styles.strategyList, maxHeight: '500px', overflowY: 'auto', paddingRight: '8px' }}>
              {deliveryActions.length > 0 ? deliveryActions.map(action => (
                <div key={action.id} style={styles.strategyRow}>
-                  <div style={{...styles.strategyIcon, backgroundColor: action.status === 'confirmado' ? '#ECFDF5' : action.status === 'reagendado' ? '#FFFBEB' : '#F8FAF9'}}>
-                     {action.status === 'confirmado' && <CheckCircle2 size={14} color="#10B981" />}
+                  <div style={{...styles.strategyIcon, backgroundColor: action.status === 'confirmado' ? '#EFF6FF' : action.status === 'reagendado' ? '#FFFBEB' : '#F8FAF9'}}>
+                     {action.status === 'confirmado' && <CheckCircle2 size={14} color="#0061FF" />}
                      {action.status === 'reagendado' && <Repeat size={14} color="#F59E0B" />}
                      {action.status === 'pendente' && <Box size={14} color="#0061FF" />}
                   </div>
@@ -920,7 +886,7 @@ const LogisticsIntelligence: React.FC<{ deliveryActions: any[], refresh: () => v
                      <div style={styles.strategyReason}>Pedido {action.order_id} • Token {action.token}</div>
                   </div>
                   <div style={styles.strategyMeta}>
-                     <div style={{...styles.strategyImpact, color: action.status === 'confirmado' ? '#10B981' : '#0061FF'}}>
+                     <div style={{...styles.strategyImpact, color: action.status === 'confirmado' ? '#0061FF' : '#0061FF'}}>
                         {action.status === 'confirmado' ? 'Verificado' : 'Autônomo'}
                      </div>
                      <div style={styles.strategyTime}>{new Date(action.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
@@ -961,7 +927,7 @@ const LogisticsAggregates: React.FC<{ aggregates: any[], refresh: () => void }> 
       <div style={styles.statsGrid}>
         <KPIItem label="Agregados Ativos" value={aggregates.filter(a => a.status === 'ativo').length.toString()} icon={Users} color="#0061FF" />
         <KPIItem label="Score Médio" value={(aggregates.reduce((acc, a) => acc + Number(a.score), 0) / (aggregates.length || 1)).toFixed(2)} icon={Star} color="#F59E0B" />
-        <KPIItem label="Total Pagamentos" value={`R$ ${aggregates.reduce((acc, a) => acc + Number(a.total_earnings), 0).toLocaleString()}`} icon={DollarSign} color="#10B981" />
+        <KPIItem label="Total Pagamentos" value={`R$ ${aggregates.reduce((acc, a) => acc + Number(a.total_earnings), 0).toLocaleString()}`} icon={DollarSign} color="#0061FF" />
       </div>
 
       <div style={styles.viewContainer}>
@@ -1005,10 +971,10 @@ const LogisticsAggregates: React.FC<{ aggregates: any[], refresh: () => void }> 
                     </div>
                   </td>
                   <td style={styles.td}>
-                    <strong style={{ color: '#10B981' }}>R$ {Number(agg.total_earnings).toLocaleString()}</strong>
+                    <strong style={{ color: '#0061FF' }}>R$ {Number(agg.total_earnings).toLocaleString()}</strong>
                   </td>
                   <td style={styles.td}>
-                    <div style={{ ...styles.statusBadge, backgroundColor: agg.status === 'ativo' ? '#D1FAE5' : '#FEE2E2', color: agg.status === 'ativo' ? '#065F46' : '#991B1B' }}>
+                    <div style={{ ...styles.statusBadge, backgroundColor: agg.status === 'ativo' ? '#BFDBFE' : '#FEE2E2', color: agg.status === 'ativo' ? '#065F46' : '#991B1B' }}>
                       {agg.status.toUpperCase()}
                     </div>
                   </td>
@@ -1102,7 +1068,7 @@ const LogisticsAggregates: React.FC<{ aggregates: any[], refresh: () => void }> 
               </div>
               <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '18px', border: '1px solid #E2E8F0' }}>
                 <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase' }}>Ganhos Totais</div>
-                <div style={{ fontSize: '16px', fontWeight: '900', color: '#10B981', marginTop: '6px' }}>R$ {Number(selectedDriverDetails.total_earnings).toLocaleString()}</div>
+                <div style={{ fontSize: '16px', fontWeight: '900', color: '#0061FF', marginTop: '6px' }}>R$ {Number(selectedDriverDetails.total_earnings).toLocaleString()}</div>
               </div>
             </div>
 
@@ -1205,7 +1171,7 @@ const LogisticsSequence: React.FC = () => {
               <h3 style={styles.sidebarTitle}>Início de Rota GPS</h3>
               <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '16px' }}>Enviar link de navegação inteligente para o motorista.</p>
               <button style={{ ...styles.addBtn, width: '100%', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                 <Share2 size={16} /> Enviar p/ Zaptro
+                 <Share2 size={16} /> Compartilhar link
               </button>
               <button style={{ ...styles.secondaryBtn, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px' }}>
                  <LocateFixed size={16} /> Abrir no Google Maps
@@ -1236,9 +1202,9 @@ const LogisticsExceptions: React.FC<{ exceptions: any[], refresh: () => void }> 
 
       <div style={styles.kpiRow}>
          <KPIItem label="Exceções Ativas" value={exceptions.length.toString()} trend={exceptions.length > 5 ? '+Alto' : 'Baixo'} trendUp={exceptions.length > 5} icon={ShieldAlert} color="#EF4444" />
-         <KPIItem label="Taxa de Confirmação" value="94.2%" trend="+2.1%" trendUp={true} icon={FileCheck} color="#10B981" />
+         <KPIItem label="Taxa de Confirmação" value="94.2%" trend="+2.1%" trendUp={true} icon={FileCheck} color="#0061FF" />
          <KPIItem label="Resolvido c/ IA" value="88%" trend="+5%" trendUp={true} icon={Zap} color="#0061FF" />
-         <KPIItem label="Economia Perda" value="R$ 4.250" trend="+R$ 800" trendUp={true} icon={DollarSign} color="#10B981" />
+         <KPIItem label="Economia Perda" value="R$ 4.250" trend="+R$ 800" trendUp={true} icon={DollarSign} color="#0061FF" />
       </div>
 
       <div style={styles.mainLayout}>
@@ -1297,7 +1263,7 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
   const fuelMeta: Record<string, { label: string; color: string }> = {
     gasolina: { label: 'Gasolina', color: '#0061FF' },
     diesel: { label: 'Diesel', color: '#EF4444' },
-    etanol: { label: 'Etanol', color: '#10B981' },
+    etanol: { label: 'Etanol', color: '#0061FF' },
     gnv: { label: 'GNV', color: '#0EA5E9' },
   };
 
@@ -1421,16 +1387,16 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
                 <div style={{ fontSize: '13px', fontWeight: '800', color: '#1E293B' }}>{reg.name}</div>
                 <div style={{ 
                   fontSize: '9px', fontWeight: '900', padding: '4px 8px', borderRadius: '20px',
-                  backgroundColor: reg.impact === 'BAIXO' ? '#DCFCE7' : (reg.impact === 'ALTO' ? '#FEE2E2' : '#FEF3C7'), 
-                  color: reg.impact === 'BAIXO' ? '#166534' : (reg.impact === 'ALTO' ? '#991B1B' : '#92400E') 
+                  backgroundColor: reg.impact === 'BAIXO' ? '#DBEAFE' : (reg.impact === 'ALTO' ? '#FEE2E2' : '#FEF3C7'), 
+                  color: reg.impact === 'BAIXO' ? '#1E3A8A' : (reg.impact === 'ALTO' ? '#991B1B' : '#92400E') 
                 }}>
                   {reg.impact}
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ fontSize: '18px', fontWeight: '900', color: '#0F172A' }}>{reg.price}</div>
-                <div style={{ fontSize: '9px', fontWeight: '800', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px #10B981' }}></div> ATIVO
+                <div style={{ fontSize: '9px', fontWeight: '800', color: '#0061FF', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0061FF', boxShadow: '0 0 8px #0061FF' }}></div> ATIVO
                 </div>
               </div>
             </div>
@@ -1501,8 +1467,8 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
                 <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase' }}>Índice de Impacto</div>
                 <div style={{ 
                   fontSize: '14px', fontWeight: '900', marginTop: '12px', display: 'inline-block', padding: '4px 10px', borderRadius: '8px',
-                  backgroundColor: selectedRegionDetails.impact === 'BAIXO' ? '#DCFCE7' : '#FEE2E2',
-                  color: selectedRegionDetails.impact === 'BAIXO' ? '#166534' : '#991B1B'
+                  backgroundColor: selectedRegionDetails.impact === 'BAIXO' ? '#DBEAFE' : '#FEE2E2',
+                  color: selectedRegionDetails.impact === 'BAIXO' ? '#1E3A8A' : '#991B1B'
                 }}>{selectedRegionDetails.impact}</div>
               </div>
             </div>
@@ -1520,7 +1486,7 @@ const LogisticsFuel: React.FC<{ fuelPrices: any[], refresh: () => void }> = ({ f
                       <div style={{ fontSize: '12px', fontWeight: '800', color: '#1E293B' }}>{p.name}</div>
                       <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>{p.address}</div>
                     </div>
-                    <div style={{ fontSize: '14px', fontWeight: '900', color: '#10B981' }}>R$ {p.price}</div>
+                    <div style={{ fontSize: '14px', fontWeight: '900', color: '#0061FF' }}>R$ {p.price}</div>
                   </div>
                 ))}
               </div>
@@ -1638,8 +1604,8 @@ const KPIItem = ({
         width: 6,
         height: 6,
         borderRadius: '50%',
-        backgroundColor: '#10B981',
-        boxShadow: '0 0 6px #10B981',
+        backgroundColor: '#0061FF',
+        boxShadow: '0 0 6px #0061FF',
         display: 'inline-block',
         flexShrink: 0,
       }}
@@ -1654,7 +1620,7 @@ const KPIItem = ({
           marginTop: 8,
           fontSize: 11,
           fontWeight: 800,
-          color: trendUp ? '#10B981' : '#F43F5E',
+          color: trendUp ? '#0061FF' : '#F43F5E',
           display: 'flex',
           alignItems: 'center',
           gap: 4,
@@ -1679,11 +1645,87 @@ const KPIItem = ({
   );
 };
 
+const LOGISTICA_MODULES = [
+  { id: 'controle', label: 'Torre de Controle', icon: Activity, sub: 'Monitoramento real-time' },
+  { id: 'destinos', label: 'Central de Destinos', icon: MapPin, sub: 'Gestão de CDs e bases' },
+  { id: 'frotas', label: 'Frotas & Agregados', icon: Users, sub: 'Gestão de motoristas' },
+  { id: 'rotas', label: 'Sequenciamento', icon: Layers, sub: 'Otimização de baú' },
+  { id: 'autonomo', label: 'Controle Autônomo', icon: ShieldAlert, sub: 'Gestão de exceções' },
+  { id: 'estrategia', label: 'Inteligência Estratégica', icon: Zap, sub: 'Análise de ROI e IA' },
+  { id: 'combustivel', label: 'Central de Combustível', icon: Fuel, sub: 'Preços e custos' },
+];
+
+const LogisticaShell: React.FC<{
+  activeModuleRouteId?: string;
+  children: React.ReactNode;
+}> = ({ activeModuleRouteId, children }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  return (
+    <div className="hub-settings-layout" style={HUB_MASTER_SECTION_NAV.layout}>
+      <aside style={HUB_MASTER_SECTION_NAV.sidebarWrapper}>
+        <nav style={HUB_MASTER_SECTION_NAV.sidebar} aria-label="Ir para módulos da logística">
+          <h2 style={HUB_MASTER_SECTION_NAV.sidebarHeading}>Operações</h2>
+          <div style={HUB_MASTER_SECTION_NAV.sidebarHeadingRule} aria-hidden />
+          <div style={HUB_MASTER_SECTION_NAV.sidebarSection}>
+            <div className="hub-settings-section-label" style={HUB_MASTER_SECTION_NAV.sidebarSectionLabel}>Módulos</div>
+            <div style={HUB_MASTER_SECTION_NAV.sidebarSectionItems}>
+              {LOGISTICA_MODULES.map((mod) => {
+                const active = activeModuleRouteId === mod.id;
+                return (
+                  <button
+                    key={mod.id}
+                    type="button"
+                    className={`hub-sidebar-item expanded${active ? ' active' : ''}`}
+                    style={{
+                      textDecoration: 'none',
+                      border: 'none',
+                      background: 'none',
+                      cursor: 'pointer',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                    }}
+                    title={mod.sub}
+                    onClick={() =>
+                      navigate({ pathname: `/master/logistica/${mod.id}`, search: location.search })
+                    }
+                  >
+                    <div
+                      style={{
+                        width: 18,
+                        height: 18,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <mod.icon size={18} strokeWidth={2} />
+                    </div>
+                    <span style={{ ...HUB_SIDEBAR_NAV_LABEL, marginLeft: 12, flex: 1, textAlign: 'left' }}>
+                      {mod.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </nav>
+      </aside>
+      <main style={HUB_MASTER_SECTION_NAV.main}>{children}</main>
+    </div>
+  );
+};
+
 const LogisticsDashboard: React.FC<{
   stats: { total_routes: number; active_vehicles: number; alerts_critical: number };
   deliveryActions: any[];
   refresh: () => void;
-}> = ({ stats, deliveryActions, refresh }) => {
+  fuelPrices?: any[];
+  aggregates?: any[];
+  exceptions?: any[];
+}> = ({ stats, deliveryActions, refresh, fuelPrices = [], aggregates = [], exceptions = [] }) => {
   const [activeKpiTab, setActiveKpiTab] = useState<
     'veiculos' | 'entregas' | 'alertas' | 'combustivel'
   >('veiculos');
@@ -1691,25 +1733,7 @@ const LogisticsDashboard: React.FC<{
   const location = useLocation();
   const mapCenter: [number, number] = [-23.5505, -46.6333];
 
-  const modulePathMatch = location.pathname.match(/\/master\/logistica\/([^/?]+)/);
-  const activeModuleRouteId = modulePathMatch?.[1];
-
-  const roiData = [
-    { name: 'Sem 1', savings: 4500 },
-    { name: 'Sem 2', savings: 5200 },
-    { name: 'Sem 3', savings: 6100 },
-    { name: 'Sem 4', savings: 7800 },
-  ];
-
-  const modules = [
-    { id: 'controle', label: 'Torre de Controle', icon: Activity, sub: 'Monitoramento real-time' },
-    { id: 'destinos', label: 'Central de Destinos', icon: MapPin, sub: 'Gestão de CDs e bases' },
-    { id: 'frotas', label: 'Frotas & Agregados', icon: Users, sub: 'Gestão de motoristas' },
-    { id: 'rotas', label: 'Sequenciamento', icon: Layers, sub: 'Otimização de baú' },
-    { id: 'autonomo', label: 'Controle Autônomo', icon: ShieldAlert, sub: 'Gestão de exceções' },
-    { id: 'estrategia', label: 'Inteligência Estratégica', icon: Zap, sub: 'Análise de ROI e IA' },
-    { id: 'combustivel', label: 'Central de Combustível', icon: Fuel, sub: 'Preços e custos' },
-  ];
+  const roiData = []; // Removendo mock fixo
 
   const kpiTabs: Array<{
     id: typeof activeKpiTab;
@@ -1724,39 +1748,33 @@ const LogisticsDashboard: React.FC<{
       label: 'Veículos Ativos',
       icon: Car,
       value: stats.active_vehicles,
-      trend: '+12%',
-      trendUp: true,
     },
     {
       id: 'entregas',
       label: 'Entregas Hoje',
       icon: Package,
       value: stats.total_routes,
-      trend: '+85',
-      trendUp: true,
     },
     {
       id: 'alertas',
       label: 'Alertas Ativos',
       icon: AlertTriangle,
       value: stats.alerts_critical,
-      trend: '-2',
-      trendUp: false,
     },
     {
       id: 'combustivel',
       label: 'Combustível (Média)',
       icon: Droplets,
-      value: 'R$ 5.89',
-      trend: '+1.2%',
-      trendUp: false,
+      value: fuelPrices.length > 0 
+        ? `R$ ${(fuelPrices.reduce((acc, f) => acc + Number(f.price || 0), 0) / fuelPrices.length).toFixed(2).replace('.', ',')}`
+        : '---',
     },
   ];
 
   const activeKpi = kpiTabs.find((t) => t.id === activeKpiTab) ?? kpiTabs[0];
 
   return (
-    <div style={styles.tabContent}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', ...styles.tabContent }}>
       <header style={{ ...styles.header, marginBottom: '40px' }}>
         <div style={styles.titleWrapper}>
           <div style={{ ...styles.iconBox, backgroundColor: '#0F172A', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' }}><Box size={24} color="#FFF" /></div>
@@ -1766,44 +1784,6 @@ const LogisticsDashboard: React.FC<{
           </div>
         </div>
         <div style={{ ...styles.headerActions, gap: '16px' }}>
-          <nav
-            style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginRight: '16px' }}
-            aria-label="Ir para módulos da logística"
-          >
-            {modules.map((mod) => {
-              const active = activeModuleRouteId === mod.id;
-              return (
-                <button
-                  key={mod.id}
-                  type="button"
-                  className="logistics-dashboard-module-pill"
-                  style={{
-                    padding: '10px 14px',
-                    borderRadius: '14px',
-                    backgroundColor: active ? 'rgba(0, 97, 255, 0.08)' : '#FFF',
-                    border: '1px solid #E2E8F0',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 1px 2px rgba(15, 23, 42, 0.06)'
-                  }}
-                  onClick={() =>
-                    navigate({ pathname: `/master/logistica/${mod.id}`, search: location.search })
-                  }
-                  title={mod.label}
-                >
-                  <mod.icon
-                    size={18}
-                    strokeWidth={2}
-                    color={active ? '#0061FF' : '#64748B'}
-                    style={{ flexShrink: 0 }}
-                  />
-                </button>
-              );
-            })}
-          </nav>
           <button style={{ ...styles.refreshBtn, width: '44px', height: '44px', borderRadius: '14px', border: '1px solid #E2E8F0', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#475569', boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)', flexShrink: 0, transition: '0.2s' }} onClick={refresh} type="button">
             <RefreshCw size={18} />
           </button>
@@ -1826,28 +1806,13 @@ const LogisticsDashboard: React.FC<{
                 <h3 style={styles.cardTitle}>Torre de Controle Ativa</h3>
                 <p style={{ ...styles.pageSub, fontSize: '11px', margin: '4px 0 0 0', padding: 0, maxWidth: '100%' }}>Sincronização GPS em tempo real de frotas e geofences.</p>
               </div>
-              <div style={styles.statusBadgeActive}>IA GUARDIAN ACTIVE</div>
+              <div className="animate-pulse" style={styles.statusBadgeActive}>IA GUARDIAN ACTIVE</div>
             </div>
 
             {/* REAL INTERACTIVE LEAFLET MAP */}
             <div style={{ height: '280px', width: '100%', borderRadius: '24px', overflow: 'hidden', border: '1px solid #E2E8F0', position: 'relative' }}>
               <HubMap center={mapCenter as any} zoom={12} scrollWheelZoom={false}>
-                {/* Scania R450 Marker */}
-                {truckIcon && (
-                  <Marker position={[-23.55052, -46.633308]} icon={truckIcon} />
-                )}
-                {/* Volvo FH540 Marker */}
-                {truckIcon && (
-                  <Marker position={[-23.53500, -46.615000]} icon={truckIcon} />
-                )}
-                {/* Car Marker */}
-                {carIcon && (
-                  <Marker position={[-23.56500, -46.650000]} icon={carIcon} />
-                )}
-                {/* Problem Icon Marker */}
-                {problemIcon && (
-                  <Marker position={[-23.55500, -46.638000]} icon={problemIcon} />
-                )}
+                {/* Real-time markers would go here based on tracking data */}
               </HubMap>
             </div>
           </div>
@@ -1859,7 +1824,7 @@ const LogisticsDashboard: React.FC<{
                 <h3 style={styles.cardTitle}>Performance da Malha (Savings)</h3>
                 <p style={{ ...styles.pageSub, fontSize: '11px', margin: '4px 0 0 0', padding: 0, maxWidth: '100%' }}>Análise cumulativa de custos economizados por otimização de IA.</p>
               </div>
-              <div style={styles.statusBadgeActive}>IA OTIMIZANDO</div>
+              <div className="animate-pulse" style={styles.statusBadgeActive}>IA OTIMIZANDO</div>
             </div>
             <div style={{ height: '240px' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -1883,9 +1848,9 @@ const LogisticsDashboard: React.FC<{
                  <h4 style={{ ...styles.insightTitle, fontSize: '12px' }}>Última Otimização</h4>
                  <p style={{ ...styles.insightText, fontSize: '11px' }}>Consolidação de carga em SP gerou economia de R$ 420,00.</p>
               </div>
-              <div style={{ ...styles.insightCard, flex: 1, backgroundColor: '#F0FDF4', borderColor: '#DCFCE7' }}>
-                 <h4 style={{ ...styles.insightTitle, fontSize: '12px', color: '#16A34A' }}>Guardian Status</h4>
-                 <p style={{ ...styles.insightText, fontSize: '11px', color: '#16A34A' }}>98% de entregas confirmadas autonomamente hoje.</p>
+              <div style={{ ...styles.insightCard, flex: 1, backgroundColor: '#EFF6FF', borderColor: '#DBEAFE' }}>
+                 <h4 style={{ ...styles.insightTitle, fontSize: '12px', color: '#1D4ED8' }}>Guardian Status</h4>
+                 <p style={{ ...styles.insightText, fontSize: '11px', color: '#1D4ED8' }}>98% de entregas confirmadas autonomamente hoje.</p>
               </div>
             </div>
           </div>
@@ -1904,7 +1869,7 @@ const LogisticsDashboard: React.FC<{
               label: '1. Torre de Controle',
               icon: Activity,
               desc: 'Rastreamento em tempo real de frotas e ordens de serviço ativas.',
-              metric: '12 Rotas Ativas',
+              metric: `${stats.total_routes} Rotas Ativas`,
               badgeColor: '#EFF6FF',
               badgeText: '#0061FF',
             },
@@ -1913,16 +1878,16 @@ const LogisticsDashboard: React.FC<{
               label: '2. Central de CD e Destinos',
               icon: MapPin,
               desc: 'Gestão integrada de galpões, filiais e docas de expedição.',
-              metric: '4 Bases Integradas',
-              badgeColor: '#ECFDF5',
-              badgeText: '#10B981',
+              metric: 'Operacional',
+              badgeColor: '#EFF6FF',
+              badgeText: '#0061FF',
             },
             {
               id: 'frotas',
               label: '3. Frotas & Agregados',
               icon: Users,
               desc: 'Fichas, documentos, frotas e motoristas próprios ou parceiros.',
-              metric: '8 Motoristas',
+              metric: `${aggregates.length} Colaboradores`,
               badgeColor: '#EEF2FF',
               badgeText: '#4338CA',
             },
@@ -1931,7 +1896,7 @@ const LogisticsDashboard: React.FC<{
               label: '4. Sequenciamento de Carga',
               icon: Layers,
               desc: 'Arrumação tridimensional do baú e roteirização sequencial via IA.',
-              metric: 'ROI +24% Cubagem',
+              metric: 'Inteligência LIFO',
               badgeColor: '#F5F3FF',
               badgeText: '#7C3AED',
             },
@@ -1940,7 +1905,7 @@ const LogisticsDashboard: React.FC<{
               label: '5. Controle Autônomo',
               icon: ShieldAlert,
               desc: 'Monitor inteligente de falhas, no-shows e alertas com geofence.',
-              metric: '2 Exceções Ativas',
+              metric: `${exceptions.length} Exceções Ativas`,
               badgeColor: '#FEF2F2',
               badgeText: '#EF4444',
             },
@@ -1949,7 +1914,7 @@ const LogisticsDashboard: React.FC<{
               label: '6. Inteligência Estratégica',
               icon: Zap,
               desc: 'Performance geral, gráficos de savings, inteligência de negócios.',
-              metric: 'Média ROI 14.8%',
+              metric: 'Análise ROI',
               badgeColor: '#FFFBEB',
               badgeText: '#F59E0B',
             },
@@ -1958,7 +1923,7 @@ const LogisticsDashboard: React.FC<{
               label: '7. Central de Combustível',
               icon: Fuel,
               desc: 'Histórico de abastecimento ANP e otimização regional de custos.',
-              metric: 'Preço Alvo R$ 5,45',
+              metric: fuelPrices.length > 0 ? `Ref: R$ ${(fuelPrices.reduce((acc, f) => acc + Number(f.price || 0), 0) / fuelPrices.length).toFixed(2)}` : 'Preços ANP',
               badgeColor: '#F0F9FF',
               badgeText: '#0EA5E9',
             },
@@ -2072,6 +2037,9 @@ const LogisticaHub: React.FC = () => {
             stats={stats}
             deliveryActions={deliveryActions}
             refresh={fetchOperationalData}
+            fuelPrices={fuelPrices}
+            aggregates={aggregates}
+            exceptions={exceptions}
           />
         );
     }
@@ -2079,7 +2047,7 @@ const LogisticaHub: React.FC = () => {
 
   const getStatusStyles = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'finalizada': return { backgroundColor: '#ECFDF5', color: '#10B981', border: '1px solid #D1FAE5' };
+      case 'finalizada': return { backgroundColor: '#EFF6FF', color: '#0061FF', border: '1px solid #BFDBFE' };
       case 'problema': return { backgroundColor: '#FEF2F2', color: '#EF4444', border: '1px solid #FEE2E2' };
       case 'atraso': return { backgroundColor: '#FFFBEB', color: '#F59E0B', border: '1px solid #FEF3C7' };
       default: return { backgroundColor: '#F0F7FF', color: 'var(--accent)', border: '1px solid #E0E7FF' };
@@ -2088,8 +2056,10 @@ const LogisticaHub: React.FC = () => {
 
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#FBFBFE' }} className="animate-fade-in">
-      {renderContent()}
+    <div style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }} className="animate-fade-in">
+      <LogisticaShell activeModuleRouteId={subPage}>
+        {renderContent()}
+      </LogisticaShell>
     </div>
   );
 };
@@ -2160,7 +2130,7 @@ const styles: Record<string, any> = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
   titleWrapper: { display: 'flex', alignItems: 'center', gap: '20px' },
   iconBox: { width: '56px', height: '56px', backgroundColor: 'var(--accent)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)' },
-  pageTitle: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  pageTitle: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0 },
   pageSub: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '16px', alignItems: 'center' },
   
@@ -2255,7 +2225,7 @@ const styles: Record<string, any> = {
   fuelVariation: { fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' },
   fuelImpact: { textAlign: 'right' },
   impactLabel: { fontSize: '10px', fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase' },
-  impactValue: { fontSize: '12px', fontWeight: '800', color: '#10B981', marginTop: '4px' },
+  impactValue: { fontSize: '12px', fontWeight: '800', color: '#0061FF', marginTop: '4px' },
   regionSelector: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0', color: '#475569', fontSize: '13px', fontWeight: '700' },
   fuelOperationalGrid: { display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' },
   fuelChartCard: { backgroundColor: 'white', padding: '32px', borderRadius: '28px', border: '1px solid var(--border)' },
@@ -2293,7 +2263,7 @@ const styles: Record<string, any> = {
   loadingClient: { fontSize: '15px', fontWeight: '800', color: '#0F172A' },
   loadingZone: { fontSize: '12px', color: '#64748B', fontWeight: '600' },
   loadingMeta: { textAlign: 'right' },
-  loadingDelivery: { fontSize: '13px', fontWeight: '800', color: '#10B981' },
+  loadingDelivery: { fontSize: '13px', fontWeight: '800', color: '#0061FF' },
   loadingAction: { fontSize: '11px', color: '#94A3B8', fontWeight: '700', textTransform: 'uppercase', marginTop: '2px' },
   
   dashShortcutLabel: { fontSize: '14px', fontWeight: '800', color: '#0F172A' },
@@ -2320,7 +2290,7 @@ const styles: Record<string, any> = {
   insightCard: { padding: '16px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: '#F8FAFC' },
   insightTitle: { fontSize: '13px', fontWeight: '800', color: '#1E293B', margin: '0 0 4px 0' },
   insightText: { fontSize: '12px', color: '#64748B', margin: 0, lineHeight: '1.5' },
-  statusBadgeActive: { padding: '6px 12px', backgroundColor: '#F0FDF4', color: '#10B981', borderRadius: '12px', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' },
+  statusBadgeActive: { padding: '6px 12px', backgroundColor: '#EFF6FF', color: '#0061FF', borderRadius: '12px', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' },
   kpiRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' },
   splitGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' },
   chartCard: { padding: '32px', backgroundColor: '#FFF', borderRadius: '32px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' },
@@ -2601,8 +2571,7 @@ const styles: Record<string, any> = {
     color: '#000000',
     margin: 0,
     letterSpacing: 0,
-    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-  },
+      },
   destinosPageSub: {
     fontSize: '12px',
     color: 'var(--text-secondary)',

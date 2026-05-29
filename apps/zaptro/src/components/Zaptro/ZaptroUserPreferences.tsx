@@ -17,8 +17,8 @@ const ZaptroUserPreferences: React.FC = () => {
   const [loading, setLoading] = useState(false);
   
   const [prefs, setPrefs] = useState({
-    sound: readWaNotifSoundEnabled(),
-    visual: readWaNotifDesktopDesired()
+    sound: true,
+    visual: true,
   });
 
   useEffect(() => {

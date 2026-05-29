@@ -230,10 +230,15 @@ const Frota = () => {
                   <input name="modelo" required placeholder="Scania R450" className="w-full bg-neutral-900 border border-neutral-800 p-3 rounded-xl outline-none focus:border-primary text-sm" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase">Tipo</label>
-                  <select name="tipo" className="w-full bg-neutral-900 border border-neutral-800 p-3 rounded-xl outline-none focus:border-primary text-sm">
-                    <option value="cavalo">Cavalo (Caminhão)</option>
-                    <option value="carreta">Carreta</option>
+                  <label className="text-[10px] font-bold text-neutral-400 uppercase">Tipo de Veículo</label>
+                  <select name="tipo" className="w-full bg-neutral-900 border border-neutral-800 p-3 rounded-xl outline-none focus:border-primary text-sm text-white">
+                    <option value="cavalo" className="bg-neutral-900">Cavalo Mecânico (Caminhão Trator)</option>
+                    <option value="carreta" className="bg-neutral-900">Carreta (Semirreboque)</option>
+                    <option value="truck" className="bg-neutral-900">Caminhão Semi-Pesado (Truck/Toco)</option>
+                    <option value="vuc" className="bg-neutral-900">VUC (Veículo Urbano de Carga)</option>
+                    <option value="van" className="bg-neutral-900">Utilitário / Van / Fiorino</option>
+                    <option value="carro" className="bg-neutral-900">Carro Comercial (Frota Administrativa)</option>
+                    <option value="moto" className="bg-neutral-900">Motocicleta (Entregas Expressas)</option>
                   </select>
                 </div>
                 <button type="submit" className="w-full py-4 bg-primary text-white rounded-xl font-bold hover:opacity-90 shadow-lg shadow-primary/20">Salvar no Supabase</button>

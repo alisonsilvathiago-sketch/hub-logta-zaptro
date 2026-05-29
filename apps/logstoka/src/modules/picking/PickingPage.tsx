@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
+import { DEMO_PICKING, pickingDetailKey } from '@/lib/logstokaDemoSeed';
+import ClickableTableRow from '@/components/ui/ClickableTableRow';
 import { MARKETPLACE_LABELS } from '@/types';
+import { supabase } from '@/lib/supabase';
 
 interface PickRow {
   sku: string;
@@ -17,6 +21,10 @@ const PickingPage: React.FC = () => {
 
   useEffect(() => {
     if (!companyId) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      setRows(DEMO_PICKING);
+      return;
+    }
     const start = new Date();
     start.setHours(0, 0, 0, 0);
 
@@ -29,16 +37,21 @@ const PickingPage: React.FC = () => {
       .then(({ data }) => {
         const map = new Map<string, PickRow>();
         for (const mov of data ?? []) {
-          for (const item of (mov as { ls_stock_movement_items?: Array<{ sku: string; quantity: number; ls_products?: { name: string } }> }).ls_stock_movement_items ?? []) {
-            const key = `${item.sku}-${mov.marketplace}-${mov.reference_code}`;
+          const movement = mov as unknown as {
+            marketplace?: string | null;
+            reference_code?: string | null;
+            ls_stock_movement_items?: Array<{ sku: string; quantity: number; ls_products?: { name?: string } | null }>;
+          };
+          for (const item of movement.ls_stock_movement_items ?? []) {
+            const key = `${item.sku}-${movement.marketplace}-${movement.reference_code}`;
             const existing = map.get(key);
             if (existing) existing.quantity += Number(item.quantity);
             else {
               map.set(key, {
                 sku: item.sku,
                 name: item.ls_products?.name ?? item.sku,
-                marketplace: mov.marketplace,
-                store: mov.reference_code,
+                marketplace: movement.marketplace,
+                store: movement.reference_code,
                 quantity: Number(item.quantity),
               });
             }
@@ -51,7 +64,7 @@ const PickingPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-black">Separação de Pedidos</h2>
+        <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Separação de Pedidos</h2>
         <p className="text-sm text-slate-500">Lista de picking agrupada por SKU e canal — hoje</p>
       </div>
 
@@ -67,17 +80,14 @@ const PickingPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && (
-              <tr><td colSpan={5} className="py-8 text-center text-slate-500">Sem saídas hoje — importe relatório ou conecte webhook.</td></tr>
-            )}
             {rows.map((r) => (
-              <tr key={`${r.sku}-${r.marketplace}-${r.store}`}>
+              <ClickableTableRow key={`${r.sku}-${r.marketplace}-${r.store}`} to={`/app/picking/${pickingDetailKey(r)}`}>
                 <td className="font-bold">{r.sku}</td>
                 <td>{r.name}</td>
                 <td>{r.marketplace ? MARKETPLACE_LABELS[r.marketplace as keyof typeof MARKETPLACE_LABELS] : '—'}</td>
                 <td>{r.store || '—'}</td>
-                <td className="font-black text-emerald-700">{r.quantity}</td>
-              </tr>
+                <td className="font-black text-orange-700">{r.quantity}</td>
+              </ClickableTableRow>
             ))}
           </tbody>
         </table>

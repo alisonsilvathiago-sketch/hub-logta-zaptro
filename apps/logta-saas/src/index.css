@@ -38,6 +38,12 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/** Login, registro e callback OAuth — precisam rolar (body padrão fica overflow:hidden). */
+body.logta-public-auth,
+body:has(.logta-auth-page) {
+  overflow: auto !important;
+}
+
 #root {
   min-height: 100dvh;
   font-size: 14px;
@@ -53,7 +59,26 @@ body {
   min-width: 0;
   min-height: 100%;
   box-sizing: border-box;
-  padding: 1rem 1rem;
+  padding: 30px 40px;
+}
+
+/** Conteúdo interno (detalhes, perfis) — mesmo recuo da página */
+.logta-page-content {
+  margin: 30px 40px;
+  box-sizing: border-box;
+}
+
+/** Shell de detalhe: recuo fica no .logta-page-content interno */
+.logta-page--flush {
+  padding: 0;
+}
+
+/** Chips de filtro (financeiro operacional — diárias, multas, margem) */
+.logta-filter-chip {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 .logta-page__body {
@@ -78,30 +103,6 @@ body {
   width: 100%;
   min-height: calc(100dvh - 15rem);
   height: 100%;
-}
-
-@media (min-width: 640px) {
-  .logta-page {
-    padding: 1.5rem 1.25rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .logta-page {
-    padding: 2.25rem 2rem;
-  }
-}
-
-@media (min-width: 1280px) {
-  .logta-page {
-    padding: 2.5rem 3rem;
-  }
-}
-
-@media (min-width: 1536px) {
-  .logta-page {
-    padding: 2.5rem 4rem;
-  }
 }
 
 /* Títulos globais — override shared/index.css (peso 700, tracking 0) */
@@ -138,6 +139,7 @@ body {
 /* Títulos / textos Logta — sem borda do tema global [class*="card"] em @shared */
 .logta-card-heading,
 .logta-panel-section-title,
+.logta-panel-eyebrow,
 .logta-stat-card__label,
 .logta-stat-card__value,
 .logta-dashboard-stat-card__value,
@@ -159,6 +161,7 @@ body {
 
 .logta-card-heading:hover,
 .logta-panel-section-title:hover,
+.logta-panel-eyebrow:hover,
 .logta-stat-card__label:hover,
 .logta-stat-card__value:hover,
 .logta-dashboard-stat-card__value:hover,
@@ -210,12 +213,29 @@ button.logta-sidebar-nav-item {
 h3.logta-panel-section-title,
 .logta-panel-section-title {
   margin: 0;
+  padding-top: 20px;
+  padding-bottom: 20px;
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0;
   line-height: 1.35;
   text-transform: uppercase;
   color: #111827;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Rótulo cinza acima de títulos em cards (ex.: Acompanhamento de Rota) */
+h3.logta-panel-eyebrow,
+.logta-panel-eyebrow {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-transform: uppercase;
+  color: #b8b8b8;
   border: none !important;
   box-shadow: none !important;
   background: transparent !important;
@@ -320,12 +340,79 @@ h3.logta-panel-section-title,
 }
 
 .logta-dashboard-stat-card__value--primary {
+  color: var(--color-primary, #2563eb) !important;
+}
+
+/* Valores grandes de KPI (dashboards financeiro, fretes, RH) — padrão 26px azul */
+.logta-dashboard-stat-card__value.logta-dashboard-stat-card__value--lg,
+.logta-stat-card .logta-dashboard-stat-card__value.logta-dashboard-stat-card__value--lg {
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  line-height: 1.2;
+  padding: 9px 0;
+}
+
+.logta-stat-card .logta-dashboard-stat-card__value.logta-dashboard-stat-card__value--primary {
+  color: var(--color-primary, #2563eb) !important;
+}
+
+/* LogtaKpiStrip — linha valor + tendência (60px altura, valor 17px) */
+.logta-kpi-strip__value-row {
+  min-height: 60px;
+}
+
+.logta-kpi-strip .logta-dashboard-stat-card__value.logta-dashboard-stat-card__value--lg {
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  line-height: 1.2;
+  padding: 0;
+}
+
+/* Lista de movimentações (Financeiro e painéis similares) */
+.logta-movement-row__icon {
+  width: 40px;
+  height: 40px;
+}
+
+.logta-movement-row__title,
+.logta-movement-row__amount {
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+/* Botões de exportação — pill ícone + texto (PDF / Excel / Imprimir) */
+.logta-export-btn {
+  display: inline-flex;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #4b5563;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.logta-export-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--color-primary, #2563eb) 30%, #e5e7eb);
   color: var(--color-primary, #2563eb);
 }
 
-.logta-dashboard-stat-card__value--lg {
-  font-size: 30px;
-  padding: 9px 0;
+.logta-export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Card métrica padrão (dashboards) */
@@ -346,7 +433,7 @@ h3.logta-panel-section-title,
 
 .logta-stat-card__label {
   margin: 0 0 4px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0;
@@ -388,6 +475,17 @@ h3.logta-panel-section-title,
   line-height: 1.2;
   letter-spacing: 0;
   color: var(--color-primary, #2563eb);
+}
+
+/* Legenda abaixo do valor do KPI (ex.: "Aguardando aprovação") */
+.logta-stat-card__hint {
+  margin: 0;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
 }
 
 /* Painéis brancos / escuros */
@@ -600,32 +698,7 @@ h3.logta-panel-section-title,
   transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
 }
 
-.logta-icon-tabs__item::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  z-index: 20;
-  padding: 4px 8px;
-  border-radius: 8px;
-  background: #111827;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.3;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transform: translateX(-50%) translateY(4px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.logta-icon-tabs__item:hover::after,
-.logta-icon-tabs__item:focus-visible::after {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
+/* Tooltip nativo via title/aria-label — evita barra escura flutuante no perfil RH */
 .logta-icon-tabs__item:hover {
   color: var(--text-primary, #1f2937);
   background-color: var(--accent-light, #f0f7ff);
@@ -646,6 +719,99 @@ h3.logta-panel-section-title,
   width: auto;
   max-width: 100%;
   flex-shrink: 0;
+}
+
+/** Barra de abas com rolagem (perfil 360° do colaborador) */
+.logta-icon-tabs-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.logta-icon-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.logta-icon-tabs--wide {
+  flex-wrap: nowrap;
+  min-width: max-content;
+}
+
+/** Abas no cabeçalho do perfil do colaborador (alinhadas à direita, mesma faixa do nome) */
+.logta-icon-tabs-scroll--profile-header {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (min-width: 768px) {
+  .logta-icon-tabs-scroll--profile-header {
+    width: auto;
+    max-width: min(560px, 100%);
+  }
+}
+
+/** Perfil RH: abas 360° + ações (tel, e-mail, situação) na mesma linha */
+.logta-icon-tabs-scroll--profile-header-row {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.logta-icon-tabs-profile-toolbar {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: min-content;
+}
+
+/* Aba isolada fora do grupo principal (ex.: Jornada & Ponto no RH) */
+.logta-icon-tabs__trailing {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+
+.logta-icon-tabs__trailing .logta-icon-tabs__item {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.logta-icon-tabs__trailing .logta-icon-tabs__item.is-active {
+  background-color: var(--color-primary, #2563eb);
+  color: #ffffff;
+  border-color: var(--color-primary, #2563eb);
+}
+
+.logta-icon-tabs__trailing .logta-icon-tabs__item.is-active:hover {
+  background-color: #1d4ed8;
+  color: #ffffff;
+}
+
+/* Ações do perfil RH — fora da faixa de abas 360°, por último */
+.logta-icon-tabs__trailing--profile-actions {
+  gap: 8px;
+  margin-left: 0;
+}
+
+.logta-icon-tabs__item--status {
+  background-color: var(--color-primary, #d7ff00);
+  color: #111827;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.logta-icon-tabs__item--status:hover {
+  background-color: #c8f000;
+  color: #111827;
 }
 
 /* Cabeçalho de modais escuros (CRM, etc.) */
@@ -669,7 +835,7 @@ h3.logta-panel-section-title,
 .logta-modal-title,
 .logta-modal-heading {
   margin: 0;
-  font-size: 19px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1.35;

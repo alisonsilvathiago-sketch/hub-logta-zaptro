@@ -1,34 +1,67 @@
 import React, { useState } from 'react';
-import { Truck, Search, Package, MapPin, CheckCircle2, Download, ExternalLink } from 'lucide-react';
+import { Truck, Search, Package, MapPin, CheckCircle2, Download, ExternalLink, Activity } from 'lucide-react';
+import { supabase } from '@shared/lib/supabase';
 
 export const ClientPortalPage: React.FC = () => {
   const [trackingCode, setTrackingCode] = useState('');
   const [searchResult, setSearchResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  const mockDelivery = {
-    code: 'LOG-987123',
-    status: 'Em rota de entrega',
-    lastUpdate: 'Há 45 minutos em Guarulhos-SP',
-    recipient: 'Comercial São Jorge Ltda',
-    origin: 'Matriz - São Paulo',
-    destination: 'Filial 02 - Campinas',
-    eta: '01/05/2026 às 16:30',
-    steps: [
-      { id: 1, title: 'Pedido Recebido', desc: 'Nota fiscal indexada com sucesso', completed: true },
-      { id: 2, title: 'Aguardando Despacho', desc: 'Carregamento finalizado', completed: true },
-      { id: 3, title: 'Em Trânsito', desc: 'Veículo em rota principal', completed: true },
-      { id: 4, title: 'Entrega Concluída', desc: 'Aguardando canhoto digital', completed: false }
-    ],
-    documents: [
-      { name: 'Danfe_NF_45231.pdf', size: '155 KB' },
-      { name: 'Canhoto_Assinado.png', size: '840 KB' }
-    ]
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (trackingCode.trim()) {
-      setSearchResult(mockDelivery);
+    if (!trackingCode.trim()) return;
+
+    try {
+      setLoading(true);
+      setSearchResult(null);
+
+      // 1. Buscar o frete pelo número_frete ou ID
+      const { data: frete, error: fErr } = await supabase
+        .from('fretes')
+        .select('*')
+        .or(`numero_frete.eq.${trackingCode},id.eq.${trackingCode}`)
+        .maybeSingle();
+
+      if (fErr) throw fErr;
+
+      if (!frete) {
+        alert('Entrega não encontrada. Verifique o código e tente novamente.');
+        return;
+      }
+
+      // 2. Buscar documentos vinculados (logdock_arquivos)
+      // Nota: tags costumam conter o ID do frete ou número para indexação rápida
+      const { data: docs } = await supabase
+        .from('logdock_arquivos')
+        .select('*')
+        .contains('tags', [frete.numero_frete || frete.id]);
+
+      // 3. Montar o objeto de resultado
+      setSearchResult({
+        code: frete.numero_frete || frete.id.slice(0, 8).toUpperCase(),
+        status: frete.status || 'Pendente',
+        lastUpdate: `Atualizado em ${new Date(frete.updated_at || frete.created_at).toLocaleString('pt-BR')}`,
+        recipient: frete.cliente_nome || 'Cliente não identificado',
+        origin: frete.origem,
+        destination: frete.destino,
+        eta: frete.previsao_entrega ? new Date(frete.previsao_entrega).toLocaleString('pt-BR') : 'A definir',
+        steps: [
+          { id: 1, title: 'Pedido Recebido', desc: 'Nota fiscal indexada com sucesso', completed: true },
+          { id: 2, title: 'Aguardando Despacho', desc: 'Carregamento finalizado', completed: !!frete.motorista_id },
+          { id: 3, title: 'Em Trânsito', desc: 'Veículo em rota principal', completed: frete.status === 'em_transito' || frete.status === 'concluido' },
+          { id: 4, title: 'Entrega Concluída', desc: 'Aguardando canhoto digital', completed: frete.status === 'concluido' }
+        ],
+        documents: docs?.map(d => ({
+          name: d.nome_arquivo,
+          size: `${(d.tamanho_bytes / 1024).toFixed(0)} KB`,
+          url: d.storage_path
+        })) || []
+      });
+    } catch (err) {
+      console.error('Erro no rastreamento:', err);
+      alert('Erro ao buscar informações. Tente novamente mais tarde.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -51,7 +84,9 @@ export const ClientPortalPage: React.FC = () => {
               <Search size={20} color="#94A3B8" />
               <input type="text" placeholder="Ex: LOG-987123" style={styles.input} value={trackingCode} onChange={(e) => setTrackingCode(e.target.value)} />
             </div>
-            <button type="submit" style={styles.searchBtn}>Rastrear Carga</button>
+            <button type="submit" style={styles.searchBtn} disabled={loading}>
+              {loading ? <Activity className="animate-spin" size={20} /> : 'Rastrear Carga'}
+            </button>
           </form>
         </div>
       </div>

@@ -55,6 +55,13 @@ export function PontoPublicView() {
 
   const register = async (type: PontoRecordType) => {
     if (!config) return;
+    if (!config.isActive) {
+      setFeedback({
+        tone: 'err',
+        text: 'O ponto desta unidade ainda não foi ativado pelo RH. Tente novamente mais tarde.',
+      });
+      return;
+    }
     const doc = document.replace(/\D/g, '');
     if (doc.length < 3 || name.trim().length < 2) {
       setFeedback({ tone: 'err', text: 'Informe nome e CPF/matrícula para registrar.' });
@@ -126,6 +133,20 @@ export function PontoPublicView() {
           <p className="logta-card-heading mb-2">Link inválido ou expirado</p>
           <p className="text-sm font-medium text-gray-500">
             Solicite um novo link de ponto ao administrador da sua empresa.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!config.isActive) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F9FAFB] p-6">
+        <div className="logta-panel-card max-w-md p-8 text-center">
+          <p className="logta-card-heading mb-2">Ponto ainda não ativado</p>
+          <p className="text-sm font-medium text-gray-500">
+            O RH da transportadora precisa ativar a configuração de ponto inteligente antes que a equipe
+            possa registrar entrada e saída por este link.
           </p>
         </div>
       </div>

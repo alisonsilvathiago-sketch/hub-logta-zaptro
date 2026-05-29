@@ -167,7 +167,7 @@ export default function ChatWidget() {
 
   const departments = [
     { id: 'suporte', name: 'Suporte Técnico', icon: Headset, color: '#0061FF', desc: 'Dúvidas e erros' },
-    { id: 'financeiro', name: 'Financeiro', icon: Wallet, color: '#10B981', desc: 'Boletos e créditos' },
+    { id: 'financeiro', name: 'Financeiro', icon: Wallet, color: '#0061FF', desc: 'Boletos e créditos' },
     { id: 'comercial', name: 'Comercial', icon: Building2, color: '#F59E0B', desc: 'Novos planos' },
     { id: 'operacao', name: 'Operação', icon: ShieldCheck, color: '#EF4444', desc: 'Status de entregas' },
   ];
@@ -215,8 +215,8 @@ export default function ChatWidget() {
               </div>
               <div>
                 <div style={{ fontSize: '16px', fontWeight: '900', letterSpacing: '-0.3px' }}>Suporte Master Hub</div>
-                <div style={{ fontSize: '12px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', marginTop: '2px' }}>
-                  <div style={{ width: 6, height: 6, background: '#10B981', borderRadius: '50%', boxShadow: '0 0 10px #10B981' }} /> Equipe Online
+                <div style={{ fontSize: '12px', color: '#0061FF', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', marginTop: '2px' }}>
+                  <div style={{ width: 6, height: 6, background: '#0061FF', borderRadius: '50%', boxShadow: '0 0 10px #0061FF' }} /> Equipe Online
                 </div>
               </div>
             </div>
@@ -230,7 +230,7 @@ export default function ChatWidget() {
                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', animation: 'fadeIn 0.5s ease' }}>
                   <div style={{ background: '#fff', padding: '20px', borderRadius: '24px', border: '1px solid #E2E8F0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#0F172A', margin: '0 0 8px 0' }}>Olá! 👋</h3>
-                    <p style={{ fontSize: '14px', color: '#64748B', margin: 0, lineHeight: '1.6', fontWeight: '500' }}>
+                    <p style={{ fontSize: '14px', color: '#949494', margin: 0, lineHeight: '1.6', fontWeight: '500' }}>
                       Bem-vindo à Central de Comando. Escolha um departamento para iniciar seu atendimento imersivo.
                     </p>
                   </div>
@@ -275,7 +275,7 @@ export default function ChatWidget() {
                   padding: '14px 20px', borderRadius: m.isMe ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
                   fontSize: '15px', lineHeight: '1.6', fontWeight: '500',
                   background: m.isMe ? 'linear-gradient(135deg, #0061FF 0%, #4338CA 100%)' : (m.type === 'system' ? '#F1F5F9' : '#fff'),
-                  color: m.isMe ? '#fff' : (m.type === 'system' ? '#64748B' : '#0F172A'),
+                  color: m.isMe ? '#fff' : (m.type === 'system' ? '#949494' : '#0F172A'),
                   boxShadow: m.isMe ? '0 10px 25px rgba(99,102,241,0.2)' : '0 4px 15px rgba(0,0,0,0.05)',
                   border: m.isMe ? 'none' : '1px solid #E2E8F0',
                   fontStyle: m.type === 'system' ? 'italic' : 'normal'

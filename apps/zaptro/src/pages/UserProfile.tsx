@@ -394,7 +394,7 @@ const UserProfileContent: React.FC = () => {
                      <div style={styles.pontoList}>
                         {[1,2,3,4,5].map(i => (
                            <div key={i} style={styles.pontoRow}>
-                              <Clock size={14} color="#64748b" />
+                              <Clock size={14} color="#949494" />
                               <span style={{flex: 1}}>Data: 10/04/2026</span>
                               <span style={styles.pontoTime}>Entrada: 08:00</span>
                               <span style={styles.pontoTime}>Saída: 18:00</span>
@@ -423,7 +423,7 @@ const UserProfileContent: React.FC = () => {
 
                   <div style={{display:'flex', gap:'20px', alignItems:'center', marginBottom:'32px', padding:'20px', backgroundColor:'#f4f4f4', borderRadius:'24px', border:'1px solid #e2e8f0'}}>
                      <div style={{width:'80px', height:'80px', backgroundColor:'white', borderRadius:'16px', border:'1px solid #e2e8f0', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden'}}>
-                        {companyData.logo_url ? <img src={companyData.logo_url} style={{width:'100%', height:'100%', objectFit:'contain'}} /> : <Building size={32} color="#94a3b8" />}
+                        {companyData.logo_url ? <img src={companyData.logo_url} style={{width:'100%', height:'100%', objectFit:'contain'}} /> : <Building size={32} color="#949494" />}
                         <label style={{...styles.avatarLabel, bottom:0, right:0, borderRadius:'4px'}}>
                            <Camera size={12} color="white" />
                            <input type="file" hidden accept="image/*" onChange={(e) => handleCompanyLogoUpload(e)} />
@@ -431,7 +431,7 @@ const UserProfileContent: React.FC = () => {
                      </div>
                      <div>
                         <h4 style={{margin:0, fontSize:'16px', fontWeight:'800'}}>{companyData.name}</h4>
-                        <p style={{margin:'4px 0 0 0', fontSize:'13px', color:'#64748b'}}>Identidade Visual da Empresa</p>
+                        <p style={{margin:'4px 0 0 0', fontSize:'13px', color:'#949494'}}>Identidade Visual da Empresa</p>
                      </div>
                   </div>
 
@@ -506,7 +506,7 @@ const UserProfileContent: React.FC = () => {
                            <p style={styles.secDesc}>Ativado para a sua proteção em todos os acessos.</p>
                         </div>
                      </div>
-                     <ChevronRight size={18} color="#94a3b8" />
+                     <ChevronRight size={18} color="#949494" />
                   </div>
                </div>
             )}
@@ -517,7 +517,7 @@ const UserProfileContent: React.FC = () => {
 };
 
 const styles: Record<string, any> = {
-  loading: { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontWeight: '700' },
+  loading: { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#949494', fontWeight: '700' },
   container: { paddingBottom: '100px', backgroundColor: '#f4f4f4', minHeight: '100vh' },
   
   heroHeader: { position: 'relative' as const, height: '240px', backgroundColor: '#DBEAFE', overflow: 'hidden' },
@@ -538,10 +538,10 @@ const styles: Record<string, any> = {
   avatarMini: { width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#D9FF00', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '700' },
   userInfoText: { flex: 1, overflow: 'hidden' },
   miniName: { fontSize: '14px', fontWeight: '600', color: '#0F172A', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-  miniEmail: { fontSize: '12px', color: '#64748B', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  miniEmail: { fontSize: '12px', color: '#949494', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
 
   tabNav: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
-  tabBtn: { display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderRadius: '16px', border: 'none', backgroundColor: 'white', border: '1px solid #E2E8F0', color: '#64748B', fontWeight: '700', fontSize: '14px', cursor: 'pointer', textAlign: 'left' as const, transition: '0.2s' },
+  tabBtn: { display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderRadius: '16px', border: 'none', backgroundColor: 'white', border: '1px solid #E2E8F0', color: '#949494', fontWeight: '700', fontSize: '14px', cursor: 'pointer', textAlign: 'left' as const, transition: '0.2s' },
   tabActive: { backgroundColor: '#ebebeb', border: '2px solid #D9FF00', color: '#000' },
 
   contentCol: { flex: 1, display: 'flex', flexDirection: 'column' as const, gap: '24px' },
@@ -553,37 +553,37 @@ const styles: Record<string, any> = {
 
   gridFields: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' },
   fieldRow: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
-  fieldLabel: { fontSize: '12px', fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
+  fieldLabel: { fontSize: '12px', fontWeight: '600', color: '#949494', textTransform: 'uppercase' as const, letterSpacing: '0.5px' },
   fieldValue: { fontSize: '15px', color: '#1E293B', fontWeight: '600', margin: 0 },
-  lockInfo: { fontSize: '10px', color: '#94A3B8', marginLeft: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' },
+  lockInfo: { fontSize: '10px', color: '#949494', marginLeft: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' },
   input: { height: '48px', padding: '0 16px', borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: '#f4f4f4', fontSize: '14px', outline: 'none', transition: '0.2s', '&:focus': { borderColor: '#D9FF00', backgroundColor: 'white' } },
   saveBtnFull: { height: '54px', width: '100%', marginTop: '40px', backgroundColor: '#0F172A', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '600', fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' },
 
   perfGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '40px' },
   perfCard: { display: 'flex', alignItems: 'center', gap: '20px', padding: '24px', backgroundColor: '#f4f4f4', borderRadius: '24px', border: '1px solid #E2E8F0' },
-  perfLabel: { fontSize: '12px', color: '#64748B', fontWeight: '600', textTransform: 'uppercase' as const },
+  perfLabel: { fontSize: '12px', color: '#949494', fontWeight: '600', textTransform: 'uppercase' as const },
   perfValue: { fontSize: '20px', fontWeight: '700', color: '#0F172A', margin: 0 },
 
   historySection: { marginBottom: '40px' },
   subTitle: { fontSize: '16px', fontWeight: '700', color: '#0F172A', marginBottom: '20px' },
   pontoList: { display: 'flex', flexDirection: 'column' as const, gap: '12px' },
-  pontoRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', backgroundColor: '#f4f4f4', borderRadius: '16px', fontSize: '13px', color: '#334155', fontWeight: '600' },
+  pontoRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', backgroundColor: '#f4f4f4', borderRadius: '16px', fontSize: '13px', color: '#6B6B6B', fontWeight: '600' },
   pontoTime: { padding: '4px 10px', backgroundColor: '#DBEAFE', color: '#0F172A', borderRadius: '8px', fontWeight: '600' },
 
   notesSection: {},
-  emptyNote: { textAlign: 'center' as const, padding: '40px', backgroundColor: '#f4f4f4', borderRadius: '24px', border: '1px dashed #CBD5E1', color: '#64748B', fontSize: '14px' },
+  emptyNote: { textAlign: 'center' as const, padding: '40px', backgroundColor: '#f4f4f4', borderRadius: '24px', border: '1px dashed #CBD5E1', color: '#949494', fontSize: '14px' },
 
   securityBox: { borderBottom: '1px solid #e8e8e8', paddingBottom: '32px', marginBottom: '32px' },
   passwordInputArea: { display: 'flex', gap: '16px', marginTop: '16px' },
   passWrapper: { flex: 1, position: 'relative' as const },
-  eyeBtn: { position: 'absolute' as const, right: '12px', top: '15px', border: 'none', background: 'none', cursor: 'pointer', color: '#94A3B8' },
+  eyeBtn: { position: 'absolute' as const, right: '12px', top: '15px', border: 'none', background: 'none', cursor: 'pointer', color: '#949494' },
   primaryBtnSmall: { padding: '0 24px', backgroundColor: '#0F172A', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '600', fontSize: '13px', cursor: 'pointer' },
 
   securityItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', backgroundColor: '#f4f4f4', borderRadius: '24px', cursor: 'pointer' },
   secInfo: { display: 'flex', gap: '16px', alignItems: 'center' },
   secTitle: { fontSize: '15px', fontWeight: '600', color: '#0F172A', margin: 0 },
-  secDesc: { fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' },
-  sectionDesc: { fontSize: '14px', color: '#64748B', marginBottom: '32px' },
+  secDesc: { fontSize: '13px', color: '#949494', margin: '4px 0 0 0' },
+  sectionDesc: { fontSize: '14px', color: '#949494', marginBottom: '32px' },
   avatarLabel: {
     position: 'absolute',
     bottom: -2,

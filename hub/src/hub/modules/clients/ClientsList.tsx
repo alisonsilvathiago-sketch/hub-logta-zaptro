@@ -20,6 +20,29 @@ import {
   validateCnpj,
 } from '@shared/lib/brDocuments';
 
+function getDemoHubClients() {
+  return [
+    {
+      id: 'demo-1',
+      name: 'Transportes Silva',
+      email: 'contato@silva.com.br',
+      phone: '(11) 98888-7777',
+      plan: 'OURO',
+      status: 'active',
+      companies: { name: 'Silva Logística', origin: 'LOGTA' },
+    },
+    {
+      id: 'demo-2',
+      name: 'Ana Costa',
+      email: 'ana@costa.com',
+      phone: '(21) 97777-6666',
+      plan: 'PRATA',
+      status: 'risk',
+      companies: { name: 'Pessoa Física', origin: 'LOGTA' },
+    },
+  ];
+}
+
 const ClientsList: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -32,11 +55,11 @@ const ClientsList: React.FC = () => {
   const [newClientName, setNewClientName] = useState('');
   const [newClientEmail, setNewClientEmail] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('');
-  const [newClientPlan, setNewClientPlan] = useState('Plano Ouro (Logta + Zaptro)');
+  const [newClientPlan, setNewClientPlan] = useState('Plano Ouro (Logta)');
   const [newClientPassword, setNewClientPassword] = useState('Logta123!');
   const [newClientDocument, setNewClientDocument] = useState('');
   const [plansList, setPlansList] = useState<any[]>([
-    { id: 'ouro', name: 'Plano Ouro (Logta + Zaptro)' },
+    { id: 'ouro', name: 'Plano Ouro (Logta)' },
     { id: 'prata', name: 'Plano Prata' },
     { id: 'bronze', name: 'Plano Bronze' }
   ]);
@@ -153,7 +176,7 @@ const ClientsList: React.FC = () => {
 
   // Cores automáticas para avatares baseados na inicial
   const getAvatarColor = (name: string) => {
-    const colors = ['#0061FF', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+    const colors = ['#0061FF', '#0061FF', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
     const charCode = name.charCodeAt(0);
     return colors[charCode % colors.length];
   };
@@ -165,16 +188,14 @@ const ClientsList: React.FC = () => {
   const fetchContacts = async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from('clients')
-        .select('*, companies(*)', { count: 'exact' });
+      let query = supabase.from('clients').select('*', { count: 'exact' });
 
-      // Apply segment filters to query
       if (activeSegment === 'active') query = query.neq('status', 'inactive');
-      if (activeSegment === 'risk') query = query.or('status.eq.risk,health_score.lt.50');
-      if (activeSegment === 'vip') query = query.or('plan.eq.OURO,is_vip.eq.true');
+      if (activeSegment === 'risk') query = query.eq('status', 'risk');
+      if (activeSegment === 'vip') {
+        query = query.or('plan.eq.OURO,plan.ilike.%Ouro%,plan.ilike.%ouro%');
+      }
 
-      // Pagination
       if (itemsPerPage !== 'all') {
         const from = (currentPage - 1) * itemsPerPage;
         const to = from + itemsPerPage - 1;
@@ -184,10 +205,23 @@ const ClientsList: React.FC = () => {
       const { data, error, count } = await query.order('name', { ascending: true });
 
       if (error) throw error;
-      setContacts(data || []);
-      setTotalItems(count || 0);
+
+      const rows = (data || []).map((c) => ({
+        ...c,
+        companies: c.companies ?? {
+          name: c.company_name ?? 'Pessoa Física',
+          origin: (c.origin as string) ?? 'LOGTA',
+        },
+      }));
+
+      setContacts(rows);
+      setTotalItems(count ?? rows.length);
     } catch (error) {
       console.error('Error fetching contacts:', error);
+      const demo = getDemoHubClients();
+      setContacts(demo);
+      setTotalItems(demo.length);
+      toast.error('Não foi possível carregar clientes do banco. Exibindo demonstração.');
     } finally {
       setLoading(false);
     }
@@ -204,6 +238,17 @@ const ClientsList: React.FC = () => {
     (c) => c.status === 'risk' || (c.health_score != null && c.health_score < 50)
   ).length;
   const vipCount = contacts.filter((c) => c.plan === 'OURO' || c.is_vip === true).length;
+
+  const mrrTotal = contacts.reduce((acc, c) => {
+    if (c.status === 'inactive') return acc;
+    if (c.plan === 'OURO' || c.plan?.includes('Ouro')) return acc + 997;
+    if (c.plan === 'PRATA' || c.plan?.includes('Prata')) return acc + 497;
+    if (c.plan === 'BRONZE' || c.plan?.includes('Bronze')) return acc + 197;
+    return acc;
+  }, 0);
+
+  const inactiveCount = contacts.filter((c) => c.status === 'inactive').length;
+  const churnRate = contacts.length > 0 ? ((inactiveCount / contacts.length) * 100).toFixed(1) + '%' : '0%';
 
   const filteredContacts = contacts.filter(c => {
     // 1. Filtro de Busca
@@ -228,12 +273,36 @@ const ClientsList: React.FC = () => {
       {/* PAGE TITLE */}
       <div style={styles.headerTitleRow}>
         <div>
-          <h1 style={styles.pageTitle}>Gestão de Clientes</h1>
-          <p style={styles.pageSub}>Visualize e gerencie toda sua base de clientes e parceiros estratégicos</p>
+          <h1 style={styles.pageTitle}>Clientes</h1>
+          <p style={styles.pageSub}>Gestão comercial de assinaturas, planos e faturamento dos seus clientes ativos</p>
         </div>
         <button style={styles.addBtn} onClick={() => setShowNewClientModal(true)}>
           <UserPlus size={18} /> Novo Cliente
         </button>
+      </div>
+
+      {/* CONCEITO BANNER */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 16,
+        padding: '16px 20px',
+        borderRadius: 16,
+        background: 'linear-gradient(135deg, #EFF6FF 0%, #F8FAFC 100%)',
+        border: '1px solid #DBEAFE',
+        marginBottom: 28,
+      }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <CreditCard size={18} color="#FFF" />
+        </div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#1E3A8A', marginBottom: 2 }}>Relacionamento Comercial</div>
+          <p style={{ margin: 0, fontSize: 12, color: '#3B82F6', lineHeight: 1.5 }}>
+            Aqui ficam os <strong>clientes que contrataram seus serviços</strong> — quem paga, assina e usa o ecossistema Logta / Zaptro / LogDock.
+            Gerencie plano, faturamento, cobrança, créditos e status da conta.
+            Para dados estruturais e CNPJ da empresa, acesse <button onClick={() => navigate('/master/companies')} style={{ background: 'none', border: 'none', color: '#0061FF', fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 12 }}>Empresas →</button>
+          </p>
+        </div>
       </div>
 
       {/* DASHBOARD SUMMARY */}
@@ -251,7 +320,7 @@ const ClientsList: React.FC = () => {
                 gap: 5,
                 fontSize: 15,
                 fontWeight: 800,
-                color: '#10B981',
+                color: '#0061FF',
               }}
             >
               +4 <TrendingUp size={16} />
@@ -279,20 +348,20 @@ const ClientsList: React.FC = () => {
                 gap: 5,
                 fontSize: 15,
                 fontWeight: 800,
-                color: '#10B981',
+                color: '#0061FF',
               }}
             >
               +8.2% <TrendingUp size={16} />
             </span>
           }
-          value="R$ 42.800"
+          value={`R$ ${mrrTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
         />
         <HubMetricCard
           label="Taxa de Churn"
           icon={TrendingDown}
           iconVariant="solid"
           accent="#0052D9"
-          value="2.4%"
+          value={churnRate}
         />
       </div>
 
@@ -427,10 +496,10 @@ const ClientsList: React.FC = () => {
         <table style={styles.table}>
           <thead>
             <tr style={styles.thead}>
-              <th style={styles.th}>CLIENTE / EMPRESA</th>
-              <th style={styles.th}>VOLUME / MRR</th>
+              <th style={styles.th}>CLIENTE / ASSINANTE</th>
+              <th style={styles.th}>PLANO & MRR</th>
               <th style={styles.th}>CONTATO</th>
-              <th style={styles.th}>SAÚDE / STATUS</th>
+              <th style={styles.th}>STATUS DA CONTA</th>
               <th style={{...styles.th, textAlign: 'right'}}>AÇÕES</th>
             </tr>
           </thead>
@@ -455,8 +524,10 @@ const ClientsList: React.FC = () => {
                 </td>
                 <td style={styles.td}>
                   <div style={styles.volumeCell}>
-                    <div style={styles.mrrText}>R$ 497,00</div>
-                    <div style={styles.orderCount}><Package size={12} /> 124 pedidos</div>
+                    <div style={styles.mrrText}>
+                      R$ {(c.plan?.includes('Ouro') || c.plan === 'OURO' ? 997 : c.plan?.includes('Prata') || c.plan === 'PRATA' ? 497 : c.plan?.includes('Bronze') || c.plan === 'BRONZE' ? 197 : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </div>
+                    <div style={styles.orderCount}><Package size={12} /> {c.companies?.origin || 'Ativo'}</div>
                   </div>
                 </td>
                 <td style={styles.td}>
@@ -467,11 +538,11 @@ const ClientsList: React.FC = () => {
                 </td>
                 <td style={styles.td}>
                   <div style={{display: 'flex', flexDirection: 'column', gap: '6px'}}>
-                    <div style={{...styles.statusBadge, color: i % 5 === 0 ? '#EF4444' : '#10B981'}}>
-                      <div style={{...styles.statusDot, backgroundColor: i % 5 === 0 ? '#EF4444' : '#10B981'}} /> 
-                      {i % 5 === 0 ? 'Em Risco' : 'Engajado'}
+                    <div style={{...styles.statusBadge, color: c.status === 'risk' ? '#EF4444' : '#0061FF'}}>
+                      <div style={{...styles.statusDot, backgroundColor: c.status === 'risk' ? '#EF4444' : '#0061FF'}} /> 
+                      {c.status === 'risk' ? 'Em Risco' : 'Engajado'}
                     </div>
-                    <div style={styles.lastActivity}><Clock size={10} /> há 2 dias</div>
+                    <div style={styles.lastActivity}><Clock size={10} />Atualizado hoje</div>
                   </div>
                 </td>
                 <td style={{...styles.td, textAlign: 'right'}}>
@@ -608,7 +679,7 @@ const ClientsList: React.FC = () => {
 const styles: Record<string, any> = {
   container: { padding: '20px 0 40px' },
   headerTitleRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' },
-  pageTitle: { fontSize: '29px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  pageTitle: { fontSize: '29px', fontWeight: '500', color: '#000000', margin: 0, letterSpacing: 0 },
   pageSub: { ...HUB_PAGE_SUBTITLE },
   header: {
     display: 'flex',
@@ -618,7 +689,7 @@ const styles: Record<string, any> = {
     flexWrap: 'wrap',
     gap: '16px',
   },
-  title: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0 },
   subtitle: { ...HUB_PAGE_SUBTITLE },
   addBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '0 26px', height: '50px', backgroundColor: '#0061FF', color: 'white', border: 'none', borderRadius: '18px', fontWeight: '700', fontSize: '15px', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)', letterSpacing: '0.02em' },
   

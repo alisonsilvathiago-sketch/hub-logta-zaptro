@@ -163,7 +163,7 @@ const SupportCenter: React.FC = () => {
       case 'IN_PROGRESS': return '#D9FF00';
       case 'PENDING': return '#f59e0b';
       case 'RESOLVED': return '#10b981';
-      default: return '#94a3b8';
+      default: return '#949494';
     }
   };
 
@@ -184,7 +184,7 @@ const SupportCenter: React.FC = () => {
         <div style={styles.sidebar}>
           <div style={styles.listHeader}>
              <div style={styles.searchBox}>
-                <Search size={16} color="#94a3b8" />
+                <Search size={16} color="#949494" />
                 <input type="text" placeholder="Buscar chamados..." style={styles.searchInput} />
              </div>
           </div>
@@ -371,12 +371,12 @@ const styles: Record<string, any> = {
   ticketItem: { padding: '16px', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s', border: '1px solid transparent', marginBottom: '8px' },
   ticketActive: { backgroundColor: 'rgba(217, 255, 0, 0.18)', border: '1px solid #ddd6fe' },
   ticketTop: { display: 'flex', justifyContent: 'space-between', marginBottom: '4px' },
-  ticketId: { fontSize: '11px', fontWeight: '600', color: '#94a3b8' },
-  ticketDate: { fontSize: '11px', color: '#94a3b8' },
+  ticketId: { fontSize: '11px', fontWeight: '600', color: '#949494' },
+  ticketDate: { fontSize: '11px', color: '#949494' },
   ticketTitle: { fontSize: '14px', fontWeight: '600', color: 'var(--primary)', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   ticketMeta: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   statusBadge: { fontSize: '10px', fontWeight: '700', padding: '3px 10px', borderRadius: '6px' },
-  categoryText: { fontSize: '11px', fontWeight: '700', color: '#94a3b8' },
+  categoryText: { fontSize: '11px', fontWeight: '700', color: '#949494' },
   
   chatArea: { backgroundColor: 'white', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex' },
   chatWrapper: { flex: 1, display: 'flex', flexDirection: 'column' },
@@ -384,7 +384,7 @@ const styles: Record<string, any> = {
   chatInfo: { display: 'flex', alignItems: 'center', gap: '16px' },
   avatar: { width: '48px', height: '48px', borderRadius: '14px', backgroundColor: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '18px' },
   chatTitle: { fontSize: '18px', fontWeight: '700', color: 'var(--primary)' },
-  chatSub: { fontSize: '13px', color: '#94a3b8' },
+  chatSub: { fontSize: '13px', color: '#949494' },
   chatActions: { display: 'flex', gap: '12px', alignItems: 'center' },
   slaBadge: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '600', color: '#f59e0b', backgroundColor: '#fffbeb', padding: '8px 16px', borderRadius: '10px' },
   moreBtn: { border: '1px solid #e2e8f0', background: 'white', padding: '10px', borderRadius: '10px', cursor: 'pointer' },
@@ -406,7 +406,7 @@ const styles: Record<string, any> = {
   sendBtn: { width: '44px', height: '44px', borderRadius: '12px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   
   emptyChat: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', textAlign: 'center', padding: '40px' },
-  emptyState: { padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '14px' },
+  emptyState: { padding: '40px', textAlign: 'center', color: '#949494', fontSize: '14px' },
   
   // Modal Form
   form: { display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px 0' },

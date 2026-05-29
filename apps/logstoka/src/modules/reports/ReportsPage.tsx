@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
 import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
+import { getDemoReports } from '@/lib/logstokaDemoSeed';
 import { MARKETPLACE_LABELS } from '@/types';
 
 const ReportsPage: React.FC = () => {
@@ -12,6 +15,15 @@ const ReportsPage: React.FC = () => {
 
   useEffect(() => {
     if (!companyId) return;
+
+    if (isLogstokaDemoCompany(companyId)) {
+      const demo = getDemoReports(period);
+      setEntries(demo.entries);
+      setExitsByMp(demo.exitsByMp);
+      setTopProducts(demo.topProducts);
+      return;
+    }
+
     const since = new Date();
     since.setDate(since.getDate() - period);
 
@@ -43,7 +55,11 @@ const ReportsPage: React.FC = () => {
         const map = new Map<string, { sku: string; name: string; qty: number }>();
         for (const row of data ?? []) {
           const sku = row.sku as string;
-          const name = (row as { ls_products?: { name: string } }).ls_products?.name ?? sku;
+          const name =
+            (row as { ls_products?: { name?: string } | { name?: string }[] | null }).ls_products &&
+            !Array.isArray((row as { ls_products?: unknown }).ls_products)
+              ? ((row as { ls_products?: { name?: string } }).ls_products?.name ?? sku)
+              : sku;
           const prev = map.get(sku) ?? { sku, name, qty: 0 };
           prev.qty += Number(row.quantity ?? 0);
           map.set(sku, prev);
@@ -56,7 +72,7 @@ const ReportsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-black">Relatórios</h2>
+          <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Relatórios</h2>
           <p className="text-sm text-slate-500">Saídas por canal, entradas e curva ABC simplificada</p>
         </div>
         <select className="ls-input w-auto" value={period} onChange={(e) => setPeriod(Number(e.target.value))}>
@@ -74,7 +90,7 @@ const ReportsPage: React.FC = () => {
         {Object.entries(exitsByMp).map(([mp, qty]) => (
           <div key={mp} className="ls-stat">
             <p className="text-xs font-bold uppercase text-slate-500">Saídas {MARKETPLACE_LABELS[mp as keyof typeof MARKETPLACE_LABELS] ?? mp}</p>
-            <p className="text-3xl font-black">{qty}</p>
+            <p className="text-3xl font-black">{qty as number}</p>
           </div>
         ))}
       </div>

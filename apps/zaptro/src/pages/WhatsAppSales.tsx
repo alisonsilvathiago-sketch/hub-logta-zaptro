@@ -619,7 +619,7 @@ const ZaptroMarketing: React.FC = () => {
             </div>
 
             <div className="zt-nav-cta-row">
-              <button type="button" className="zt-btn-outline" onClick={() => window.location.href = `${appOrigin}/login`}>
+              <button type="button" className="zt-btn-outline" onClick={() => { window.location.href = `${appOrigin}/login`; }}>
                 Entrar
               </button>
               <button type="button" className="zt-btn-lime" onClick={() => window.location.href = `${appOrigin}${ZAPTRO_ROUTES.REGISTER}`}>
@@ -1375,7 +1375,7 @@ const ZaptroMarketing: React.FC = () => {
                   >
                     Continuar com e-mail
                   </button>
-                  <button type="button" className="zt-step-embed-btn zt-step-embed-btn--dark" onClick={() => navigate('/login')}>
+                  <button type="button" className="zt-step-embed-btn zt-step-embed-btn--dark" onClick={() => { window.location.href = '/login'; }}>
                     Continuar com Google
                   </button>
                 </div>
@@ -1963,7 +1963,7 @@ const ZaptroMarketing: React.FC = () => {
               <a href="#faq" className="zt-foot-a">
                 Perguntas frequentes
               </a>
-              <button type="button" className="zt-foot-a btnlink" onClick={() => navigate('/login')}>
+              <button type="button" className="zt-foot-a btnlink" onClick={() => { window.location.href = '/login'; }}>
                 Entrar
               </button>
               <button type="button" className="zt-foot-a btnlink" onClick={() => navigate(ZAPTRO_ROUTES.REGISTER)}>
@@ -3997,7 +3997,7 @@ const ZaptroMarketing: React.FC = () => {
         }
         .zt-bento-mock-total {
           font-weight: 600;
-          color: #334155;
+          color: #6B6B6B;
         }
         .zt-bento-mock-total strong {
           font-weight: 700;
@@ -4053,7 +4053,7 @@ const ZaptroMarketing: React.FC = () => {
           font-weight: 600;
           letter-spacing: 0.06em;
           text-transform: uppercase;
-          color: #64748b;
+          color: #949494;
           margin-bottom: 10px;
         }
         .zt-bento-flow-card {
@@ -4102,7 +4102,7 @@ const ZaptroMarketing: React.FC = () => {
           text-align: center;
           font-weight: 600;
           font-size: 11px;
-          color: #64748b;
+          color: #949494;
         }
         .zt-bento-cap--flow .zt-bento-cap-title {
           margin-bottom: 14px;
@@ -4224,7 +4224,7 @@ const ZaptroMarketing: React.FC = () => {
         }
         .zt-bento-chat-snippet {
           font-size: 10px;
-          color: #64748b;
+          color: #949494;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -4232,7 +4232,7 @@ const ZaptroMarketing: React.FC = () => {
         .zt-bento-chat-time {
           font-size: 10px;
           font-weight: 700;
-          color: #94a3b8;
+          color: #949494;
           flex-shrink: 0;
         }
         .zt-bento-table-cap {
@@ -4257,7 +4257,7 @@ const ZaptroMarketing: React.FC = () => {
           padding: 8px 12px;
           font-size: 11px;
           font-weight: 600;
-          color: #334155;
+          color: #6B6B6B;
           border-top: 1px solid #e8e8e8;
         }
         .zt-bento-table-row:first-child {
@@ -4269,7 +4269,7 @@ const ZaptroMarketing: React.FC = () => {
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.04em;
-          color: #64748b;
+          color: #949494;
         }
         .zt-bento-table-avs {
           display: flex;
@@ -5094,7 +5094,7 @@ const ZaptroMarketing: React.FC = () => {
           text-align: center;
           font-size: 10px;
           font-weight: 700;
-          color: #64748b;
+          color: #949494;
         }
         .zt-steps-browser-body {
           display: grid;
@@ -5174,7 +5174,7 @@ const ZaptroMarketing: React.FC = () => {
           font-weight: 600;
           padding: 6px 10px;
           border-radius: 8px;
-          color: #94a3b8;
+          color: #949494;
         }
         .zt-steps-tab--on {
           background: #000000;
@@ -5191,7 +5191,7 @@ const ZaptroMarketing: React.FC = () => {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.06em;
-          color: #64748b;
+          color: #949494;
           margin-bottom: 8px;
         }
         .zt-steps-card-mock {
@@ -5219,7 +5219,7 @@ const ZaptroMarketing: React.FC = () => {
         }
         .zt-steps-card-meta {
           font-size: 10px;
-          color: #64748b;
+          color: #949494;
           font-weight: 600;
         }
         .zt-steps-cards {
@@ -5578,7 +5578,7 @@ const ZaptroMarketing: React.FC = () => {
           text-align: center;
           font-size: 10px;
           font-weight: 700;
-          color: #64748b;
+          color: #949494;
         }
         .zt-idemo-topbar {
           display: flex;
@@ -5602,11 +5602,11 @@ const ZaptroMarketing: React.FC = () => {
           border: 1px solid #e2e8f0;
           font-size: 10px;
           font-weight: 600;
-          color: #94a3b8;
+          color: #949494;
         }
         .zt-idemo-search svg {
           flex-shrink: 0;
-          color: #94a3b8;
+          color: #949494;
         }
         .zt-idemo-topbar-actions {
           display: inline-flex;
@@ -5676,7 +5676,7 @@ const ZaptroMarketing: React.FC = () => {
         .zt-idemo-user-role {
           font-size: 9px;
           font-weight: 600;
-          color: #64748b;
+          color: #949494;
         }
         @media (max-width: 480px) {
           .zt-idemo-user-meta {
@@ -5803,7 +5803,7 @@ const ZaptroMarketing: React.FC = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #64748b;
+          color: #949494;
         }
         .zt-idemo-rail-item svg {
           flex-shrink: 0;
@@ -5941,13 +5941,13 @@ const ZaptroMarketing: React.FC = () => {
         .zt-idemo-thread-time {
           font-size: 9px;
           font-weight: 700;
-          color: #94a3b8;
+          color: #949494;
           flex-shrink: 0;
         }
         .zt-idemo-thread-snippet {
           font-size: 7px;
           font-weight: 600;
-          color: #64748b;
+          color: #949494;
           line-height: 1.35;
           display: -webkit-box;
           -webkit-line-clamp: 2;
@@ -6032,7 +6032,7 @@ const ZaptroMarketing: React.FC = () => {
         .zt-idemo-badge--muted {
           background: ${WHITE};
           border: 1px solid #e2e8f0;
-          color: #64748b;
+          color: #949494;
         }
         .zt-idemo-status {
           padding: 8px 12px 4px;
@@ -6053,7 +6053,7 @@ const ZaptroMarketing: React.FC = () => {
           border-radius: 999px;
           background: ${WHITE};
           border: 1px solid #e2e8f0;
-          color: #64748b;
+          color: #949494;
         }
         .zt-idemo-dot--done {
           background: #ecfdf5;
@@ -6128,7 +6128,7 @@ const ZaptroMarketing: React.FC = () => {
           width: 5px;
           height: 5px;
           border-radius: 50%;
-          background: #94a3b8;
+          background: #949494;
           animation: ztIdemoTypingDot 1.05s ease-in-out infinite;
         }
         .zt-idemo-typing span:nth-child(2) {
@@ -6222,7 +6222,7 @@ const ZaptroMarketing: React.FC = () => {
           flex: 1;
           font-size: 13px;
           font-weight: 600;
-          color: #94a3b8;
+          color: #949494;
         }
         .zt-idemo-send {
           width: 32px;
@@ -6291,7 +6291,7 @@ const ZaptroMarketing: React.FC = () => {
         .zt-idemo-side-tag {
           font-size: 8px;
           font-weight: 700;
-          color: #64748b;
+          color: #949494;
         }
         .zt-idemo-side-block {
           padding: 8px;
@@ -6307,7 +6307,7 @@ const ZaptroMarketing: React.FC = () => {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          color: #64748b;
+          color: #949494;
           margin-bottom: 6px;
         }
         .zt-idemo-doc {

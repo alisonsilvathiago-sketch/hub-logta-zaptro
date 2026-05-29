@@ -177,13 +177,13 @@ const HelpCenter: React.FC = () => {
         <h1 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 16px' }}>
           Olá, como podemos ajudar?
         </h1>
-        <p style={{ fontSize: 16, color: '#64748B', fontWeight: 500, marginBottom: 40, maxWidth: 600, marginInline: 'auto' }}>
+        <p style={{ fontSize: 16, color: '#949494', fontWeight: 500, marginBottom: 40, maxWidth: 600, marginInline: 'auto' }}>
           Utilize nossa Inteligência Artificial para encontrar respostas rápidas sobre automação, rotas e CRM.
         </p>
 
         <div style={{ maxWidth: 680, margin: '0 auto', position: 'relative' }}>
           <div style={{ backgroundColor: '#FFF', borderRadius: 20, boxShadow: '0 10px 40px rgba(0,0,0,0.06)', padding: '4px', display: 'flex', border: '1px solid #E2E8F0' }}>
-            <div style={{ padding: '0 20px', display: 'flex', alignItems: 'center' }}><Search size={22} color="#94A3B8" /></div>
+            <div style={{ padding: '0 20px', display: 'flex', alignItems: 'center' }}><Search size={22} color="#949494" /></div>
             <input 
               type="text"
               placeholder="Ex: Como conectar meu WhatsApp?"
@@ -200,9 +200,9 @@ const HelpCenter: React.FC = () => {
               {filteredArticles.length > 0 ? filteredArticles.map(art => (
                 <div key={art.id} onClick={() => handleOpenArticle(art)} style={{ padding: '16px', borderRadius: 16, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F1F5F9'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{art.title}</div>
-                  <div style={{ fontSize: 13, color: '#64748B' }}>{art.excerpt}</div>
+                  <div style={{ fontSize: 13, color: '#949494' }}>{art.excerpt}</div>
                 </div>
-              )) : <div style={{ padding: '40px', textAlign: 'center', color: '#94A3B8' }}>Nenhum artigo encontrado.</div>}
+              )) : <div style={{ padding: '40px', textAlign: 'center', color: '#949494' }}>Nenhum artigo encontrado.</div>}
             </div>
           )}
         </div>
@@ -211,7 +211,7 @@ const HelpCenter: React.FC = () => {
       {/* TABS */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 32, borderBottom: '1px solid #E2E8F0', marginBottom: 60 }}>
         {['Transportadora', 'Motorista', 'Embarcador'].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '16px 8px', border: 'none', borderBottom: `3px solid ${activeTab === tab ? '#000' : 'transparent'}`, fontWeight: activeTab === tab ? 800 : 500, fontSize: 15, color: activeTab === tab ? '#000' : '#64748B', cursor: 'pointer', backgroundColor: 'transparent' }}>
+          <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '16px 8px', border: 'none', borderBottom: `3px solid ${activeTab === tab ? '#000' : 'transparent'}`, fontWeight: activeTab === tab ? 800 : 500, fontSize: 15, color: activeTab === tab ? '#000' : '#949494', cursor: 'pointer', backgroundColor: 'transparent' }}>
             Sou {tab}
           </button>
         ))}
@@ -226,7 +226,7 @@ const HelpCenter: React.FC = () => {
             <div key={cat.id} onClick={() => handleOpenCategory(cat)} style={{ backgroundColor: '#FFF', borderRadius: 24, padding: '32px', border: '1px solid #E2E8F0', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
               <div style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>{cat.icon}</div>
               <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px' }}>{cat.title}</h3>
-              <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.5, marginBottom: 16 }}>{cat.desc}</p>
+              <p style={{ fontSize: 14, color: '#949494', lineHeight: 1.5, marginBottom: 16 }}>{cat.desc}</p>
               <div style={{ color: '#000', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>Ver artigos <ChevronRight size={14} /></div>
             </div>
           ))}
@@ -235,7 +235,7 @@ const HelpCenter: React.FC = () => {
              <div onClick={() => handleOpenArticle(ARTICLES.find(a => a.id === 'mot-1')!)} style={{ backgroundColor: '#FFF', borderRadius: 24, padding: '32px', border: '1px solid #E2E8F0', cursor: 'pointer' }}>
                <div style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: LIME, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}><Download color="#000" /></div>
                <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px' }}>Como usar o App Zaptro</h3>
-               <p style={{ fontSize: 14, color: '#64748B' }}>Tutorial completo para motoristas de frota ou agregados.</p>
+               <p style={{ fontSize: 14, color: '#949494' }}>Tutorial completo para motoristas de frota ou agregados.</p>
              </div>
           )}
 
@@ -243,7 +243,7 @@ const HelpCenter: React.FC = () => {
              <div style={{ backgroundColor: '#FFF', borderRadius: 24, padding: '32px', border: '1px solid #E2E8F0', cursor: 'pointer' }}>
                <div style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}><MapPin color={LIME} /></div>
                <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px' }}>Rastreamento Público</h3>
-               <p style={{ fontSize: 14, color: '#64748B' }}>Veja como acompanhar sua carga em tempo real sem precisar de senha.</p>
+               <p style={{ fontSize: 14, color: '#949494' }}>Veja como acompanhar sua carga em tempo real sem precisar de senha.</p>
              </div>
           )}
         </div>
@@ -253,20 +253,20 @@ const HelpCenter: React.FC = () => {
 
   const renderCategory = () => (
     <section style={{ maxWidth: 900, margin: '40px auto 100px', padding: '0 24px' }}>
-      <button onClick={() => setView('home')} style={{ display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', cursor: 'pointer', color: '#64748B', fontWeight: 600, marginBottom: 32 }}>
+      <button onClick={() => setView('home')} style={{ display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', cursor: 'pointer', color: '#949494', fontWeight: 600, marginBottom: 32 }}>
         <ArrowLeft size={18} /> Voltar para o início
       </button>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
          <div style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{selectedCat?.icon}</div>
          <h1 style={{ fontSize: 32, fontWeight: 900 }}>{selectedCat?.title}</h1>
       </div>
-      <p style={{ fontSize: 16, color: '#64748B', marginBottom: 48 }}>{selectedCat?.desc}</p>
+      <p style={{ fontSize: 16, color: '#949494', marginBottom: 48 }}>{selectedCat?.desc}</p>
 
       <div style={{ display: 'grid', gap: 16 }}>
         {catArticles.length > 0 ? catArticles.map(art => (
           <div key={art.id} onClick={() => handleOpenArticle(art)} style={{ backgroundColor: '#FFF', padding: '24px', borderRadius: 20, border: '1px solid #E2E8F0', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.borderColor = '#000'}>
             <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 8 }}>{art.title}</div>
-            <p style={{ fontSize: 14, color: '#64748B', margin: 0 }}>{art.excerpt}</p>
+            <p style={{ fontSize: 14, color: '#949494', margin: 0 }}>{art.excerpt}</p>
           </div>
         )) : <p>Em breve novos artigos para esta categoria.</p>}
       </div>
@@ -275,7 +275,7 @@ const HelpCenter: React.FC = () => {
 
   const renderArticle = () => (
     <section style={{ maxWidth: 800, margin: '40px auto 100px', padding: '0 24px' }}>
-      <button onClick={() => setView('category')} style={{ display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', cursor: 'pointer', color: '#64748B', fontWeight: 600, marginBottom: 32 }}>
+      <button onClick={() => setView('category')} style={{ display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', cursor: 'pointer', color: '#949494', fontWeight: 600, marginBottom: 32 }}>
         <ArrowLeft size={18} /> Voltar para {selectedCat?.title || 'Ajuda'}
       </button>
       
@@ -286,7 +286,7 @@ const HelpCenter: React.FC = () => {
         {selectedArt?.title}
       </h1>
 
-      <article style={{ fontSize: 17, lineHeight: 1.7, color: '#334155' }}>
+      <article style={{ fontSize: 17, lineHeight: 1.7, color: '#6B6B6B' }}>
         {selectedArt?.content}
       </article>
 
@@ -309,11 +309,11 @@ const HelpCenter: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 20, fontWeight: 900, letterSpacing: '-0.04em' }}>zaptro</span>
             <div style={{ width: 1, height: 20, backgroundColor: '#E2E8F0' }} />
-            <span style={{ fontSize: 15, fontWeight: 600, color: '#64748B' }}>Central de Ajuda</span>
+            <span style={{ fontSize: 15, fontWeight: 600, color: '#949494' }}>Central de Ajuda</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#64748B', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}><Globe size={18} /> Português</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#949494', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}><Globe size={18} /> Português</div>
           <button style={{ backgroundColor: '#000', color: '#FFF', padding: '10px 24px', borderRadius: 12, border: 'none', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}>Acessar Sistema</button>
         </div>
       </header>
@@ -329,14 +329,14 @@ const HelpCenter: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 40, marginBottom: 60 }}>
             <div style={{ maxWidth: 300 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}><Zap size={24} color="#000" fill="#000" /><span style={{ fontSize: 22, fontWeight: 900 }}>zaptro</span></div>
-              <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6 }}>A inteligência que move o transporte. Automação, CRM e Rastreamento em um único ecossistema.</p>
+              <p style={{ fontSize: 14, color: '#949494', lineHeight: 1.6 }}>A inteligência que move o transporte. Automação, CRM e Rastreamento em um único ecossistema.</p>
             </div>
             <div style={{ display: 'flex', gap: 80 }}>
-              <div><h4 style={{ fontSize: 14, fontWeight: 800, marginBottom: 20 }}>SUPORTE</h4><p style={{ fontSize: 14, color: '#64748B' }}>Suporte 24/7 via WhatsApp<br/>E-mail: help@zaptro.com.br</p></div>
-              <div><h4 style={{ fontSize: 14, fontWeight: 800, marginBottom: 20 }}>REDES</h4><p style={{ fontSize: 14, color: '#64748B' }}>Instagram<br/>LinkedIn</p></div>
+              <div><h4 style={{ fontSize: 14, fontWeight: 800, marginBottom: 20 }}>SUPORTE</h4><p style={{ fontSize: 14, color: '#949494' }}>Suporte 24/7 via WhatsApp<br/>E-mail: help@zaptro.com.br</p></div>
+              <div><h4 style={{ fontSize: 14, fontWeight: 800, marginBottom: 20 }}>REDES</h4><p style={{ fontSize: 14, color: '#949494' }}>Instagram<br/>LinkedIn</p></div>
             </div>
           </div>
-          <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: 40, display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: 13 }}>
+          <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: 40, display: 'flex', justifyContent: 'space-between', color: '#949494', fontSize: 13 }}>
             <span>© 2026 Zaptro. Orgulhosamente servindo a logística brasileira.</span>
             <div style={{ display: 'flex', gap: 24 }}><span>Privacidade</span><span>Termos</span></div>
           </div>

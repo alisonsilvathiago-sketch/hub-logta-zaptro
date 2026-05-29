@@ -1,0 +1,130 @@
+.zaptro-num-calc {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid #ebebec;
+  background: #fbfbfc;
+}
+
+.zaptro-num-calc-head strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.zaptro-num-calc-head p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #949494;
+  line-height: 1.45;
+}
+
+.zaptro-num-calc-display {
+  min-height: 72px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #0f172a;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.zaptro-num-calc-display-meta {
+  font-size: 13px;
+  font-weight: 600;
+  color: #949494;
+}
+
+.zaptro-num-calc-display-value {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  word-break: break-all;
+  text-align: right;
+}
+
+.zaptro-num-calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.zaptro-num-calc-key {
+  min-height: 48px;
+  border: none;
+  border-radius: 14px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+
+.zaptro-num-calc-key:hover {
+  background: #f1f5f9;
+}
+
+.zaptro-num-calc-key:active {
+  transform: scale(0.97);
+}
+
+.zaptro-num-calc-key--op {
+  background: #eef2ff;
+  color: #1e293b;
+}
+
+.zaptro-num-calc-key--eq {
+  grid-row: span 2;
+  background: #d9ff00;
+  color: #0f172a;
+  font-size: 22px;
+}
+
+.zaptro-num-calc-key--danger {
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 15px;
+}
+
+.zaptro-num-calc-key--wide {
+  grid-column: span 2;
+}
+
+.zaptro-num-calc-apply {
+  width: 100%;
+  min-height: 46px;
+  border: none;
+  border-radius: 14px;
+  background: #000;
+  color: #d9ff00;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.zaptro-num-calc-apply:hover {
+  opacity: 0.92;
+}
+
+@media (max-width: 820px) {
+  .zaptro-num-calc-key--eq {
+    grid-row: auto;
+  }
+}

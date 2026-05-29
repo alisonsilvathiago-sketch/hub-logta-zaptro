@@ -18,7 +18,7 @@ const S: Record<string, React.CSSProperties> = {
 export default function DashboardStats({ metrics }: DashboardStatsProps) {
   const data = metrics || {
     mrr: 'R$ 0,00',
-    active: 2,
+    active: 0,
     trial: 0,
     overdue: 0
   };
@@ -29,28 +29,24 @@ export default function DashboardStats({ metrics }: DashboardStatsProps) {
         label="MRR ATIVO" 
         value={data.mrr} 
         icon={DollarSign} 
-        trend="+12.5%" 
         color="#0061FF" 
       />
       <StatCard 
         label="ASSINATURAS ATIVAS" 
         value={data.active} 
         icon={Zap} 
-        trend="+4.2%" 
-        color="#10B981" 
+        color="#0061FF" 
       />
       <StatCard 
         label="EM TRIAL" 
         value={data.trial} 
         icon={Clock} 
-        trend="+2.1%" 
         color="#F59E0B" 
       />
       <StatCard 
         label="INADIMPLENTES" 
         value={data.overdue} 
         icon={AlertCircle} 
-        trend="Atenção" 
         color="#EF4444" 
       />
     </div>

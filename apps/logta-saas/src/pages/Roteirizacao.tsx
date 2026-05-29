@@ -536,7 +536,7 @@ const PlanejamentoView = ({
   <div className="space-y-8">
     <section>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="logta-panel-section-title mb-4">Entregas Pendentes</h3>
+        <h3 className="logta-panel-section-title">Entregas Pendentes</h3>
         <span className="text-[10px] font-bold text-gray-400">{pendingCount} na fila</span>
       </div>
       <div className="space-y-3">
@@ -588,7 +588,7 @@ const PlanejamentoView = ({
     </section>
 
     <section>
-      <h3 className="logta-panel-section-title mb-4">Alocação de Recurso</h3>
+      <h3 className="logta-panel-section-title">Alocação de Recurso</h3>
       <div className="space-y-4">
         <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm">
           <div className="flex items-center gap-4 mb-4">
@@ -830,7 +830,7 @@ const PerformanceView = () => {
     </div>
 
     <div className="bg-gray-50 border border-gray-100 p-6 rounded-[32px]">
-      <h3 className="logta-panel-section-title mb-6">Eficiência por Veículo</h3>
+      <h3 className="logta-panel-section-title">Eficiência por Veículo</h3>
       <div className="space-y-6">
         {[
           { label: 'Sprinter BRA-2L22', val: 92 },

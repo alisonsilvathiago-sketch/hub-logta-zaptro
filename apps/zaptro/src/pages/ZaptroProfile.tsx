@@ -69,15 +69,15 @@ function openPaymentReceiptPrint(args: {
     body { font-family: system-ui, -apple-system, sans-serif; padding: 48px; color: #111; max-width: 720px; margin: 0 auto; }
     .top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid #e5e7eb; }
     .zaptro { font-size: 26px; font-weight: 700; letter-spacing: -0.04em; }
-    .zaptro-sub { font-size: 11px; color: #64748b; margin-top: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+    .zaptro-sub { font-size: 11px; color: #949494; margin-top: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
     .co-logo { width: 72px; height: 72px; border-radius: 14px; object-fit: cover; border: 1px solid #e5e7eb; }
     .co-ph { width: 72px; height: 72px; border-radius: 14px; background: #f4f4f5; display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:950;color:#18181b;border:1px solid #e5e7eb;}
     h1 { font-size: 18px; margin: 28px 0 12px; font-weight: 700; }
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; padding: 12px 0; border-bottom: 1px solid #ebebec; font-size: 14px; }
-    th { width: 34%; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    th { width: 34%; color: #949494; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
     .val { font-weight: 600; font-size: 16px; }
-    .muted { color: #64748b; font-size: 13px; line-height: 1.55; margin-top: 28px; }
+    .muted { color: #949494; font-size: 13px; line-height: 1.55; margin-top: 28px; }
   </style></head><body>
   <div class="top">
     <div>
@@ -549,7 +549,7 @@ const ZaptroProfile: React.FC = () => {
                       <div style={styles.infoField}>
                          <label style={styles.label}>Primeiro Nome</label>
                          <div style={styles.inputStack}>
-                            <User size={16} color="#64748B" />
+                            <User size={16} color="#949494" />
                             <input 
                               style={styles.input} 
                               value={profileData.firstName} 
@@ -561,7 +561,7 @@ const ZaptroProfile: React.FC = () => {
                       <div style={styles.infoField}>
                          <label style={styles.label}>Sobrenome</label>
                          <div style={styles.inputStack}>
-                            <User size={16} color="#64748B" />
+                            <User size={16} color="#949494" />
                             <input 
                               style={styles.input} 
                               value={profileData.lastName} 
@@ -705,7 +705,7 @@ const ZaptroProfile: React.FC = () => {
                      <Mail size={18} color="#0369a1" style={{ flexShrink: 0 }} />
                      <div>
                        <strong style={{ color: '#0c4a6e' }}>Sua conta é o e-mail e a senha do login.</strong>
-                       <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#334155', lineHeight: 1.55, fontWeight: 600 }}>
+                       <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#6B6B6B', lineHeight: 1.55, fontWeight: 600 }}>
                          O plano fica vinculado a este acesso: <strong>{user?.email || profile?.email || '—'}</strong>. Pode trocar nome da
                          transportadora, CNPJ nos seus registros internos e o <strong>WhatsApp</strong> (um número por vez na conexão)
                          sem perder a assinatura — desconecte o aparelho em Configurações → Conexão e escaneie outro QR quando precisar.
@@ -786,7 +786,7 @@ const ZaptroProfile: React.FC = () => {
                       <div style={styles.infoField}>
                          <label style={styles.label}>Nome Fantasia (Público)</label>
                          <div style={styles.inputStack}>
-                            <Building2 size={16} color="#64748B" />
+                            <Building2 size={16} color="#949494" />
                             <input
                               disabled={vitrineFormDisabled}
                               style={styles.input}
@@ -799,7 +799,7 @@ const ZaptroProfile: React.FC = () => {
                       <div style={styles.infoField}>
                          <label style={styles.label}>Telefone de Atendimento</label>
                          <div style={styles.inputStack}>
-                            <Phone size={16} color="#64748B" />
+                            <Phone size={16} color="#949494" />
                             <input
                               disabled={vitrineFormDisabled}
                               style={styles.input}
@@ -812,7 +812,7 @@ const ZaptroProfile: React.FC = () => {
                       <div style={styles.infoFull}>
                          <label style={styles.label}>Endereço Completo</label>
                          <div style={styles.inputStack}>
-                            <MapPin size={16} color="#64748B" />
+                            <MapPin size={16} color="#949494" />
                             <input
                               disabled={vitrineFormDisabled}
                               style={styles.input}
@@ -825,7 +825,7 @@ const ZaptroProfile: React.FC = () => {
                       <div style={styles.infoField}>
                          <label style={styles.label}>Sítio Web / Link</label>
                          <div style={styles.inputStack}>
-                            <Globe size={16} color="#64748B" />
+                            <Globe size={16} color="#949494" />
                             <input
                               disabled={vitrineFormDisabled}
                               style={styles.input}
@@ -838,7 +838,7 @@ const ZaptroProfile: React.FC = () => {
                       <div style={styles.infoField}>
                          <label style={styles.label}>Segmento / Categoria</label>
                          <div style={styles.inputStack}>
-                            <Tag size={16} color="#64748B" />
+                            <Tag size={16} color="#949494" />
                             <select
                               disabled={vitrineFormDisabled}
                               style={styles.select}
@@ -858,7 +858,7 @@ const ZaptroProfile: React.FC = () => {
                       <div style={styles.infoFull}>
                          <label style={styles.label}>Serviços no painel (orçamentos / calculadora)</label>
                          <div style={styles.inputStack}>
-                            <Zap size={16} color="#64748B" />
+                            <Zap size={16} color="#949494" />
                             <select
                               disabled={vitrineFormDisabled}
                               style={styles.select}
@@ -875,14 +875,14 @@ const ZaptroProfile: React.FC = () => {
                                <option value="storage_only">Apenas armazenagem</option>
                             </select>
                          </div>
-                         <p style={{ margin: '8px 0 0', fontSize: 12, color: '#64748b', lineHeight: 1.45, fontWeight: 600 }}>
+                         <p style={{ margin: '8px 0 0', fontSize: 12, color: '#949494', lineHeight: 1.45, fontWeight: 600 }}>
                            Isto define o que aparece na calculadora de Orçamentos: só frete, só armazenagem ou ambos com separador.
                          </p>
                       </div>
                       <div style={styles.infoField}>
                          <label style={styles.label}>Horário de Funcionamento</label>
                          <div style={styles.inputStack}>
-                            <Clock size={16} color="#64748B" />
+                            <Clock size={16} color="#949494" />
                             <input
                               disabled={vitrineFormDisabled}
                               style={styles.input}
@@ -911,7 +911,7 @@ const ZaptroProfile: React.FC = () => {
                     {/* DADOS DE PAGAMENTO (PIX & BANCÁRIO) */}
                     <div style={{ marginTop: 24 }}>
                        <h3 style={{ ...styles.sectionTitle, fontSize: 18, marginBottom: 16, color: '#000' }}>Dados para Pagamento (Pix & Bancário)</h3>
-                       <p style={{ fontSize: 13, color: '#64748b', fontWeight: 600, marginBottom: 20 }}>
+                       <p style={{ fontSize: 13, color: '#949494', fontWeight: 600, marginBottom: 20 }}>
                           Estas informações serão usadas para gerar cobranças e compartilhar dados de pagamento com seus clientes via WhatsApp.
                        </p>
                        
@@ -933,7 +933,7 @@ const ZaptroProfile: React.FC = () => {
                           <div style={styles.infoField}>
                              <label style={styles.label}>Banco</label>
                              <div style={styles.inputStack}>
-                                <Building2 size={16} color="#64748B" />
+                                <Building2 size={16} color="#949494" />
                                 <input
                                   disabled={vitrineFormDisabled}
                                   style={styles.input}
@@ -947,7 +947,7 @@ const ZaptroProfile: React.FC = () => {
                           <div style={styles.infoField}>
                              <label style={styles.label}>Titular (Nome ou Razão Social)</label>
                              <div style={styles.inputStack}>
-                                <User size={16} color="#64748B" />
+                                <User size={16} color="#949494" />
                                 <input
                                   disabled={vitrineFormDisabled}
                                   style={styles.input}
@@ -961,7 +961,7 @@ const ZaptroProfile: React.FC = () => {
                           <div style={styles.infoField}>
                              <label style={styles.label}>Agência</label>
                              <div style={styles.inputStack}>
-                                <CreditCard size={16} color="#64748B" />
+                                <CreditCard size={16} color="#949494" />
                                 <input
                                   disabled={vitrineFormDisabled}
                                   style={styles.input}
@@ -975,7 +975,7 @@ const ZaptroProfile: React.FC = () => {
                           <div style={styles.infoField}>
                              <label style={styles.label}>Conta Corrente</label>
                              <div style={styles.inputStack}>
-                                <CreditCard size={16} color="#64748B" />
+                                <CreditCard size={16} color="#949494" />
                                 <input
                                   disabled={vitrineFormDisabled}
                                   style={styles.input}
@@ -1088,7 +1088,7 @@ const ZaptroProfile: React.FC = () => {
                                         <span style={styles.amountText}>{item.amount}</span>
                                         <div style={styles.statusPill}>PAGO</div>
                                      </div>
-                                     <ExternalLink size={14} color="#94A3B8" aria-hidden />
+                                     <ExternalLink size={14} color="#949494" aria-hidden />
                                   </div>
                                </div>
                             ))}
@@ -1114,13 +1114,13 @@ const ZaptroProfile: React.FC = () => {
       >
         {billingDetailIdx !== null && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <p style={{ margin: 0, fontSize: '14px', color: '#64748b', lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: '14px', color: '#949494', lineHeight: 1.5 }}>
               Cobrança selecionada: <strong style={{ color: '#0f172a' }}>{billingHistory[billingDetailIdx].date}</strong> —{' '}
               {billingHistory[billingDetailIdx].method}. Valor {billingHistory[billingDetailIdx].amount}, status{' '}
               {billingHistory[billingDetailIdx].status}.
             </p>
             <div>
-              <h4 style={{ margin: '0 0 12px', fontSize: '12px', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.02em' }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '12px', fontWeight: 700, color: '#949494', letterSpacing: '0.02em' }}>
                 TODAS AS COBRANÇAS
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto' }}>
@@ -1140,7 +1140,7 @@ const ZaptroProfile: React.FC = () => {
                     }}
                   >
                     <span>{row.date}</span>
-                    <span style={{ color: '#64748b', fontWeight: 700 }}>{row.method}</span>
+                    <span style={{ color: '#949494', fontWeight: 700 }}>{row.method}</span>
                     <span>{row.amount}</span>
                   </div>
                 ))}
@@ -1176,7 +1176,7 @@ const ZaptroProfile: React.FC = () => {
               <Download size={18} />
               Baixar comprovante (PDF)
             </button>
-            <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
+            <p style={{ margin: 0, fontSize: '12px', color: '#949494' }}>
               O arquivo abre em nova aba com marca Zaptro, dados da empresa e o segmento. Use Imprimir → Salvar como PDF.
             </p>
           </div>
@@ -1190,7 +1190,7 @@ const styles: Record<string, any> = {
   container: { padding: '0 0 40px 0', maxWidth: 1200, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
   header: { marginBottom: '40px' },
   title: { fontSize: '32px', fontWeight: '700', color: '#000', margin: '0 0 8px 0', letterSpacing: '-1.5px' },
-  subtitle: { fontSize: '15px', color: '#64748B', fontWeight: '600', lineHeight: 1.5, margin: 0 },
+  subtitle: { fontSize: '15px', color: '#949494', fontWeight: '600', lineHeight: 1.5, margin: 0 },
   layout: { display: 'grid', gap: '40px' },
   profileNav: { display: 'flex', flexDirection: 'column', gap: '32px' },
   navGroup: { display: 'flex', flexDirection: 'column', gap: '14px' },
@@ -1392,7 +1392,7 @@ const styles: Record<string, any> = {
   planContent: { position: 'relative', zIndex: 10 },
   planBadge: { display: 'inline-block', padding: '6px 12px', backgroundColor: 'rgba(217, 255, 0, 0.1)', color: '#D9FF00', borderRadius: '8px', fontSize: '10px', fontWeight: '700', marginBottom: '16px', letterSpacing: '1px' },
   planTitle: { margin: '0 0 8px 0', fontSize: '28px', fontWeight: '700', letterSpacing: '-1px' },
-  planSub: { margin: 0, fontSize: '14px', color: '#94A3B8', fontWeight: '600' },
+  planSub: { margin: 0, fontSize: '14px', color: '#949494', fontWeight: '600' },
   priceTag: { fontSize: '32px', fontWeight: '700', marginTop: '24px', color: '#D9FF00' },
   planVisual: { position: 'absolute', right: '-100px', top: '-100px', width: '400px', height: '400px', opacity: 0.6 },
   aiWaveContainer: { position: 'relative', width: '100%', height: '100%' },
@@ -1421,7 +1421,7 @@ const styles: Record<string, any> = {
   },
   cardDetails: { display: 'flex', flexDirection: 'column', gap: '4px' },
   cardNum: { fontSize: '16px', fontWeight: '700', color: '#0F172A' },
-  cardExp: { fontSize: '12px', fontWeight: '700', color: '#64748B' },
+  cardExp: { fontSize: '12px', fontWeight: '700', color: '#949494' },
   editBtn: { padding: '14px 24px', backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '14px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', transition: '0.2s' },
 
   // PAYMENT SELECTOR
@@ -1433,7 +1433,7 @@ const styles: Record<string, any> = {
      backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '20px',
      cursor: 'pointer', transition: '0.2s', fontWeight: '700', fontSize: '11px', textTransform: 'uppercase'
   },
-  cancelLink: { border: 'none', background: 'transparent', color: '#64748B', fontSize: '12px', fontWeight: '600', marginTop: '20px', cursor: 'pointer', textDecoration: 'underline' },
+  cancelLink: { border: 'none', background: 'transparent', color: '#949494', fontSize: '12px', fontWeight: '600', marginTop: '20px', cursor: 'pointer', textDecoration: 'underline' },
 
   historyBox: { display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '12px' },
   historyList: { display: 'flex', flexDirection: 'column', gap: '12px' },
@@ -1450,7 +1450,7 @@ const styles: Record<string, any> = {
   },
   historyInfo: { display: 'flex', flexDirection: 'column', gap: '4px' },
   histDate: { fontSize: '15px', fontWeight: '700', color: '#0F172A' },
-  histMethod: { fontSize: '11px', fontWeight: '700', color: '#94A3B8' },
+  histMethod: { fontSize: '11px', fontWeight: '700', color: '#949494' },
   historyAmount: { display: 'flex', alignItems: 'center', gap: '20px' },
   amountWrap: { textAlign: 'right' },
   amountText: { fontSize: '15px', fontWeight: '700', color: '#000', display: 'block' },

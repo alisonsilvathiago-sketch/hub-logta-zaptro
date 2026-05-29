@@ -102,8 +102,8 @@ const EvolutionManager = () => {
 
     statusBadge: (status: string) => ({
       padding: '4px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: '600',
-      backgroundColor: status === 'connected' ? '#ECFDF5' : '#FEF2F2',
-      color: status === 'connected' ? '#10B981' : '#EF4444',
+      backgroundColor: status === 'connected' ? '#EFF6FF' : '#FEF2F2',
+      color: status === 'connected' ? '#0061FF' : '#EF4444',
       textTransform: 'uppercase' as const, letterSpacing: '0.5px'
     }),
 
@@ -143,8 +143,8 @@ const EvolutionManager = () => {
           label="Instâncias Ativas"
           value={`${instances.filter(i => i.status === 'connected').length} / ${instances.length}`}
           icon={Smartphone}
-          accent="#16A34A"
-          softBg="#F0FDF4"
+          accent="#1D4ED8"
+          softBg="#EFF6FF"
         />
         <HubMetricCard
           label="Carga do Cluster"

@@ -90,7 +90,7 @@ export function ComercialColaboradorPerfilView() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 text-left">
+    <div className="logta-page-content space-y-8 animate-in fade-in duration-500 text-left">
       <button
         type="button"
         onClick={() => navigate('/crm/clientes')}

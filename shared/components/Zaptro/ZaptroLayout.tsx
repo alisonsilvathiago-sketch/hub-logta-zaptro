@@ -659,7 +659,7 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
   const hubPopupBody = (
     <>
       <div style={styles.hubHeader}>
-        <ShieldCheck size={20} color="#10B981" />
+        <ShieldCheck size={20} color="#0061FF" />
         <div>
           <h4 style={{ ...styles.hubTitle, color: palette.text }}>Nível de Proteção Ativo</h4>
           <p style={styles.hubDesc}>Criptografia ponta-a-ponta ativada.</p>
@@ -1170,7 +1170,7 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
 
                             {/* Credits */}
                             <div style={{ padding: '16px 20px' }}>
-                              <div style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>📊 Créditos do Plano</div>
+                              <div style={{ fontSize: 11, fontWeight: 800, color: '#949494', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>📊 Créditos do Plano</div>
 
                               {/* Progress bar */}
                               <div style={{ marginBottom: 16 }}>
@@ -1192,7 +1192,7 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
                               {/* Stats row */}
                               {[
                                 { label: 'Total', value: credits.total, color: '#374151' },
-                                { label: 'Usados', value: credits.usado, color: '#10b981' },
+                                { label: 'Usados', value: credits.usado, color: '#0061FF' },
                                 { label: 'Disponíveis', value: credits.disponivel, color: '#D9FF00' },
                               ].map(({ label, value, color }) => (
                                 <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
@@ -1204,7 +1204,7 @@ const ZaptroLayoutChrome: React.FC<ZaptroLayoutProps> = ({
                               {/* Plan info */}
                               <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 12, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                 <div>
-                                  <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>PLANO ATUAL</div>
+                                  <div style={{ fontSize: 11, fontWeight: 700, color: '#949494' }}>PLANO ATUAL</div>
                                   <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', textTransform: 'uppercase' }}>
                                     {(company as any)?.plan || 'Starter'}
                                   </div>

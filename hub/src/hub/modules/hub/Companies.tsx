@@ -20,10 +20,11 @@ import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/
 import LogtaModal from '@shared/components/Modal';
 import Pagination from '@shared/components/Pagination';
 import HubMetricCard, { HUB_METRIC_GRID_STYLE } from '@shared/components/HubMetricCard';
-import { hubPillTabStripStyles } from '@shared/styles/hubPillTabStripStyles';
 import { supabase } from '@core/lib/supabase';
 import { useAuth } from '@core/context/AuthContext';
 import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
+import { HUB_MASTER_SECTION_NAV } from '@hub/styles/hubMasterSectionNavStyles';
+import { HUB_SIDEBAR_NAV_LABEL } from '@hub/styles/hubPageTypography';
 import type { Company, Profile } from '@core/types';
 import {
   onlyDigits,
@@ -33,13 +34,10 @@ import {
 } from '@shared/lib/brDocuments';
 import { SystemsManagementContent, PerformanceContent } from './TeamHub';
 
-// Mock data for charts if DB doesn't have enough history
-const growthData = [
-  { month: 'Jan', companies: 4 },
-  { month: 'Fev', companies: 7 },
-  { month: 'Mar', companies: 12 },
-  { month: 'Abr', companies: 18 },
-];
+
+
+
+type CompaniesShellSection = 'empresas' | 'modulos-sync' | 'metricas-score';
 
 const CompanyManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -118,6 +116,17 @@ const CompanyManagement: React.FC = () => {
 
       if (error) throw error;
 
+      const isBlocked = newStatus === 'blocked' || newStatus === 'suspended';
+      await supabase.from('company_status').upsert(
+        {
+          company_id: companyId,
+          is_active: !isBlocked,
+          blocked_reason: isBlocked ? 'Empresa bloqueada pelo Hub Master' : null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'company_id' },
+      );
+
       await logMasterAction(
         'STATUS_CHANGE', 
         `Instância alterada para ${newStatus}`, 
@@ -125,7 +134,11 @@ const CompanyManagement: React.FC = () => {
         { company_id: companyId, new_status: newStatus }
       );
 
-      toastSuccess(`Status atualizado para ${newStatus}`);
+      toastSuccess(
+        isBlocked
+          ? 'Empresa bloqueada. Usuários não conseguem acessar o sistema.'
+          : `Status atualizado para ${newStatus}`,
+      );
       fetchData(); // Refresh list
       if (selectedCompany?.id === companyId) {
         setSelectedCompany({ ...selectedCompany, status: newStatus });
@@ -399,22 +412,22 @@ const CompanyManagement: React.FC = () => {
 
   const stats = {
     total: companies.length,
-    activeCompanies: companies.filter(c => c.status === 'active' || c.status === 'trial').length,
-    online: Math.floor(companies.length * 0.8), // Mocked status for now
-    criticalErrors: companies.filter(c => c.plan === 'FREE').length, // Using FREE as mock for unstable
-    revenue: companies.reduce((acc, c) => {
+    activeCompanies: companies.filter(c => c.status === 'active' || c.status === 'trial' || c.status === 'ATIVO').length,
+    online: companies.filter(c => c.status === 'active' || c.status === 'ATIVO').length,
+    criticalErrors: companies.filter(c => c.status !== 'active' && c.status !== 'trial' && c.status !== 'ATIVO').length,
+    revenue: companies.length > 0 ? companies.reduce((acc, c) => {
         const value = c.plan === 'OURO' ? 997 : c.plan === 'PRATA' ? 497 : 197;
         return acc + value;
-    }, 0)
+    }, 0) : 0
   };
 
   const insights = [
-    { type: 'error', text: `${stats.criticalErrors} unidades com instabilidade na Evolution API detectada.` },
-    { type: 'info', text: '5 empresas elegíveis para upgrade de plano baseado no uso de IA.' },
-    { type: 'success', text: 'Sincronização global de frotas operando com latência de 45ms.' }
+    { type: stats.criticalErrors > 0 ? 'error' : 'success', text: `${stats.criticalErrors} unidades requerem atenção administrativa.` },
+    { type: 'info', text: `${stats.activeCompanies} instâncias operando em produção.` },
+    { type: 'success', text: 'Sincronização global do ecossistema ativa.' }
   ];
 
-  type CompaniesShellSection = 'empresas' | 'modulos-sync' | 'metricas-score';
+
   const companiesShellSection: CompaniesShellSection = location.pathname.endsWith('/modulos-sync')
     ? 'modulos-sync'
     : location.pathname.endsWith('/metricas-score')
@@ -431,283 +444,277 @@ const CompanyManagement: React.FC = () => {
   };
 
   return (
-    <div style={styles.container} className="animate-fade-in">
-      {/* PAGE TITLE & ACTION */}
-      <div style={styles.pageHeader}>
-        <div>
-          <h1 style={styles.pageTitle}>
-            {companiesShellSection === 'empresas' && 'Central de Comando Master'}
-            {companiesShellSection === 'modulos-sync' && 'Módulos & Sync'}
-            {companiesShellSection === 'metricas-score' && 'Métricas & Score'}
-          </h1>
-          <p style={styles.pageSub}>
-            {companiesShellSection === 'empresas' &&
-              'Governança global, faturamento e saúde das instâncias Logta & Zaptro.'}
-            {companiesShellSection === 'modulos-sync' &&
-              'Sistemas conectados, sincronização global e broadcast entre produtos do ecossistema.'}
-            {companiesShellSection === 'metricas-score' &&
-              'Indicadores, score e desempenho da equipe master no Hub.'}
-          </p>
+    <div className="animate-fade-in" style={{ width: '100%' }}>
+      <div className="hub-settings-layout" style={HUB_MASTER_SECTION_NAV.layout}>
+        <aside style={HUB_MASTER_SECTION_NAV.sidebarWrapper}>
+          <nav style={HUB_MASTER_SECTION_NAV.sidebar} aria-label="Seções de empresas">
+            <h2 style={HUB_MASTER_SECTION_NAV.sidebarHeading}>Empresas</h2>
+            <div style={HUB_MASTER_SECTION_NAV.sidebarHeadingRule} aria-hidden />
+            <div style={HUB_MASTER_SECTION_NAV.sidebarSection}>
+              <div className="hub-settings-section-label" style={HUB_MASTER_SECTION_NAV.sidebarSectionLabel}>Áreas</div>
+              <div style={HUB_MASTER_SECTION_NAV.sidebarSectionItems}>
+                <button
+                  type="button"
+                  onClick={() => goCompaniesShell('empresas')}
+                  className={`hub-sidebar-item expanded${companiesShellSection === 'empresas' ? ' active' : ''}`}
+                  style={{
+                    textDecoration: 'none',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{ width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Building2 size={18} strokeWidth={2} />
+                  </div>
+                  <span style={{ ...HUB_SIDEBAR_NAV_LABEL, marginLeft: 12, flex: 1, textAlign: 'left' }}>Empresas</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goCompaniesShell('modulos-sync')}
+                  className={`hub-sidebar-item expanded${companiesShellSection === 'modulos-sync' ? ' active' : ''}`}
+                  style={{
+                    textDecoration: 'none',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{ width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Layers size={18} strokeWidth={2} />
+                  </div>
+                  <span style={{ ...HUB_SIDEBAR_NAV_LABEL, marginLeft: 12, flex: 1, textAlign: 'left' }}>Módulos & Sync</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goCompaniesShell('metricas-score')}
+                  className={`hub-sidebar-item expanded${companiesShellSection === 'metricas-score' ? ' active' : ''}`}
+                  style={{
+                    textDecoration: 'none',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{ width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <BarChart3 size={18} strokeWidth={2} />
+                  </div>
+                  <span style={{ ...HUB_SIDEBAR_NAV_LABEL, marginLeft: 12, flex: 1, textAlign: 'left' }}>Métricas & Score</span>
+                </button>
+              </div>
+            </div>
+          </nav>
+        </aside>
+        <main style={HUB_MASTER_SECTION_NAV.main}>
+          <div style={HUB_MASTER_SECTION_NAV.mainInner}>
+      <div className="hub-page-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            <h1 className="hub-page-title">
+              {companiesShellSection === 'empresas' && 'Empresas'}
+              {companiesShellSection === 'modulos-sync' && 'Módulos & Sync'}
+              {companiesShellSection === 'metricas-score' && 'Métricas & Score'}
+            </h1>
+            <p className="hub-page-subtitle">
+              {companiesShellSection === 'empresas'
+                ? 'Estrutura organizacional, CNPJ e instâncias do ecossistema'
+                : 'Governança global e saúde das instâncias do ecossistema.'}
+            </p>
+          </div>
+          
+          {companiesShellSection === 'empresas' && (
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="hub-premium-pill secondary" onClick={fetchData} style={{ padding: '8px 16px' }}>
+                <RefreshCw size={14} />
+              </button>
+              <button className="hub-premium-pill primary" onClick={() => setIsAddModalOpen(true)}>
+                <Plus size={16} /> Nova Unidade
+              </button>
+            </div>
+          )}
         </div>
-        {companiesShellSection === 'empresas' && (
-        <div style={styles.headerActions}>
-           <button style={styles.refreshBtn} onClick={fetchData}><RefreshCw size={18} /></button>
-           <button style={styles.addBtn} onClick={() => setIsAddModalOpen(true)}>
-             <Plus size={18} /> NOVA UNIDADE
-           </button>
-        </div>
-        )}
       </div>
-
-      <nav
-        style={{
-          ...hubPillTabStripStyles.container,
-          backgroundColor: '#FFFFFF',
-        }}
-        aria-label="Seções da central de empresas"
-      >
-        <button
-          type="button"
-          style={{
-            ...hubPillTabStripStyles.button,
-            ...(companiesShellSection === 'empresas' ? hubPillTabStripStyles.buttonActive : {}),
-          }}
-          onClick={() => goCompaniesShell('empresas')}
-        >
-          <Building2 size={15} strokeWidth={2} color={companiesShellSection === 'empresas' ? 'var(--accent)' : 'var(--text-secondary)'} />
-          Empresas
-        </button>
-        <button
-          type="button"
-          style={{
-            ...hubPillTabStripStyles.button,
-            ...(companiesShellSection === 'modulos-sync' ? hubPillTabStripStyles.buttonActive : {}),
-          }}
-          onClick={() => goCompaniesShell('modulos-sync')}
-        >
-          <Database size={15} strokeWidth={2} color={companiesShellSection === 'modulos-sync' ? 'var(--accent)' : 'var(--text-secondary)'} />
-          Módulos & Sync
-        </button>
-        <button
-          type="button"
-          style={{
-            ...hubPillTabStripStyles.button,
-            ...(companiesShellSection === 'metricas-score' ? hubPillTabStripStyles.buttonActive : {}),
-          }}
-          onClick={() => goCompaniesShell('metricas-score')}
-        >
-          <BarChart3 size={15} strokeWidth={2} color={companiesShellSection === 'metricas-score' ? 'var(--accent)' : 'var(--text-secondary)'} />
-          Métricas & Score
-        </button>
-      </nav>
 
       {companiesShellSection === 'empresas' && (
-      <>
-      <div style={{ ...HUB_METRIC_GRID_STYLE, marginBottom: '40px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-        <HubMetricCard
-          label="Unidade Global"
-          value={stats.total}
-          icon={Globe}
-          accent="#0061FF"
-          topRight={<span style={{ color: '#10B981' }}>OPERANDO</span>}
-        />
-        <HubMetricCard
-          label="Online Agora"
-          value={stats.online}
-          icon={Activity}
-          iconVariant="solid"
-          accent="#0061FF"
-        />
-        <HubMetricCard
-          label="Erros Críticos"
-          value={stats.criticalErrors}
-          icon={ShieldAlert}
-          accent="#0061FF"
-          topRight={<span style={{ color: '#EF4444' }}>ATENÇÃO</span>}
-        />
-        <HubMetricCard
-          label="Receita Global (MRR)"
-          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.revenue)}
-          icon={DollarSign}
-          iconVariant="solid"
-          accent="#0052D9"
-          topRight={
-            <span style={{ color: '#10B981', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              +4.2% <TrendingUp size={12} />
-            </span>
-          }
-        />
-      </div>
-
-      {/* SEGMENTATION TABS */}
-      <div style={styles.segmentTabs}>
-         <button 
-           style={{...styles.segmentBtn, ...(currentFilter === 'todas' ? styles.segmentBtnActive : {})}}
-           onClick={() => setCurrentFilter('todas')}
-         >
-           Todas as Operações
-         </button>
-         <button 
-           style={{...styles.segmentBtn, ...(currentFilter === 'ativas' ? styles.segmentBtnActive : {})}}
-           onClick={() => setCurrentFilter('ativas')}
-         >
-           Unidades Ativas
-         </button>
-         <button 
-           style={{...styles.segmentBtn, ...(currentFilter === 'erros' ? styles.segmentBtnActive : {})}}
-           onClick={() => setCurrentFilter('erros')}
-         >
-           Erros & Alertas <span style={styles.tabCounter}>{stats.criticalErrors}</span>
-         </button>
-         <button 
-           style={{...styles.segmentBtn, ...(currentFilter === 'novas' ? styles.segmentBtnActive : {})}}
-           onClick={() => setCurrentFilter('novas')}
-         >
-           Novas Unidades
-         </button>
-         <button 
-           style={{...styles.segmentBtn, ...(currentFilter === 'billing' ? styles.segmentBtnActive : {})}}
-           onClick={() => setCurrentFilter('billing')}
-         >
-           Auto-Faturamento
-         </button>
-      </div>
-
-      {/* CONTROLS & SEARCH */}
-      <div style={styles.controls}>
-        <div style={styles.searchBox}>
-          <Search size={18} color="#94a3b8" />
-          <input 
-            type="text" 
-            placeholder="Nível Google: Buscar por Nome, CNPJ, Domínio, ID ou Telefone..." 
-            style={styles.searchInput}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 16,
+          padding: '16px 20px',
+          borderRadius: 16,
+          background: 'linear-gradient(135deg, #F0FDF4 0%, #F8FAFC 100%)',
+          border: '1px solid #BBF7D0',
+          marginBottom: 28,
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Building2 size={18} color="#FFF" />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#14532D', marginBottom: 2 }}>Estrutura Organizacional</div>
+            <p style={{ margin: 0, fontSize: 12, color: '#16A34A', lineHeight: 1.5 }}>
+              Aqui ficam as <strong>empresas cadastradas no ecossistema</strong> — instâncias com CNPJ, filiais, unidades e estrutura corporativa.
+              Gerencie dados da organização, módulos ativos e integridades do sistema.
+              Para gestão comercial de assinaturas e cobrança, acesse <button onClick={() => navigate('/master/clientes')} style={{ background: 'none', border: 'none', color: '#16A34A', fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 12 }}>Clientes →</button>
+            </p>
+          </div>
         </div>
-        <div style={styles.controlActions}>
-          <button style={styles.filterBtn}><Filter size={18} /> Filtro Granular</button>
-          <button style={styles.syncBtn}><RefreshCw size={16} /> Forçar Sync Global</button>
-        </div>
-      </div>
-
-      {/* MASTER INSTANCE TABLE */}
-      <div style={styles.listCard}>
-        <table style={styles.table}>
-          <thead>
-            <tr style={styles.tableHead}>
-               <th style={styles.th}>INSTÂNCIA / MASTER</th>
-               <th style={styles.th}>SISTEMAS</th>
-               <th style={styles.th}>STATUS REAL</th>
-               <th style={styles.th}>SAÚDE / MÉTRICAS</th>
-               <th style={styles.th}>ÚLTIMA ATIVIDADE</th>
-               <th style={{...styles.th, textAlign: 'right'}}>AÇÕES DE COMANDO</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-               <tr><td colSpan={6} style={{padding: '60px', textAlign: 'center', color: '#94a3b8'}}>Arquitetando visualização master...</td></tr>
-            ) : filteredCompanies.length === 0 ? (
-               <tr><td colSpan={6} style={{padding: '60px', textAlign: 'center', color: '#94a3b8'}}>Nenhuma unidade detectada na rede.</td></tr>
-            ) : filteredCompanies.map(company => (
-              <tr 
-                key={company.id} 
-                style={{...styles.tr, cursor: 'pointer'}} 
-                onClick={() => openDetails(company)}
-                className="hover-scale"
-              >
-                <td style={styles.td}>
-                   <div style={styles.companyInfo}>
-                      <div style={{...styles.avatar, backgroundColor: company.primary_color || '#0061FF'}}>
-                        {(company.name || 'U')[0]}
-                      </div>
-                      <div>
-                         <div style={styles.companyName}>{company.name}</div>
-                         <div style={styles.subdomainLink}>
-                            {company.subdomain || 'padrao'}.logta.app
-                         </div>
-                         <div style={styles.companyMeta}>ID: {company.id.substring(0,8)} | CNPJ: {company.settings?.cnpj || 'S/ CNPJ'}</div>
-                      </div>
-                   </div>
-                </td>
-                <td style={styles.td}>
-                   <div style={styles.systemsGrid}>
-                      <span style={styles.sysBadgeLogta} title="Logta Operacional"><Layers size={10} /> Logta</span>
-                      <span style={styles.sysBadgeZapto} title="Zapto Comunicação"><Phone size={10} /> Zapto</span>
-                   </div>
-                </td>
-                <td style={styles.td}>
-                   <div style={{
-                      ...styles.statusBadgeMaster,
-                      backgroundColor: company.status === 'ATIVO' ? '#ecfdf5' : '#fef2f2',
-                      color: company.status === 'ATIVO' ? '#10b981' : '#ef4444'
-                   }}>
-                      <div style={{...styles.pulseDot, backgroundColor: company.status === 'ATIVO' ? '#10b981' : '#ef4444'}} />
-                      {company.status === 'ATIVO' ? 'OPERANDO' : 'INSTÁVEL'}
-                   </div>
-                </td>
-                <td style={styles.td}>
-                   <div style={styles.metricsCell}>
-                      <div style={styles.mrrValue}>R$ {company.plan === 'OURO' ? '997' : company.plan === 'PRATA' ? '497' : '197'},00</div>
-                      <div style={styles.usageBar}><div style={{...styles.usageFill, width: '70%'}} /></div>
-                      <div style={styles.usageText}>Uso: 70% (IA + WA)</div>
-                   </div>
-                </td>
-                <td style={styles.td}>
-                   <div style={styles.activityCell}>
-                      <span style={styles.dateText}>Hoje às 14:30</span>
-                      <span style={styles.deviceText}>Desktop / São Paulo</span>
-                   </div>
-                </td>
-                <td style={styles.td}>
-                   <div style={styles.actions}>
-                      <button 
-                         style={styles.actionBtnAdmin} 
-                         title="Login como Admin (Impersonate)"
-                         onClick={() => handleImpersonate(company)}
-                      >
-                         <Lock size={14} /> Entrar
-                      </button>
-                      <button 
-                         style={styles.actionBtnView} 
-                         title="Visualizar Painel"
-                         onClick={() => openDetails(company)}
-                      >
-                         <Eye size={16} />
-                      </button>
-                      <button 
-                         style={styles.actionBtnConfig} 
-                         title="Configurações Master"
-                      >
-                         <Settings size={16} />
-                      </button>
-                      <button 
-                         style={styles.actionBtnRestart} 
-                         title="Reiniciar Integrações"
-                      >
-                         <RefreshCw size={16} />
-                      </button>
-                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <Pagination 
-          currentPage={currentPage}
-          totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={handleItemsPerPageChange}
-        />
-      </div>
-
-      </>
       )}
+
+      {companiesShellSection === 'empresas' && (
+        <>
+          {/* Metrics Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+            <div className="hub-premium-card" style={{ padding: '20px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--hub-text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '8px' }}>Total Unidades</div>
+              <div style={{ fontSize: '24px', fontWeight: 700 }}>{stats.total}</div>
+            </div>
+            <div className="hub-premium-card" style={{ padding: '20px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--hub-text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '8px' }}>Online Agora</div>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--hub-accent)' }}>{stats.online}</div>
+            </div>
+            <div className="hub-premium-card" style={{ padding: '20px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--hub-text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '8px' }}>Erros Críticos</div>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: stats.criticalErrors > 0 ? '#EF4444' : 'var(--hub-text-main)' }}>{stats.criticalErrors}</div>
+            </div>
+            <div className="hub-premium-card" style={{ padding: '20px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--hub-text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '8px' }}>MRR Estimado</div>
+              <div style={{ fontSize: '24px', fontWeight: 700 }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.revenue)}</div>
+            </div>
+          </div>
+
+          {/* Filters and Search */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
+            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+              {['todas', 'ativas', 'erros', 'novas', 'billing'].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setCurrentFilter(f as any)}
+                  className="hub-btn-secondary"
+                  style={{ 
+                    whiteSpace: 'nowrap', 
+                    padding: '6px 12px', 
+                    fontSize: '12px',
+                    backgroundColor: currentFilter === f ? 'var(--hub-card)' : 'transparent',
+                    borderColor: currentFilter === f ? 'var(--hub-accent)' : 'var(--hub-border)',
+                    color: currentFilter === f ? 'var(--hub-accent)' : 'var(--hub-text-main)',
+                  }}
+                >
+                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                </button>
+              ))}
+            </div>
+            <div style={{ position: 'relative', width: '350px' }}>
+              <Search size={16} color="var(--hub-text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+              <input 
+                type="text" 
+                className="hub-input" 
+                style={{ paddingLeft: '40px' }}
+                placeholder="Buscar empresa ou CNPJ..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Companies Table */}
+          <div className="hub-premium-card" style={{ padding: 0, overflow: 'hidden' }}>
+            <table className="hub-table">
+              <thead>
+                <tr>
+                  <th>Empresa / Instância</th>
+                  <th>Produtos Ativos</th>
+                  <th>Status</th>
+                  <th>MRR</th>
+                  <th style={{ textAlign: 'right' }}>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan={5} style={{ padding: '60px', textAlign: 'center', color: 'var(--hub-text-muted)' }}>Carregando infraestrutura...</td></tr>
+                ) : filteredCompanies.length === 0 ? (
+                  <tr><td colSpan={5} style={{ padding: '60px', textAlign: 'center', color: 'var(--hub-text-muted)' }}>Nenhuma unidade encontrada.</td></tr>
+                ) : filteredCompanies.map(company => (
+                  <tr key={company.id} onClick={() => openDetails(company)} style={{ cursor: 'pointer' }}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '4px', backgroundColor: company.primary_color || 'var(--hub-accent-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '14px', color: '#FFF' }}>
+                          {(company.name || 'U')[0]}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 600, color: 'var(--hub-text-main)' }}>{company.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--hub-text-muted)' }}>{company.subdomain}.logta.app</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--hub-border)', color: 'var(--hub-text-sec)' }}>LOGTA</span>
+                        <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--hub-border)', color: 'var(--hub-text-sec)' }}>ZAPTRO</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: company.status === 'active' || company.status === 'ATIVO' ? 'var(--hub-accent)' : '#EF4444' }} />
+                        <span style={{ fontSize: '12px', fontWeight: 500 }}>{company.status?.toUpperCase()}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ fontSize: '13px', fontWeight: 600 }}>R$ {company.plan === 'OURO' ? '997' : company.plan === 'PRATA' ? '497' : '197'},00</div>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          className={`hub-premium-pill ${company.status === 'blocked' || company.status === 'suspended' ? 'secondary' : 'primary'}`}
+                          style={{ padding: '6px 12px', fontSize: '10px' }}
+                          title={company.status === 'blocked' ? 'Desbloquear empresa' : 'Bloquear acesso'}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const willBlock = company.status !== 'blocked' && company.status !== 'suspended';
+                            const msg = willBlock
+                              ? `Bloquear "${company.name}"? Usuários desta empresa não poderão acessar o sistema.`
+                              : `Reativar "${company.name}" e liberar acesso?`;
+                            if (!window.confirm(msg)) return;
+                            handleUpdateCompanyStatus(company.id, willBlock ? 'blocked' : 'active');
+                          }}
+                        >
+                          {company.status === 'blocked' || company.status === 'suspended' ? 'Desbloquear' : 'Bloquear'}
+                        </button>
+                        <button className="hub-premium-pill secondary" style={{ padding: '8px' }} title="Impersonate" onClick={(e) => { e.stopPropagation(); handleImpersonate(company); }}><Lock size={14} /></button>
+                        <button className="hub-premium-pill secondary" style={{ padding: '8px' }} title="Detalhes"><ChevronRight size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+            <div style={{ padding: '16px', borderTop: '1px solid var(--hub-border)' }}>
+              <Pagination 
+                currentPage={currentPage}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            </div>
+          </div>
+        </>
+      )}
+
 
       {companiesShellSection === 'modulos-sync' && <SystemsManagementContent />}
       {companiesShellSection === 'metricas-score' && <PerformanceContent />}
+
+          </div>
+        </main>
+      </div>
 
       {/* MODAL DETALHES EMPRESA */}
       <LogtaModal 
@@ -787,7 +794,7 @@ const CompanyManagement: React.FC = () => {
                      <div style={styles.statsRow}>
                         <div style={styles.statBox}>
                            <div style={styles.statBoxLabel}>Instância Hub</div>
-                           <div style={{...styles.statBoxValue, color: selectedCompany?.status === 'active' ? '#10B981' : '#EF4444'}}>
+                           <div style={{...styles.statBoxValue, color: selectedCompany?.status === 'active' ? '#0061FF' : '#EF4444'}}>
                               {selectedCompany?.status === 'active' ? 'Ativa' : 'Bloqueada'}
                            </div>
                         </div>
@@ -806,8 +813,8 @@ const CompanyManagement: React.FC = () => {
                                 padding: '4px 12px',
                                 borderRadius: '8px',
                                 border: 'none',
-                                backgroundColor: selectedCompany?.status === 'active' ? '#FEE2E2' : '#DCFCE7',
-                                color: selectedCompany?.status === 'active' ? '#EF4444' : '#10B981',
+                                backgroundColor: selectedCompany?.status === 'active' ? '#FEE2E2' : '#DBEAFE',
+                                color: selectedCompany?.status === 'active' ? '#EF4444' : '#0061FF',
                                 fontSize: '11px',
                                 fontWeight: '800',
                                 cursor: 'pointer'
@@ -909,13 +916,13 @@ const CompanyManagement: React.FC = () => {
                            <div key={instance.id} style={styles.evolutionCard}>
                              <div style={styles.evolutionHeader}>
                                <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-                                 <div style={{...styles.evolutionIcon, backgroundColor: instance.status === 'open' ? '#10B981' : '#64748B'}}>
+                                 <div style={{...styles.evolutionIcon, backgroundColor: instance.status === 'open' ? '#0061FF' : '#64748B'}}>
                                    <Phone size={24} color="#FFF" />
                                  </div>
                                  <div>
                                    <div style={styles.evolutionTitle}>{instance.instance_name}</div>
                                    <div style={styles.evolutionStatus}>
-                                     <div style={{...styles.statusDot, backgroundColor: instance.status === 'open' ? '#10B981' : '#F43F5E'}} /> 
+                                     <div style={{...styles.statusDot, backgroundColor: instance.status === 'open' ? '#0061FF' : '#F43F5E'}} /> 
                                      {instance.status === 'open' ? 'Conectado' : 'Desconectado'}
                                    </div>
                                  </div>
@@ -995,7 +1002,7 @@ const CompanyManagement: React.FC = () => {
                         </div>
                         <div style={{textAlign: 'right'}}>
                            <div style={styles.infoLabel}>Total Faturado (Histórico)</div>
-                           <div style={{fontSize: '24px', fontWeight: '800', color: '#10b981'}}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(companyMetrics.total_billed)}</div>
+                           <div style={{fontSize: '24px', fontWeight: '800', color: '#0061FF'}}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(companyMetrics.total_billed)}</div>
                         </div>
                      </div>
                      
@@ -1026,7 +1033,7 @@ const CompanyManagement: React.FC = () => {
                      <h4 style={{marginTop: '24px', marginBottom: '16px', fontSize: '12px', fontWeight: '800', color: '#94A3B8'}}>HISTÓRICO FINANCEIRO</h4>
                      <div style={styles.billingRow}>
                         <span>Assinatura Enterprise - Abril 2026</span>
-                        <span style={{color: '#10b981', fontWeight: '700'}}>PAGO</span>
+                        <span style={{color: '#0061FF', fontWeight: '700'}}>PAGO</span>
                      </div>
                   </div>
                )}
@@ -1037,7 +1044,7 @@ const CompanyManagement: React.FC = () => {
                         <div style={styles.intIcon}><Layers size={20} /></div>
                         <div>
                            <div style={styles.intTitle}>Logta Operational</div>
-                           <div style={{...styles.intStatus, color: '#10B981'}}>Conectado</div>
+                           <div style={{...styles.intStatus, color: '#0061FF'}}>Conectado</div>
                         </div>
                      </div>
                      <div style={styles.integracaoCard}>
@@ -1283,7 +1290,7 @@ const CompanyManagement: React.FC = () => {
 const styles: Record<string, any> = {
   container: { padding: '0', backgroundColor: 'transparent' },
   pageHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
-  pageTitle: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  pageTitle: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: 0 },
   pageSub: { ...HUB_PAGE_SUBTITLE },
   headerActions: { display: 'flex', gap: '16px' },
   refreshBtn: { width: '48px', height: '48px', borderRadius: '16px', border: '1px solid var(--border)', backgroundColor: 'white', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' },
@@ -1316,7 +1323,7 @@ const styles: Record<string, any> = {
 
   systemsGrid: { display: 'flex', gap: '8px' },
   sysBadgeLogta: { padding: '6px 12px', borderRadius: '10px', backgroundColor: '#F0F7FF', color: '#0052D9', fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' },
-  sysBadgeZapto: { padding: '6px 12px', borderRadius: '10px', backgroundColor: '#F0FDF4', color: '#16A34A', fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' },
+  sysBadgeZapto: { padding: '6px 12px', borderRadius: '10px', backgroundColor: '#EFF6FF', color: '#1D4ED8', fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' },
 
   statusBadgeMaster: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '12px', fontSize: '11px', fontWeight: '800', width: 'fit-content' },
   pulseDot: { width: '8px', height: '8px', borderRadius: '50%' },

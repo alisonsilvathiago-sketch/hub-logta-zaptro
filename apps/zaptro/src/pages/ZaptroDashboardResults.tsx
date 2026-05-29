@@ -3,6 +3,14 @@ import {
   Users,
   MessageSquare,
   Clock,
+  MessagesSquare,
+  Send,
+  UserRound,
+  Gauge,
+  Hourglass,
+  CalendarDays,
+  UsersRound,
+  Timer,
   ArrowUpRight,
   ArrowDownRight,
   Activity,
@@ -25,7 +33,6 @@ import {
   ChevronUp,
   ArrowUp,
   Sparkles,
-  Inbox,
   Bot,
   Kanban,
   Settings,
@@ -53,14 +60,22 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { zaptroOccurrencePath, ZAPTRO_ROUTES } from '../constants/zaptroRoutes';
 import { isZaptroTenantAdminRole } from '../utils/zaptroPermissions';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 import { useZaptroTheme } from '../context/ZaptroThemeContext';
 import { useTenant } from '../context/TenantContext';
+import { supabaseZaptro } from '../lib/supabase-zaptro';
 import HubGuard from '../components/HubGuard';
 import ZaptroLayout from '../components/Zaptro/ZaptroLayout';
 import ZaptroDashboardModernPreview from '../components/Zaptro/ZaptroDashboardModernPreview';
 import { ZAPTRO_SHADOW } from '../constants/zaptroShadows';
+import { zaptroDashboardIconOrbStyle, ZAPTRO_DASH_ICON_ORB_FG } from '../constants/zaptroCardSurface';
 
-import { ZAPTRO_FIELD_BG, ZAPTRO_SECTION_BORDER, ZAPTRO_TITLE_COLOR } from '../constants/zaptroUi';
+import {
+  ZAPTRO_AUX_TEXT,
+  ZAPTRO_FIELD_BG,
+  ZAPTRO_SECTION_BORDER,
+  ZAPTRO_TITLE_COLOR,
+} from '../constants/zaptroUi';
 import { resolveSessionAvatarUrl } from '../utils/zaptroAvatar';
 import { readAllQuotesFlattened } from '../constants/zaptroQuotes';
 import {
@@ -79,6 +94,9 @@ const ZT_UI = {
   tabTrack: ZAPTRO_FIELD_BG,
 } as const;
 
+/** Tipografia auxiliar do painel — mesmo padrão do shell (`ZAPTRO_AUX_TEXT`). */
+const DASH_TEXT = ZAPTRO_AUX_TEXT;
+
 const ZapRay = ({ size = 24, color = "#D9FF00", style = {} }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={style}>
     <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill={color} />
@@ -88,7 +106,7 @@ const ZapRay = ({ size = 24, color = "#D9FF00", style = {} }) => (
 const LIME = '#D9FF00';
 
 /** `true` — painel Início logístico (pré-visualização preto + lima). `false` — painel Zaptro clássico completo. */
-const ZAPTRO_DASHBOARD_MODERN_PREVIEW = true;
+const ZAPTRO_DASHBOARD_MODERN_PREVIEW = false;
 
 const DASH_LAYOUT_STORAGE_KEY = 'zaptro_dashboard_widgets_v1';
 
@@ -567,8 +585,8 @@ const ZaptroDashboardContent: React.FC = () => {
     [deliveryPeriod, monthlyChartData, weeklyChartData]
   );
 
-  const chartStrokeGrid = palette.mode === 'dark' ? '#334155' : '#e2e8f0';
-  const chartTick = palette.mode === 'dark' ? '#94a3b8' : '#64748b';
+  const chartStrokeGrid = palette.mode === 'dark' ? '#6B6B6B' : '#e2e8f0';
+  const chartTick = palette.mode === 'dark' ? '#949494' : '#949494';
   const chartDotFill = palette.mode === 'dark' ? '#0a0a0a' : '#0f172a';
   const gradId = `zt-area-${palette.mode}`;
 
@@ -588,7 +606,7 @@ const ZaptroDashboardContent: React.FC = () => {
         feedText: styles.feedText,
         userAvatar: styles.userAvatar,
         viewMoreBtn: styles.viewMoreBtn,
-        neonIconBox: styles.neonIconBox,
+        statIconOrb: zaptroDashboardIconOrbStyle({ size: 100 }),
         statBadgeBg: '#e4e4e7',
         statBadgeColor: '#18181b',
         statBadgeBorder: `1px solid ${ZT_UI.surfaceBorder}`,
@@ -607,7 +625,6 @@ const ZaptroDashboardContent: React.FC = () => {
           padding: '2px 4px',
         },
         barDim: '#E2E8F0',
-        iconStroke: '#000',
       };
     }
     return {
@@ -636,23 +653,23 @@ const ZaptroDashboardContent: React.FC = () => {
         ...styles.secBtn,
         backgroundColor: '#111111',
         color: palette.text,
-        border: '1px solid #334155',
+        border: '1px solid #6B6B6B',
       },
       feedItem: {
         ...styles.feedItem,
         backgroundColor: '#111111',
-        border: '1px solid #334155',
+        border: '1px solid #6B6B6B',
         boxShadow: 'none',
       },
-      feedText: { ...styles.feedText, color: '#e2e8f0' },
+      feedText: { ...styles.feedText },
       userAvatar: {
         ...styles.userAvatar,
         backgroundColor: '#1e293b',
         color: '#f8fafc',
         borderColor: '#475569',
       },
-      viewMoreBtn: { ...styles.viewMoreBtn, borderColor: '#334155', color: palette.textMuted },
-      neonIconBox: { ...styles.neonIconBox, backgroundColor: 'rgba(217,255,0,0.12)' },
+      viewMoreBtn: { ...styles.viewMoreBtn, borderColor: '#6B6B6B', color: palette.textMuted },
+      statIconOrb: zaptroDashboardIconOrbStyle({ size: 100 }),
       statBadgeBg: '#27272a',
       statBadgeColor: '#e4e4e7',
       statBadgeBorder: '1px solid #52525b',
@@ -667,11 +684,10 @@ const ZaptroDashboardContent: React.FC = () => {
         gap: '4px',
         borderRadius: '14px',
         backgroundColor: '#1e293b',
-        border: '1px solid #334155',
+        border: '1px solid #6B6B6B',
         padding: '2px 4px',
       },
-      barDim: '#334155',
-      iconStroke: '#f8fafc',
+      barDim: '#6B6B6B',
     };
   }, [palette]);
 
@@ -951,32 +967,32 @@ const ZaptroDashboardContent: React.FC = () => {
           value: activeCount,
           change: 'Abertas / em espera',
           positive: true,
-          icon: MessageSquare,
-          color: 'linear-gradient(135deg, #D9FF00 0%, #A3E635 100%)',
+          icon: MessagesSquare,
+          badgeIcon: Hourglass,
         },
         {
           label: 'Mensagens hoje',
           value: messagesTodayCount,
           change: 'Hoje',
           positive: true,
-          icon: Inbox,
-          color: 'linear-gradient(135deg, #D9FF00 0%, #84CC16 100%)',
+          icon: Send,
+          badgeIcon: CalendarDays,
         },
         {
           label: 'Total de contatos',
           value: totalCRM,
           change: 'Base',
           positive: true,
-          icon: Users,
-          color: 'linear-gradient(135deg, #22C55E 0%, #D9FF00 100%)',
+          icon: UserRound,
+          badgeIcon: UsersRound,
         },
         {
           label: 'Tempo médio de resposta',
           value: avgAttendance,
           change: 'SLA',
           positive: true,
-          icon: Clock,
-          color: 'linear-gradient(135deg, #EF4444 0%, #D9FF00 100%)',
+          icon: Gauge,
+          badgeIcon: Timer,
         },
       ] as const,
     [activeCount, totalCRM, messagesTodayCount, avgAttendance]
@@ -1103,130 +1119,166 @@ const ZaptroDashboardContent: React.FC = () => {
       <div style={styles.container}>
         <div
           style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            marginBottom: dashLayoutEdit ? 14 : 10,
             width: '100%',
+            paddingTop: 0,
+            marginBottom: dashLayoutEdit ? 8 : 6,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            boxSizing: 'border-box',
+            maxHeight: dashLayoutEdit ? 117 : 52,
+            overflow: 'hidden',
           }}
         >
-          {!dashLayoutEdit ? (
-            <div style={{ flex: 1 }} />
-          ) : (
-            <span style={{ fontSize: 13, fontWeight: 600, color: palette.textMuted }}>Personalizar página</span>
-          )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            {!dashLayoutEdit ? (
-              <button
-                type="button"
-                onClick={startDashLayoutEdit}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '10px 16px',
-                  borderRadius: 14,
-                  border: `1px solid ${palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : ZAPTRO_SECTION_BORDER}`,
-                  backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#fff',
-                  color: palette.text,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                <LayoutGrid size={17} strokeWidth={2.2} />
-                Personalizar página
-              </button>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={cancelDashLayoutEdit}
-                  style={{
-                    padding: '10px 16px',
-                    borderRadius: 14,
-                    border: 'none',
-                    background: 'transparent',
-                    color: palette.textMuted,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={saveDashLayoutEdit}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: 14,
-                    border: 'none',
-                    background: '#0f172a',
-                    color: '#fff',
-                    fontSize: 14,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  Salvar página
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {dashLayoutEdit && (
           <div
-            role="status"
             style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              marginBottom: 18,
-              padding: '14px 18px',
-              borderRadius: 16,
               display: 'flex',
               flexWrap: 'wrap',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 14,
-              backgroundColor: palette.mode === 'dark' ? 'rgba(217, 255, 0, 0.1)' : 'rgba(217, 255, 0, 0.16)',
-              border: `1px solid ${palette.mode === 'dark' ? 'rgba(217, 255, 0, 0.32)' : 'rgba(15, 23, 42, 0.08)'}`,
+              justifyContent: 'center',
+              gap: 10,
+              width: '100%',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, minWidth: 0, flex: '1 1 280px' }}>
-              <Info size={20} color={accent} style={{ flexShrink: 0, marginTop: 1 }} />
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, lineHeight: 1.5, color: palette.text }}>
-                Estás a personalizar o teu painel. Os dados são os mesmos de sempre; podes remover widgets e voltar a
-                adicioná-los em «Gerir widgets». Não te esqueças de guardar.
-              </p>
+            {dashLayoutEdit ? (
+              <span style={{ ...ZAPTRO_AUX_TEXT.label, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Personalizar página
+              </span>
+            ) : null}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexShrink: 0 }}>
+              {!dashLayoutEdit ? (
+                <button
+                  type="button"
+                  aria-label="Personalizar página"
+                  title="Personalizar página"
+                  onClick={startDashLayoutEdit}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 44,
+                    height: 44,
+                    padding: 0,
+                    borderRadius: 14,
+                    border: `1px solid ${palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : ZAPTRO_SECTION_BORDER}`,
+                    backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#fff',
+                    color: palette.text,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    boxShadow: palette.mode === 'dark' ? 'none' : '0 4px 14px rgba(15,23,42,0.06)',
+                  }}
+                >
+                  <LayoutGrid size={20} strokeWidth={2.2} />
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Cancelar personalização"
+                    title="Cancelar"
+                    onClick={cancelDashLayoutEdit}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 44,
+                      height: 44,
+                      padding: 0,
+                      borderRadius: 14,
+                      border: `1px solid ${palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : ZAPTRO_SECTION_BORDER}`,
+                      background: palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#fff',
+                      color: palette.textMuted,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    <X size={20} strokeWidth={2.2} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Salvar página"
+                    title="Salvar página"
+                    onClick={saveDashLayoutEdit}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 44,
+                      height: 44,
+                      padding: 0,
+                      borderRadius: 14,
+                      border: 'none',
+                      background: '#0f172a',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    <Check size={20} strokeWidth={2.4} />
+                  </button>
+                </>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={() => setDashManageWidgetsOpen(true)}
+          </div>
+
+          {dashLayoutEdit && (
+            <div
+              role="status"
               style={{
-                display: 'inline-flex',
+                width: '100%',
+                maxWidth: 720,
+                boxSizing: 'border-box',
+                padding: '10px 14px',
+                borderRadius: 14,
+                display: 'flex',
+                flexWrap: 'wrap',
                 alignItems: 'center',
-                gap: 6,
-                border: 'none',
-                background: 'none',
-                color: palette.mode === 'dark' ? accent : '#14532d',
-                fontWeight: 600,
-                fontSize: 13,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
+                justifyContent: 'center',
+                gap: 10,
+                backgroundColor: palette.mode === 'dark' ? 'rgba(217, 255, 0, 0.1)' : 'rgba(217, 255, 0, 0.16)',
+                border: `1px solid ${palette.mode === 'dark' ? 'rgba(217, 255, 0, 0.32)' : 'rgba(15, 23, 42, 0.08)'}`,
               }}
             >
-              <Plus size={17} strokeWidth={2.2} /> Gerir widgets
-            </button>
-          </div>
-        )}
+              <p
+                style={{
+                  margin: 0,
+                  ...ZAPTRO_AUX_TEXT.label,
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  lineHeight: 1.45,
+                  flex: '1 1 200px',
+                }}
+              >
+                Estás a personalizar o teu painel. Guarda quando terminares.
+              </p>
+              <button
+                type="button"
+                aria-label="Gerir widgets"
+                title="Gerir widgets"
+                onClick={() => setDashManageWidgetsOpen(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 44,
+                  height: 44,
+                  padding: 0,
+                  borderRadius: 14,
+                  border: `1px solid ${palette.mode === 'dark' ? 'rgba(217, 255, 0, 0.35)' : 'rgba(15, 23, 42, 0.12)'}`,
+                  background: palette.mode === 'dark' ? 'rgba(0,0,0,0.25)' : '#fff',
+                  color: palette.mode === 'dark' ? accent : '#14532d',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  flexShrink: 0,
+                }}
+              >
+                <Plus size={20} strokeWidth={2.2} />
+              </button>
+            </div>
+          )}
+        </div>
 
         {dashManageWidgetsOpen && dashLayoutEdit && (
           <div
@@ -1430,7 +1482,7 @@ const ZaptroDashboardContent: React.FC = () => {
                         <div style={{ fontSize: 15, fontWeight: 700, color: palette.text, marginBottom: 8, lineHeight: 1.25 }}>
                           {meta.title}
                         </div>
-                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: palette.textMuted, lineHeight: 1.5 }}>
+                        <p style={{ margin: 0, ...DASH_TEXT.body, lineHeight: 1.5 }}>
                           {meta.description}
                         </p>
                       </button>
@@ -1502,14 +1554,9 @@ const ZaptroDashboardContent: React.FC = () => {
             marginBottom: 4,
             overflow: 'hidden',
             background:
-              palette.mode === 'dark'
-                ? 'radial-gradient(ellipse 100% 80% at 0% -30%, rgba(217,255,0,0.1) 0%, transparent 52%), linear-gradient(168deg, #000000 0%, #0a0a0a 48%, #111111 100%)'
-                : 'radial-gradient(ellipse 90% 70% at 12% -15%, rgba(217,255,0,0.14) 0%, transparent 46%), linear-gradient(158deg, #000000 0%, #0a0a0a 42%, #141414 100%)',
-            border: `1px solid ${palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.12)'}`,
-            boxShadow:
-              palette.mode === 'dark'
-                ? '0 28px 56px -16px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.04)'
-                : '0 28px 56px -16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
+              'radial-gradient(ellipse 90% 70% at 12% -15%, rgba(217,255,0,0.12) 0%, transparent 48%), #ffffff',
+            border: `1px solid ${ZAPTRO_SECTION_BORDER}`,
+            boxShadow: '0 16px 40px -12px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,1)',
             ...(dashLayoutEdit ? { outline: dashEditOutline, outlineOffset: 4 } : {}),
           }}
         >
@@ -1579,9 +1626,9 @@ const ZaptroDashboardContent: React.FC = () => {
                   width: 58,
                   height: 58,
                   borderRadius: 20,
-                  border: '2px solid rgba(217,255,0,0.35)',
-                  backgroundColor: 'rgba(15,23,42,0.55)',
-                  boxShadow: '0 10px 28px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.06) inset',
+                  border: '2px solid rgba(217,255,0,0.45)',
+                  backgroundColor: '#f4f4f4',
+                  boxShadow: '0 8px 20px rgba(15,23,42,0.06), inset 0 0 0 1px rgba(15,23,42,0.04)',
                 }}
               >
                 {headerHeroImage ? (
@@ -1589,7 +1636,7 @@ const ZaptroDashboardContent: React.FC = () => {
                 ) : sessionAvatarSrc ? (
                   <img src={sessionAvatarSrc} alt="" style={styles.heroPhotoImg} />
                 ) : (
-                  <span style={{ ...styles.heroPhotoPh, color: '#f8fafc' }}>{profile?.full_name?.[0] || 'Z'}</span>
+                  <span style={{ ...styles.heroPhotoPh, color: '#0f172a' }}>{profile?.full_name?.[0] || 'Z'}</span>
                 )}
                 <span style={styles.heroPhotoCam}>
                   <Camera size={14} color="#FFFFFF" />
@@ -1620,8 +1667,8 @@ const ZaptroDashboardContent: React.FC = () => {
                     title="Assistente"
                     onClick={() => setDigestPanelOpen(true)}
                     style={{
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      background: 'rgba(255,255,255,0.06)',
+                      border: `1px solid ${ZAPTRO_SECTION_BORDER}`,
+                      background: '#f8fafc',
                       borderRadius: 999,
                       padding: 7,
                       cursor: 'pointer',
@@ -1631,37 +1678,35 @@ const ZaptroDashboardContent: React.FC = () => {
                       transition: 'background 0.2s ease',
                     }}
                   >
-                    <HelpCircle size={18} color="rgba(248,250,252,0.9)" strokeWidth={2} />
+                    <HelpCircle size={18} color="#475569" strokeWidth={2} />
                   </button>
                 </div>
-                <p
-                  style={{
-                    margin: '0 0 6px',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'rgba(248,250,252,0.45)',
-                  }}
-                >
-                  Painel principal
-                </p>
                 <h1
                   id="zaptro-dash-hero-title"
                   style={{
                     margin: '0 0 4px 0',
-                    fontSize: 'clamp(20px, 2.4vw, 28px)',
+                    fontSize: 30,
                     fontWeight: 700,
-                    color: '#f8fafc',
+                    color: '#000',
                     lineHeight: 1.2,
-                    letterSpacing: '-0.04em',
+                    letterSpacing: '-0.02em',
                     textWrap: 'balance' as const,
                   }}
                 >
                   Olá, {dashFirstName || profile?.full_name || 'Comandante'} 🚀
                 </h1>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'rgba(248,250,252,0.5)', letterSpacing: '0.02em' }}>
+                <p style={{ margin: '0 0 8px', ...DASH_TEXT.body, letterSpacing: '0.02em' }}>
                   {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'long', year: 'numeric' })}.
+                </p>
+                <p
+                  style={{
+                    margin: 0,
+                    ...DASH_TEXT.label,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Painel principal
                 </p>
               </div>
             </div>
@@ -1671,17 +1716,15 @@ const ZaptroDashboardContent: React.FC = () => {
                   style={{
                     ...styles.dashboardCredits,
                     overflow: 'hidden',
-                    backgroundColor: 'rgba(255,255,255,0.06)',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    boxShadow: '0 12px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)',
+                    backgroundColor: '#f8fafc',
+                    border: `1px solid ${ZAPTRO_SECTION_BORDER}`,
+                    boxShadow: '0 8px 24px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,1)',
                   }}
                   title="Saldo de créditos disponíveis"
                 >
-                  <span style={{ ...styles.dashboardCreditsLabel, color: palette.mode === 'dark' ? '#a3a3a3' : '#71717a' }}>CRÉDITOS</span>
+                  <span style={{ ...styles.dashboardCreditsLabel, color: '#71717a' }}>CRÉDITOS</span>
                   <div style={styles.dashboardCreditsRow}>
-                    <span style={{ ...styles.dashboardCreditsValue, color: '#FFFFFF' }}>
+                    <span style={{ ...styles.dashboardCreditsValue, color: '#0f172a' }}>
                       {creditsVisible ? '1,240' : '•••••'}
                     </span>
                     <button
@@ -1690,7 +1733,7 @@ const ZaptroDashboardContent: React.FC = () => {
                       title={creditsVisible ? 'Ocultar' : 'Mostrar'}
                       style={{
                         ...styles.dashboardCreditsEye,
-                        background: palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.08)',
+                        background: '#ffffff',
                       }}
                       onClick={() => setCreditsVisible((v) => !v)}
                     >
@@ -1705,7 +1748,7 @@ const ZaptroDashboardContent: React.FC = () => {
                     <Zap
                       size={12}
                       color={palette.lime}
-                      fill={palette.mode === 'dark' ? '#111111' : '#18181b'}
+                      fill="#f8fafc"
                     />
                   </div>
                 </div>
@@ -2117,11 +2160,12 @@ const ZaptroDashboardContent: React.FC = () => {
         >
            {stats.map((s, i) => {
              const demo = 'isDemo' in s && s.isDemo;
+             const BadgeIcon = s.badgeIcon ?? s.icon;
              return (
              <div key={i} style={ds.statCard}>
                 <div style={styles.statTop}>
-                   <div style={ds.neonIconBox}>
-                      <s.icon size={22} strokeWidth={2.5} color={ds.iconStroke} />
+                   <div style={ds.statIconOrb}>
+                      <s.icon size={28} strokeWidth={2.35} color={ZAPTRO_DASH_ICON_ORB_FG} />
                    </div>
                    <div
                      role="button"
@@ -2147,10 +2191,10 @@ const ZaptroDashboardContent: React.FC = () => {
                    >
                       {statImages[i] ? (
                         <img src={statImages[i]} alt="" style={styles.statBadgeImg} />
-                      ) : s.positive ? (
-                        <ArrowUpRight size={14} color={ds.statBadgeArrow} />
                       ) : (
-                        <ArrowDownRight size={14} color={ds.statBadgeArrow} />
+                        <div style={zaptroDashboardIconOrbStyle({ size: 26 })}>
+                          <BadgeIcon size={14} strokeWidth={2.35} color={ZAPTRO_DASH_ICON_ORB_FG} />
+                        </div>
                       )}
                       <span>{s.change}</span>
                    </div>
@@ -2237,10 +2281,7 @@ const ZaptroDashboardContent: React.FC = () => {
                    <p
                      style={{
                        margin: 0,
-                       fontSize: 11,
-                       fontWeight: 700,
-                       lineHeight: 1.45,
-                       color: palette.textMuted,
+                       ...DASH_TEXT.label,
                        maxWidth: 420,
                      }}
                    >
@@ -2329,8 +2370,7 @@ const ZaptroDashboardContent: React.FC = () => {
                       justifyContent: 'center',
                       borderRadius: 20,
                       backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : ZAPTRO_FIELD_BG,
-                      color: palette.textMuted,
-                      fontSize: 14,
+                      ...DASH_TEXT.body,
                       fontWeight: 700,
                       border: `1px dashed ${palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : ZAPTRO_SECTION_BORDER}`,
                     }}
@@ -2526,11 +2566,11 @@ const ZaptroDashboardContent: React.FC = () => {
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
             <div style={{ flex: '1 1 220px', minWidth: 0 }}>
               <h3 style={{ ...ds.cardTitle, marginBottom: 8 }}>Automação (resumo)</h3>
-              <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: palette.text, lineHeight: 1.45 }}>
-                Agentes de atendimento na equipa: <strong>{onlineAgents}</strong>
+              <p style={{ margin: '0 0 8px', ...DASH_TEXT.body, fontWeight: 700 }}>
+                Agentes de atendimento na equipa: <strong style={{ color: ZAPTRO_TITLE_COLOR }}>{onlineAgents}</strong>
               </p>
-              <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: palette.textMuted, lineHeight: 1.45 }}>
-                Mensagens automáticas hoje: <strong style={{ color: palette.text }}>—</strong> (métrica em evolução)
+              <p style={{ margin: 0, ...DASH_TEXT.label, fontWeight: 600 }}>
+                Mensagens automáticas hoje: <strong style={{ color: 'rgba(189, 189, 189, 1)' }}>—</strong> (métrica em evolução)
               </p>
             </div>
             <button
@@ -2638,7 +2678,7 @@ const ZaptroDashboardContent: React.FC = () => {
               >
                 Operação e WhatsApp num só hub
               </h2>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: palette.textMuted, lineHeight: 1.55 }}>
+              <p style={{ margin: 0, ...DASH_TEXT.body, lineHeight: 1.55 }}>
                 Inbox, CRM e automações ligados ao teu fluxo logístico — mesmo estilo de painel que conheces, com atalhos à
                 mão.
               </p>
@@ -2658,7 +2698,7 @@ const ZaptroDashboardContent: React.FC = () => {
               >
                 <Zap size={26} color={palette.lime} fill={palette.mode === 'dark' ? '#111' : '#18181b'} />
               </div>
-              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: palette.text, lineHeight: 1.45 }}>
+              <p style={{ margin: 0, ...DASH_TEXT.body, fontWeight: 700 }}>
                 Mensagens, equipa e rotas alinhadas ao mesmo tempo real.
               </p>
             </div>
@@ -2741,8 +2781,8 @@ const ZaptroDashboardContent: React.FC = () => {
             >
               <Icon size={20} strokeWidth={2} color={palette.lime} style={{ flexShrink: 0 }} />
               <span style={{ textAlign: 'left', minWidth: 0 }}>
-                <span style={{ display: 'block', fontSize: 14, fontWeight: 700, letterSpacing: '-0.02em' }}>{label}</span>
-                <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: palette.textMuted, marginTop: 4 }}>
+                <span style={{ display: 'block', ...DASH_TEXT.body, fontWeight: 700, letterSpacing: '-0.02em' }}>{label}</span>
+                <span style={{ display: 'block', ...DASH_TEXT.label, fontWeight: 600, marginTop: 4 }}>
                   {sub}
                 </span>
               </span>
@@ -2780,11 +2820,11 @@ const ZaptroDashboardContent: React.FC = () => {
               </p>
               
               <div style={styles.welcomeActions}>
-                 <button style={styles.modalActionBtn} onClick={() => setShowWelcome(false)}>
+                 <button className="hub-premium-pill primary" style={{ width: '100%', height: '48px' }} onClick={() => setShowWelcome(false)}>
                     ACESSAR DASHBOARD
                  </button>
                  {connectionStatus === 'failed' && (
-                    <button style={styles.modalSecBtn} onClick={() => navigate(`${ZAPTRO_ROUTES.SETTINGS_ALIAS}?tab=config`)}>
+                    <button className="hub-premium-pill secondary" style={{ width: '100%', height: '48px', marginTop: '12px' }} onClick={() => navigate(`${ZAPTRO_ROUTES.SETTINGS_ALIAS}?tab=config`)}>
                        CONECTAR WHATSAPP <ExternalLink size={14} />
                     </button>
                  )}
@@ -3132,7 +3172,7 @@ const styles: Record<string, any> = {
     justifyContent: 'center',
   },
   title: { fontSize: '40px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: '-2px' },
-  subtitle: { fontSize: '16px', color: '#64748B', margin: 0, fontWeight: '500' },
+  subtitle: { ...DASH_TEXT.body, fontSize: 12, margin: 0 },
   /** Ocupa a linha inteira abaixo da saudação → botões alinhados à direita do painel. */
   headerActions: {
     display: 'flex',
@@ -3168,10 +3208,6 @@ const styles: Record<string, any> = {
     boxShadow: ZAPTRO_SHADOW.sm, cursor: 'pointer', transition: '0.2s'
   },
   statTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
-  neonIconBox: { 
-    width: '60px', height: '60px', borderRadius: '20px', display: 'flex', alignItems: 'center', 
-    justifyContent: 'center', backgroundColor: '#D9FF0015'
-  },
   statBadge: {
     display: 'flex',
     alignItems: 'center',
@@ -3195,7 +3231,7 @@ const styles: Record<string, any> = {
   },
   statUploadHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' },
   statUploadTitle: { margin: 0, fontSize: '20px', fontWeight: 700, color: '#0f172a', letterSpacing: '-0.5px' },
-  statUploadHint: { margin: '0 0 20px', fontSize: '14px', color: '#64748b', lineHeight: 1.5 },
+  statUploadHint: { margin: '0 0 20px', ...DASH_TEXT.body, lineHeight: 1.5 },
   statUploadFileLabel: {
     display: 'inline-flex',
     alignItems: 'center',
@@ -3214,7 +3250,7 @@ const styles: Record<string, any> = {
   statUploadActions: { display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' },
   statContent: { display: 'flex', flexDirection: 'column', gap: '4px' },
   statValue: { fontSize: '42px', fontWeight: '700', color: '#0F172A', margin: 0, letterSpacing: '-1.5px' },
-  statLabel: { fontSize: '14px', color: ZAPTRO_TITLE_COLOR, fontWeight: '700' },
+  statLabel: { ...DASH_TEXT.body, margin: 0, fontWeight: 700 },
 
   mainGrid: { display: 'flex', gap: '20px', flexWrap: 'wrap' },
   gridCard: { backgroundColor: 'white', padding: '32px', borderRadius: '40px', border: `1px solid ${ZAPTRO_SECTION_BORDER}`, boxShadow: ZAPTRO_SHADOW.md, minWidth: '320px' },
@@ -3239,21 +3275,21 @@ const styles: Record<string, any> = {
   feedRow: { display: 'flex', gap: '14px', alignItems: 'center' },
   userAvatar: { width: '36px', height: '36px', borderRadius: '12px', backgroundColor: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', color: '#0F172A', border: `1px solid ${ZAPTRO_SECTION_BORDER}` },
   feedInfo: { flex: 1 },
-  feedText: { fontSize: '13px', color: '#1E293B', margin: 0, lineHeight: '1.4' },
-  feedTime: { fontSize: '11px', color: '#94A3B8', fontWeight: '700', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' },
-  viewMoreBtn: { width: '100%', padding: '16px', marginTop: '32px', backgroundColor: 'transparent', border: '1px solid #e4e4e7', borderRadius: '16px', color: '#64748B', fontWeight: '700', fontSize: '13px', cursor: 'pointer' },
+  feedText: { ...DASH_TEXT.body, margin: 0 },
+  feedTime: { ...DASH_TEXT.label, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' },
+  viewMoreBtn: { width: '100%', padding: '16px', marginTop: '32px', backgroundColor: 'transparent', border: '1px solid #e4e4e7', borderRadius: '16px', color: '#949494', fontWeight: '700', fontSize: '13px', cursor: 'pointer' },
 
   modalOverlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 },
   modalContent: { width: '600px', backgroundColor: 'white', borderRadius: '48px', boxShadow: ZAPTRO_SHADOW.xxl, overflow: 'hidden' },
   modalHeader: { padding: '40px 40px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   modalTypeBadge: { padding: '8px 16px', borderRadius: '12px', fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '1px' },
-  closeBtn: { background: ZAPTRO_FIELD_BG, border: 'none', width: '40px', height: '40px', borderRadius: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' },
+  closeBtn: { background: ZAPTRO_FIELD_BG, border: 'none', width: '40px', height: '40px', borderRadius: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#949494' },
   
   modalBody: { padding: '0 40px 40px' },
   modalMainInfo: { display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '40px', marginTop: '10px' },
   modalAvatarLarge: { width: '64px', height: '64px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: '700', color: 'white' },
   modalTitle: { fontSize: '24px', fontWeight: '700', color: '#0F172A', margin: '0 0 6px 0', letterSpacing: '-1px' },
-  modalUserSub: { fontSize: '14px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 },
+  modalUserSub: { fontSize: '14px', color: '#949494', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 },
   
   modalGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' },
   modalInfoCard: { padding: '20px', backgroundColor: ZAPTRO_FIELD_BG, borderRadius: '24px', border: `1px solid ${ZAPTRO_SECTION_BORDER}` },
@@ -3273,7 +3309,7 @@ const styles: Record<string, any> = {
   welcomeStatusBox: { marginBottom: '30px', backgroundColor: ZAPTRO_FIELD_BG, padding: '20px', borderRadius: '24px', border: `1px solid ${ZAPTRO_SECTION_BORDER}` },
   statusLine: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' },
   statusText: { fontSize: '16px', color: '#000', margin: 0, fontWeight: '600' },
-  welcomeDesc: { fontSize: '15px', color: '#64748B', lineHeight: '1.6', marginBottom: '40px', fontWeight: '500' },
+  welcomeDesc: { fontSize: '15px', color: '#949494', lineHeight: '1.6', marginBottom: '40px', fontWeight: '500' },
   welcomeActions: { display: 'flex', flexDirection: 'column', gap: '12px' },
 };
 

@@ -48,6 +48,10 @@ import {
   zaptroPublicTrackPath,
 } from '../constants/zaptroRouteExecution';
 import { appendZaptroActivityLog } from '../constants/zaptroActivityLogStore';
+import {
+  readLocalCompanyLogoUrl,
+  readLocalCompanyName,
+} from '../lib/zaptroRouteCompanyBranding';
 import { deleteRouteLiveToken, patchRouteLive, readRouteLive } from '../constants/zaptroRouteLiveStore';
 import {
   readActiveRoutes,
@@ -63,17 +67,31 @@ import { hasZaptroGranularPermission, isZaptroTenantAdminRole } from '../utils/z
 import { zaptroProfileInitials } from '../utils/zaptroDriverSelfProfile';
 import OpenStreetRouteMap from '../components/OpenStreetRouteMap';
 import { ZAPTRO_DEMO_DRIVERS } from '../constants/zaptroDriversDemo';
+import { isDriverBlockedById } from '../lib/zaptroDriverProfileExtended';
+import { resolveFleetDriverById } from '../lib/zaptroFleetDriverResolve';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import leafletMarker2x from 'leaflet/dist/images/marker-icon-2x.png';
+import leafletMarker from 'leaflet/dist/images/marker-icon.png';
+import leafletMarkerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { 
   ZAPTRO_MAP_DEST_ICON, 
   ZAPTRO_MAP_VEHICLE_ICON,
 } from '../constants/zaptroMapStyles';
 
+// Fix Leaflet default marker asset URLs under Vite bundling (prevents 404s in console).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: leafletMarker2x,
+  iconUrl: leafletMarker,
+  shadowUrl: leafletMarkerShadow,
+});
+
 const LIME = '#D9FF00';
 
-const ZaptroRoutesInner: React.FC = () => {
+export const ZaptroRoutesInner: React.FC = () => {
   const { profile, user } = useAuth();
   const { company } = useTenant();
   const { palette } = useZaptroTheme();
@@ -152,6 +170,7 @@ const ZaptroRoutesInner: React.FC = () => {
       createdBy: profile?.full_name || undefined,
       clientRef: clientRefDraft.trim() || undefined,
       internalNote: noteDraft.trim() || undefined,
+      driverId: driverIdDraft || undefined,
     };
 
     setRows((prev) => {
@@ -160,13 +179,26 @@ const ZaptroRoutesInner: React.FC = () => {
       return next;
     });
 
+    if (driverIdDraft && (driver?.status === 'bloqueado' || isDriverBlockedById(driverIdDraft))) {
+      notifyZaptro('error', 'Motorista bloqueado', 'Desbloqueie o motorista antes de criar uma rota para ele.');
+      return;
+    }
+
+    const fleetCtx = driver?.id ? resolveFleetDriverById(driver.id) : null;
     patchRouteLive(token, {
-      publicCompanyName: company?.name || 'Zaptro User',
-      publicHeaderLogoUrl: company?.logo_url || null,
-      driverDisplayName: driver?.name || undefined,
-      driverAvatarUrl: driver?.photo_url || undefined,
-      originLabel: originDraft || undefined,
-      destLabel: destDraft || undefined,
+      status: 'assigned',
+      publicCompanyName: company?.name || readLocalCompanyName() || 'Transportadora',
+      publicHeaderLogoUrl: company?.logo_url || readLocalCompanyLogoUrl() || null,
+      fleetDriverId: driver?.id ?? null,
+      driverDisplayName: fleetCtx?.name || driver?.name || undefined,
+      driverPhone: fleetCtx?.phone || driver?.phone || undefined,
+      driverVehicle: fleetCtx?.vehicle || driver?.vehicle || undefined,
+      driverAvatarUrl: fleetCtx?.photoUrl || driver?.photo_url || undefined,
+      driverEmploymentType: fleetCtx?.employmentType ?? null,
+      driverVehicleOwnership: fleetCtx?.vehicleOwnership ?? null,
+      originLabel: originDraft.trim() || undefined,
+      destLabel: destDraft.trim() || undefined,
+      opsNotifyEmail: user?.email?.trim() || profile?.email?.trim() || null,
     });
 
     setStartDrawerOpen(false);
@@ -176,7 +208,15 @@ const ZaptroRoutesInner: React.FC = () => {
     setDestDraft('');
     setNoteDraft('');
     notifyZaptro('success', 'Rota criada', 'Operação iniciada e vinculada ao motorista.');
-  }, [company, crmStorageId, profile?.full_name, clientRefDraft, driverIdDraft, originDraft, destDraft, noteDraft]);
+  }, [company, crmStorageId, profile?.full_name, profile?.email, user?.email, clientRefDraft, driverIdDraft, originDraft, destDraft, noteDraft]);
+
+  const copyRouteLink = useCallback((path: string, label: string) => {
+    const url = `${window.location.origin}${path}`;
+    void navigator.clipboard.writeText(url).then(
+      () => notifyZaptro('success', 'Link copiado', `${label}: ${url}`),
+      () => notifyZaptro('info', label, url),
+    );
+  }, []);
 
   const executeDeletePermanently = (row: ActiveRouteRow) => {
     setRows((prev) => {
@@ -215,26 +255,20 @@ const ZaptroRoutesInner: React.FC = () => {
   }, [rows]);
 
   return (
-    <div style={{ display: 'flex', height: '100%', overflow: 'hidden', background: pageBg, padding: 16, gap: 16 }}>
-      
+    <div className="zaptro-routes-page" style={{ background: pageBg }}>
       {/* ─── SIDEBAR (LEFT) ─────────────────────────────────── */}
-      <aside style={{
-        width: 380,
-        minWidth: 380,
-        background: panelBg,
-        borderRadius: 24,
-        border: `1px solid ${border}`,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        position: 'relative',
-        zIndex: 10,
-        boxShadow: isDark ? 'none' : '0 10px 40px rgba(0,0,0,0.06)',
-      }}>
+      <aside
+        className="zaptro-routes-page__sidebar"
+        style={{
+          background: panelBg,
+          border: `1px solid ${border}`,
+          boxShadow: isDark ? 'none' : '0 10px 40px rgba(0,0,0,0.06)',
+        }}
+      >
         <div style={{ padding: '24px 24px 16px', borderBottom: `1px solid ${border}` }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
             <div>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: text, letterSpacing: '-0.03em' }}>Rotas</h1>
+              <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, color: '#000', letterSpacing: '-0.02em' }}>Rotas</h1>
               <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: muted }}>CENTRAL LOGÍSTICA</p>
             </div>
             <button 
@@ -306,16 +340,15 @@ const ZaptroRoutesInner: React.FC = () => {
       </aside>
 
       {/* ─── MAIN AREA (PREMIUM MAP) ─────────────────────────────────── */}
-      <main style={{ 
-        flex: 1, 
-        position: 'relative', 
-        overflow: 'hidden', 
-        borderRadius: 24, 
-        background: '#fff', 
-        border: `1px solid ${border}`, 
-        boxShadow: isDark ? 'none' : '0 10px 40px rgba(0,0,0,0.06)' 
-      }}>
-        <div style={{ height: '100%', width: '100%', position: 'relative' }}>
+      <main
+        className="zaptro-routes-page__map"
+        style={{
+          background: '#fff',
+          border: `1px solid ${border}`,
+          boxShadow: isDark ? 'none' : '0 10px 40px rgba(0,0,0,0.06)',
+        }}
+      >
+        <div className="zaptro-routes-page__map-inner">
           <style dangerouslySetInnerHTML={{ __html: `
             .zaptro-grayscale-map .leaflet-tile-container {
               filter: none !important;
@@ -540,10 +573,31 @@ const ZaptroRoutesInner: React.FC = () => {
                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: text, lineHeight: 1.6 }}>O motorista está atualmente vinculado a esta rota. Você pode acompanhar a localização em tempo real no mapa principal ou compartilhar o link público.</p>
               </div>
 
+              {readRouteLive(detailRow.token)?.opsIncidentAt ? (
+                <div style={{ padding: 16, borderRadius: 16, border: '1px solid rgba(239,68,68,0.45)', background: 'rgba(239,68,68,0.08)', marginBottom: 4 }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#b91c1c' }}>Ocorrência reportada pelo motorista</p>
+                  <p style={{ margin: '8px 0 0', fontSize: 12, fontWeight: 600, color: text, lineHeight: 1.5 }}>
+                    {readRouteLive(detailRow.token)?.opsIncidentNote || 'Sem descrição.'} — contacte o motorista. O cliente não vê este alerta.
+                  </p>
+                </div>
+              ) : null}
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                 <button onClick={() => navigate(zaptroDriverRoutePath(detailRow.token))} style={{ padding: 16, borderRadius: 16, background: '#000', color: LIME, border: 'none', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer' }}><Truck size={18} /> Painel Motorista</button>
-                 <button onClick={() => navigate(zaptroPublicTrackPath(detailRow.token))} style={{ padding: 16, borderRadius: 16, background: isDark ? 'rgba(255,255,255,0.05)' : '#fff', color: text, border: `1px solid ${border}`, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer' }}><ExternalLink size={18} /> Link Público</button>
+                 <button type="button" onClick={() => navigate(zaptroDriverRoutePath(detailRow.token, readRouteLive(detailRow.token)?.driverPhone))} style={{ padding: 16, borderRadius: 16, background: '#000', color: LIME, border: 'none', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer' }}><Truck size={18} /> Painel Motorista</button>
+                 <button type="button" onClick={() => navigate(zaptroPublicTrackPath(detailRow.token))} style={{ padding: 16, borderRadius: 16, background: isDark ? 'rgba(255,255,255,0.05)' : '#fff', color: text, border: `1px solid ${border}`, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer' }}><ExternalLink size={18} /> Rastreio Cliente</button>
               </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <button type="button" onClick={() => copyRouteLink(zaptroDriverRoutePath(detailRow.token, readRouteLive(detailRow.token)?.driverPhone), 'Link motorista (WhatsApp)')} style={{ padding: 14, borderRadius: 14, border: `1px solid ${border}`, background: cardBg, color: text, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12 }}><Copy size={16} /> Copiar link motorista</button>
+                <button type="button" onClick={() => copyRouteLink(zaptroPublicTrackPath(detailRow.token), 'Link cliente')} style={{ padding: 14, borderRadius: 14, border: `1px solid ${border}`, background: cardBg, color: text, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12 }}><Copy size={16} /> Copiar link cliente</button>
+              </div>
+
+              {readRouteLive(detailRow.token)?.driverDisplayName ? (
+                <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: muted }}>
+                  Motorista: <strong style={{ color: text }}>{readRouteLive(detailRow.token)?.driverDisplayName}</strong>
+                  {readRouteLive(detailRow.token)?.driverPhone ? ` · ${readRouteLive(detailRow.token)?.driverPhone}` : ''}
+                </p>
+              ) : null}
 
               <section>
                 <h4 style={{ fontSize: 12, fontWeight: 900, color: muted, textTransform: 'uppercase', marginBottom: 16 }}>Dados da Rota</h4>
@@ -651,7 +705,7 @@ function rowMatchesStatusTab(row: ActiveRouteRow, tab: RoutesStatusTab): boolean
   if (lv === 'encerrada') return false;
   switch (tab) {
     case 'iniciar': return lv === 'assigned' || lv === 'draft';
-    case 'em_rota': return lv === 'started';
+    case 'em_rota': return lv === 'en_route' || lv === 'started' || lv === 'arrived';
     case 'cheguei': return lv === 'arrived';
     case 'entrega': return lv === 'delivered';
     case 'problema': return lv === 'issue';
@@ -687,6 +741,7 @@ function getRouteCardVisual(row: ActiveRouteRow): RouteCardVisual {
   switch (st) {
     case 'delivered': return { title: 'Entregue', accent: '#16a34a', iconBg: 'rgba(34,197,94,0.2)', iconFg: '#15803d', ...photos };
     case 'arrived': return { title: 'No Local', accent: '#ea580c', iconBg: 'rgba(249,115,22,0.22)', iconFg: '#c2410c', ...photos };
+    case 'en_route': return { title: 'A caminho', accent: '#0ea5e9', iconBg: 'rgba(14,165,233,0.18)', iconFg: '#0369a1', ...photos };
     case 'started': return { title: 'Em Rota', accent: LIME, iconBg: 'rgba(217,255,0,0.15)', iconFg: '#000', ...photos };
     case 'issue': return { title: 'Problema', accent: '#dc2626', iconBg: 'rgba(239,68,68,0.2)', iconFg: '#b91c1c', ...photos };
     default: return { title: 'Agendada', accent: '#525252', iconBg: 'rgba(64,64,64,0.14)', iconFg: '#262626', ...photos };
@@ -756,7 +811,7 @@ const ZaptroRoutes: React.FC = () => {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', gap: '20px' }}>
         <div style={{ width: 40, height: 40, border: '3px solid #E2E8F0', borderTopColor: '#0061FF', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <p style={{ color: '#64748B', fontSize: '14px', fontWeight: '600' }}>Identificando sua empresa...</p>
+        <p style={{ color: '#949494', fontSize: '14px', fontWeight: '600' }}>Identificando sua empresa...</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );

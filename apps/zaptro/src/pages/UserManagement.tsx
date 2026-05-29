@@ -173,7 +173,7 @@ const UserManagement: React.FC = () => {
       <div style={styles.tableCard}>
          <div style={styles.cardToolbar}>
             <div style={styles.search}>
-               <Search size={18} color="#94A3B8" />
+               <Search size={18} color="#949494" />
                <input placeholder="Buscar por nome ou cargo..." style={styles.searchInput} onChange={e => setSearchTerm(e.target.value)} />
             </div>
          </div>
@@ -207,7 +207,7 @@ const UserManagement: React.FC = () => {
                           {availableModules.map(m => (
                             <div key={m.id} style={{
                                 opacity: user.metadata?.modules?.[m.id] ? 1 : 0.2,
-                                color: user.metadata?.modules?.[m.id] ? '#0F172A' : '#94A3B8'
+                                color: user.metadata?.modules?.[m.id] ? '#0F172A' : '#949494'
                             }}>
                                <m.icon size={16} />
                             </div>
@@ -276,7 +276,7 @@ const UserManagement: React.FC = () => {
                         backgroundColor: (formData.modules as any)[m.id] ? '#CCFF0008' : '#FFF'
                       }}
                     >
-                       <m.icon size={20} color={(formData.modules as any)[m.id] ? '#0F172A' : '#94A3B8'} />
+                       <m.icon size={20} color={(formData.modules as any)[m.id] ? '#0F172A' : '#949494'} />
                        <span style={{fontSize: '11px', fontWeight: '600', textAlign: 'center'}}>{m.label}</span>
                     </div>
                  ))}
@@ -333,7 +333,7 @@ const styles: Record<string, any> = {
   zaptroHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '48px' },
   headerInfo: { display: 'flex', flexDirection: 'column', gap: '8px' },
   title: { fontSize: '32px', fontWeight: '700', color: '#0F172A', margin: 0, letterSpacing: '-1.5px' },
-  subtitle: { fontSize: '16px', color: '#64748B', fontWeight: '500', margin: 0 },
+  subtitle: { fontSize: '16px', color: '#949494', fontWeight: '500', margin: 0 },
   primaryBtn: { backgroundColor: '#0F172A', color: 'white', border: 'none', padding: '14px 28px', borderRadius: '16px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
   
   tableCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #e8e8e8', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' },
@@ -343,22 +343,22 @@ const styles: Record<string, any> = {
   
   table: { width: '100%', borderCollapse: 'collapse' },
   thRow: { backgroundColor: '#f4f4f4', borderBottom: '1px solid #e8e8e8' },
-  th: { padding: '16px 32px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: '#94A3B8', letterSpacing: '1px' },
+  th: { padding: '16px 32px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: '#949494', letterSpacing: '1px' },
   tr: { borderBottom: '1px solid #e8e8e8', transition: '0.2s' },
   td: { padding: '20px 32px' },
   
   userCell: { display: 'flex', alignItems: 'center', gap: '16px' },
   avatar: { width: '40px', height: '40px', borderRadius: '14px', backgroundColor: '#ebebeb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', color: '#0F172A', fontSize: '16px' },
   uName: { display: 'block', fontSize: '15px', fontWeight: '700', color: '#0F172A' },
-  uEmail: { fontSize: '12px', color: '#94A3B8' },
-  roleTag: { padding: '6px 14px', backgroundColor: '#ebebeb', borderRadius: '10px', fontSize: '11px', fontWeight: '700', color: '#64748B' },
+  uEmail: { fontSize: '12px', color: '#949494' },
+  roleTag: { padding: '6px 14px', backgroundColor: '#ebebeb', borderRadius: '10px', fontSize: '11px', fontWeight: '700', color: '#949494' },
   modulesStrip: { display: 'flex', gap: '12px' },
   actionRow: { display: 'flex', gap: '8px', justifyContent: 'flex-end' },
-  iconBtn: { width: '36px', height: '36px', borderRadius: '12px', border: 'none', backgroundColor: '#f4f4f4', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
+  iconBtn: { width: '36px', height: '36px', borderRadius: '12px', border: 'none', backgroundColor: '#f4f4f4', color: '#949494', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
 
   form: { display: 'flex', flexDirection: 'column', gap: '20px' },
   inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  label: { fontSize: '13px', fontWeight: '600', color: '#64748B' },
+  label: { fontSize: '13px', fontWeight: '600', color: '#949494' },
   input: { padding: '14px', borderRadius: '14px', border: '1.5px solid #e8e8e8', fontSize: '14px', fontWeight: '700', outline: 'none' },
   modulesBlock: { marginTop: '12px' },
   modulesGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginTop: '12px' },
@@ -369,12 +369,12 @@ const styles: Record<string, any> = {
   deleteArea: { textAlign: 'center', padding: '20px 10px' },
   deleteIcon: { marginBottom: '24px' },
   deleteTitle: { fontSize: '20px', fontWeight: '700', color: '#0F172A', margin: '0 0 12px 0' },
-  deleteText: { fontSize: '15px', color: '#64748B', lineHeight: '1.6', marginBottom: '32px' },
+  deleteText: { fontSize: '15px', color: '#949494', lineHeight: '1.6', marginBottom: '32px' },
   confirmBox: { textAlign: 'left', backgroundColor: '#FFF5F5', padding: '20px', borderRadius: '20px', border: '1px solid #FFDCDC', marginBottom: '32px' },
   confirmLabel: { fontSize: '12px', color: '#EF4444', fontWeight: '700', marginBottom: '12px', display: 'block' },
   confirmInput: { width: '100%', padding: '14px', borderRadius: '12px', border: '2.5px solid #FFDCDC', fontSize: '18px', fontWeight: '700', textAlign: 'center', color: '#EF4444', outline: 'none' },
   modalActions: { display: 'flex', gap: '12px' },
-  cancelBtn: { flex: 1, padding: '16px', borderRadius: '16px', border: 'none', backgroundColor: '#ebebeb', color: '#64748B', fontWeight: '700', cursor: 'pointer' },
+  cancelBtn: { flex: 1, padding: '16px', borderRadius: '16px', border: 'none', backgroundColor: '#ebebeb', color: '#949494', fontWeight: '700', cursor: 'pointer' },
   deleteBtn: { flex: 1, padding: '16px', borderRadius: '16px', border: 'none', backgroundColor: '#EF4444', color: 'white', fontWeight: '700', cursor: 'pointer' }
 };
 

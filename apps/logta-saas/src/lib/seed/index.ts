@@ -15,11 +15,11 @@ import {
 import {
   savePontoRecords,
   loadPontoRecords,
-  savePontoConfig,
+  activatePontoConfig,
   loadPontoConfig,
-  createDefaultPontoConfig,
 } from '../../modules/rh/ponto/pontoStorage';
 import { saveColaboradorProfile } from '../../modules/rh/ponto/colaboradorRhStorage';
+import { appendLocalFinanceTransaction } from '../financeLocalStorage';
 
 export {
   LOGTA_DEMO_COMPANY_ID,
@@ -67,6 +67,35 @@ export function mergeOperationalWithSandbox<T extends { id: string }>(
   return mergeById(db, sandbox, minCount);
 }
 
+function appendSandboxRhFolhaPayments(
+  companyId: string,
+  transactions: ReturnType<typeof getSandboxOperationalBundle>['transactions'],
+) {
+  if (typeof window === 'undefined') return;
+  for (const t of transactions) {
+    const desc = (t.description ?? '').toLowerCase();
+    if (!desc.includes('[colab:')) continue;
+    appendLocalFinanceTransaction(companyId, {
+      id: t.id,
+      type: t.type === 'income' ? 'income' : 'expense',
+      amount: typeof t.amount === 'number' ? t.amount : 0,
+      description: t.description ?? '',
+      category: t.category ?? 'folha',
+      paid_at: t.paid_at ?? new Date().toISOString(),
+      created_at: t.created_at ?? new Date().toISOString(),
+      company_id: companyId,
+    });
+  }
+}
+
+/** Atualiza perfis RH do sandbox (holerites, salários demo). */
+export function refreshSandboxRhProfiles(companyId: string) {
+  if (!shouldUseLogtaSandbox()) return;
+  const bundle = getSandboxOperationalBundle(companyId);
+  bundle.colaboradorProfiles.forEach((p) => saveColaboradorProfile(p));
+  appendSandboxRhFolhaPayments(companyId, bundle.transactions);
+}
+
 export function seedLocalSandboxModules(companyId: string) {
   if (typeof window === 'undefined') return;
   const flag = `${LOGTA_SANDBOX_FLAG}:${companyId}`;
@@ -79,13 +108,11 @@ export function seedLocalSandboxModules(companyId: string) {
     savePontoRecords(companyId, bundle.pontoRecords);
   }
 
-  let cfg = loadPontoConfig(companyId);
-  if (!cfg || cfg.companyId !== companyId) {
-    cfg = createDefaultPontoConfig(companyId, 'Matriz São Paulo — Demo');
-    savePontoConfig(cfg);
-  }
+  activatePontoConfig(companyId, 'Matriz São Paulo — Demo');
 
   bundle.colaboradorProfiles.forEach((p) => saveColaboradorProfile(p));
+
+  appendSandboxRhFolhaPayments(companyId, bundle.transactions);
 
   localStorage.setItem(flag, '1');
   window.dispatchEvent(new CustomEvent('logta-operational-sync'));

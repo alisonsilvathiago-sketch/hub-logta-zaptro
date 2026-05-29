@@ -80,7 +80,7 @@ const HelpCategory: React.FC = () => {
         <div style={styles.bcItem} onClick={() => navigate('/ajuda')}>
           <Home size={14} /> Central de Ajuda
         </div>
-        <ChevronRight size={14} color="#94a3b8" />
+        <ChevronRight size={14} color="#949494" />
         <div style={{...styles.bcItem, color: 'var(--text-main)', cursor: 'default'}}>
           {category.name}
         </div>
@@ -145,10 +145,10 @@ const HelpCategory: React.FC = () => {
 
 const styles: Record<string, any> = {
   container: { minHeight: '100vh', backgroundColor: '#fcfdfe', padding: '120px 40px 80px 40px' },
-  loading: { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' },
+  loading: { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#949494' },
   breadcrumb: { 
     maxWidth: '1200px', margin: '0 auto 40px auto', display: 'flex', alignItems: 'center', gap: '8px',
-    fontSize: '13px', color: '#94a3b8', fontWeight: '500' 
+    fontSize: '13px', color: '#949494', fontWeight: '500' 
   },
   bcItem: { cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s', '&:hover': { color: 'var(--primary)' } },
   header: { 
@@ -158,8 +158,8 @@ const styles: Record<string, any> = {
   headerContent: { display: 'flex', gap: '24px', alignItems: 'center' },
   iconBox: { width: '80px', height: '80px', borderRadius: '24px', backgroundColor: 'rgba(217, 255, 0, 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: '32px', fontWeight: '700', color: '#0F172A', letterSpacing: '-1.5px', marginBottom: '8px' },
-  subtitle: { fontSize: '16px', color: '#64748B', maxWidth: '600px' },
-  articleCount: { fontSize: '14px', color: '#94a3b8', fontWeight: '600', padding: '8px 16px', borderRadius: '12px', border: '1px solid #e8e8e8' },
+  subtitle: { fontSize: '16px', color: '#949494', maxWidth: '600px' },
+  articleCount: { fontSize: '14px', color: '#949494', fontWeight: '600', padding: '8px 16px', borderRadius: '12px', border: '1px solid #e8e8e8' },
 
   main: { maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 320px', gap: '64px' },
   articlesGrid: { display: 'grid', gridTemplateColumns: '1fr', gap: '16px' },
@@ -170,15 +170,15 @@ const styles: Record<string, any> = {
   },
   articleInfo: { flex: 1, paddingRight: '40px' },
   articleTitle: { fontSize: '18px', fontWeight: '600', color: '#1e293b', marginBottom: '8px' },
-  articleExcerpt: { fontSize: '14px', color: '#94a3b8', lineHeight: '1.5' },
+  articleExcerpt: { fontSize: '14px', color: '#949494', lineHeight: '1.5' },
   articleFooter: { display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--primary)', fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap' },
 
   sidebar: { display: 'flex', flexDirection: 'column', gap: '24px' },
   ctaBox: { padding: '32px', backgroundColor: '#0f172a', borderRadius: '24px', color: 'white' },
   contactBtn: { width: '100%', marginTop: '20px', padding: '14px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' },
   
-  emptyState: { textAlign: 'center', padding: '100px 40px', color: '#94a3b8' },
-  backBtn: { marginTop: '24px', padding: '10px 20px', backgroundColor: '#ebebeb', border: 'none', borderRadius: '10px', color: '#64748b', fontWeight: '700', cursor: 'pointer' }
+  emptyState: { textAlign: 'center', padding: '100px 40px', color: '#949494' },
+  backBtn: { marginTop: '24px', padding: '10px 20px', backgroundColor: '#ebebeb', border: 'none', borderRadius: '10px', color: '#949494', fontWeight: '700', cursor: 'pointer' }
 };
 
 export default HelpCategory;

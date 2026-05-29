@@ -105,7 +105,7 @@ const styles: Record<string, any> = {
 
   main: { padding: '25px' },
   routeHeader: { backgroundColor: '#111', padding: '25px', borderRadius: '25px', border: '1px solid #222', marginBottom: '40px' },
-  pLabel: { fontSize: '10px', color: '#94A3B8', fontWeight: '700', letterSpacing: '2px' },
+  pLabel: { fontSize: '10px', color: '#949494', fontWeight: '700', letterSpacing: '2px' },
   pVal: { fontSize: '20px', fontWeight: '700', color: '#D9FF00', margin: '10px 0' },
   pBar: { height: '6px', backgroundColor: '#222', borderRadius: '3px', overflow: 'hidden' },
   pFill: { height: '100%', backgroundColor: '#D9FF00' },
@@ -114,9 +114,9 @@ const styles: Record<string, any> = {
   deliveryCard: { backgroundColor: '#111', border: '1px solid #333', borderRadius: '30px', padding: '25px', marginBottom: '20px' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px' },
   stopNum: { fontSize: '11px', fontWeight: '700', color: '#D9FF00', backgroundColor: '#D9FF0020', padding: '4px 10px', borderRadius: '6px' },
-  stopTime: { fontSize: '11px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '5px' },
+  stopTime: { fontSize: '11px', color: '#949494', display: 'flex', alignItems: 'center', gap: '5px' },
   clientName: { fontSize: '22px', fontWeight: '700', margin: '0 0 10px 0' },
-  addressBox: { display: 'flex', gap: '10px', fontSize: '14px', color: '#94A3B8', lineHeight: 1.4, marginBottom: '25px' },
+  addressBox: { display: 'flex', gap: '10px', fontSize: '14px', color: '#949494', lineHeight: 1.4, marginBottom: '25px' },
 
   cardActions: { display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '15px' },
   navBtn: { padding: '15px', backgroundColor: '#222', border: 'none', borderRadius: '15px', color: '#FFF', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' },

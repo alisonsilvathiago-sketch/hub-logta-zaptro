@@ -1,5 +1,7 @@
 export type LogstokaRoleCode = 'master_admin' | 'logistics_manager' | 'operator';
 
+export type ProductPublicationStatus = 'draft' | 'review' | 'ready' | 'published';
+
 export type Marketplace =
   | 'shopee'
   | 'mercadolivre'
@@ -32,6 +34,18 @@ export interface LsProduct {
   max_stock?: number | null;
   main_image_url?: string | null;
   extra_images?: string[];
+  short_name?: string | null;
+  manufacturer_code?: string | null;
+  ncm?: string | null;
+  origin_code?: string | null;
+  description_short?: string | null;
+  description_html?: string | null;
+  promo_price?: number | null;
+  weight_kg?: number | null;
+  height_cm?: number | null;
+  width_cm?: number | null;
+  length_cm?: number | null;
+  publication_status?: ProductPublicationStatus;
   status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;

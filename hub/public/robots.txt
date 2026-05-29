@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /master
+Disallow: /app
+Allow: /login
+Allow: /checkout
+Allow: /combustivel
+Allow: /rastreamento-publico

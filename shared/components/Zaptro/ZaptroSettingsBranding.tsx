@@ -108,7 +108,7 @@ const ZaptroSettingsBranding: React.FC = () => {
         <h2 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.03em' }}>
           Marca & logo
         </h2>
-        <p style={{ margin: '10px 0 0', fontSize: 15, fontWeight: 600, color: '#64748b', maxWidth: 720, lineHeight: 1.55 }}>
+        <p style={{ margin: '10px 0 0', fontSize: 15, fontWeight: 600, color: '#949494', maxWidth: 720, lineHeight: 1.55 }}>
           Cola o URL da imagem ou carrega um ficheiro pequeno — vês o resultado ao lado antes de guardar. Isto atualiza
           o painel e o favicon do browser quando aplicável.
         </p>
@@ -240,7 +240,7 @@ const ZaptroSettingsBranding: React.FC = () => {
               placeholder="minha-transportadora"
               style={inputStyle}
             />
-            <p style={{ margin: '8px 0 0', fontSize: 12, fontWeight: 600, color: '#94a3b8' }}>
+            <p style={{ margin: '8px 0 0', fontSize: 12, fontWeight: 600, color: '#949494' }}>
               Exemplo:{' '}
               <strong style={{ color: '#334155' }}>
                 https://{subdomain || 'slug'}.{LOGTA_DOMAINS.ZAPTRO}
@@ -276,7 +276,7 @@ const ZaptroSettingsBranding: React.FC = () => {
         </div>
 
         <aside style={{ position: 'sticky', top: 12 }}>
-          <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: '#94a3b8' }}>
+          <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: '#949494' }}>
             PRÉ-VISUALIZAÇÃO
           </p>
           <div

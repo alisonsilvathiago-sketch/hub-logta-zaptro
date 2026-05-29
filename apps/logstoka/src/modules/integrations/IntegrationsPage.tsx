@@ -1,9 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { MARKETPLACE_LABELS } from '@/types';
+import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
+import { DEMO_INTEGRATION_LOGS, DEMO_WEBHOOKS } from '@/lib/logstokaDemoSeed';
 import Modal from '@/components/ui/Modal';
+import ClickableTableRow from '@/components/ui/ClickableTableRow';
 
 interface WebhookEndpoint {
   id: string;
@@ -30,6 +34,11 @@ const IntegrationsPage: React.FC = () => {
 
   const load = useCallback(async () => {
     if (!companyId) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      setWebhooks(DEMO_WEBHOOKS);
+      setLogs(DEMO_INTEGRATION_LOGS);
+      return;
+    }
     const [wh, lg] = await Promise.all([
       supabase.from('ls_webhook_endpoints').select('*').eq('company_id', companyId),
       supabase.from('ls_integration_logs').select('*').eq('company_id', companyId).order('created_at', { ascending: false }).limit(30),
@@ -44,6 +53,11 @@ const IntegrationsPage: React.FC = () => {
 
   const saveWebhook = async () => {
     if (!companyId || !form.name || !form.url) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      toast.success('[Demo] Webhook cadastrado');
+      setModalOpen(false);
+      return;
+    }
     const { error } = await supabase.from('ls_webhook_endpoints').insert({
       company_id: companyId,
       name: form.name,
@@ -62,7 +76,7 @@ const IntegrationsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-black">Central de Integrações</h2>
+        <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Central de Integrações</h2>
         <p className="text-sm text-slate-500">Marketplaces, webhooks e logs de integração</p>
       </div>
 
@@ -86,7 +100,7 @@ const IntegrationsPage: React.FC = () => {
             <div key={w.id} className="rounded-xl border border-slate-100 px-4 py-3">
               <p className="font-bold">{w.name}</p>
               <p className="text-xs text-slate-500">{w.url}</p>
-              <p className="text-xs text-emerald-600">{w.events.join(', ')}</p>
+              <p className="text-xs text-orange-600">{w.events.join(', ')}</p>
             </div>
           ))}
         </div>
@@ -99,12 +113,12 @@ const IntegrationsPage: React.FC = () => {
             <thead><tr><th>Direção</th><th>Endpoint</th><th>Status</th><th>Data</th></tr></thead>
             <tbody>
               {logs.map((l) => (
-                <tr key={l.id}>
+                <ClickableTableRow key={l.id} to={`/app/integrations/logs/${l.id}`}>
                   <td>{l.direction}</td>
                   <td>{l.endpoint || '—'}</td>
                   <td>{l.status}</td>
                   <td>{new Date(l.created_at).toLocaleString('pt-BR')}</td>
-                </tr>
+                </ClickableTableRow>
               ))}
             </tbody>
           </table>
@@ -113,7 +127,7 @@ const IntegrationsPage: React.FC = () => {
 
       <div className="ls-card">
         <h3 className="mb-2 font-black">Webhooks de entrada</h3>
-        <code className="block rounded-xl bg-slate-950 p-4 text-xs text-emerald-300">
+        <code className="block rounded-xl bg-slate-950 p-4 text-xs text-orange-300">
           POST /webhooks/orders · /webhooks/marketplaces · Header: x-company-id
         </code>
       </div>

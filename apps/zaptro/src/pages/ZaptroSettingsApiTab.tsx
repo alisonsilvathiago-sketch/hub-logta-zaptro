@@ -114,7 +114,7 @@ const ZaptroSettingsApiTab: React.FC = () => {
     };
     persist([row, ...rows]);
     setDraft(emptyForm());
-    toastSuccess('Integração guardada. O sistema pode reconhecer esta API pelo tipo e pelo estado «activo».');
+    toastSuccess('Integração guardada. O sistema pode reconhecer esta API pelo tipo e pelo estado «ativo».');
   };
 
   const toggle = (id: string) => {
@@ -477,7 +477,7 @@ const ZaptroSettingsApiTab: React.FC = () => {
                           gap: 4,
                         }}
                       >
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: r.enabled ? '#16a34a' : '#94a3b8' }} />
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: r.enabled ? '#16a34a' : '#949494' }} />
                         {r.enabled ? 'Ativa' : 'Inativa'}
                       </span>
                     </div>

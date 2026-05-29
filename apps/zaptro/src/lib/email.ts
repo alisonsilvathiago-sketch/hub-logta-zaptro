@@ -54,7 +54,7 @@ export const generateEmailHtml = ({ nome_destinatario, mensagem, cta, config }: 
         </div>
 
         <!-- FOOTER -->
-        <div style="padding:24px; font-size:12px; color:#94a3b8; text-align:center; border-top: 1px solid #e8e8e8; background: #fafafa;">
+        <div style="padding:24px; font-size:12px; color:#949494; text-align:center; border-top: 1px solid #e8e8e8; background: #fafafa;">
           © ${config?.empresa_nome || 'Logta Platform'} - Transportes e Logística Inteligente
         </div>
 

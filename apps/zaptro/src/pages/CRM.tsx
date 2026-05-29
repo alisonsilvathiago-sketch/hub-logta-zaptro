@@ -250,8 +250,8 @@ const CRM: React.FC = () => {
                  </linearGradient>
                </defs>
                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
-               <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
+               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#949494'}} />
+               <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#949494'}} />
                <Tooltip />
                <Area type="monotone" dataKey="v" stroke="var(--primary)" strokeWidth={4} fill="url(#crmGradient)" />
              </AreaChart>
@@ -289,7 +289,7 @@ const CRM: React.FC = () => {
                   <p style={styles.leadResponsible}>{lead.responsible_name}</p>
                   <div style={styles.leadFooter}>
                     <span style={styles.leadValue}>R$ {lead.estimated_value?.toLocaleString('pt-BR')}</span>
-                    <ChevronRight size={14} color="#94a3b8" />
+                    <ChevronRight size={14} color="#949494" />
                   </div>
                 </div>
               ))}
@@ -319,7 +319,7 @@ const CRM: React.FC = () => {
                 <td style={styles.td}>
                   <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
                     <div style={{width:'36px', height:'36px', borderRadius:'10px', backgroundColor:'#f1f5f9', display:'flex', alignItems:'center', justifyContent:'center'}}>
-                      <Building size={18} color="#64748b" />
+                      <Building size={18} color="#949494" />
                     </div>
                     <strong>{c.name}</strong>
                   </div>
@@ -341,12 +341,12 @@ const CRM: React.FC = () => {
   );
 
   const headerActions = (
-    <div style={{ display: 'flex', gap: '8px' }}>
-      <button style={styles.actionBtn} onClick={() => toastSuccess('Exportando CRM...')}>
+    <div style={{ display: 'flex', gap: '12px' }}>
+      <button className="hub-premium-pill secondary" onClick={() => toastSuccess('Exportando CRM...')}>
         <Download size={16} />
         <span>Exportar</span>
       </button>
-      <button style={{...styles.actionBtn, backgroundColor: 'var(--primary)', color: 'white', border: 'none'}} onClick={() => { setSelectedLead(null); setIsDetailModalOpen(true); }}>
+      <button className="hub-premium-pill primary" onClick={() => { setSelectedLead(null); setIsDetailModalOpen(true); }}>
         <Plus size={16} />
         <span>Novo Lead</span>
       </button>
@@ -379,10 +379,10 @@ const CRM: React.FC = () => {
              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px'}}>
                 <div>
                   <h2 style={{fontSize: '28px', fontWeight: '700', color: 'var(--text-main)', margin: 0}}>{selectedLead.company_name}</h2>
-                  <p style={{color: '#64748b', fontSize: '15px', marginTop: '4px'}}>Status Atual: <span style={{color: 'var(--primary)', fontWeight: '600'}}>{selectedLead.status}</span></p>
+                  <p style={{color: '#949494', fontSize: '15px', marginTop: '4px'}}>Status Atual: <span style={{color: 'var(--primary)', fontWeight: '600'}}>{selectedLead.status}</span></p>
                 </div>
                 <div style={{textAlign: 'right'}}>
-                  <p style={{fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '600', margin: 0}}>Valor Estimado</p>
+                  <p style={{fontSize: '12px', color: '#949494', textTransform: 'uppercase', fontWeight: '600', margin: 0}}>Valor Estimado</p>
                   <h3 style={{fontSize: '24px', fontWeight: '700', color: '#10b981', margin: 0}}>R$ {selectedLead.estimated_value?.toLocaleString('pt-BR')}</h3>
                 </div>
              </div>
@@ -405,10 +405,10 @@ const CRM: React.FC = () => {
              </div>
 
              <div style={{display: 'flex', gap: '12px', marginTop: '40px'}}>
-                <button style={styles.btnFull} onClick={() => handleUpdateStatus(selectedLead.id, 'PROPOSAL')}>
+                <button className="hub-premium-pill secondary" style={{ width: '100%' }} onClick={() => handleUpdateStatus(selectedLead.id, 'PROPOSAL')}>
                   <FileText size={18} /> Mudar para Proposta
                 </button>
-                <button style={{...styles.btnFull, backgroundColor: '#10b981'}} onClick={() => handleConvertToClient(selectedLead)}>
+                <button className="hub-premium-pill success" style={{ width: '100%' }} onClick={() => handleConvertToClient(selectedLead)}>
                   <CheckCircle2 size={18} /> Marcar como Ganho
                 </button>
              </div>
@@ -418,7 +418,7 @@ const CRM: React.FC = () => {
              <div style={{textAlign: 'center', marginBottom: '10px'}}>
                 <Target size={48} color="var(--primary)" style={{opacity: 0.2, marginBottom: '12px'}} />
                 <h3 style={{fontSize: '20px', fontWeight: '700', margin: 0}}>Cadastrar Novo Lead</h3>
-                <p style={{color: '#64748b', fontSize: '14px'}}>Inicie uma nova oportunidade de negócio</p>
+                <p style={{color: '#949494', fontSize: '14px'}}>Inicie uma nova oportunidade de negócio</p>
              </div>
 
              <div style={styles.inputGroup}>
@@ -480,7 +480,7 @@ const CRM: React.FC = () => {
                 </div>
              </div>
 
-             <button type="submit" style={{...styles.btnFull, height: '56px', marginTop: '10px'}} disabled={loadingAction}>
+             <button type="submit" className="hub-premium-pill primary" style={{ width: '100%', height: '56px', marginTop: '10px' }} disabled={loadingAction}>
                 {loadingAction ? 'Salvando...' : 'Criar Lead Estratégico'}
              </button>
           </form>
@@ -496,7 +496,7 @@ const styles: Record<string, any> = {
   kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' },
   kpiCard: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', border: '1px solid #e8e8e8', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' },
   kpiInfo: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  kpiLabel: { fontSize: '12px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  kpiLabel: { fontSize: '12px', fontWeight: '600', color: '#949494', textTransform: 'uppercase', letterSpacing: '0.05em' },
   kpiValueText: { fontSize: '32px', fontWeight: '700', color: 'var(--text-main)', margin: '4px 0' },
   iconBox: { width: '64px', height: '64px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   
@@ -509,29 +509,29 @@ const styles: Record<string, any> = {
   columnHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
   columnHeaderTitle: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px', fontWeight: '700', color: '#1e293b' },
   columnDot: { width: '8px', height: '8px', borderRadius: '50%' },
-  columnCount: { fontSize: '11px', fontWeight: '700', color: '#64748b', backgroundColor: 'white', padding: '2px 8px', borderRadius: '10px', border: '1px solid #e2e8f0' },
+  columnCount: { fontSize: '11px', fontWeight: '700', color: '#949494', backgroundColor: 'white', padding: '2px 8px', borderRadius: '10px', border: '1px solid #e2e8f0' },
   columnBody: { display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 },
-  emptyColumn: { flex: 1, border: '2px dashed #e2e8f0', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '13px', fontWeight: '700' },
+  emptyColumn: { flex: 1, border: '2px dashed #e2e8f0', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#949494', fontSize: '13px', fontWeight: '700' },
   
   leadCard: { backgroundColor: 'white', padding: '20px', borderRadius: '24px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', border: '1px solid #e8e8e8', cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 10px 25px rgba(0,0,0,0.06)' } },
   leadName: { margin: '0 0 4px 0', fontSize: '15px', fontWeight: '700', color: 'var(--text-main)' },
-  leadResponsible: { fontSize: '12px', color: '#64748b', margin: 0 },
+  leadResponsible: { fontSize: '12px', color: '#949494', margin: 0 },
   leadFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e8e8e8' },
   leadValue: { fontSize: '14px', fontWeight: '700', color: 'var(--primary)' },
   
   tableCard: { backgroundColor: 'white', borderRadius: '32px', border: '1px solid #e8e8e8', overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.02)' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  th: { textAlign: 'left', padding: '20px 32px', fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e8e8e8', backgroundColor: '#fcfdfe' },
+  th: { textAlign: 'left', padding: '20px 32px', fontSize: '11px', fontWeight: '700', color: '#949494', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e8e8e8', backgroundColor: '#fcfdfe' },
   td: { padding: '20px 32px', fontSize: '14px', borderBottom: '1px solid #e8e8e8', color: '#475569' },
   tr: { transition: 'background-color 0.2s', '&:hover': { backgroundColor: '#fcfdfe' } },
   
   detailBox: { display: 'flex', gap: '16px', alignItems: 'center', padding: '20px', backgroundColor: '#f4f4f4', borderRadius: '20px', border: '1px solid #e8e8e8' },
-  detailLabel: { fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '600' },
+  detailLabel: { fontSize: '11px', color: '#949494', textTransform: 'uppercase', fontWeight: '600' },
   detailValue: { fontSize: '15px', fontWeight: '600', color: '#1e293b', margin: 0 },
   btnFull: { flex: 1, padding: '16px', borderRadius: '16px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' },
   actionBtn: { padding: '10px 18px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '600' },
   categoryBadge: { padding: '5px 12px', backgroundColor: '#f0f9ff', color: '#0369a1', borderRadius: '12px', fontSize: '11px', fontWeight: '700' },
-  iconBtn: { padding: '8px', color: '#94a3b8', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '10px', transition: 'all 0.2s', '&:hover': { backgroundColor: '#ebebeb', color: 'var(--primary)' } }
+  iconBtn: { padding: '8px', color: '#949494', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '10px', transition: 'all 0.2s', '&:hover': { backgroundColor: '#ebebeb', color: 'var(--primary)' } }
 };
 
 export default CRM;

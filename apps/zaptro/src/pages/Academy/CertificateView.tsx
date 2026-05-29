@@ -94,7 +94,7 @@ const CertificateView: React.FC = () => {
 const styles = {
   container: { minHeight: '100vh', backgroundColor: '#ebebeb', padding: '40px', display: 'flex', flexDirection: 'column' as const, alignItems: 'center' },
   noPrint: { width: '1000px', display: 'flex', justifyContent: 'space-between', marginBottom: '32px', '@media print': { display: 'none' } } as any,
-  backBtn: { display: 'flex', alignItems: 'center', gap: '8px', border: 'none', background: 'none', color: '#64748b', fontWeight: '600', cursor: 'pointer' },
+  backBtn: { display: 'flex', alignItems: 'center', gap: '8px', border: 'none', background: 'none', color: '#949494', fontWeight: '600', cursor: 'pointer' },
   actions: { display: 'flex', gap: '12px' },
   actionBtn: { padding: '10px 20px', backgroundColor: 'white', borderRadius: '10px', border: '1px solid #e2e8f0', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#1e293b' },
   
@@ -109,13 +109,13 @@ const styles = {
   content: { textAlign: 'center' as const, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', width: '100%' },
   badge: { marginBottom: '24px' },
   mainTitle: { fontSize: '48px', fontWeight: '700', color: '#1e293b', marginBottom: '24px', letterSpacing: '4px' },
-  introText: { fontSize: '18px', color: '#64748b', margin: '8px 0', fontStyle: 'italic' },
+  introText: { fontSize: '18px', color: '#949494', margin: '8px 0', fontStyle: 'italic' },
   studentName: { fontSize: '42px', fontWeight: '600', color: 'var(--primary)', margin: '24px 0', borderBottom: '2px solid #e8e8e8', paddingBottom: '12px', minWidth: '400px' },
   courseName: { fontSize: '28px', fontWeight: '700', color: '#000000', margin: '24px 0' },
   
   stats: { display: 'flex', gap: '60px', marginTop: '40px' },
   statItem: { display: 'flex', flexDirection: 'column' as const, gap: '4px' },
-  statLabel: { fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' as const },
+  statLabel: { fontSize: '11px', fontWeight: '700', color: '#949494', textTransform: 'uppercase' as const },
   statValue: { fontSize: '18px', fontWeight: '600', color: '#1e293b' },
   
   footer: { marginTop: 'auto', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '60px' },
@@ -124,8 +124,8 @@ const styles = {
   
   validation: { display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' as const },
   qrMock: { width: '64px', height: '64px', backgroundColor: '#ebebeb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '700', color: '#cbd5e1' },
-  valTitle: { display: 'block', fontSize: '10px', fontWeight: '700', color: '#94a3b8' },
-  valCode: { fontSize: '12px', color: '#64748b', fontWeight: '700' },
+  valTitle: { display: 'block', fontSize: '10px', fontWeight: '700', color: '#949494' },
+  valCode: { fontSize: '12px', color: '#949494', fontWeight: '700' },
 
   loader: { padding: '100px', color: 'var(--primary)', fontWeight: '600' },
   error: { padding: '100px', color: 'var(--primary)', fontWeight: '600' }

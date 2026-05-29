@@ -103,25 +103,7 @@ const CollaboratorProfile: React.FC = () => {
       
       if (data) setEmp(data);
       else {
-        // Mock fallback
-        setEmp({
-          id,
-          full_name: 'Lucas Silva Santana',
-          email: 'lucas.santana@logta.com.br',
-          position: 'Motorista de Pesados',
-          type: 'CLT',
-          status: 'Ativo',
-          hiring_date: '2023-05-12',
-          area: 'Logística Regional (Sudeste)',
-          handle: '@lucas_logta',
-          phone: '(11) 97766-5544',
-          address: 'Rua das Palmeiras, 120 - Barueri, SP',
-          vehicle: 'Scania R450 - Placa ABC-1234',
-          points: { presence: 98, absences: 2, late: 4 },
-          health: { score: 92, lastCheckin: 'Bem (😃)' },
-          conduct: { complaints: 0, positiveNotes: 14, warnings: 1 },
-          vacations: { last: 'Março/2025', next: 'Abril/2026', daysRemaining: 15 }
-        });
+        setEmp(null);
       }
       setLoading(false);
     };
@@ -283,8 +265,8 @@ const CollaboratorProfile: React.FC = () => {
                         </div>
                         <div style={{padding: '16px', backgroundColor: '#f4f4f4', borderRadius: '16px', border: '1px solid #e2e8f0'}}>
                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
-                              <span style={{fontSize: '11px', fontWeight: '700', color: '#64748b'}}>ATUALIZAÇÃO DOC</span>
-                              <span style={{fontSize: '10px', color: '#64748b'}}>02/04</span>
+                              <span style={{fontSize: '11px', fontWeight: '700', color: '#949494'}}>ATUALIZAÇÃO DOC</span>
+                              <span style={{fontSize: '10px', color: '#949494'}}>02/04</span>
                            </div>
                            <p style={{margin: 0, fontSize: '13px', color: '#444'}}>Certificado NR-35 atualizado com sucesso no cofre digital.</p>
                         </div>
@@ -298,12 +280,12 @@ const CollaboratorProfile: React.FC = () => {
                   <table style={{width: '100%', borderCollapse: 'collapse'}}>
                      <thead>
                         <tr style={{backgroundColor: '#f4f4f4'}}>
-                           <th style={{textAlign: 'left', padding: '16px 24px', fontSize: '11px', textTransform: 'uppercase', color: '#94a3b8'}}>Data</th>
-                           <th style={{textAlign: 'left', padding: '16px 24px', fontSize: '11px', textTransform: 'uppercase', color: '#94a3b8'}}>Entrada</th>
-                           <th style={{textAlign: 'left', padding: '16px 24px', fontSize: '11px', textTransform: 'uppercase', color: '#94a3b8'}}>Pausa</th>
-                           <th style={{textAlign: 'left', padding: '16px 24px', fontSize: '11px', textTransform: 'uppercase', color: '#94a3b8'}}>Retorno</th>
-                           <th style={{textAlign: 'left', padding: '16px 24px', fontSize: '11px', textTransform: 'uppercase', color: '#94a3b8'}}>Saída</th>
-                           <th style={{textAlign: 'left', padding: '16px 24px', fontSize: '11px', textTransform: 'uppercase', color: '#94a3b8'}}>Total</th>
+                           <th style={{textAlign: 'left', padding: '16px 24px', fontSize: '11px', textTransform: 'uppercase', color: '#949494'}}>Data</th>
+                           <th style={{textAlign: 'left', padding: '16px 24px', fontSize: '11px', textTransform: 'uppercase', color: '#949494'}}>Entrada</th>
+                           <th style={{textAlign: 'left', padding: '16px 24px', fontSize: '11px', textTransform: 'uppercase', color: '#949494'}}>Pausa</th>
+                           <th style={{textAlign: 'left', padding: '16px 24px', fontSize: '11px', textTransform: 'uppercase', color: '#949494'}}>Retorno</th>
+                           <th style={{textAlign: 'left', padding: '16px 24px', fontSize: '11px', textTransform: 'uppercase', color: '#949494'}}>Saída</th>
+                           <th style={{textAlign: 'left', padding: '16px 24px', fontSize: '11px', textTransform: 'uppercase', color: '#949494'}}>Total</th>
                         </tr>
                      </thead>
                      <tbody>
@@ -390,7 +372,7 @@ const CollaboratorProfile: React.FC = () => {
                             <h4 style={{margin: 0, fontSize: '14px', fontWeight: '600'}}>{log.details}</h4>
                             <p style={{margin: 0, fontSize: '11px', color: 'var(--text-muted)'}}>{log.module} • {log.action}</p>
                          </div>
-                         <span style={{fontSize: '11px', fontWeight: '700', color: '#94a3b8'}}>{new Date(log.created_at).toLocaleString()}</span>
+                         <span style={{fontSize: '11px', fontWeight: '700', color: '#949494'}}>{new Date(log.created_at).toLocaleString()}</span>
                          <button style={styles.detailsBtn}><Eye size={14} /></button>
                       </div>
                     ))

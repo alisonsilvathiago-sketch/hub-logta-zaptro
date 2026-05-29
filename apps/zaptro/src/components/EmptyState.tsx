@@ -94,7 +94,7 @@ const styles = {
   },
   description: {
     fontSize: '15px',
-    color: '#64748b',
+    color: '#949494',
     lineHeight: '1.6',
     margin: 0
   },

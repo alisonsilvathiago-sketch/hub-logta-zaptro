@@ -27,9 +27,14 @@ yarn-error.log*
 # Caches & tooling
 .cache
 *.tsbuildinfo
-.vercel
+# Vercel CLI — ignore local cache/tokens; keep linked project id for deploys
+**/.vercel/**
+!**/.vercel/project.json
 
 # Editor (optional — uncomment if you want repo-local settings ignored)
 # .idea
 # .vscode/*
 # !.vscode/extensions.json
+.vercel
+.env*.local
+.local-dev-logs/

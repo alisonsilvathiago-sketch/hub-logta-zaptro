@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Cpu, RefreshCw, Save, Coins, ArrowRight } from 'lucide-react';
+import { RefreshCw, Save, Coins } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
 import { useAuth } from '@core/context/AuthContext';
@@ -160,24 +159,6 @@ const ClientIaCredits: React.FC<{ embedded?: boolean }> = ({ embedded = false })
           >
             <RefreshCw size={16} /> Recarregar
           </button>
-          <Link
-            to="/master/ia-gateway"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 16px',
-              borderRadius: 12,
-              border: 'none',
-              background: '#0061FF',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: 13,
-              textDecoration: 'none',
-            }}
-          >
-            <Cpu size={16} /> Gateway IA <ArrowRight size={16} />
-          </Link>
         </div>
       ) : (
       <div
@@ -246,24 +227,6 @@ const ClientIaCredits: React.FC<{ embedded?: boolean }> = ({ embedded = false })
           >
             <RefreshCw size={16} /> Recarregar
           </button>
-          <Link
-            to="/master/ia-gateway"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 16px',
-              borderRadius: 12,
-              border: 'none',
-              background: '#0061FF',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: 13,
-              textDecoration: 'none',
-            }}
-          >
-            <Cpu size={16} /> Gateway IA <ArrowRight size={16} />
-          </Link>
         </div>
       </div>
       )}

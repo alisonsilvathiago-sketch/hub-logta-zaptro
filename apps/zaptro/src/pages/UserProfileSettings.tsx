@@ -248,7 +248,7 @@ const styles = {
   
   mainAvatarBox: { marginBottom: '24px' },
   avatarLarge: { 
-    width: '100px', height: '100px', borderRadius: '50%', backgroundColor: '#334155', border: '6px solid white',
+    width: '100px', height: '100px', borderRadius: '50%', backgroundColor: '#6B6B6B', border: '6px solid white',
     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', color: 'white', fontWeight: '600', position: 'relative' as const
   },
   camBtn: { position: 'absolute' as const, bottom: '0', right: '0', width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'white', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' },
@@ -256,14 +256,14 @@ const styles = {
   sectionCard: { backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '32px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
   cardTitle: { fontSize: '20px', fontWeight: '600', color: '#0F172A' },
-  editLink: { display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #E2E8F0', backgroundColor: 'transparent', padding: '8px 16px', borderRadius: '8px', fontSize: '13px', color: '#64748B', fontWeight: '700', cursor: 'pointer' },
+  editLink: { display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #E2E8F0', backgroundColor: 'transparent', padding: '8px 16px', borderRadius: '8px', fontSize: '13px', color: '#949494', fontWeight: '700', cursor: 'pointer' },
   securityBtn: { display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #DBEAFE', backgroundColor: '#F0F9FF', padding: '8px 16px', borderRadius: '8px', fontSize: '13px', color: '#D9FF00', fontWeight: '700', cursor: 'pointer' },
   
-  sectionDesc: { fontSize: '14px', color: '#64748B', marginBottom: '24px' },
+  sectionDesc: { fontSize: '14px', color: '#949494', marginBottom: '24px' },
   
   dataGrid: { display: 'flex', flexDirection: 'column' as const, gap: '16px' },
   dataRow: { display: 'grid', gridTemplateColumns: '240px 1fr', alignItems: 'center' },
-  dataLabel: { fontSize: '13px', fontWeight: '700', color: '#64748B' },
+  dataLabel: { fontSize: '13px', fontWeight: '700', color: '#949494' },
   dataValue: { fontSize: '14px', fontWeight: '600', color: '#1E293B' },
   dataInput: { padding: '10px 14px', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '14px', color: '#1E293B', outline: 'none', backgroundColor: '#f4f4f4' },
   dataLink: { fontSize: '14px', fontWeight: '600', color: '#D9FF00', textDecoration: 'none' },
@@ -274,7 +274,7 @@ const styles = {
   socialGroup: { display: 'flex', gap: '16px' },
   
   formGroup: { marginBottom: '16px' },
-  label: { display: 'block', fontSize: '13px', fontWeight: '700', color: '#64748B', marginBottom: '8px' },
+  label: { display: 'block', fontSize: '13px', fontWeight: '700', color: '#949494', marginBottom: '8px' },
   formInput: { width: '100%', padding: '12px 14px', borderRadius: '10px', border: '1px solid #E2E8F0', outline: 'none' },
   actionBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }
 };

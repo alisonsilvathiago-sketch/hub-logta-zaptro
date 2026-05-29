@@ -1,8 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { collaboratorIdFromDocument } from '../colaboradorRhStorage';
+import { LogtaKpiStrip } from '../../../../components/LogtaKpiStrip';
 import {
   Activity,
+  AlertTriangle,
   ArrowLeft,
   CheckCircle2,
   Clock,
@@ -10,9 +12,12 @@ import {
   Download,
   Link2,
   MapPin,
+  Power,
+  PowerOff,
   Printer,
   QrCode,
   RefreshCw,
+  Save,
   Shield,
   Sparkles,
   Users,
@@ -22,8 +27,11 @@ import { showToast } from '../../../../components/Toast';
 import { LogtaWaveTabStrip } from '../../../../components/LogtaWaveTabStrip';
 import { usePontoConfig } from '../hooks/usePontoConfig';
 import {
+  buildPublicPontoPath,
   buildPublicPontoUrl,
   buildSectorQrPath,
+  LOCALHOST_PONTO_ORIGIN,
+  resolvePontoPublicOrigin,
   regeneratePublicToken,
   slugifyUnit,
 } from '../pontoStorage';
@@ -59,12 +67,24 @@ export function ControlePontoView({
 }: ControlePontoViewProps) {
   const { config: tenantConfig } = useTenant();
   const companyId = tenantConfig?.id;
-  const { config, records, alerts, insights, stats, persistConfig, refreshRecords } =
-    usePontoConfig(companyId);
+  const {
+    config,
+    records,
+    alerts,
+    insights,
+    stats,
+    persistConfig,
+    activateConfig,
+    deactivateConfig,
+    refreshRecords,
+  } = usePontoConfig(companyId);
 
   const [activeTab, setActiveTab] = useState('config');
 
-  const publicUrl = useMemo(() => (config ? buildPublicPontoUrl(config) : ''), [config]);
+  const publicUrl = useMemo(
+    () => (config ? buildPublicPontoUrl(config) : ''),
+    [config],
+  );
 
   const applyMode = useCallback(
     (mode: PontoRegistrationMode) => {
@@ -92,6 +112,12 @@ export function ControlePontoView({
     });
   };
 
+  const saveConfiguration = useCallback(() => {
+    if (!config) return;
+    persistConfig({});
+    showToast('success', 'Configuração de ponto salva.', 'Controle de Ponto');
+  }, [config, persistConfig]);
+
   if (!config) {
     return (
       <div className="flex items-center justify-center py-20 text-sm font-bold text-gray-400">
@@ -117,18 +143,62 @@ export function ControlePontoView({
             </div>
             <div className="min-w-0">
               <h2 className="logta-page-title text-xl sm:text-2xl">Controle de Ponto</h2>
-              <p className="mt-1.5 max-w-2xl text-sm font-medium text-gray-600">
-                Central de configuração inteligente — QR Code, link público, geolocalização e
-                validações operacionais.
-              </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[9px] font-bold uppercase text-green-700">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
-                  IA ativa
+                <span
+                  className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase ${
+                    config.isActive
+                      ? 'border-green-200 bg-green-50 text-green-700'
+                      : 'border-amber-200 bg-amber-50 text-amber-800'
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      config.isActive ? 'animate-pulse bg-green-500' : 'bg-amber-500'
+                    }`}
+                  />
+                  {config.isActive ? 'Ponto ativo' : 'Aguardando ativação'}
                 </span>
                 <span className="rounded-full border border-primary/20 bg-white px-2.5 py-1 text-[9px] font-bold uppercase text-gray-600">
                   {colaboradoresCount} colaboradores
                 </span>
+              </div>
+              <div className="mt-3 w-full max-w-2xl rounded-2xl border border-primary/25 bg-primary/5 px-4 py-3">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <Link2 size={16} strokeWidth={2.5} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="logta-card-heading text-sm text-gray-900">Link público</p>
+                    <p className="text-[9px] font-bold uppercase tracking-wide text-primary">
+                      localhost:5173
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={publicUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 block break-all rounded-xl border border-gray-100 bg-white px-3 py-2 text-xs font-bold text-gray-900 hover:border-primary/30 hover:text-primary"
+                >
+                  {publicUrl || `${LOCALHOST_PONTO_ORIGIN}/ponto/...`}
+                </a>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={copyLink}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-primary/20 bg-white px-3 py-1.5 text-[10px] font-bold text-primary hover:bg-primary/5"
+                  >
+                    <Copy size={12} /> Copiar link
+                  </button>
+                  <a
+                    href={publicUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-white hover:opacity-90"
+                  >
+                    <Link2 size={12} /> Abrir link público
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -152,31 +222,68 @@ export function ControlePontoView({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {[
-          { label: 'Registros hoje', value: String(stats.registrosHoje) },
-          { label: 'Online agora', value: String(stats.onlineAgora) },
-          { label: 'Atrasos', value: String(stats.atrasos) },
-          { label: 'Alertas ativos', value: String(stats.alertasAtivos) },
-        ].map((kpi) => (
-          <div key={kpi.label} className="logta-stat-card !p-4">
-            <p className="logta-stat-card__label logta-stat-card__label--spaced !mb-1">{kpi.label}</p>
-            <p className="logta-dashboard-stat-card__value logta-dashboard-stat-card__value--primary !text-xl">
-              {kpi.value}
-            </p>
-          </div>
-        ))}
-      </div>
+      <LogtaKpiStrip
+        items={[
+          { label: 'Registros hoje', value: stats.registrosHoje, icon: Activity },
+          { label: 'Online agora', value: stats.onlineAgora, icon: Users },
+          { label: 'Atrasos', value: stats.atrasos, icon: Clock },
+          { label: 'Alertas ativos', value: stats.alertasAtivos, icon: AlertTriangle },
+        ]}
+      />
 
       {activeTab === 'config' ? (
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 xl:items-start">
-          {/* Coluna esquerda */}
-          <div className="space-y-5 min-w-0">
-            <div className="logta-panel-card p-5 sm:p-6">
-              <h3 className="logta-card-heading mb-2 text-gray-900">Configuração de Ponto Inteligente</h3>
-              <p className="mb-4 text-sm font-medium text-gray-500">
-                Regras operacionais, horários e limites da unidade.
-              </p>
+        <div className="space-y-5">
+          {/* Linha 1: Configuração | Geolocalização (mesma altura) */}
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 xl:items-stretch">
+            <div className="logta-panel-card min-w-0 p-5 sm:p-6 xl:min-h-[693px]">
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <h3 className="logta-card-heading text-gray-900">Configuração de Ponto Inteligente</h3>
+                <span
+                  className={`rounded-full border px-3 py-1 text-[9px] font-black uppercase ${
+                    config.isActive
+                      ? 'border-green-200 bg-green-50 text-green-700'
+                      : 'border-gray-200 bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  {config.isActive ? 'Ativo' : 'Rascunho'}
+                </span>
+              </div>
+              {!config.isActive ? (
+                <p className="mb-4 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2.5 text-[11px] font-semibold leading-relaxed text-amber-900">
+                  Ajuste os campos abaixo. Use <strong>Salvar</strong> para gravar e depois{' '}
+                  <strong>Ativar</strong> para liberar link, QR e batidas da equipe.
+                </p>
+              ) : (
+                <div className="mb-4 flex flex-col gap-3 rounded-xl border border-green-100 bg-green-50/80 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-[11px] font-semibold leading-relaxed text-green-900">
+                    Configuração <strong>ativa</strong>
+                    {config.activatedAt
+                      ? ` desde ${new Date(config.activatedAt).toLocaleString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}`
+                      : ''}
+                    . Colaboradores já podem registrar ponto pelo link ou QR.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      deactivateConfig();
+                      showToast(
+                        'info',
+                        'Ponto desativado. Link e QR públicos deixam de aceitar novas batidas.',
+                        'Controle de Ponto',
+                      );
+                    }}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-green-200 bg-white px-4 py-2.5 text-[10px] font-bold uppercase text-gray-600 transition-all hover:border-red-200 hover:text-red-700"
+                  >
+                    <PowerOff size={14} /> Desativar
+                  </button>
+                </div>
+              )}
+
               <div className="space-y-4">
                 <label className="block space-y-1.5">
                   <span className="text-[10px] font-bold uppercase text-gray-400">Nome da unidade</span>
@@ -248,102 +355,62 @@ export function ControlePontoView({
                     className="w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-primary/50"
                   />
                 </label>
-              </div>
-            </div>
 
-            <div className="logta-panel-card p-5 sm:p-6">
-              <h3 className="logta-card-heading mb-4 text-gray-900">Método de registro</h3>
-              <div className="grid grid-cols-1 gap-3">
-                {(
-                  [
-                    { id: 'qr' as const, label: 'QR Code', icon: QrCode, desc: 'Batida via leitura de QR' },
-                    { id: 'link' as const, label: 'Link público', icon: Link2, desc: 'Acesso por URL segura' },
-                    { id: 'both' as const, label: 'QR + Link', icon: CheckCircle2, desc: 'Ambos ativos' },
-                  ] as const
-                ).map((opt) => (
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <button
-                    key={opt.id}
                     type="button"
-                    onClick={() => applyMode(opt.id)}
-                    className={`logta-panel-card flex flex-col items-start gap-2 p-4 text-left transition-all ${
-                      config.registrationMode === opt.id
-                        ? 'border-primary/40 ring-2 ring-primary/20'
-                        : 'hover:border-primary/20'
-                    }`}
+                    onClick={saveConfiguration}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-4 text-xs font-bold text-gray-800 shadow-sm transition-all hover:border-primary/30 hover:bg-gray-50"
                   >
-                    <opt.icon size={20} className="text-primary" />
-                    <span className="logta-card-heading text-gray-900">{opt.label}</span>
-                    <span className="text-xs font-medium text-gray-500">{opt.desc}</span>
+                    <Save size={18} /> Salvar configuração
                   </button>
-                ))}
+                  {!config.isActive ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        activateConfig();
+                        showToast(
+                          'success',
+                          'Ponto inteligente ativado. Link e QR liberados para a equipe.',
+                          'Controle de Ponto',
+                        );
+                      }}
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-xs font-bold text-white shadow-lg shadow-primary/25 transition-all hover:opacity-90"
+                    >
+                      <Power size={18} /> Ativar configuração de ponto
+                    </button>
+                  ) : null}
+                </div>
               </div>
             </div>
 
-            <div className="logta-panel-card p-5 sm:p-6">
-              <h3 className="logta-card-heading mb-4 text-gray-900">Validações inteligentes</h3>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {(
-                  [
-                    ['location', 'Localização GPS'],
-                    ['schedule', 'Horário operacional'],
-                    ['device', 'Dispositivo'],
-                    ['distance', 'Distância permitida'],
-                    ['journey', 'Jornada'],
-                    ['suspicious', 'Tentativa suspeita'],
-                    ['multiAccess', 'Múltiplos acessos'],
-                  ] as const
-                ).map(([key, label]) => (
-                  <label
-                    key={key}
-                    className="flex cursor-pointer items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-xs font-bold text-gray-700"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={config.validations[key]}
-                      onChange={() => toggleValidation(key)}
-                      className="rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Coluna direita — link, QR e mapa */}
-          <div className="space-y-5 min-w-0">
-          {(config.linkEnabled || config.qrEnabled) ? (
-            <div className="space-y-5">
+            <div className="flex min-w-0 flex-col gap-5">
               {config.linkEnabled ? (
                 <div className="logta-panel-card p-5 sm:p-6">
-                  <div className="mb-4 flex items-center gap-2">
+                  <div className="mb-4 flex flex-wrap items-center gap-2">
                     <Link2 size={18} className="text-primary" />
                     <h3 className="logta-card-heading">Link público de ponto</h3>
+                    <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[9px] font-black uppercase text-primary">
+                      localhost:5173
+                    </span>
                   </div>
                   <p className="mb-4 text-xs font-medium text-gray-500">
-                    Link único, seguro e compartilhável para registro operacional dos colaboradores.
+                    {config.isActive
+                      ? 'Link único para a equipe registrar entrada, saída e pausa.'
+                      : 'Prévia do link — ative a configuração para liberar batidas.'}
                   </p>
-                  <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                  <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4">
                     <code className="break-all text-xs font-bold text-gray-800">{publicUrl}</code>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button type="button" onClick={copyLink} className="hub-premium-pill primary">
                       <Copy size={16} /> Copiar link
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = regeneratePublicToken(config);
-                        persistConfig(next);
-                        showToast('info', 'Novo token de segurança gerado.', 'Controle de Ponto');
-                      }}
-                      className="hub-premium-pill secondary"
-                    >
-                      <RefreshCw size={16} /> Regenerar
-                    </button>
-                    <a href={publicUrl} target="_blank" rel="noreferrer" className="hub-premium-pill secondary">
-                      Abrir link
-                    </a>
+                    {config.isActive ? (
+                      <a href={publicUrl} target="_blank" rel="noreferrer" className="hub-premium-pill secondary">
+                        Abrir link
+                      </a>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -358,7 +425,7 @@ export function ControlePontoView({
                     <img
                       src={qrImageUrl(publicUrl)}
                       alt="QR Code ponto"
-                      className="h-48 w-48 rounded-2xl border border-gray-100 bg-white p-2"
+                      className="h-48 w-48 shrink-0 rounded-2xl border border-gray-100 bg-white p-2"
                     />
                     <div className="flex-1 space-y-3">
                       <p className="text-xs font-medium text-gray-500">
@@ -382,10 +449,7 @@ export function ControlePontoView({
                       </div>
                       <div className="space-y-2">
                         {config.sectorQrCodes.map((sector) => {
-                          const path =
-                            typeof window !== 'undefined'
-                              ? `${window.location.origin}${buildSectorQrPath(config, sector.token)}`
-                              : buildSectorQrPath(config, sector.token);
+                          const path = `${resolvePontoPublicOrigin()}${buildSectorQrPath(config, sector.token)}`;
                           return (
                             <div
                               key={sector.id}
@@ -405,65 +469,123 @@ export function ControlePontoView({
                   </div>
                 </div>
               ) : null}
-            </div>
-          ) : null}
 
-          <div className="logta-panel-card p-5 sm:p-6">
-            <div className="mb-4 flex items-center gap-2">
-              <MapPin size={18} className="text-primary" />
-              <h3 className="logta-card-heading">Geolocalização</h3>
-            </div>
-            <label className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700">
-              <input
-                type="checkbox"
-                checked={config.geoEnabled}
-                onChange={(e) => persistConfig({ geoEnabled: e.target.checked })}
-                className="rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              Captura GPS e validação por raio
-            </label>
-            <div className="grid grid-cols-1 gap-4">
-              <label className="block space-y-1.5">
-                <span className="text-[10px] font-bold uppercase text-gray-400">Latitude</span>
-                <input
-                  type="number"
-                  step="any"
-                  value={config.geoLat}
-                  onChange={(e) => persistConfig({ geoLat: Number(e.target.value) })}
-                  className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-primary/50"
-                />
-              </label>
-              <label className="block space-y-1.5">
-                <span className="text-[10px] font-bold uppercase text-gray-400">Longitude</span>
-                <input
-                  type="number"
-                  step="any"
-                  value={config.geoLng}
-                  onChange={(e) => persistConfig({ geoLng: Number(e.target.value) })}
-                  className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-primary/50"
-                />
-              </label>
-              <label className="block space-y-1.5">
-                <span className="text-[10px] font-bold uppercase text-gray-400">Raio (m)</span>
-                <input
-                  type="number"
-                  value={config.geoRadiusMeters}
-                  onChange={(e) => persistConfig({ geoRadiusMeters: Number(e.target.value) })}
-                  className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-primary/50"
-                />
-              </label>
-            </div>
-            <div className="mt-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
-              <MapPin className="mx-auto mb-2 text-primary" size={28} />
-              <p className="text-xs font-bold text-gray-600">Mapa operacional</p>
-              <p className="mt-1 text-[11px] font-medium text-gray-400">
-                Centro: {config.geoLat.toFixed(4)}, {config.geoLng.toFixed(4)} — raio {config.geoRadiusMeters}m
-              </p>
+              <div className="logta-panel-card flex min-h-0 flex-col p-5 sm:p-6 xl:min-h-[280px]">
+                <div className="mb-4 flex items-center gap-2">
+                  <MapPin size={18} className="text-primary" />
+                  <h3 className="logta-card-heading">Geolocalização</h3>
+                </div>
+                <label className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={config.geoEnabled}
+                    onChange={(e) => persistConfig({ geoEnabled: e.target.checked })}
+                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  Captura GPS e validação por raio
+                </label>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-1">
+                  <label className="block space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase text-gray-400">Latitude</span>
+                    <input
+                      type="number"
+                      step="any"
+                      value={config.geoLat}
+                      onChange={(e) => persistConfig({ geoLat: Number(e.target.value) })}
+                      className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-primary/50"
+                    />
+                  </label>
+                  <label className="block space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase text-gray-400">Longitude</span>
+                    <input
+                      type="number"
+                      step="any"
+                      value={config.geoLng}
+                      onChange={(e) => persistConfig({ geoLng: Number(e.target.value) })}
+                      className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-primary/50"
+                    />
+                  </label>
+                  <label className="block space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase text-gray-400">Raio (m)</span>
+                    <input
+                      type="number"
+                      value={config.geoRadiusMeters}
+                      onChange={(e) => persistConfig({ geoRadiusMeters: Number(e.target.value) })}
+                      className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none focus:border-primary/50"
+                    />
+                  </label>
+                </div>
+                <div className="mt-4 flex min-h-[200px] flex-1 flex-col justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
+                  <MapPin className="mx-auto mb-2 text-primary" size={28} />
+                  <p className="text-xs font-bold text-gray-600">Mapa operacional</p>
+                  <p className="mt-1 text-[11px] font-medium text-gray-400">
+                    Centro: {config.geoLat.toFixed(4)}, {config.geoLng.toFixed(4)} — raio {config.geoRadiusMeters}m
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
+          {/* Linha 2: Método + Validações */}
+          <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-2 lg:items-stretch">
+              <div className="logta-panel-card min-w-0 p-5 sm:p-6">
+                <h3 className="logta-card-heading mb-4 text-gray-900">Método de registro</h3>
+                <div className="grid grid-cols-1 gap-3">
+                  {(
+                    [
+                      { id: 'qr' as const, label: 'QR Code', icon: QrCode, desc: 'Batida via leitura de QR' },
+                      { id: 'link' as const, label: 'Link público', icon: Link2, desc: 'Acesso por URL segura' },
+                      { id: 'both' as const, label: 'QR + Link', icon: CheckCircle2, desc: 'Ambos ativos' },
+                    ] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => applyMode(opt.id)}
+                      className={`logta-panel-card flex flex-col items-start gap-2 p-4 text-left transition-all ${
+                        config.registrationMode === opt.id
+                          ? 'border-primary/40 ring-2 ring-primary/20'
+                          : 'hover:border-primary/20'
+                      }`}
+                    >
+                      <opt.icon size={20} className="text-primary" />
+                      <span className="logta-card-heading text-gray-900">{opt.label}</span>
+                      <span className="text-xs font-medium text-gray-500">{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          </div>
+              <div className="logta-panel-card min-w-0 p-5 sm:p-6">
+                <h3 className="logta-card-heading mb-4 text-gray-900">Validações inteligentes</h3>
+                <div className="grid grid-cols-1 gap-2">
+                  {(
+                    [
+                      ['location', 'Localização GPS'],
+                      ['schedule', 'Horário operacional'],
+                      ['device', 'Dispositivo'],
+                      ['distance', 'Distância permitida'],
+                      ['journey', 'Jornada'],
+                      ['suspicious', 'Tentativa suspeita'],
+                      ['multiAccess', 'Múltiplos acessos'],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <label
+                      key={key}
+                      className="flex cursor-pointer items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-xs font-bold text-gray-700"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={config.validations[key]}
+                        onChange={() => toggleValidation(key)}
+                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
         </div>
       ) : null}
 

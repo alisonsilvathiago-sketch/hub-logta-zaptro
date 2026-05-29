@@ -71,7 +71,7 @@ function ProgressRing({ pct, isDark, stroke }: { pct: number; isDark: boolean; s
   const off = c * (1 - pct / 100);
   return (
     <svg width={58} height={58} viewBox="0 0 58 58" aria-hidden>
-      <circle cx="29" cy="29" r={r} fill="none" stroke={isDark ? '#334155' : '#e5e7eb'} strokeWidth={7} />
+      <circle cx="29" cy="29" r={r} fill="none" stroke={isDark ? '#6B6B6B' : '#e5e7eb'} strokeWidth={7} />
       <circle
         cx="29"
         cy="29"
@@ -100,7 +100,7 @@ function ShipmentDonut({ isDark, accent }: { isDark: boolean; accent: string }) 
           <span style={{ width: 8, height: 8, borderRadius: 999, background: accent }} /> Taxa de sucesso
         </span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: 999, background: isDark ? '#94a3b8' : '#000000' }} /> Taxa sem sucesso
+          <span style={{ width: 8, height: 8, borderRadius: 999, background: isDark ? '#949494' : '#000000' }} /> Taxa sem sucesso
         </span>
       </div>
       <div style={{ width: 200, height: 200, position: 'relative' }}>
@@ -133,7 +133,7 @@ function ShipmentDonut({ isDark, accent }: { isDark: boolean; accent: string }) 
 }
 
 function subText(isDark: boolean) {
-  return isDark ? '#94a3b8' : MUTED;
+  return isDark ? '#949494' : MUTED;
 }
 
 function formatDashHeaderDate(isoYmd: string): string {
@@ -540,7 +540,7 @@ const ZaptroDashboardModernPreview: React.FC = () => {
                     const variation = Number(item.data?.variation_percentage || 0);
                     const positive = variation > 0;
                     return (
-                      <div key={item.type} style={{ borderRadius: 10, border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`, padding: '7px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div key={item.type} style={{ borderRadius: 10, border: `1px solid ${isDark ? '#6B6B6B' : '#e5e7eb'}`, padding: '7px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '11px', fontWeight: 700, color: item.color }}>{item.label}</span>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                           <strong style={{ fontSize: '11px', color: text }}>{item.data?.price != null ? `R$ ${Number(item.data.price).toFixed(2)}` : '—'}</strong>
@@ -584,7 +584,7 @@ const ZaptroDashboardModernPreview: React.FC = () => {
                       padding: '10px 14px',
                       borderRadius: 14,
                       background: isDark ? 'rgba(148,163,184,0.12)' : '#f3f4f6',
-                      border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`,
+                      border: `1px solid ${isDark ? '#6B6B6B' : '#e5e7eb'}`,
                     }}
                   >
                     <div style={{ fontSize: 10, fontWeight: 600, color: sub, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{x.l}</div>
@@ -671,7 +671,7 @@ const ZaptroDashboardModernPreview: React.FC = () => {
                 style={{
                   height: 10,
                   borderRadius: 999,
-                  background: isDark ? '#334155' : '#e5e7eb',
+                  background: isDark ? '#6B6B6B' : '#e5e7eb',
                   overflow: 'hidden',
                   marginBottom: 18,
                 }}
@@ -702,7 +702,7 @@ const ZaptroDashboardModernPreview: React.FC = () => {
                     padding: '12px 14px',
                     borderRadius: 16,
                     background: isDark ? 'rgba(148,163,184,0.08)' : '#fafafa',
-                    border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`,
+                    border: `1px solid ${isDark ? '#6B6B6B' : '#e5e7eb'}`,
                   }}
                 >
                   <div style={{ fontSize: 12, fontWeight: 700, color: text, marginBottom: 10 }}>Fatura #0472</div>
@@ -780,7 +780,7 @@ const ZaptroDashboardModernPreview: React.FC = () => {
                       alignItems: 'center',
                       gap: 12,
                       padding: '10px 0',
-                      borderBottom: `1px solid ${isDark ? '#334155' : '#f3f4f6'}`,
+                      borderBottom: `1px solid ${isDark ? '#6B6B6B' : '#f3f4f6'}`,
                     }}
                   >
                     <img
@@ -843,7 +843,7 @@ const ZaptroDashboardModernPreview: React.FC = () => {
             <div
               style={{
                 padding: '12px 20px 22px',
-                borderTop: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`,
+                borderTop: `1px solid ${isDark ? '#6B6B6B' : '#e5e7eb'}`,
                 fontSize: 14,
                 fontWeight: 700,
                 color: text,
@@ -907,7 +907,7 @@ const ZaptroDashboardModernPreview: React.FC = () => {
                   padding: '14px 0',
                   borderRadius: 12,
                   border: 'none',
-                  background: isDark ? '#334155' : '#F1F5F9',
+                  background: isDark ? '#6B6B6B' : '#F1F5F9',
                   color: text,
                   fontWeight: 700,
                   fontSize: 15,

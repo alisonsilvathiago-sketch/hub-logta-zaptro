@@ -24,7 +24,7 @@ export default defineConfig({
     port: 5177,
     origin: 'http://localhost:5177',
     strictPort: true,
-    open: 'http://localhost:5177/',
+    open: 'http://localhost:5177/vendas',
     proxy: {
       '/logstoka-api': {
         target: process.env.LOGSTOKA_API_PROXY || 'http://localhost:8788',

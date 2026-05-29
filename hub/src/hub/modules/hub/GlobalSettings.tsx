@@ -4,29 +4,69 @@ import { useSystemConfig } from '@core/context/SystemConfigContext';
 import { 
   Globe, Users, Terminal, ShieldCheck, 
   Palette, Database, Save, 
-  RefreshCw, Zap, HardDrive, User,
+  RefreshCw, Zap, User,
   Activity, Cpu, Network, Shield,
-  CreditCard, Layout, Link as LinkIcon, Smartphone,
-  Bell, Workflow, MessageSquare, Plug,
+  Layout, Link as LinkIcon, Smartphone,
+  Bell, Workflow, Plug,
 } from 'lucide-react';
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError, toastLoading, toastDismiss } from '@core/lib/toast';
-import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Sub-componentes
 import EvolutionManager from './EvolutionManager';
 import TeamHub from './TeamHub';
+import WorkflowManagement, { WORKFLOW_SECTIONS, type WorkflowSectionId } from './Workflows';
+import IntegrationsPage, { INTEGRATION_TABS } from './IntegrationsPage';
+import HubNotifications from '@hub/pages/HubNotifications';
 import Button from '@shared/components/Button';
+import HubMasterSectionAside from '@hub/components/HubMasterSectionAside';
 import { HUB_PAGE_SUBTITLE, HUB_SIDEBAR_NAV_LABEL } from '@hub/styles/hubPageTypography';
+import { HUB_MASTER_SECTION_NAV } from '@hub/styles/hubMasterSectionNavStyles';
 
 type SettingsNavTab = {
   id: string;
   label: string;
   icon: React.ReactNode;
-  /** Rota absoluta em `/master/...` (ex.: automações, integrações). */
-  externalPath?: string;
+  /** Rota dedicada em settings (ex.: `/master/settings/evolution`). */
+  dedicatedPath?: string;
+  badge?: string;
 };
+
+type SettingsNavSection = { title: string; items: SettingsNavTab[] };
+
+const SETTINGS_NAV_SECTIONS: SettingsNavSection[] = [
+  {
+    title: 'Configuração',
+    items: [
+      { id: 'geral', label: 'Geral & Branding', icon: <Globe size={18} strokeWidth={2} /> },
+      { id: 'equipe', label: 'Equipe & Acesso', icon: <Users size={18} strokeWidth={2} /> },
+      { id: 'seguranca', label: 'Segurança', icon: <ShieldCheck size={18} strokeWidth={2} /> },
+      { id: 'notificacoes', label: 'Notificações', icon: <Bell size={18} strokeWidth={2} /> },
+    ],
+  },
+  {
+    title: 'Fluxos e integrações',
+    items: [
+      { id: 'automacoes', label: 'Automações', icon: <Workflow size={18} strokeWidth={2} /> },
+      { id: 'integracoes', label: 'Integrações', icon: <Plug size={18} strokeWidth={2} /> },
+      {
+        id: 'evolution',
+        label: 'Motores WhatsApp',
+        icon: <Smartphone size={18} strokeWidth={2} />,
+        dedicatedPath: '/master/settings/evolution',
+      },
+    ],
+  },
+  {
+    title: 'API e laboratório',
+    items: [
+      { id: 'api', label: 'API & Developers', icon: <Terminal size={18} strokeWidth={2} /> },
+      { id: 'labs', label: 'Labs / Beta', icon: <Zap size={18} strokeWidth={2} />, badge: 'Beta' },
+    ],
+  },
+];
 
 const MasterSettings: React.FC = () => {
   const { profile } = useAuth();
@@ -49,6 +89,40 @@ const MasterSettings: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState(getTabFromPath());
   const [loading, setLoading] = useState(false);
+
+  const searchParams = new URLSearchParams(location.search);
+  const workflowSub: WorkflowSectionId = (() => {
+    const sub = searchParams.get('sub');
+    return WORKFLOW_SECTIONS.some((s) => s.id === sub) ? (sub as WorkflowSectionId) : 'workflows';
+  })();
+  const integrationSub = (() => {
+    const sub = searchParams.get('sub');
+    const valid = INTEGRATION_TABS.some((t) => t.id === sub);
+    return valid ? (sub as (typeof INTEGRATION_TABS)[number]['id']) : 'google';
+  })();
+
+  const settingsBackFooter = (
+    <>
+      <div style={HUB_MASTER_SECTION_NAV.sidebarSectionRule} aria-hidden />
+      <button
+        type="button"
+        className="hub-sidebar-item expanded"
+        onClick={() => navigate('/master/settings?tab=geral')}
+        style={{
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+          width: '100%',
+          boxSizing: 'border-box',
+          marginTop: 4,
+        }}
+      >
+        <span style={{ ...HUB_SIDEBAR_NAV_LABEL, flex: 1, textAlign: 'left', color: '#6b7280' }}>
+          ← Todas as configurações
+        </span>
+      </button>
+    </>
+  );
   
   // Local states for form management
   const [platformName, setPlatformName] = useState('');
@@ -72,17 +146,6 @@ const MasterSettings: React.FC = () => {
   useEffect(() => {
     setActiveTab(getTabFromPath());
   }, [location.pathname, location.search]);
-
-  /** Abas que têm página dedicada: evita ficar só no placeholder com ?tab=. */
-  useEffect(() => {
-    const path = location.pathname;
-    const onSettingsHome =
-      path === '/master/settings' || path === '/master/settings/';
-    if (!onSettingsHome) return;
-    const q = new URLSearchParams(location.search).get('tab');
-    if (q === 'automacoes') navigate('/master/automacoes', { replace: true });
-    else if (q === 'integracoes') navigate('/master/integracoes', { replace: true });
-  }, [location.pathname, location.search, navigate]);
 
   const handleSaveAll = async () => {
     if (!profile?.id) return;
@@ -131,30 +194,6 @@ const MasterSettings: React.FC = () => {
     }
   };
 
-  const tabs: SettingsNavTab[] = [
-    { id: 'geral', label: 'Geral & Branding', icon: <Globe size={18} strokeWidth={2} /> },
-    { id: 'equipe', label: 'Equipe & Acesso', icon: <Users size={18} strokeWidth={2} /> },
-    { id: 'seguranca', label: 'Segurança', icon: <ShieldCheck size={18} strokeWidth={2} /> },
-    { id: 'infra', label: 'Infraestrutura', icon: <Database size={18} strokeWidth={2} /> },
-    { id: 'logdock', label: 'LogDock (Drive & Backup)', icon: <HardDrive size={18} strokeWidth={2} /> },
-    {
-      id: 'automacoes',
-      label: 'Automações',
-      icon: <Workflow size={18} strokeWidth={2} />,
-      externalPath: '/master/automacoes',
-    },
-    {
-      id: 'integracoes',
-      label: 'Integrações',
-      icon: <Plug size={18} strokeWidth={2} />,
-      externalPath: '/master/integracoes',
-    },
-    { id: 'financeiro', label: 'Financeiro', icon: <CreditCard size={18} strokeWidth={2} /> },
-    { id: 'comunicacao', label: 'Comunicação', icon: <MessageSquare size={18} strokeWidth={2} /> },
-    { id: 'api', label: 'API & Developers', icon: <Terminal size={18} strokeWidth={2} /> },
-    { id: 'labs', label: 'Labs / Beta', icon: <Zap size={18} strokeWidth={2} /> },
-  ];
-
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'geral': return (
@@ -164,11 +203,12 @@ const MasterSettings: React.FC = () => {
           reg={allowRegistration} setReg={setAllowRegistration}
           color={primaryColor} setColor={setPrimaryColor}
           lockdown={systemLockdown} setLockdown={setSystemLockdown}
+          onSave={handleSaveAll}
+          loading={loading}
         />
       );
       case 'equipe': return <TeamHub />;
       case 'evolution': return <EvolutionManager />;
-      case 'infra': return <CoreStatusTab />;
       case 'seguranca': return (
         <div style={styles.tabContent}>
            <div style={styles.tabHeader}>
@@ -181,14 +221,8 @@ const MasterSettings: React.FC = () => {
                  <div style={{...styles.logoPreview, backgroundColor: '#EF4444'}}><ShieldCheck size={24} /></div>
                  <div>
                     <h4 style={{margin: 0, fontSize: '15px', fontWeight: '800', color: '#991B1B'}}>Central de Segurança Ativa</h4>
-                    <p style={{margin: '4px 0 0', fontSize: '12px', color: '#B91C1C'}}>Acesse o módulo de infraestrutura para gerenciar 2FA, logs de auditoria, firewall e bloqueios de IP em tempo real.</p>
+                    <p style={{margin: '4px 0 0', fontSize: '12px', color: '#B91C1C'}}>Configure 2FA, políticas de sessão e firewall perimetral nesta aba.</p>
                  </div>
-                 <Button 
-                    variant="primary" 
-                    label="IR PARA SEGURANÇA MASTER" 
-                    onClick={() => navigate('/master/infrastructure/seguranca')}
-                    style={{ marginLeft: 'auto', backgroundColor: '#EF4444' }} 
-                 />
               </div>
            </div>
 
@@ -211,13 +245,35 @@ const MasterSettings: React.FC = () => {
            </div>
         </div>
       );
-      case 'logdock': return <div style={styles.tabPlaceholder}>Módulo LogDock: Configurações de drive, backups, sincronização e armazenamento.</div>;
       case 'automacoes':
-        return <Navigate to="/master/automacoes" replace />;
+        return (
+          <WorkflowManagement
+            embedded
+            activeSection={workflowSub}
+            onSectionChange={(id) => {
+              const params = new URLSearchParams(location.search);
+              params.set('tab', 'automacoes');
+              params.set('sub', id);
+              navigate({ pathname: '/master/settings', search: params.toString() }, { replace: true });
+            }}
+          />
+        );
       case 'integracoes':
-        return <Navigate to="/master/integracoes" replace />;
-      case 'financeiro': return <div style={styles.tabPlaceholder}>Módulo Financeiro: Assinaturas, planos, cobranças, gateways e invoices.</div>;
-      case 'comunicacao': return <div style={styles.tabPlaceholder}>Módulo de Comunicação: HubChat, WhatsApp, SMTP e templates de notificações.</div>;
+        return (
+          <IntegrationsPage
+            embedded
+            activeSubTab={integrationSub}
+            onSubTabChange={(id) => {
+              const params = new URLSearchParams(location.search);
+              params.set('tab', 'integracoes');
+              if (id === 'google') params.delete('sub');
+              else params.set('sub', id);
+              navigate({ pathname: '/master/settings', search: params.toString() }, { replace: true });
+            }}
+          />
+        );
+      case 'notificacoes':
+        return <HubNotifications embedded />;
       case 'api': return <div style={styles.tabPlaceholder}>API & Developers: Documentação, tokens, webhooks e logs de API.</div>;
       case 'labs': return <div style={styles.tabPlaceholder}>Labs / Beta: Funcionalidades experimentais e recursos beta.</div>;
       default: return <div style={styles.tabPlaceholder}>Selecione um módulo no menu lateral.</div>;
@@ -226,66 +282,102 @@ const MasterSettings: React.FC = () => {
 
   return (
     <div style={styles.container} className="animate-fade-in">
-      <header style={styles.header}>
-        <div>
-          <div style={styles.badge}>MASTER HQ • CENTRAL DE ORQUESTRAÇÃO</div>
-          <h1 style={styles.title}>Painel de Controle Master</h1>
-          <p style={styles.subtitle}>Gestão unificada de regras, infraestrutura e governança do ecossistema.</p>
-        </div>
-        <div style={styles.headerActions}>
-           <button style={styles.refreshBtn} onClick={refreshConfigs} disabled={loading}><RefreshCw size={18} className={loading ? 'animate-spin' : ''} /></button>
-           <Button 
-             variant="primary" 
-             icon={<Save size={18} />} 
-             label={loading ? 'Propagando...' : 'Propagar Alterações'} 
-             onClick={handleSaveAll} 
-             disabled={loading} 
-           />
-        </div>
-      </header>
-
-      <div style={styles.layout}>
-        {/* SIDEBAR TABS FIXED */}
-        <aside style={styles.sidebarWrapper}>
-          <nav style={styles.sidebar}>
-            {tabs.map((tab) => {
-              const isActive =
-                activeTab === tab.id ||
-                (!!tab.externalPath &&
-                  (location.pathname === tab.externalPath ||
-                    location.pathname.startsWith(`${tab.externalPath}/`)));
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() =>
-                    tab.externalPath
-                      ? navigate(tab.externalPath)
-                      : navigate(`/master/settings?tab=${tab.id}`)
-                  }
-                  style={{
-                    ...styles.tabBtn,
-                    ...(isActive ? styles.tabBtnActive : {}),
-                  }}
-                >
-                  <div
-                    style={{
-                      ...styles.tabIcon,
-                      color: isActive ? '#0061FF' : '#64748B',
-                    }}
-                  >
-                    {tab.icon}
-                  </div>
-                  <span style={HUB_SIDEBAR_NAV_LABEL}>{tab.label}</span>
-                </button>
-              );
-            })}
+      <div style={HUB_MASTER_SECTION_NAV.layout} className="hub-settings-layout">
+        {activeTab === 'automacoes' ? (
+          <HubMasterSectionAside
+            heading="Automações"
+            ariaLabel="Seções de automação"
+            items={WORKFLOW_SECTIONS.map((s) => ({ id: s.id, label: s.label, icon: s.icon }))}
+            activeId={workflowSub}
+            onSelect={(id) => {
+              const params = new URLSearchParams(location.search);
+              params.set('tab', 'automacoes');
+              params.set('sub', id);
+              navigate({ pathname: '/master/settings', search: params.toString() }, { replace: true });
+            }}
+            footer={settingsBackFooter}
+          />
+        ) : activeTab === 'integracoes' ? (
+          <HubMasterSectionAside
+            heading="Integrações"
+            ariaLabel="Seções de integrações"
+            items={INTEGRATION_TABS.map((t) => ({ id: t.id, label: t.label, icon: t.icon }))}
+            activeId={integrationSub}
+            onSelect={(id) => {
+              const params = new URLSearchParams(location.search);
+              params.set('tab', 'integracoes');
+              if (id === 'google') params.delete('sub');
+              else params.set('sub', id);
+              navigate({ pathname: '/master/settings', search: params.toString() }, { replace: true });
+            }}
+            footer={settingsBackFooter}
+          />
+        ) : (
+        <aside style={HUB_MASTER_SECTION_NAV.sidebarWrapper}>
+          <nav style={HUB_MASTER_SECTION_NAV.sidebar} aria-label="Seções de configuração">
+            <h2 style={HUB_MASTER_SECTION_NAV.sidebarHeading}>Configurações</h2>
+            <div style={HUB_MASTER_SECTION_NAV.sidebarHeadingRule} aria-hidden="true" />
+            {SETTINGS_NAV_SECTIONS.map((section, sIdx) => (
+              <div key={section.title} style={HUB_MASTER_SECTION_NAV.sidebarSection}>
+                {sIdx > 0 ? <div style={HUB_MASTER_SECTION_NAV.sidebarSectionRule} aria-hidden="true" /> : null}
+                <div className="hub-settings-section-label" style={HUB_MASTER_SECTION_NAV.sidebarSectionLabel}>
+                  {section.title}
+                </div>
+                <div style={HUB_MASTER_SECTION_NAV.sidebarSectionItems}>
+                  {section.items.map((tab) => {
+                    const isActive =
+                      activeTab === tab.id ||
+                      (!!tab.dedicatedPath &&
+                        (location.pathname === tab.dedicatedPath ||
+                          location.pathname.startsWith(`${tab.dedicatedPath}/`)));
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => {
+                          if (tab.dedicatedPath) navigate(tab.dedicatedPath);
+                          else if (tab.id === 'equipe') navigate('/master/settings/equipe');
+                          else navigate(`/master/settings?tab=${tab.id}`);
+                        }}
+                        className={`hub-sidebar-item expanded${isActive ? ' active' : ''}`}
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          backgroundColor: 'transparent',
+                          boxShadow: 'none',
+                          cursor: 'pointer',
+                          width: '100%',
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <span style={{ ...HUB_SIDEBAR_NAV_LABEL, flex: 1, textAlign: 'left' }}>{tab.label}</span>
+                        {tab.badge ? (
+                          <span style={styles.navItemBadge}>{tab.badge}</span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
         </aside>
+        )}
 
-        {/* CONTENT AREA */}
-        <main style={styles.content}>
-           {renderActiveTab()}
+        <main style={{ ...HUB_MASTER_SECTION_NAV.main, paddingTop: 38 }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'absolute', top: 0, right: 0, zIndex: 10, gap: 8 }}>
+            <button
+              type="button"
+              className="hub-btn-secondary"
+              style={styles.refreshBtn}
+              onClick={refreshConfigs}
+              disabled={loading}
+              title="Recarregar configurações"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            </button>
+          </div>
+          <div style={HUB_MASTER_SECTION_NAV.mainInner}>{renderActiveTab()}</div>
         </main>
       </div>
     </div>
@@ -294,65 +386,144 @@ const MasterSettings: React.FC = () => {
 
 // --- SUB-COMPONENTES ---
 
-const GeralTab = ({ name, setName, email, setEmail, reg, setReg, color, setColor, lockdown, setLockdown }: any) => {
+const SettingsCard = ({ title, subtitle, children, onSave, loading }: any) => {
   return (
-    <div style={styles.tabContent}>
-       <div style={styles.tabHeader}>
-          <h3 style={styles.tabTitle}>Identidade & Branding Global</h3>
-          <p style={styles.tabSub}>Configure a presença da marca Logta e regras básicas de entrada na plataforma.</p>
+    <div style={{ marginBottom: '40px' }}>
+      <div style={{ marginBottom: '16px' }}>
+        <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#111827', margin: '0 0 4px 0' }}>{title}</h4>
+        {subtitle && <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>{subtitle}</p>}
+      </div>
+      <div
+        style={{
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #E5E7EB',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          boxShadow: 'none',
+        }}
+      >
+        <div style={{ padding: '24px' }}>{children}</div>
+        {onSave && (
+          <div
+            style={{
+              backgroundColor: '#F9FAFB',
+              borderTop: '1px solid #E5E7EB',
+              padding: '12px 24px',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px',
+              alignItems: 'center',
+            }}
+          >
+            <button
+              type="button"
+              className="hub-btn-primary hub-btn-primary--flat"
+              onClick={onSave}
+              disabled={loading}
+              style={{ opacity: loading ? 0.7 : 1 }}
+            >
+              {loading ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const SettingsRow = ({ label, description, children, noBorder }: any) => {
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'minmax(150px, 260px) 1fr',
+      gap: '32px',
+      padding: '20px 0',
+      borderBottom: noBorder ? 'none' : '1px solid #F3F4F6',
+    }} className="settings-row-entry">
+      <div>
+        <label style={{ fontSize: '13px', fontWeight: 500, color: '#374151', display: 'block', marginBottom: '4px' }}>{label}</label>
+        {description && <p style={{ fontSize: '12px', color: '#6B7280', margin: 0, lineHeight: 1.4 }}>{description}</p>}
+      </div>
+      <div style={{ maxWidth: '520px', display: 'flex', flexDirection: 'column', justifyContent: 'center', width: '100%' }}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+const GeralTab = ({ name, setName, email, setEmail, reg, setReg, color, setColor, lockdown, setLockdown, onSave, loading }: any) => {
+  return (
+    <div style={styles.geralTabContent}>
+       <div style={{ ...styles.tabHeader, borderBottom: '1px solid #E5E7EB', paddingBottom: '24px', marginBottom: '32px' }}>
+          <h3 style={{ ...styles.tabTitle, fontSize: '24px', fontWeight: 800, marginBottom: '4px' }}>Identidade & Branding Global</h3>
+          <p style={{ ...styles.tabSub, fontSize: '14px', color: '#6B7280' }}>Configure a presença da marca Logta e regras básicas de entrada na plataforma.</p>
        </div>
 
-       <div style={styles.fGrid}>
-          <div style={styles.fGroup}>
-             <label style={styles.fLabel}>Nome da Plataforma (Hub)</label>
+       <SettingsCard 
+         title="Identidade da Plataforma" 
+         subtitle="Configurações gerais e canais de suporte da organização."
+         onSave={onSave}
+         loading={loading}
+       >
+          <SettingsRow label="Nome da Plataforma (Hub)">
              <input style={styles.input} value={name} onChange={e => setName(e.target.value)} placeholder="Logta HQ" />
-          </div>
-          <div style={styles.fGroup}>
-             <label style={styles.fLabel}>E-mail de Suporte Central</label>
+          </SettingsRow>
+          <SettingsRow label="E-mail de Suporte Central" noBorder>
              <input style={styles.input} value={email} onChange={e => setEmail(e.target.value)} placeholder="master@logta.com" />
-          </div>
-          <div style={styles.fGroup}>
-             <label style={styles.fLabel}>Cor Primária do Hub</label>
-             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          </SettingsRow>
+       </SettingsCard>
+
+       <SettingsCard 
+         title="Branding e Customização" 
+         subtitle="Defina a cor principal e o logotipo corporativo."
+         onSave={onSave}
+         loading={loading}
+       >
+          <SettingsRow label="Cor Primária do Hub">
+             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', width: '100%' }}>
                 <input 
                    type="color" 
                    value={color || '#0061FF'} 
                    onChange={e => setColor(e.target.value)} 
-                   style={{...styles.input, padding: '2px', height: '48px', width: '60px', flex: 'none', cursor: 'pointer'}}
+                   style={{...styles.input, padding: '2px', height: '36px', width: '48px', flex: 'none', cursor: 'pointer', minHeight: 'unset'}}
                 />
                 <input style={{...styles.input, flex: 1}} value={color} onChange={e => setColor(e.target.value)} />
              </div>
-          </div>
-          <div style={styles.fGroup}>
-             <label style={styles.fLabel}>Políticas de Registro</label>
+          </SettingsRow>
+          <SettingsRow label="Logo Principal (Master)" noBorder>
+             <div style={{ display: 'flex', gap: '20px', alignItems: 'center', width: '100%' }}>
+                <div style={{ ...styles.logoPreview, backgroundColor: color || '#0061FF', width: '44px', height: '44px', fontSize: '18px', borderRadius: '8px' }}>L</div>
+                <div style={{ flex: 1 }}>
+                   <p style={{ margin: '0', fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>A logo enviada aqui será replicada em todas as áreas não customizadas.</p>
+                </div>
+                <Button variant="outline" size="sm" label="Alterar Logo" style={{ flexShrink: 0 }} />
+             </div>
+          </SettingsRow>
+       </SettingsCard>
+
+       <SettingsCard 
+         title="Políticas de Acesso" 
+         subtitle="Gerenciamento de convites e segurança de borda da infraestrutura."
+         onSave={onSave}
+         loading={loading}
+       >
+          <SettingsRow label="Políticas de Registro">
              <select style={styles.input} value={reg.toString()} onChange={e => setReg(e.target.value === 'true')}>
                 <option value="true">Aberto (Landing Page)</option>
                 <option value="false">Restrito (Apenas Convite)</option>
              </select>
-          </div>
-          <div style={styles.fGroup}>
-             <label style={{...styles.fLabel, color: lockdown ? '#EF4444' : '#94A3B8'}}>MASTER LOCKDOWN (GATEWAY)</label>
+          </SettingsRow>
+          <SettingsRow label="Master Lockdown (Gateway)" noBorder>
              <select 
-               style={{...styles.input, backgroundColor: lockdown ? '#FEF2F2' : '#F8FAFC', borderColor: lockdown ? '#EF4444' : '#E2E8F0'}} 
+               style={{...styles.input, backgroundColor: lockdown ? '#FEF2F2' : '#FFFFFF', borderColor: lockdown ? '#EF4444' : '#E5E7EB'}} 
                value={lockdown.toString()} 
                onChange={e => setLockdown(e.target.value === 'true')}
              >
                 <option value="false">Operação Normal</option>
                 <option value="true">LOCKDOWN ATIVO (Restringir Acessos)</option>
              </select>
-          </div>
-        </div>
-
-       <div style={{...styles.card, marginTop: '32px', backgroundColor: '#f8fafc'}}>
-          <div style={{display: 'flex', gap: '20px', alignItems: 'center'}}>
-             <div style={{...styles.logoPreview, backgroundColor: color}}>L</div>
-             <div>
-                <h4 style={{margin: 0, fontSize: '15px', fontWeight: '800'}}>Logo Principal (Master)</h4>
-                <p style={{margin: '4px 0 0', fontSize: '12px', color: '#64748b'}}>A logo enviada aqui será replicada em todas as áreas não customizadas.</p>
-             </div>
-              <Button variant="outline" size="sm" label="Alterar Logo" style={{ marginLeft: 'auto' }} />
-          </div>
-       </div>
+          </SettingsRow>
+       </SettingsCard>
     </div>
   );
 };
@@ -389,7 +560,7 @@ const GoogleWorkspaceTab = () => {
   return (
     <div style={styles.tabContent}>
        <h3 style={styles.tabTitle}>Google Cloud & Workspace Hub</h3>
-       <p style={styles.tabSub}>Integração nativa para Meet, LogDock e Agenda em todo o monorepo.</p>
+       <p style={styles.tabSub}>Integração nativa para Meet e Agenda no ecossistema Logta.</p>
        
        <div style={styles.fGroup}>
           <label style={styles.fLabel}>Service Account JSON Key</label>
@@ -430,7 +601,7 @@ const CoreStatusTab = () => {
 
   const getMetricColor = () => {
     if (activeMetric === 'cpu') return '#0061FF';
-    if (activeMetric === 'ram') return '#10B981';
+    if (activeMetric === 'ram') return '#0061FF';
     return '#F59E0B';
   };
 
@@ -449,15 +620,15 @@ const CoreStatusTab = () => {
            fontSize: '10px', 
            fontWeight: '800', 
            letterSpacing: '0.5px', 
-           color: '#10B981', 
-           background: '#ECFDF5', 
+           color: '#0061FF', 
+           background: '#EFF6FF', 
            padding: '6px 12px', 
            borderRadius: '20px',
            display: 'flex',
            alignItems: 'center',
            gap: '6px'
          }}>
-           <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px #10B981' }} />
+           <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF', boxShadow: '0 0 8px #0061FF' }} />
            TEMPO REAL CONECTADO
          </span>
        </div>
@@ -465,7 +636,7 @@ const CoreStatusTab = () => {
        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
           {[
             { id: 'cpu', label: 'Supabase DB', status: 'Online', icon: <Database size={20} />, latency: '12ms', color: '#0061FF', bg: 'rgba(0, 97, 255, 0.08)' },
-            { id: 'ram', label: 'Edge Runtime', status: 'Online', icon: <Cpu size={20} />, latency: '45ms', color: '#10B981', bg: 'rgba(16, 185, 129, 0.08)' },
+            { id: 'ram', label: 'Edge Runtime', status: 'Online', icon: <Cpu size={20} />, latency: '45ms', color: '#0061FF', bg: 'rgba(0, 97, 255, 0.08)' },
             { id: 'req', label: 'Mail Server', status: 'Online', icon: <LinkIcon size={20} />, latency: '110ms', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.08)' },
           ].map((item) => (
             <div 
@@ -484,7 +655,7 @@ const CoreStatusTab = () => {
                <div style={styles.statusInfo}>
                   <div style={styles.statusLabel}>{item.label}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '2px 0' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }} />
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0061FF' }} />
                     <span style={{ ...styles.statusValue, fontSize: '15px' }}>{item.status}</span>
                   </div>
                   <div style={styles.statusMeta}>Latência: <span style={{ color: item.color, fontWeight: 700 }}>{item.latency}</span></div>
@@ -587,71 +758,141 @@ const CoreStatusTab = () => {
 // --- ESTILOS ---
 
 const styles: Record<string, any> = {
-  container: { padding: '0', minHeight: '100vh', backgroundColor: 'transparent' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
-  badge: { fontSize: '10px', fontWeight: '600', color: 'var(--primary)', letterSpacing: '0.8px', marginBottom: '8px', textTransform: 'uppercase' },
-  title: { fontSize: '29px', fontWeight: '500', color: '#000000', letterSpacing: 0, margin: 0, lineHeight: '1.2', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
-  subtitle: { ...HUB_PAGE_SUBTITLE },
-  headerActions: { display: 'flex', gap: '12px' },
-  refreshBtn: { width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '24px', cursor: 'pointer', color: '#64748b' },
-  saveBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 28px', backgroundColor: '#1e293b', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.3px' },
-
-  layout: { display: 'grid', gridTemplateColumns: '280px 1fr', gap: '40px', alignItems: 'flex-start' },
-  sidebarWrapper: { 
-    // Removido o fixo/sticky para rolar normal
-  },
-  sidebar: { display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: 'white', padding: '16px', borderRadius: '32px', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' },
-  tabBtn: {
+  container: { padding: '0', backgroundColor: '#FFFFFF', width: '100%' },
+  header: {
     display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '9px 14px',
-    border: 'none',
-    backgroundColor: 'transparent',
-    borderRadius: '22px',
-    fontSize: '13px',
-    fontWeight: 600,
-    color: 'var(--text-secondary, #64748B)',
-    cursor: 'pointer',
-    textAlign: 'left',
-    transition: 'background-color 0.18s ease, color 0.18s ease',
-    width: '100%',
-    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '20px',
+    flexWrap: 'wrap' as const,
+    marginBottom: '28px',
   },
-  tabBtnActive: {
-    backgroundColor: 'var(--accent-light, #F0F7FF)',
-    color: 'var(--text-primary, #0F172A)',
+  title: {
+    fontSize: '20px',
     fontWeight: 600,
-  },
-  tabIcon: {
-    width: 20,
-    height: 20,
+    color: '#1a1d21',
+    letterSpacing: '-0.02em',
+    margin: 0,
+    lineHeight: 1.35,
+      },
+  subtitle: { ...HUB_PAGE_SUBTITLE, padding: '6px 0 0 0', maxWidth: '520px' },
+  headerActions: { display: 'flex', gap: '12px' },
+  refreshBtn: {
+    width: '40px',
+    height: '40px',
+    padding: 0,
+    minWidth: '40px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
+  saveBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 28px', backgroundColor: '#1e293b', color: 'white', border: 'none', borderRadius: '22px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.3px' },
+
+  layout: {
+    display: 'grid',
+    gridTemplateColumns: '240px 1fr',
+    gap: 0,
+    alignItems: 'flex-start',
+  },
+  sidebarWrapper: {
+    position: 'sticky',
+    top: '0',
+    alignSelf: 'flex-start',
+    maxHeight: 'calc(100vh - 48px)',
+  },
+  sidebar: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 0,
+    minHeight: 'min(800px, 80vh)',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    backgroundColor: 'transparent',
+    padding: '0 12px 0 0',
+    borderRadius: 0,
+    border: 'none',
+    borderRight: '1px solid #E5E7EB',
+    scrollbarWidth: 'thin',
+    scrollbarColor: '#CBD5E1 transparent',
+  },
+  sidebarHeading: {
+    margin: 0,
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#1a1d21',
+    letterSpacing: '-0.02em',
+    lineHeight: 1.3,
+      },
+  sidebarHeadingRule: {
+    height: 1,
+    backgroundColor: '#eceef1',
+    margin: '12px 0 14px',
+    borderRadius: 1,
+    flexShrink: 0,
+  },
+  sidebarSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: 0,
+  },
+  sidebarSectionRule: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    margin: '14px 0 12px',
+    flexShrink: 0,
+  },
+  sidebarSectionLabel: {
+    fontSize: '11px',
+    fontWeight: 800,
+    color: '#94A3B8',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    padding: '0 8px 8px',
+    lineHeight: 1.3,
+      },
+  sidebarSectionItems: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 1,
+  },
+  navItemBadge: {
+    fontSize: '9px',
+    fontWeight: 800,
+    padding: '2px 7px',
+    borderRadius: '8px',
+    border: '1px solid rgba(249, 115, 22, 0.45)',
+    color: '#EA580C',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    flexShrink: 0,
+  },
+  navItemExternalIcon: {
+    color: '#94A3B8',
+    opacity: 0.85,
+    flexShrink: 0,
+  },
 
   content: {
-    backgroundColor: 'white',
-    padding: '40px',
-    borderRadius: '40px',
-    border: '1px solid #e2e8f0',
-    boxShadow: '0 20px 40px -10px rgba(0,0,0,0.05)',
-    minHeight: '700px',
-    marginTop: '7px',
-    marginBottom: '7px',
+    backgroundColor: '#FFFFFF',
+    padding: '0 var(--hub-shell-space-page-x, 24px) 64px var(--hub-shell-space-page-x, 24px)',
+    borderRadius: 0,
+    border: 'none',
+    boxShadow: 'none',
+    minHeight: 'min(700px, 70vh)',
+    marginTop: 0,
+    marginBottom: 0,
+    position: 'relative',
   },
   tabHeader: { marginBottom: '32px' },
   tabTitle: {
-    fontSize: '25px',
-    fontWeight: 500,
-    color: 'var(--accent-glow)',
+    fontSize: '17px',
+    fontWeight: 600,
+    color: '#1a1d21',
     margin: '0 0 8px 0',
-    letterSpacing: 0,
-    lineHeight: 1.2,
-    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-    backgroundImage: 'none',
+    letterSpacing: '-0.02em',
+    lineHeight: 1.35,
+        backgroundImage: 'none',
     WebkitBackgroundClip: 'unset',
     backgroundClip: 'unset',
   },
@@ -673,13 +914,41 @@ const styles: Record<string, any> = {
     fontWeight: '500',
   },
 
-  fGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
+  /** Conteúdo padrão das abas (exceto Geral, que usa `geralTabContent`) */
+  tabContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
+  },
+  /** Aba Geral — alinhado ao modelo de perfil (margens, topo, sem row-gap) */
+  geralTabContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 0,
+    marginLeft: 0,
+    marginRight: 0,
+    paddingTop: 0,
+    fontWeight: 800,
+  },
   fGroup: { display: 'flex', flexDirection: 'column', gap: '10px' },
   fLabel: { fontSize: '11px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' },
-  input: { padding: '14px 18px', borderRadius: '18px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', fontWeight: 400, outline: 'none', fontSize: '12px', color: 'rgba(0, 0, 0, 0.8)', transition: 'all 0.2s' },
+  input: {
+    padding: '8px 12px',
+    borderRadius: '6px',
+    border: '1px solid #E5E7EB',
+    backgroundColor: '#FFFFFF',
+    fontWeight: 400,
+    outline: 'none',
+    fontSize: '13px',
+    color: '#111827',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+    minHeight: '38px',
+    boxSizing: 'border-box' as const,
+    width: '100%',
+  },
   textarea: { padding: '18px', borderRadius: '22px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', fontWeight: '500', outline: 'none', resize: 'vertical' },
 
-  card: { padding: '24px', backgroundColor: 'white', borderRadius: '24px', border: '1px solid #e2e8f0' },
+  card: { padding: '24px', backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e8eaed' },
   logoPreview: { width: '56px', height: '56px', color: 'white', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', fontSize: '24px' },
   secondaryBtn: { padding: '10px 20px', backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '14px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.2px' },
 
@@ -688,7 +957,7 @@ const styles: Record<string, any> = {
   statusInfo: { flex: 1 },
   statusLabel: { fontSize: '11px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px' },
   statusValue: { fontSize: '16px', fontWeight: '600', color: '#1e293b', letterSpacing: '0.2px' },
-  statusMeta: { fontSize: '11px', color: '#10b981', fontWeight: '500', marginTop: '2px', letterSpacing: '0.2px' }
+  statusMeta: { fontSize: '11px', color: '#0061FF', fontWeight: '500', marginTop: '2px', letterSpacing: '0.2px' }
 };
 
 export default MasterSettings;

@@ -56,7 +56,11 @@ export function CrmFinanceiroView() {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-start">
+      {/* Ajustado com estilo inline de alta especificidade para garantir que as duas seções principais (Esquerda e Direita) fiquem lado a lado, sobrepondo qualquer regra CSS global que force flex-direction: column */}
+      <div 
+        className="grid grid-cols-2 gap-6 items-start"
+        style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}
+      >
         {/* Esquerda: transferência + faturamento + faturas */}
         <div className="flex min-w-0 flex-col gap-6">
           <div className="logta-panel-card flex flex-col p-6 sm:p-8">

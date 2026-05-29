@@ -111,7 +111,7 @@ const styles: Record<string, any> = {
   },
   desc: {
     fontSize: '14px',
-    color: '#64748B',
+    color: '#949494',
     lineHeight: '1.5'
   },
   btn: {

@@ -23,7 +23,7 @@
   --bg-active:     #F0F7FF; /* Global Blue 50 - Active states */
   --accent-glow:   rgba(0,97,255,0.1);
   --bg-overlay:    rgba(0, 97, 255, 0.04);
-  --green:         #10B981;
+  --green:         #0061FF;
   --orange:        #F59E0B;
   --red:           #EF4444;
   --blue:          #3B82F6;
@@ -34,7 +34,15 @@
   --shadow-modal:  0 20px 60px rgba(0,0,0,0.1);
 }
 
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  body, h1, h2, h3, h4, h5, h6, p, ol, ul, figure, blockquote, dl, dd {
+    margin: 0;
+    padding: 0;
+  }
+}
 
 html { font-size: 14px; }
 
@@ -82,12 +90,57 @@ h4 { font-size: 1.25rem; font-weight: 600; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sr-only  { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
 
+/* ── Global Premium Components ─────────────────── */
+.hub-premium-pill {
+  border-radius: 100px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  font-size: 11px !important;
+  letter-spacing: 0.06em !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer !important;
+  font-family: 'Inter', sans-serif !important;
+  border: none !important;
+  padding: 12px 28px !important;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  text-decoration: none !important;
+}
+
+.hub-premium-pill:hover {
+  filter: brightness(1.05);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.hub-premium-pill:active {
+  transform: translateY(0);
+}
+
+/* Variantes de cores */
+.hub-premium-pill.primary { background: var(--accent) !important; color: white !important; }
+.hub-premium-pill.secondary {
+  background: var(--hub-card, #ffffff) !important;
+  color: var(--hub-text-main, var(--text-primary)) !important;
+  border: 1px solid var(--hub-border, var(--border)) !important;
+}
+.hub-premium-pill.dark { background: #0F172A !important; color: white !important; }
+.hub-premium-pill.success { background: #10B981 !important; color: white !important; }
+.hub-premium-pill.danger { background: #EF4444 !important; color: white !important; }
+.hub-premium-pill.zaptro { background: #8B5CF6 !important; color: white !important; }
+.hub-premium-pill.whatsapp { background: #25D366 !important; color: white !important; }
+
 /* ── Global Cards ── */
 /* :not(.hub-metric-card): wrapper KPI; :not([class*="hub-metric-card__"]): evita .hub-metric-card__label
-   etc. — também casam em [class*="card"] por conterem a substring "card". Ver HubMetricCard.css */
+   etc. — também casam em [class*="card"] por conterem a substring "card". Ver HubMetricCard.css.
+   Exclui classes Logta com a mesma substring. */
 .card,
-[class*="card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):not([class*="hub-splash"]),
-[class*="Card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):not([class*="hub-splash"]) {
+[class*="card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):not([class*="hub-splash"]):not(.logta-metric-card):not([class*="logta-metric-card"]):not(.logta-finance-stat-card):not([class*="logta-finance-stat-card"]):not(.logta-stat-card):not([class*="logta-stat-card"]):not([class*="logta-stat-card__"]):not(.logta-panel-card):not([class*="logta-panel-card"]):not([class*="logta-card-heading"]):not([class*="logta-modal-heading"]):not([class*="logta-dashboard-stat-card"]):not([class*="logta-dashboard-stat-card__"]):not([class*="logta-kanban-card-title"]):not([class*="logta-kanban-column-title"]),
+[class*="Card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):not([class*="hub-splash"]):not(.logta-metric-card):not([class*="logta-metric-card"]):not(.logta-finance-stat-card):not([class*="logta-finance-stat-card"]):not(.logta-stat-card):not([class*="logta-stat-card"]):not([class*="logta-stat-card__"]):not(.logta-panel-card):not([class*="logta-panel-card"]):not([class*="logta-card-heading"]):not([class*="logta-modal-heading"]):not([class*="logta-dashboard-stat-card"]):not([class*="logta-dashboard-stat-card__"]):not([class*="logta-kanban-card-title"]):not([class*="logta-kanban-column-title"]) {
   border-radius: 22px;
   background-color: #ffffff !important;
   color: #1F2937;
@@ -102,9 +155,9 @@ h4 { font-size: 1.25rem; font-weight: 600; }
 }
 
 .card:hover,
-[class*="card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):not([class*="hub-splash"]):hover,
-[class*="Card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):not([class*="hub-splash"]):hover,
-.hover-scale:not(.hub-metric-card):hover {
+[class*="card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):not([class*="hub-splash"]):not(.logta-metric-card):not([class*="logta-metric-card"]):not(.logta-finance-stat-card):not([class*="logta-finance-stat-card"]):not(.logta-stat-card):not([class*="logta-stat-card"]):not([class*="logta-stat-card__"]):not(.logta-panel-card):not([class*="logta-panel-card"]):not([class*="logta-card-heading"]):not([class*="logta-modal-heading"]):not([class*="logta-dashboard-stat-card"]):not([class*="logta-dashboard-stat-card__"]):hover,
+[class*="Card"]:not(.hub-metric-card):not([class*="hub-metric-card__"]):not([class*="hub-splash"]):not(.logta-metric-card):not([class*="logta-metric-card"]):not(.logta-finance-stat-card):not([class*="logta-finance-stat-card"]):not(.logta-stat-card):not([class*="logta-stat-card"]):not([class*="logta-stat-card__"]):not(.logta-panel-card):not([class*="logta-panel-card"]):not([class*="logta-card-heading"]):not([class*="logta-modal-heading"]):not([class*="logta-dashboard-stat-card"]):not([class*="logta-dashboard-stat-card__"]):hover,
+.hover-scale:not(.hub-metric-card):not(.logta-metric-card):hover {
   transform: translateY(-4px) !important;
   box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08) !important;
 }

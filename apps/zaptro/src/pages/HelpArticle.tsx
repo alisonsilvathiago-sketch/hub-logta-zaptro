@@ -74,11 +74,11 @@ const HelpArticle: React.FC = () => {
         <div style={styles.bcItem} onClick={() => navigate('/ajuda')}>
           <Home size={14} /> Home
         </div>
-        <ChevronRight size={14} color="#94a3b8" />
+        <ChevronRight size={14} color="#949494" />
         <div style={styles.bcItem} onClick={() => navigate(`/ajuda/categoria/${article.category_id}`)}>
           {article.category?.name}
         </div>
-        <ChevronRight size={14} color="#94a3b8" />
+        <ChevronRight size={14} color="#949494" />
         <div style={{...styles.bcItem, color: 'var(--text-main)', cursor: 'default'}}>
           Artigo
         </div>
@@ -148,10 +148,10 @@ const HelpArticle: React.FC = () => {
 
 const styles: Record<string, any> = {
   container: { minHeight: '100vh', backgroundColor: 'white', padding: '120px 40px 80px 40px' },
-  loading: { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' },
+  loading: { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#949494' },
   breadcrumb: { 
     maxWidth: '1200px', margin: '0 auto 40px auto', display: 'flex', alignItems: 'center', gap: '8px',
-    fontSize: '13px', color: '#94a3b8', fontWeight: '500' 
+    fontSize: '13px', color: '#949494', fontWeight: '500' 
   },
   bcItem: { cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'color 0.2s', '&:hover': { color: 'var(--primary)' } },
   main: { maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 340px', gap: '64px' },
@@ -162,11 +162,11 @@ const styles: Record<string, any> = {
     color: 'var(--primary)', fontWeight: '600', fontSize: '14px', marginBottom: '24px', cursor: 'pointer' 
   },
   title: { fontSize: '36px', fontWeight: '700', color: '#0F172A', letterSpacing: '-1.5px', marginBottom: '16px' },
-  meta: { display: 'flex', gap: '24px', fontSize: '13px', color: '#94a3b8', fontWeight: '500' },
+  meta: { display: 'flex', gap: '24px', fontSize: '13px', color: '#949494', fontWeight: '500' },
   metaItem: { display: 'flex', alignItems: 'center', gap: '6px' },
   
   content: { 
-    fontSize: '17px', color: '#334155', lineHeight: '1.8', 
+    fontSize: '17px', color: '#6B6B6B', lineHeight: '1.8', 
     marginBottom: '60px', borderBottom: '1px solid #e8e8e8', paddingBottom: '60px' 
   },
   
@@ -177,12 +177,12 @@ const styles: Record<string, any> = {
   fBtn: { 
     display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', 
     border: '1px solid #e2e8f0', borderRadius: '12px', background: 'white', 
-    fontSize: '13px', fontWeight: '700', color: '#64748B', cursor: 'pointer' 
+    fontSize: '13px', fontWeight: '700', color: '#949494', cursor: 'pointer' 
   },
   shareBtn: { 
     display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', 
     background: 'none', border: 'none', fontSize: '14px', fontWeight: '700', 
-    color: '#94a3b8', cursor: 'pointer' 
+    color: '#949494', cursor: 'pointer' 
   },
 
   sidebar: { display: 'flex', flexDirection: 'column', gap: '32px' },
@@ -190,11 +190,11 @@ const styles: Record<string, any> = {
   sidebarTitle: { fontSize: '18px', fontWeight: '700', color: '#0f172a', marginBottom: '20px' },
   relatedList: { display: 'flex', flexDirection: 'column', gap: '16px' },
   relatedItem: { 
-    fontSize: '14px', color: '#64748B', fontWeight: '600', cursor: 'pointer', 
+    fontSize: '14px', color: '#949494', fontWeight: '600', cursor: 'pointer', 
     transition: 'color 0.2s', '&:hover': { color: 'var(--primary)' } 
   },
   supportBox: { padding: '32px', backgroundColor: '#0f172a', borderRadius: '24px', color: 'white' },
-  supportText: { fontSize: '14px', color: '#94a3b8', lineHeight: '1.5', marginBottom: '20px' },
+  supportText: { fontSize: '14px', color: '#949494', lineHeight: '1.5', marginBottom: '20px' },
   contactBtn: { 
     width: '100%', padding: '12px', backgroundColor: 'var(--primary)', color: 'white', 
     border: 'none', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' 

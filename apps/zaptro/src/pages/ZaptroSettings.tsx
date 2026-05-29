@@ -1,6 +1,6 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Bot, Bell } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import ZaptroLayout from '../components/Zaptro/ZaptroLayout';
 import WhatsAppConfig from './WhatsAppConfig';
 import ZaptroAutomation from './ZaptroAutomation';
@@ -15,181 +15,12 @@ import { ZAPTRO_FIELD_BG, ZAPTRO_SECTION_BORDER } from '../constants/zaptroUi';
 import { hasZaptroGranularPermission, isZaptroTenantAdminRole } from '../utils/zaptroPermissions';
 import { zaptroSettingsTabToPageId } from '../utils/zaptroPagePermissionMap';
 import { isZaptroBrandingEntitledByPlan } from '../utils/zaptroBrandingEntitlement';
+import ZaptroChatbotSettingsTab from '../app/ZaptroChatbotSettingsTab';
 
 const TAB_KEYS = ['config', 'automation', 'chatbot', 'marca', 'api', 'notificacoes'] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 
-const CHATBOT_PREFS_KEY = 'zaptro_chatbot_prefs_v1';
-
-function ZaptroChatbotTab() {
-  const { palette } = useZaptroTheme();
-  const { profile } = useAuth();
-  const [, setSearchParams] = useSearchParams();
-  const prefsKey = `${CHATBOT_PREFS_KEY}_${profile?.company_id || 'local'}`;
-  const [tone, setTone] = useState<'profissional' | 'amigavel' | 'direto'>('profissional');
-  const [quietHours, setQuietHours] = useState(true);
-  const [signOff, setSignOff] = useState('— Equipa comercial');
-  const [savedAt, setSavedAt] = useState<string | null>(null);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(prefsKey);
-      if (!raw) return;
-      const j = JSON.parse(raw) as {
-        tone?: typeof tone;
-        quietHours?: boolean;
-        signOff?: string;
-      };
-      if (j.tone === 'profissional' || j.tone === 'amigavel' || j.tone === 'direto') setTone(j.tone);
-      if (typeof j.quietHours === 'boolean') setQuietHours(j.quietHours);
-      if (typeof j.signOff === 'string') setSignOff(j.signOff);
-    } catch {
-      /* ignore */
-    }
-  }, [prefsKey]);
-
-  const savePrefs = () => {
-    try {
-      localStorage.setItem(prefsKey, JSON.stringify({ tone, quietHours, signOff }));
-      setSavedAt(new Date().toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const fieldBorder = palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : ZAPTRO_SECTION_BORDER;
-  const fieldBg = palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#fafafa';
-
-  return (
-    <div style={{ maxWidth: 720, padding: '12px 0 32px', boxSizing: 'border-box', width: '100%' }}>
-      <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start', marginBottom: 22 }}>
-        <div
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: 16,
-            backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f4f4f5',
-            border: `1px solid ${fieldBorder}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Bot size={26} color={palette.text} strokeWidth={2.2} />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h2 style={{ margin: '0 0 8px 0', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: palette.text }}>
-            Chatbot
-          </h2>
-          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: palette.textMuted, fontWeight: 600 }}>
-            Preferências de tom e encerramento guardadas neste browser. A triagem por menu (opções 1, 2, 3…) configura-se em{' '}
-            <button
-              type="button"
-              onClick={() => setSearchParams({ tab: 'automation' }, { replace: true })}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                font: 'inherit',
-                fontWeight: 700,
-                color: palette.text,
-                cursor: 'pointer',
-                textDecoration: 'underline',
-              }}
-            >
-              Automação / Fluxos
-            </button>
-            .
-          </p>
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 18,
-          padding: 22,
-          borderRadius: 20,
-          border: `1px solid ${fieldBorder}`,
-          backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#fff',
-        }}
-      >
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: palette.textMuted }}>TOM DAS RESPOSTAS</span>
-          <select
-            value={tone}
-            onChange={(e) => setTone(e.target.value as typeof tone)}
-            style={{
-              padding: '12px 14px',
-              borderRadius: 14,
-              border: `1px solid ${fieldBorder}`,
-              backgroundColor: fieldBg,
-              color: palette.text,
-              fontWeight: 700,
-              fontSize: 14,
-              fontFamily: 'inherit',
-              accentColor: '#000',
-            }}
-          >
-            <option value="profissional">Profissional e objetivo</option>
-            <option value="amigavel">Amigável e próximo</option>
-            <option value="direto">Direto (frases curtas)</option>
-          </select>
-        </label>
-
-        <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', fontWeight: 700, fontSize: 14, color: palette.text }}>
-          <input type="checkbox" checked={quietHours} onChange={(e) => setQuietHours(e.target.checked)} style={{ width: 18, height: 18, accentColor: '#000' }} />
-          Reduzir automatismos fora do horário comercial (9h–18h) — só aviso, integração WhatsApp continua na Central de Conexão.
-        </label>
-
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: palette.textMuted }}>ASSINATURA / DESPEDIDA (TEXTO CURTO)</span>
-          <input
-            value={signOff}
-            onChange={(e) => setSignOff(e.target.value)}
-            placeholder="Ex.: — Equipa Zaptro"
-            style={{
-              padding: '12px 14px',
-              borderRadius: 14,
-              border: `1px solid ${fieldBorder}`,
-              backgroundColor: fieldBg,
-              color: palette.text,
-              fontWeight: 600,
-              fontSize: 14,
-              fontFamily: 'inherit',
-            }}
-          />
-        </label>
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
-          <button
-            type="button"
-            onClick={savePrefs}
-            style={{
-              padding: '12px 20px',
-              borderRadius: 14,
-              border: 'none',
-              background: '#000',
-              color: palette.lime,
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: 'pointer',
-            }}
-          >
-            Guardar preferências
-          </button>
-          {savedAt ? (
-            <span style={{ fontSize: 12, fontWeight: 700, color: palette.textMuted }}>Guardado às {savedAt}</span>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const ZaptroSettingsInner: React.FC = () => {
+export const ZaptroSettingsInner: React.FC = () => {
   const { palette } = useZaptroTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const { profile, isMaster } = useAuth();
@@ -241,15 +72,13 @@ const ZaptroSettingsInner: React.FC = () => {
   const tabLabelInactive = isDark ? palette.textMuted : '#525252';
 
   /** Uma só largura máxima em todas as abas — evita reflow da grelha e sensação de “aba maior” ao entrar em Automação. */
-  const shellMax = 'min(100%, 1360px)';
-
   return (
-    <div style={{ width: '100%', maxWidth: shellMax, margin: '0 auto', boxSizing: 'border-box' }}>
+    <div className="zaptro-settings-shell" style={{ width: '100%', maxWidth: '100%', margin: 0, boxSizing: 'border-box' }}>
       <header style={{ marginBottom: 28 }}>
-        <h1 style={{ margin: '0 0 8px 0', fontSize: 37, fontWeight: 600, letterSpacing: '-0.8px', color: palette.text }}>
+        <h1 style={{ margin: '0 0 8px 0', fontSize: 25, fontWeight: 600, letterSpacing: '-0.8px', color: palette.text }}>
           Configurações
         </h1>
-        <p style={{ margin: 0, fontSize: 15, color: palette.textMuted, fontWeight: 600, lineHeight: 1.5 }}>
+        <p style={{ margin: 0, fontSize: 11, color: '#C9C9C9', fontWeight: 500, lineHeight: 1.5 }}>
           Conexão WhatsApp, automação, chatbot, marca e integrações API.
         </p>
       </header>
@@ -342,8 +171,8 @@ const ZaptroSettingsInner: React.FC = () => {
           }}
         >
           {activeTab === 'config' && <WhatsAppConfig />}
-          {activeTab === 'automation' && <ZaptroAutomation hideLayout />}
-          {activeTab === 'chatbot' && <ZaptroChatbotTab />}
+          {activeTab === 'automation' && <ZaptroAutomation hideLayout activateAllOnMount />}
+          {activeTab === 'chatbot' && <ZaptroChatbotSettingsTab />}
           {activeTab === 'notificacoes' && <ZaptroUserPreferences />}
           {activeTab === 'marca' && <ZaptroWhiteLabelInner embedded />}
           {activeTab === 'api' && <ZaptroSettingsApiTab />}

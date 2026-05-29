@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",
+    "wa:webhook": "tsx --env-file=.env.local ../scripts/run-wa-webhook-server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js"
   },

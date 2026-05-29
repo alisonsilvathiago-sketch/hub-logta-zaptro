@@ -5,6 +5,12 @@ import { useAuth } from '@core/context/AuthContext';
 import { useToast } from '@core/context/ToastContext';
 import SyncIndicator from '../../components/SyncIndicator';
 import { HUB_PAGE_SUBTITLE } from '@hub/styles/hubPageTypography';
+import HubMasterAvatar from '@hub/components/HubMasterAvatar';
+import {
+  isHubDevProfile,
+  resolveHubMasterAvatarUrl,
+  syncHubDevSessionAvatar,
+} from '@hub/lib/hubMasterAvatar';
 
 const ProfilePage: React.FC = () => {
   const { profile, refreshProfile } = useAuth();
@@ -33,14 +39,18 @@ const ProfilePage: React.FC = () => {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (profile?.id === 'dev-user') {
-      showToast('Sessão de desenvolvimento detectada. Por favor, faça login com uma conta real para salvar alterações.', 'error');
-      return;
-    }
-
     setLoading(true);
 
     try {
+      if (isHubDevProfile(profile)) {
+        syncHubDevSessionAvatar(resolveHubMasterAvatarUrl(profile), {
+          full_name: formData.full_name,
+        });
+        await refreshProfile();
+        showToast('Perfil atualizado localmente!', 'success');
+        return;
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -68,6 +78,19 @@ const ProfilePage: React.FC = () => {
 
     setLoading(true);
     try {
+      if (isHubDevProfile(profile)) {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(new Error('Falha ao ler imagem'));
+          reader.readAsDataURL(file);
+        });
+        syncHubDevSessionAvatar(dataUrl);
+        await refreshProfile();
+        showToast('Foto de perfil atualizada!', 'success');
+        return;
+      }
+
       const fileExt = file.name.split('.').pop();
       const filePath = `${profile?.id}/avatar-${Math.random()}.${fileExt}`;
 
@@ -123,11 +146,15 @@ const ProfilePage: React.FC = () => {
           <div style={styles.card}>
             <div style={styles.avatarSection}>
               <div style={styles.avatarWrapper}>
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} style={styles.largeAvatar} alt="" />
-                ) : (
-                  <div style={styles.avatarPlaceholder}>{profile?.full_name?.[0]}</div>
-                )}
+                <HubMasterAvatar
+                  size={100}
+                  borderRadius={32}
+                  alt={profile?.full_name || 'Avatar do perfil'}
+                  style={{
+                    border: '4px solid white',
+                    boxShadow: '0 10px 15px rgba(0,0,0,0.1)',
+                  }}
+                />
                 <label style={styles.uploadLabel}>
                   <Camera size={18} color="white" />
                   <input type="file" style={{ display: 'none' }} accept="image/*" onChange={handleAvatarUpload} />
@@ -165,7 +192,7 @@ const ProfilePage: React.FC = () => {
                 <button style={styles.textBtn}>Alterar</button>
               </div>
               <div style={styles.securityItem}>
-                <div style={styles.securityIcon}><Shield size={18} color="#10B981" /></div>
+                <div style={styles.securityIcon}><Shield size={18} color="#0061FF" /></div>
                 <div style={styles.securityText}>
                   <span style={styles.securityLabel}>Autenticação em Duas Etapas</span>
                   <span style={styles.securitySub}>Proteja sua conta</span>
@@ -287,7 +314,7 @@ const styles: Record<string, any> = {
   },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
   headerInfo: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  pageTitle: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  pageTitle: { fontSize: '29px', fontWeight: '800', color: '#000000', margin: 0, letterSpacing: 0 },
   pageSub: { ...HUB_PAGE_SUBTITLE },
   saveBtn: { 
     backgroundColor: '#0061FF', color: 'white', border: 'none', padding: '12px 24px', 
@@ -322,7 +349,7 @@ const styles: Record<string, any> = {
   statItem: { display: 'flex', flexDirection: 'column', gap: '4px' },
   statLabel: { fontSize: '11px', fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase' },
   statValue: { fontSize: '14px', fontWeight: '700', color: '#0F172A' },
-  statusBadge: { display: 'inline-flex', alignItems: 'center', gap: '4px', backgroundColor: '#ECFDF5', color: '#059669', padding: '4px 10px', borderRadius: '24px', fontSize: '12px', fontWeight: '700', width: 'fit-content' },
+  statusBadge: { display: 'inline-flex', alignItems: 'center', gap: '4px', backgroundColor: '#EFF6FF', color: '#059669', padding: '4px 10px', borderRadius: '24px', fontSize: '12px', fontWeight: '700', width: 'fit-content' },
 
   form: { display: 'flex', flexDirection: 'column', gap: '20px' },
   row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' },

@@ -2,7 +2,11 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
 const zUrl = import.meta.env.VITE_SUPABASE_ZAPTRO_URL || import.meta.env.VITE_SUPABASE_URL;
-const zKey = import.meta.env.VITE_SUPABASE_ZAPTRO_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+const zKey =
+  import.meta.env.VITE_SUPABASE_ZAPTRO_PUBLISHABLE_KEY ||
+  import.meta.env.VITE_SUPABASE_ZAPTRO_ANON_KEY ||
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY;
 const mainUrl = import.meta.env.VITE_SUPABASE_URL;
 
 /**

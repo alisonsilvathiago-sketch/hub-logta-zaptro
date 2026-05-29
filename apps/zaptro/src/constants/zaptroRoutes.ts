@@ -44,6 +44,10 @@ export const ZAPTRO_ROUTES = {
   BILLING: '/faturamento',
   /** Login público com marca da transportadora (slug = subdomínio cadastrado). Não confundir com `/login` (Zaptro global). */
   COMPANY_LOGIN: '/entrada',
+  /** Painel administrativo completo do Whatsapp (Instâncias, Créditos, API). */
+  WHATSAPP_HUB: '/whatsapp/hub',
+  /** Painel de orquestração de IA e compra de créditos universais. */
+  IA_GATEWAY: '/ia-gateway',
 } as const;
 
 /** Inbox Zaptro com thread pré-selecionada (telefone só dígitos, ex. `5511999887766`, ou UUID de `whatsapp_conversations`). */
@@ -70,11 +74,11 @@ export function zaptroClientProfilePath(id: string): string {
 }
 
 export function zaptroLeadProfilePath(id: string): string {
-  return `/clientes/leads/perfil/${encodeURIComponent(id)}`;
+  return `/app/crm/leads/${encodeURIComponent(id)}`;
 }
 
 export function zaptroDriverProfilePath(id: string): string {
-  return `/motoristas/${encodeURIComponent(id)}`;
+  return `${ZAPTRO_ROUTES.DRIVER_PROFILE}/${encodeURIComponent(id)}`;
 }
 
 export function zaptroVehicleProfilePath(id: string): string {
@@ -82,5 +86,10 @@ export function zaptroVehicleProfilePath(id: string): string {
 }
 
 export function zaptroTeamMemberProfilePath(id: string): string {
+  return `/app/membros/perfil/${encodeURIComponent(id)}`;
+}
+
+/** Legado — redireciona para {@link zaptroTeamMemberProfilePath}. */
+export function zaptroLegacyTeamMemberProfilePath(id: string): string {
   return `${ZAPTRO_ROUTES.TEAM_MEMBER_PROFILE}/${encodeURIComponent(id)}`;
 }

@@ -1,0 +1,89 @@
+---
+description: LogStoka — integrações e webhooks como coração do sistema (hub bidirecional, API-first)
+globs: apps/logstoka/**
+alwaysApply: false
+---
+
+# INTEGRAÇÕES E WEBHOOKS SÃO O CORAÇÃO DO LOGSTOKA
+
+## Diferencial competitivo
+
+O LogStoka **não compete só por estoque**. O diferencial é **interação**: receber e enviar dados para múltiplos sistemas externos com flexibilidade e confiabilidade.
+
+Nasce como **plataforma aberta e altamente integrável** — hub central onde informações entram, são processadas e são redistribuídas.
+
+## Conceito — hub bidirecional
+
+| Direção | Papel |
+|--------|--------|
+| **Receber** | Webhooks/APIs de marketplaces, ERPs, fiscal, pagamentos, automação, APIs do cliente |
+| **Enviar** | Notificar sistemas externos sobre produto, estoque, pedido, NF, inventário, etc. |
+
+Fluxo: **consumir → validar → processar → persistir → propagar → logar**.
+
+Flexibilidade obrigatória: um cliente pode receber **só saídas** de um sistema e **só entradas** de outro; cada conector deve ser configurável (escopo, eventos, mapeamento).
+
+## Sistemas-alvo (não limitar a esta lista)
+
+- **Marketplaces**: Shopee, Mercado Livre, Amazon, TikTok Shop, Magalu
+- **ERPs**: Bling, Tiny, Omie, Conta Azul, ERP próprio
+- **Fiscal**: emissores NF-e, XML NF-e
+- **Pagamentos**: Mercado Pago, Asaas, Stripe, PagSeguro, outros
+- **Automação**: Zaptro, WhatsApp, chatbots, n8n, Make, Zapier
+- **Outros**: APIs próprias, logística, transportadoras, legados
+
+## Webhooks — entrada (exemplos)
+
+`order.created` · `order.paid` · `order.cancelled` · `order.shipped` · `order.delivered` · `product.created` · `product.updated` · `invoice.issued` · `payment.approved` · `payment.refused` · `transfer.created` · `return.created` · `stock.in` · `stock.out` · `inventory.updated`
+
+## Webhooks — saída (exemplos)
+
+Disparar em alterações relevantes: produto criado/atualizado, estoque alterado, pedido recebido/enviado/entregue, transferência, devolução, NF processada, inventário concluído.
+
+## API-first
+
+**Nada existe só na UI.** Toda ação da interface deve ter endpoint equivalente:
+
+- CRUD produto · update estoque · entrada/saída · devolução · avaria · relatórios · inventários · movimentações
+
+Referência UI atual: `SettingsApiWebhooksPanel.tsx`, `logstokaApi.ts`, `IntegrationsPage.tsx`, `SettingsAuditPanel.tsx`.
+
+## Pipeline obrigatório (sem exceção)
+
+```
+Webhook/API recebido
+  → Fila assíncrona
+  → Validação + idempotência
+  → Processamento
+  → Banco de dados
+  → Atualização estoque / produto / pedido
+  → Logs + eventos de saída (webhooks outbound)
+  → Resposta
+```
+
+- **Nunca** processar integração crítica de forma síncrona no handler HTTP.
+- **Idempotência** por evento (evitar duplicidade).
+- **Retry** com backoff; dead-letter para falhas persistentes.
+- Fila: BullMQ/Redis em produção; fallback em memória com retry apenas em dev.
+
+## Logs e monitoramento
+
+Painel deve exibir: origem, destino, payload in/out, data/hora, status, erro, tentativas; **reprocessamento manual**.
+
+Arquivos: `IntegrationLogDetailPage.tsx`, `SettingsAuditPanel.tsx` — estender para produção.
+
+## Segurança
+
+API Keys · tokens · assinatura HMAC de webhooks · rate limit · auditoria · permissões por integração.
+
+## Ao implementar
+
+1. Projetar conector como **plugin** (entrada/saída/eventos configuráveis).
+2. Mapear eventos genéricos internos; adaptadores por sistema externo.
+3. Testes de idempotência e replay de webhook.
+4. Não quebrar sync de estoque mestre (regra `logstoka-master-catalog-pim-hub.mdc`).
+5. WhatsApp/transmissão: conformidade Meta (regra Zaptro separada).
+
+## Objetivo
+
+LogStoka **conversa com qualquer sistema do mercado**. Integrações e webhooks são **pilar principal**, não feature secundária — escaláveis, confiáveis, tempo real.

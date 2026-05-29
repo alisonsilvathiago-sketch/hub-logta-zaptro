@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, AlertTriangle, RefreshCw, Sparkles } from 'lucide-react';
+import { Activity, AlertTriangle, RefreshCw, Sparkles, X, DollarSign } from 'lucide-react';
 import { useOperationalData } from '../contexts/OperationalDataContext';
 import { buildGlobalOperationalAlerts, getGlobalMonitoringSummary } from '../lib/logtaGlobalIntelligence';
 
@@ -8,12 +8,30 @@ export function LogtaGlobalOperationalStrip() {
   const { loading, error, shipments, deliveries, motoristas, vehicles, transactions, lastSyncAt, refresh, hasBackend } =
     useOperationalData();
 
-  const alerts = useMemo(
-    () => buildGlobalOperationalAlerts({ shipments, deliveries, motoristas, vehicles, transactions }),
-    [shipments, deliveries, motoristas, vehicles, transactions],
-  );
+  // Estado para armazenar alertas que o usuário já visualizou/dispensou
+  const [seenAlertIds, setSeenAlertIds] = React.useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('logta_seen_alert_ids') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  // Filtra os alertas removendo os já visualizados
+  const alerts = useMemo(() => {
+    const allAlerts = buildGlobalOperationalAlerts({ shipments, deliveries, motoristas, vehicles, transactions });
+    return allAlerts.filter((a) => !seenAlertIds.includes(a.id));
+  }, [shipments, deliveries, motoristas, vehicles, transactions, seenAlertIds]);
+
   const summary = useMemo(() => getGlobalMonitoringSummary(alerts), [alerts]);
   const top = alerts[0];
+
+  // Função para marcar um alerta como visto e persistir no localStorage
+  const handleMarkAsSeen = (alertId: string) => {
+    const nextSeen = [...seenAlertIds, alertId];
+    setSeenAlertIds(nextSeen);
+    localStorage.setItem('logta_seen_alert_ids', JSON.stringify(nextSeen));
+  };
 
   if (!hasBackend) {
     return (
@@ -32,6 +50,11 @@ export function LogtaGlobalOperationalStrip() {
         <span className="text-[11px] font-bold text-gray-600">Sincronizando ecossistema operacional…</span>
       </div>
     );
+  }
+
+  // Oculta completamente a barra caso não existam alertas ativos
+  if (alerts.length === 0) {
+    return null;
   }
 
   const nivelClass =
@@ -70,17 +93,22 @@ export function LogtaGlobalOperationalStrip() {
         {top ? (
           <Link
             to={top.actionPath}
+            onClick={() => handleMarkAsSeen(top.id)}
             className="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-[9px] font-bold text-white hover:opacity-90"
           >
-            <AlertTriangle size={12} />
+            {top.module === 'financeiro' ? (
+              <DollarSign size={12} className="text-white" />
+            ) : (
+              <AlertTriangle size={12} />
+            )}
             {top.module}: {top.actionLabel}
           </Link>
         ) : null}
         <Link to="/fretes/central" className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[9px] font-bold text-gray-700 hover:bg-gray-50">
           <Activity size={12} /> Fretes
         </Link>
-        <Link to="/financeiro/central" className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[9px] font-bold text-gray-700 hover:bg-gray-50">
-          <Sparkles size={12} /> Financeiro
+        <Link to="/financeiro/central" className="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-[9px] font-bold text-white hover:opacity-90">
+          <DollarSign size={12} className="text-white" /> Financeiro
         </Link>
         <button
           type="button"
@@ -89,6 +117,16 @@ export function LogtaGlobalOperationalStrip() {
         >
           <RefreshCw size={12} /> Sync
         </button>
+        {top ? (
+          <button
+            type="button"
+            onClick={() => handleMarkAsSeen(top.id)}
+            className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5 text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+            title="Dispensar alerta"
+          >
+            <X size={12} />
+          </button>
+        ) : null}
       </div>
     </div>
   );

@@ -1,7 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
 import { FileUp, ScanText, History } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
+import { DEMO_IMPORTS } from '@/lib/logstokaDemoSeed';
 import { logstokaApi } from '@/lib/logstokaApi';
+import ClickableTableRow from '@/components/ui/ClickableTableRow';
 
 interface ImportRecord {
   id: string;
@@ -23,6 +28,7 @@ async function fileToBase64(file: File): Promise<string> {
 }
 
 const ImportsPage: React.FC = () => {
+  const { companyId } = useLogstokaTenant();
   const inputRef = useRef<HTMLInputElement>(null);
   const ocrInputRef = useRef<HTMLInputElement>(null);
   const [imports, setImports] = useState<ImportRecord[]>([]);
@@ -30,6 +36,10 @@ const ImportsPage: React.FC = () => {
   const [ocrLoading, setOcrLoading] = useState(false);
 
   const loadImports = async () => {
+    if (isLogstokaDemoCompany(companyId)) {
+      setImports(DEMO_IMPORTS);
+      return;
+    }
     try {
       const res = await logstokaApi.getImports();
       setImports((res.data ?? []) as ImportRecord[]);
@@ -40,9 +50,13 @@ const ImportsPage: React.FC = () => {
 
   useEffect(() => {
     void loadImports();
-  }, []);
+  }, [companyId]);
 
   const handleFile = async (file: File) => {
+    if (isLogstokaDemoCompany(companyId)) {
+      toast.success(`[Demo] ${file.name} importado — dados demo atualizados`);
+      return;
+    }
     setLoading(true);
     try {
       const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
@@ -53,10 +67,18 @@ const ImportsPage: React.FC = () => {
         toast.success(`NF-e importada — ${result.items} itens (NF ${result.invoiceNumber ?? '—'})`);
       } else if (ext === 'csv' || ext === 'txt') {
         const text = await file.text();
+        const validation = await logstokaApi.aiValidateImport({ file_type: 'csv', content: text }).catch(() => null);
+        if (validation && !validation.valid) {
+          toast.error(`IA: ${validation.summary} (${validation.issues.length} alerta(s))`);
+        }
         const result = await logstokaApi.importReport(text, file.name);
         toast.success(`Relatório importado — ${result.rowsProcessed} linhas, ${result.movements} saídas`);
       } else if (ext === 'xlsx' || ext === 'xls') {
         const base64 = await fileToBase64(file);
+        const validation = await logstokaApi.aiValidateImport({ file_type: 'xlsx', base64 }).catch(() => null);
+        if (validation && !validation.valid) {
+          toast.error(`IA: ${validation.summary}`);
+        }
         const result = await logstokaApi.importExcel(base64, file.name);
         toast.success(`Excel importado — ${result.rowsProcessed} linhas, ${result.movements} saídas`);
       } else if (ext === 'pdf') {
@@ -77,6 +99,10 @@ const ImportsPage: React.FC = () => {
   };
 
   const handleOcrFile = async (file: File) => {
+    if (isLogstokaDemoCompany(companyId)) {
+      toast.success(`[Demo] OCR ${file.name} — 24 linhas extraídas`);
+      return;
+    }
     setOcrLoading(true);
     try {
       const base64 = await fileToBase64(file);
@@ -97,14 +123,14 @@ const ImportsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-black">Centro de Importação</h2>
+        <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Centro de Importação</h2>
         <p className="text-sm text-slate-500">NF-e XML, relatórios CSV/Excel/PDF e OCR via Llama 3.2</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="ls-card">
           <div className="mb-3 flex items-center gap-2 font-black">
-            <FileUp size={18} className="text-emerald-600" />
+            <FileUp size={18} className="text-orange-600" />
             Upload NF-e / Relatório
           </div>
           <input
@@ -133,7 +159,7 @@ const ImportsPage: React.FC = () => {
 
         <div className="ls-card">
           <div className="mb-3 flex items-center gap-2 font-black">
-            <ScanText size={18} className="text-emerald-600" />
+            <ScanText size={18} className="text-orange-600" />
             OCR / imagem
           </div>
           <p className="text-sm text-slate-600">
@@ -186,7 +212,7 @@ const ImportsPage: React.FC = () => {
                 </tr>
               )}
               {imports.map((row) => (
-                <tr key={row.id}>
+                <ClickableTableRow key={row.id} to={`/app/imports/${row.id}`}>
                   <td>{row.file_name}</td>
                   <td>{row.file_type}</td>
                   <td>
@@ -194,7 +220,7 @@ const ImportsPage: React.FC = () => {
                   </td>
                   <td>{row.rows_processed ?? 0}</td>
                   <td>{new Date(row.created_at).toLocaleString('pt-BR')}</td>
-                </tr>
+                </ClickableTableRow>
               ))}
             </tbody>
           </table>

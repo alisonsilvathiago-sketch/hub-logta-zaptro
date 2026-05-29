@@ -1,0 +1,235 @@
+/* LogStoka — shell flutuante · preto + branco + laranja */
+.logstoka-app-shell {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background: #fefefe;
+  color: #0f172a;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.logstoka-app-sidebar-wrap {
+  flex-shrink: 0;
+  display: flex;
+  padding: 14px 0 14px 14px;
+  position: relative;
+  z-index: 50;
+}
+
+.logstoka-app-sidebar {
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 0 16px;
+  gap: 4px;
+  background: #ffffff;
+  border-radius: 23px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow:
+    0 4px 6px rgba(15, 23, 42, 0.04),
+    0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+.logstoka-app-brand {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.logstoka-app-brand-icon {
+  color: #ffffff;
+}
+
+.logstoka-app-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  width: 100%;
+  padding: 8px 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.logstoka-app-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.logstoka-app-nav-item {
+  width: 46px;
+  height: 40px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #949494;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.logstoka-app-nav-item:hover {
+  background: #f8f8f8;
+  color: #475569;
+}
+
+.logstoka-app-nav-item.active {
+  background: rgba(234, 88, 12, 0.18);
+  color: #C2410C;
+}
+
+.logstoka-app-nav-item.active svg {
+  stroke: #C2410C;
+}
+
+.logstoka-app-nav-item--ai.active,
+.logstoka-app-nav-item--ai:hover {
+  background: #C2410C;
+  color: #ffffff;
+}
+
+.logstoka-app-nav-item--ai.active svg,
+.logstoka-app-nav-item--ai:hover svg {
+  stroke: #ffffff;
+}
+
+.logstoka-app-nav-divider {
+  width: 40px;
+  height: 1px;
+  background: #e2e8f0;
+  margin: 6px 0;
+}
+
+.logstoka-app-sidebar-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.logstoka-app-nav-profile {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff7ed;
+  border: 2px solid #ffedd5;
+  font-size: 14px;
+  font-weight: 800;
+  color: #EA580C;
+  cursor: default;
+}
+
+/* Tooltip compacto ao passar o mouse nos ícones do menu */
+.logstoka-sidebar-tooltip-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logstoka-sidebar-tooltip {
+  z-index: 200;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.18),
+    0 2px 4px rgba(15, 23, 42, 0.08);
+  animation: logstoka-sidebar-tooltip-in 0.15s ease;
+}
+
+.logstoka-sidebar-tooltip--fixed {
+  position: fixed;
+  transform: translateY(-50%);
+}
+
+.logstoka-sidebar-tooltip::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-right-color: #111827;
+}
+
+@keyframes logstoka-sidebar-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.logstoka-app-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.logstoka-app-content-gutter {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin-left: 10px;
+  padding: 35px 50px 20px 50px;
+  box-sizing: border-box;
+}
+
+.logstoka-app-content-gutter--inicio {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.ls-inicio-page {
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 980px) {
+  .logstoka-app-sidebar-wrap {
+    display: none;
+  }
+
+  .logstoka-app-content-gutter {
+    margin-left: 0;
+    padding: 20px 16px 88px;
+  }
+}

@@ -1,0 +1,38 @@
+---
+description: Disponibilidade 24/7 — Evolution Go e Llama 3.2 (serviços essenciais Zaptro)
+alwaysApply: true
+---
+
+# REGRA CRÍTICA DE DISPONIBILIDADE
+
+Evolution Go e Llama 3.2 são **serviços essenciais** da plataforma Zaptro. Devem permanecer **ativos, conectados e operacionais 24/7**.
+
+**Não desativar, interromper, pausar ou desconectar** em circunstância operacional normal.
+
+## Regras obrigatórias
+
+- Evolution Go sempre online.
+- Llama 3.2 (Ollama) sempre online.
+- Conexão permanente com a VPS (`108.174.151.98` — ver `apps/zaptro/src/constants/zaptroOllamaConfig.ts`).
+- Inicialização automática após reinicializações do servidor.
+- Monitoramento contínuo dos serviços.
+- Reconexão automática em caso de falha.
+- Recuperação automática após quedas.
+- Atendimento disponível em tempo integral.
+
+Independentemente de haver utilizadores activos, os serviços devem estar **prontos para atender imediatamente**.
+
+## Quando implementar ou alterar código
+
+- **Nunca** introduzir flags, toggles ou fallbacks que desliguem Evolution ou Ollama em produção sem pedido explícito do utilizador.
+- Preferir **retry exponencial**, **health checks** e **reconexão** em vez de desactivar o serviço.
+- Qualquer falha detectada: tentativa automática de recuperação + **registo em log**.
+- Dev local: proxy Vite `/ollama-api` → `OLLAMA_PROXY_TARGET`; Evolution via `/evolution-api` → VPS.
+
+## Referências no repositório
+
+- Ollama: `apps/zaptro/src/lib/ollamaCopilot.ts`, `OLLAMA_SETUP.md`
+- Evolution: `apps/zaptro/supabase/WHATSAPP_EVOLUTION_SETUP.md`, edge `evolution-webhook`
+- Auto-reply WhatsApp + Ollama: `supabase/functions/_shared/zaptroWaAutoReply.ts`
+
+**Objetivo:** disponibilidade contínua, estabilidade operacional e atendimento ininterrupto para clientes, motoristas, colaboradores e administradores.

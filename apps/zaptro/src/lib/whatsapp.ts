@@ -12,19 +12,45 @@ export interface WhatsAppInstance {
   status: 'connected' | 'disconnected' | 'connecting' | 'error';
 }
 
-/** Normalizes Evolution connect / QR payloads (shape varies by connection state). */
+/** Normalizes Evolution / Evolution GO connect payloads (formato varia por versão). */
 export function extractQrBase64(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null;
   const o = payload as Record<string, unknown>;
+
+  const pick = (v: unknown): string | null => {
+    if (typeof v !== 'string' || !v.trim()) return null;
+    const s = v.trim();
+    if (s.startsWith('data:image')) return s;
+    if (s.length > 80) return s;
+    return null;
+  };
+
   const fromNested = (q: unknown): string | null => {
     if (!q || typeof q !== 'object') return null;
-    const b = (q as Record<string, unknown>).base64;
-    return typeof b === 'string' ? b : null;
+    const r = q as Record<string, unknown>;
+    return pick(r.base64) ?? pick(r.code) ?? pick(r.qrcode);
   };
+
+  const instance = o.instance;
+  if (instance && typeof instance === 'object') {
+    const fromInst = fromNested((instance as Record<string, unknown>).qrcode);
+    if (fromInst) return fromInst;
+  }
+
+  const data = o.data;
+  if (data && typeof data === 'object') {
+    const d = data as Record<string, unknown>;
+    const fromData =
+      pick(d.Qrcode) ?? pick(d.qrcode) ?? pick(d.QRCode) ?? fromNested(d.qrcode);
+    if (fromData) return fromData;
+  }
+
   return (
     fromNested(o.qrcode) ??
     fromNested(o.qrCode) ??
-    (typeof o.base64 === 'string' ? o.base64 : null)
+    pick(o.base64) ??
+    pick(o.Qrcode) ??
+    pick(o.QRCode)
   );
 }
 

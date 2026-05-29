@@ -88,20 +88,8 @@ const Logistics: React.FC = () => {
     expected_arrival_time: ''
   });
 
-  // --- Mock Data ---
-  const perfData = [
-    { name: 'Seg', entregas: 45, atrasos: 2 },
-    { name: 'Ter', entregas: 52, atrasos: 0 },
-    { name: 'Qua', entregas: 38, atrasos: 5 },
-    { name: 'Qui', entregas: 48, atrasos: 1 },
-    { name: 'Sex', entregas: 61, atrasos: 3 },
-  ];
-
-  const statusPieData = [
-    { name: 'Concluídas', value: 85, color: 'var(--success)' },
-    { name: 'Em Andamento', value: 10, color: 'var(--primary)' },
-    { name: 'Atrasadas', value: 5, color: 'var(--danger)' },
-  ];
+  const [perfData, setPerfData] = useState<any[]>([]);
+  const [statusPieData, setStatusPieData] = useState<any[]>([]);
 
   // --- Fetching ---
   const fetchData = async () => {
@@ -158,6 +146,22 @@ const Logistics: React.FC = () => {
           route_id: s.route_id
         }));
         setDeliveries(formattedShips as any);
+
+        // 3. Calcular Performance (Simulado por dias da semana)
+        const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+        const pData = days.map(day => ({
+           name: day,
+           entregas: formattedShips.filter(s => s.status === 'ENTREGUE').length / 7,
+           atrasos: formattedShips.filter(s => s.status === 'PROBLEMA').length / 7
+        }));
+        setPerfData(pData);
+
+        // 4. Status Pie
+        setStatusPieData([
+          { name: 'Concluídas', value: formattedShips.filter(s => s.status === 'ENTREGUE').length, color: 'var(--success)' },
+          { name: 'Em Andamento', value: formattedShips.filter(s => s.status === 'EM_ROTA' || s.status === 'PENDENTE').length, color: 'var(--primary)' },
+          { name: 'Atrasadas', value: formattedShips.filter(s => s.status === 'PROBLEMA').length, color: 'var(--danger)' },
+        ]);
       }
 
       // Adicionar log de sucesso
@@ -332,14 +336,16 @@ const Logistics: React.FC = () => {
               <div style={{...styles.kpiIconBox, backgroundColor: '#fef2f2'}}><Clock size={24} color="#ef4444" /></div>
               <div style={styles.kpiInfo}>
                  <p style={styles.kpiLabel}>Em Atraso</p>
-                 <h2 style={{...styles.kpiValue, color: '#ef4444'}}>03</h2>
+                 <h2 style={{...styles.kpiValue, color: '#ef4444'}}>
+                   {deliveries.filter(d => d.status === 'PROBLEMA').length.toString().padStart(2, '0')}
+                 </h2>
               </div>
            </div>
            <div style={styles.kpiCard}>
               <div style={{...styles.kpiIconBox, backgroundColor: '#fffbeb'}}><AlertTriangle size={24} color="#f59e0b" /></div>
               <div style={styles.kpiInfo}>
                  <p style={styles.kpiLabel}>Alertas</p>
-                 <h2 style={{...styles.kpiValue, color: '#f59e0b'}}>{occurrences.length + 2}</h2>
+                 <h2 style={{...styles.kpiValue, color: '#f59e0b'}}>{occurrences.length}</h2>
               </div>
            </div>
         </div>
@@ -362,8 +368,8 @@ const Logistics: React.FC = () => {
                              <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
                           </linearGradient>
                        </defs>
-                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                       <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#949494', fontSize: 12}} />
+                       <YAxis axisLine={false} tickLine={false} tick={{fill: '#949494', fontSize: 12}} />
                        <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }} />
                        <Area type="monotone" dataKey="entregas" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorEntregas)" />
                        <Area type="monotone" dataKey="atrasos" stroke="#ef4444" strokeWidth={2} fillOpacity={0} />
@@ -409,7 +415,7 @@ const Logistics: React.FC = () => {
     <div className="animate-fade-in" style={styles.content}>
          <div style={styles.actionRow}>
             <div style={styles.searchBox}>
-               <Search size={18} color="#94a3b8" />
+               <Search size={18} color="#949494" />
                <input 
                  value={searchTerm}
                  onChange={e => setSearchTerm(e.target.value)}
@@ -419,15 +425,15 @@ const Logistics: React.FC = () => {
             </div>
             
             <div style={styles.dateFilter}>
-               <Calendar size={18} color="#94a3b8" />
+               <Calendar size={18} color="#949494" />
                <input type="date" style={styles.dateInput} />
-               <span style={{color: '#94a3b8'}}>até</span>
+               <span style={{color: '#949494'}}>até</span>
                <input type="date" style={styles.dateInput} />
             </div>
 
             <div style={styles.actionGroup}>
-               <button style={styles.excelBtn} onClick={() => exportData('excel')}><Download size={16} /> Excel</button>
-               <button style={styles.primaryBtnSmall} onClick={() => setIsCreateModalOpen(true)}>
+               <button className="hub-premium-pill secondary" onClick={() => exportData('excel')}><Download size={16} /> Excel</button>
+               <button className="hub-premium-pill primary" onClick={() => setIsCreateModalOpen(true)}>
                   <Plus size={18} /> Criar Rota
                </button>
             </div>
@@ -465,7 +471,7 @@ const Logistics: React.FC = () => {
     <div className="animate-fade-in" style={styles.content}>
        <div style={styles.actionRow}>
           <div style={styles.searchBox}>
-             <Search size={18} color="#94a3b8" />
+             <Search size={18} color="#949494" />
              <input 
                value={searchTerm}
                onChange={e => setSearchTerm(e.target.value)}
@@ -478,7 +484,7 @@ const Logistics: React.FC = () => {
        <div style={styles.tableCard}>
           <div style={{padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
              <h3>Custódia de Entregas</h3>
-             <button style={styles.btnSecondary} onClick={() => exportData('excel')}><Download size={16} /> Exportar Lista</button>
+             <button className="hub-premium-pill secondary" onClick={() => exportData('excel')}><Download size={16} /> Exportar Lista</button>
           </div>
           <div style={{overflowX: 'auto'}}>
             <table style={styles.table}>
@@ -707,12 +713,12 @@ const Logistics: React.FC = () => {
   ];
 
   const headerActions = (
-    <div style={{ display: 'flex', gap: '8px' }}>
-      <button style={styles.actionBtn} onClick={() => exportData('excel')}>
+    <div style={{ display: 'flex', gap: '12px' }}>
+      <button className="hub-premium-pill secondary" onClick={() => exportData('excel')}>
         <Download size={16} />
         <span>Exportar</span>
       </button>
-      <button style={styles.actionBtn} onClick={() => setIsCreateModalOpen(true)}>
+      <button className="hub-premium-pill primary" onClick={() => setIsCreateModalOpen(true)}>
         <Plus size={16} />
         <span>Gerar Rota</span>
       </button>
@@ -1004,7 +1010,7 @@ const styles: Record<string, any> = {
   tabBtnCompact: { 
     display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '4px', 
     padding: '10px 16px', borderRadius: '14px', border: 'none', backgroundColor: 'transparent', 
-    fontWeight: '700', color: '#94A3B8', cursor: 'pointer', transition: 'all 0.2s', 
+    fontWeight: '700', color: '#949494', cursor: 'pointer', transition: 'all 0.2s', 
     minWidth: '80px', fontSize: '11px' 
   },
   tabBtnActive: { backgroundColor: 'white', color: 'var(--primary)', boxShadow: 'var(--shadow-md)', border: '1px solid var(--border)' },
@@ -1013,9 +1019,9 @@ const styles: Record<string, any> = {
   kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' },
   kpiCard: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' },
   kpiInfo: { display: 'flex', flexDirection: 'column' as const },
-  kpiLabel: { fontSize: '13px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
+  kpiLabel: { fontSize: '13px', color: '#949494', fontWeight: '700', textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
   kpiValue: { fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: '4px 0' },
-  kpiSub: { fontSize: '11px', color: '#94a3b8' },
+  kpiSub: { fontSize: '11px', color: '#949494' },
   kpiIconBox: { width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   
   dashboardMainGrid: { display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '24px' },
@@ -1023,7 +1029,7 @@ const styles: Record<string, any> = {
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
   cardTitle: { fontSize: '18px', fontWeight: '600', color: '#0f172a' },
   chartLegend: { display: 'flex', gap: '16px' },
-  legendItem: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748b', fontWeight: '600' },
+  legendItem: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#949494', fontWeight: '600' },
   dot: { width: '8px', height: '8px', borderRadius: '50%' },
   
   recentSummary: { backgroundColor: 'white', padding: '32px', borderRadius: '32px', border: '1px solid #e2e8f0' },
@@ -1033,7 +1039,7 @@ const styles: Record<string, any> = {
   itemIcon: { width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' },
   itemInfo: { display: 'flex', flexDirection: 'column' as const },
   itemName: { fontSize: '13px', fontWeight: '700', color: '#0f172a' },
-  itemValue: { fontSize: '11px', color: '#64748b' },
+  itemValue: { fontSize: '11px', color: '#949494' },
 
   actionRow: { display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' },
   searchBox: { flex: 2, display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'white', padding: '0 20px', borderRadius: '16px', border: '1px solid #e2e8f0', height: '52px' },
@@ -1047,11 +1053,11 @@ const styles: Record<string, any> = {
   routesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' },
   routeCard: { backgroundColor: 'white', padding: '24px', borderRadius: '24px', border: '1px solid #e2e8f0', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 12px 20px -10px rgba(0,0,0,0.1)' } },
   routeHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' },
-  routeBadge: { fontSize: '10px', color: '#94a3b8', backgroundColor: '#ebebeb', padding: '4px 8px', borderRadius: '6px', fontWeight: '700' },
+  routeBadge: { fontSize: '10px', color: '#949494', backgroundColor: '#ebebeb', padding: '4px 8px', borderRadius: '6px', fontWeight: '700' },
   statusTag: { fontSize: '10px', fontWeight: '600', padding: '4px 10px', borderRadius: '20px' },
   routeName: { fontSize: '18px', fontWeight: '700', color: '#0f172a', marginBottom: '16px' },
   routeMeta: { display: 'flex', flexDirection: 'column' as const, gap: '8px', marginBottom: '24px' },
-  metaItem: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#64748b' },
+  metaItem: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#949494' },
   routeFooter: { borderTop: '1px solid #e8e8e8', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   loadInfo: { display: 'flex', gap: '16px' },
   routeActionBtn: { border: 'none', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' },

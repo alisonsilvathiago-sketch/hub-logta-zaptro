@@ -7,7 +7,9 @@ import { registerMailRoutes } from './routes/mailRoutes.js';
 import { registerCalendarRoutes } from './routes/calendarRoutes.js';
 import { registerNotificationRoutes } from './routes/notificationRoutes.js';
 import { registerGoogleRoutes } from './routes/googleRoutes.js';
+import { registerGoogleOAuthRoutes } from './routes/googleOAuthRoutes.js';
 import { registerWebhookRoutes } from './routes/webhookRoutes.js';
+import { registerEvolutionWaRoutes } from './routes/evolutionWaRoutes.js';
 import { registerLogisticsPublicRoutes } from './routes/logisticsPublicRoutes.js';
 import { WorkflowService } from './services/workflowService.js';
 import { MaintenanceService } from './services/maintenanceService.js';
@@ -39,6 +41,7 @@ import { UnifiedApiService } from './services/unifiedApiService.js';
 import { TalentScoutService } from './services/talentScoutService.js';
 import { AuditorService } from './services/auditorService.js';
 import { EventHub } from './services/eventHub.js';
+import { globalRateLimit } from './middleware/globalRateLimit.js';
 
 async function main() {
   const cfg = loadConfig();
@@ -59,16 +62,17 @@ async function main() {
     }),
   );
   app.use(express.json({ limit: '600kb' }));
+  app.use(globalRateLimit);
 
   app.get('/', (_req, res) => {
     res.send(`
       <div style="font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #0f172a; color: white;">
         <h1 style="color: #38bdf8;">Zaptro Mail API</h1>
         <p>O servidor backend está rodando corretamente.</p>
-        <div style="margin-top: 20px; padding: 10px 20px; background: #1e293b; border-radius: 8px; border: 1px solid #334155;">
-          <code style="color: #94a3b8;">Status: Online</code>
+        <div style="margin-top: 20px; padding: 10px 20px; background: #1e293b; border-radius: 8px; border: 1px solid #6B6B6B;">
+          <code style="color: #949494;">Status: Online</code>
         </div>
-        <p style="margin-top: 20px; font-size: 0.8rem; color: #64748b;">Acesse /health para detalhes técnicos.</p>
+        <p style="margin-top: 20px; font-size: 0.8rem; color: #949494;">Acesse /health para detalhes técnicos.</p>
       </div>
     `);
   });
@@ -77,7 +81,9 @@ async function main() {
   registerCalendarRoutes(app, cfg);
   registerNotificationRoutes(app, cfg, logger, queue);
   registerGoogleRoutes(app, cfg);
+  registerGoogleOAuthRoutes(app, cfg);
   registerWebhookRoutes(app);
+  registerEvolutionWaRoutes(app, cfg);
   registerLogisticsPublicRoutes(app, cfg);
 
   // --- Intelligent Hub Initialization ---

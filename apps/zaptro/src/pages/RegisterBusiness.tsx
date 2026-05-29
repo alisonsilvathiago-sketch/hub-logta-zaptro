@@ -143,7 +143,7 @@ const RegisterBusiness: React.FC = () => {
                    <div style={styles.fieldLogta}>
                       <label style={styles.labelLogta}>Nome da Empresa / Razão Social</label>
                       <div style={styles.inputWrapperLogta}>
-                         <Building2 size={18} color="#94A3B8" />
+                         <Building2 size={18} color="#949494" />
                          <input 
                            style={styles.inputClean} 
                            placeholder="Ex: Transportes Logta LTDA" 
@@ -155,7 +155,7 @@ const RegisterBusiness: React.FC = () => {
                    <div style={styles.fieldLogta}>
                       <label style={styles.labelLogta}>CNPJ</label>
                       <div style={styles.inputWrapperLogta}>
-                         <ShieldCheck size={18} color="#94A3B8" />
+                         <ShieldCheck size={18} color="#949494" />
                          <input 
                            style={styles.inputClean} 
                            placeholder="00.000.000/0000-00" 
@@ -175,7 +175,7 @@ const RegisterBusiness: React.FC = () => {
                    <div style={styles.fieldLogta}>
                       <label style={styles.labelLogta}>E-mail Corporativo</label>
                       <div style={styles.inputWrapperLogta}>
-                         <Mail size={18} color="#94A3B8" />
+                         <Mail size={18} color="#949494" />
                          <input 
                            type="email"
                            style={styles.inputClean} 
@@ -188,7 +188,7 @@ const RegisterBusiness: React.FC = () => {
                    <div style={styles.fieldLogta}>
                       <label style={styles.labelLogta}>Senha</label>
                       <div style={styles.inputWrapperLogta}>
-                         <Lock size={18} color="#94A3B8" />
+                         <Lock size={18} color="#949494" />
                          <input 
                            type="password"
                            style={styles.inputClean} 
@@ -283,7 +283,7 @@ const styles: Record<string, any> = {
   welcomeSection: { marginBottom: '32px' },
   badgeRegister: { fontSize: '11px', fontWeight: '700', color: '#D9FF00', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px', display: 'block' },
   titleBig: { fontSize: '36px', fontWeight: '700', color: '#0F172A', margin: '0 0 12px 0', letterSpacing: '-1.5px' },
-  subtitleSmall: { fontSize: '16px', color: '#64748B', fontWeight: '500' },
+  subtitleSmall: { fontSize: '16px', color: '#949494', fontWeight: '500' },
   
   stepperComplex: { height: '6px', width: '100%', backgroundColor: '#ebebeb', borderRadius: '10px', position: 'relative' as const, margin: '32px 0 40px' },
   stepBar: { height: '100%', backgroundColor: '#D9FF00', borderRadius: '10px', transition: 'width 0.3s ease' },
@@ -298,7 +298,7 @@ const styles: Record<string, any> = {
   inputClean: { flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '15px', fontWeight: '600', color: '#1E293B' },
   
   btnRow: { display: 'flex', gap: '16px' },
-  secBtn: { flex: 0.4, padding: '18px', backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: '16px', color: '#64748B', fontWeight: '600', cursor: 'pointer' },
+  secBtn: { flex: 0.4, padding: '18px', backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: '16px', color: '#949494', fontWeight: '600', cursor: 'pointer' },
   submitBtnLogta: { 
     flex: 1, padding: '20px', backgroundColor: '#D9FF00', color: '#000000', border: 'none', 
     borderRadius: '16px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', 
@@ -308,12 +308,12 @@ const styles: Record<string, any> = {
 
   plansSelect: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' },
   planItem: { padding: '16px', borderRadius: '16px', border: '2px solid #e8e8e8', cursor: 'pointer', textAlign: 'center' as const },
-  planNameLabel: { fontSize: '11px', fontWeight: '600', color: '#94A3B8', display: 'block', marginBottom: '4px' },
+  planNameLabel: { fontSize: '11px', fontWeight: '600', color: '#949494', display: 'block', marginBottom: '4px' },
   planPriceLabel: { fontSize: '18px', fontWeight: '700', color: '#0F172A' },
 
-  footerLinkArea: { textAlign: 'center' as const, marginTop: '40px', fontSize: '14px', color: '#64748B', display: 'flex', justifyContent: 'center', gap: '8px' },
+  footerLinkArea: { textAlign: 'center' as const, marginTop: '40px', fontSize: '14px', color: '#949494', display: 'flex', justifyContent: 'center', gap: '8px' },
   linkAction: { color: '#D9FF00', fontWeight: '700', cursor: 'pointer' },
-  copyrightBottom: { position: 'absolute' as const, bottom: '40px', left: '60px', fontSize: '12px', color: '#94A3B8', fontWeight: '500' },
+  copyrightBottom: { position: 'absolute' as const, bottom: '40px', left: '60px', fontSize: '12px', color: '#949494', fontWeight: '500' },
 
   // BRANDING PANE (RIGHT)
   brandingSide: { flex: 1, backgroundColor: '#f4f4f4', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px' },
@@ -325,7 +325,7 @@ const styles: Record<string, any> = {
   cardHeader: { textAlign: 'center' as const, marginBottom: '60px' },
   cardIconBox: { width: '64px', height: '64px', backgroundColor: '#0F172A', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px' },
   cardTitle: { fontSize: '24px', fontWeight: '700', color: '#0F172A', margin: '0 0 12px 0', letterSpacing: '1px' },
-  cardSubtitle: { fontSize: '15px', color: '#64748B', fontWeight: '500', maxWidth: '380px', margin: '0 auto' },
+  cardSubtitle: { fontSize: '15px', color: '#949494', fontWeight: '500', maxWidth: '380px', margin: '0 auto' },
   
   cardVisualRegister: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
   laptopMockup: { width: '120%', maxWidth: '800px', height: 'auto', borderRadius: '24px', boxShadow: '0 50px 100px rgba(0,0,0,0.3)', transform: 'rotate(-2deg)' },

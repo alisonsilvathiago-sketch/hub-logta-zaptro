@@ -6,8 +6,9 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { evolutionApi } from '../lib/evolution';
+import { buildZaptroInstanceName, evolutionApi } from '../services/evolution';
 import { supabaseZaptro } from '../lib/supabase-zaptro';
+import { toQrDataUrl } from '../lib/whatsapp';
 import { toastSuccess, toastError } from '../lib/toast';
 import { ZAPTRO_SHADOW } from '../constants/zaptroShadows';
 
@@ -15,7 +16,7 @@ import ZaptroLayout from '../components/Zaptro/ZaptroLayout';
 
 const ZaptroOnboarding: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [step, setStep] = useState(1);
   const [instance, setInstance] = useState<any>(null);
   const [qrCode, setQrCode] = useState<string | null>(null);
@@ -44,7 +45,7 @@ const ZaptroOnboarding: React.FC = () => {
         setTimeout(() => navigate('/inicio'), 2500);
       } else {
         setStatus('disconnected');
-        if (resp.qrcode?.base64) setQrCode(resp.qrcode.base64);
+        if (resp.qrcode?.base64) setQrCode(toQrDataUrl(resp.qrcode.base64));
       }
     } catch (err) {
       setStatus('error');
@@ -60,10 +61,10 @@ const ZaptroOnboarding: React.FC = () => {
   }, [instance, status]);
 
   const handleStartConnection = async () => {
-    if (!profile?.company_id) return;
+    if (!profile?.company_id || !user?.id) return;
     setLoading(true);
     try {
-      const instanceName = `zaptro_${profile.company_id.slice(0, 8)}`;
+      const instanceName = buildZaptroInstanceName(user.id);
       const result = await evolutionApi.createInstance(profile.company_id, instanceName);
       
       const { data, error } = await supabaseZaptro
@@ -215,7 +216,7 @@ const styles: Record<string, any> = {
   content: { display: 'flex', flexDirection: 'column', gap: '24px' },
   heroBadge: { backgroundColor: '#CCFF0015', color: '#0F172A', fontSize: '10px', fontWeight: '700', padding: '6px 14px', borderRadius: '20px', width: 'fit-content', letterSpacing: '1px' },
   title: { fontSize: '32px', fontWeight: '700', color: '#0F172A', margin: 0, lineHeight: '1.1', letterSpacing: '-1.8px' },
-  desc: { fontSize: '16px', color: '#64748B', lineHeight: '1.6', margin: 0, fontWeight: '500' },
+  desc: { fontSize: '16px', color: '#949494', lineHeight: '1.6', margin: 0, fontWeight: '500' },
   
   featureList: { display: 'flex', flexDirection: 'column', gap: '14px', margin: '8px 0' },
   featureItem: { display: 'flex', alignItems: 'center', gap: '12px', fontSize: '15px', fontWeight: '600', color: '#0F172A' },
@@ -241,10 +242,10 @@ const styles: Record<string, any> = {
   statusFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' },
   statusRow: { display: 'flex', alignItems: 'center', gap: '10px' },
   statusDot: { width: '10px', height: '10px', borderRadius: '50%', boxShadow: '0 0 10px rgba(245, 158, 11, 0.5)' },
-  refreshBtn: { border: 'none', background: 'transparent', color: '#94A3B8', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
+  refreshBtn: { border: 'none', background: 'transparent', color: '#949494', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
   
   footer: { marginTop: '48px', borderTop: '1px solid #e8e8e8', paddingTop: '24px', display: 'flex', justifyContent: 'space-between' },
-  footerLink: { border: 'none', background: 'transparent', color: '#94A3B8', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }
+  footerLink: { border: 'none', background: 'transparent', color: '#949494', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }
 };
 
 export default ZaptroOnboarding;

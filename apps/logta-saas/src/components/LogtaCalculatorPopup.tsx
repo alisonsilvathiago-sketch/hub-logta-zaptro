@@ -23,9 +23,25 @@ const TABS: { id: CalcTabId; label: string; icon: typeof Calculator }[] = [
   { id: 'operacional', label: 'Operacional', icon: Gauge },
 ];
 
+function parseExpression(v: string): number {
+  try {
+    let sanitized = String(v)
+      .replace(/\./g, '')
+      .replace(/,/g, '.')
+      .replace(/x/g, '*')
+      .replace(/X/g, '*')
+      .replace(/%/g, '/100');
+
+    const sanitizedClean = sanitized.replace(/[^0-9+\-*/().\s]/g, '');
+    const result = new Function(`return (${sanitizedClean})`)();
+    return Number.isFinite(result) ? result : 0;
+  } catch {
+    return 0;
+  }
+}
+
 function parseNum(v: string) {
-  const n = parseFloat(String(v).replace(/\./g, '').replace(',', '.'));
-  return Number.isFinite(n) ? n : 0;
+  return parseExpression(v);
 }
 
 function formatNum(n: number) {
@@ -45,12 +61,12 @@ export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
   const [display, setDisplay] = useState('0');
   const [activeField, setActiveField] = useState<FieldId>('receita');
 
-  const [freteValor, setFreteValor] = useState('12500');
-  const [freteCustos, setFreteCustos] = useState('3300');
-  const [lucroReceita, setLucroReceita] = useState('45000');
-  const [lucroCustos, setLucroCustos] = useState('38200');
-  const [combTotal, setCombTotal] = useState('8420');
-  const [opTotal, setOpTotal] = useState('393600');
+  const [freteValor, setFreteValor] = useState('12.500');
+  const [freteCustos, setFreteCustos] = useState('3.300');
+  const [lucroReceita, setLucroReceita] = useState('45.000');
+  const [lucroCustos, setLucroCustos] = useState('38.200');
+  const [combTotal, setCombTotal] = useState('8.420');
+  const [opTotal, setOpTotal] = useState('393.600');
 
   const fields = useMemo(() => {
     if (tab === 'frete') {
@@ -95,7 +111,7 @@ export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
     const [, set] = getSetter(activeField);
     set(formatNum(amount));
     setDisplay('0');
-    showToast('success', 'Valor inserido.', 'Calculadora');
+    showToast('success', 'Valor inserido no campo.', 'Calculadora');
   }, [activeField, display, getSetter]);
 
   const sumToField = useCallback(() => {
@@ -184,7 +200,7 @@ export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
     }
     try {
       await navigator.clipboard.writeText(url);
-      showToast('success', 'Link público copiado. Quem tiver o link vê este cálculo (sem acesso ao sistema).', 'Compartilhar');
+      showToast('success', 'Link público copiado com sucesso!', 'Compartilhar');
     } catch {
       showToast('info', url, 'Link do cálculo');
     }
@@ -192,19 +208,24 @@ export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-      <button type="button" className="absolute inset-0 bg-black/55 backdrop-blur-sm" aria-label="Fechar" onClick={onClose} />
-      <div className="relative flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-[28px] border border-neutral-800 bg-[#18191B] text-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-neutral-800 px-5 py-4">
+      <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-md cursor-pointer" aria-label="Fechar" onClick={onClose} />
+      
+      {/* Landscape Container: max-w-4xl for Landscape Orientation */}
+      <div className="relative flex max-h-[95dvh] w-full max-w-4xl flex-col overflow-hidden rounded-[32px] border border-neutral-800 bg-[#18191B] text-white shadow-2xl animate-in zoom-in-95 duration-300">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-neutral-800 px-6 py-4">
           <div className="flex items-center gap-2">
             <Calculator size={20} className="text-primary" />
-            <span className="text-sm font-black">Calculadora Logta</span>
+            <span className="text-sm font-black">Calculadora Logta (Modo Paisagem)</span>
           </div>
-          <button type="button" onClick={onClose} className="rounded-xl p-2 text-neutral-400 hover:bg-neutral-800">
+          <button type="button" onClick={onClose} className="rounded-xl p-2 text-neutral-400 hover:bg-neutral-800 transition-colors cursor-pointer">
             <X size={18} />
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-1.5 border-b border-neutral-800 px-4 py-3">
+        {/* Modular Category Tabs */}
+        <div className="flex flex-wrap gap-1.5 border-b border-neutral-800 px-6 py-3.5 bg-neutral-900/10">
           {TABS.map((t) => {
             const Icon = t.icon;
             return (
@@ -212,8 +233,8 @@ export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`flex items-center gap-1 rounded-xl px-3 py-2 text-[10px] font-bold uppercase ${
-                  tab === t.id ? 'bg-primary text-white' : 'bg-neutral-900 text-neutral-400'
+                className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-[10px] font-black uppercase transition-all cursor-pointer ${
+                  tab === t.id ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800'
                 }`}
               >
                 <Icon size={12} /> {t.label}
@@ -222,62 +243,97 @@ export function LogtaCalculatorPopup({ open, onClose, createdBy }: Props) {
           })}
         </div>
 
-        <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-          <LogtaCalcKeypad
-            display={display}
-            fields={fields}
-            activeFieldId={activeField}
-            onActiveFieldChange={(id) => setActiveField(id as FieldId)}
-            onDisplayChange={setDisplay}
-            onApply={applyDisplay}
-            onSum={sumToField}
-          />
-
-          <div className="space-y-2 rounded-xl border border-neutral-800 bg-neutral-900/50 px-3 py-2">
-            {fields.map((f) => (
-              <div key={f.id} className="flex justify-between text-[11px]">
-                <span className="text-neutral-500">{f.label}</span>
-                <span className="font-bold tabular-nums text-white">R$ {parseNum(fieldValues[f.id] ?? '0').toLocaleString('pt-BR')}</span>
-              </div>
-            ))}
+        {/* 2-Column Landscape Content layout */}
+        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch scrollbar-hide">
+          
+          {/* Left Column: Keypad Panel */}
+          <div className="flex flex-col justify-start">
+            <LogtaCalcKeypad
+              display={display}
+              fields={fields}
+              activeFieldId={activeField}
+              onActiveFieldChange={(id) => setActiveField(id as FieldId)}
+              onDisplayChange={setDisplay}
+              onApply={applyDisplay}
+              onSum={sumToField}
+            />
           </div>
 
-          <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4">
-            {computed.lines.map((l) => (
-              <div key={l.label} className="mb-2 flex justify-between text-xs">
-                <span className="text-neutral-400">{l.label}</span>
-                <span className="font-bold">R$ {l.value.toLocaleString('pt-BR')}</span>
+          {/* Right Column: Calculations, Summary & History */}
+          <div className="flex flex-col justify-between gap-6">
+            <div className="space-y-4">
+              
+              {/* Field values summary */}
+              <div className="space-y-2 rounded-2xl border border-neutral-800 bg-neutral-900/35 p-4 text-left">
+                <p className="text-[10px] font-black uppercase tracking-wider text-neutral-400 mb-2">Valores Atuais dos Campos</p>
+                <div className="space-y-2">
+                  {fields.map((f) => (
+                    <div key={f.id} className="flex justify-between items-center text-xs">
+                      <span className="text-neutral-500 font-bold">{f.label}</span>
+                      <span className="font-extrabold tabular-nums text-white bg-neutral-950/80 px-3 py-1.5 rounded-xl border border-neutral-800/80">
+                        R$ {parseNum(fieldValues[f.id] ?? '0').toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-            <div className="mt-3 flex justify-between border-t border-primary/20 pt-3">
-              <span className="text-[10px] font-black uppercase text-primary">Total</span>
-              <span className="text-lg font-black text-primary">R$ {computed.total.toLocaleString('pt-BR')}</span>
-            </div>
-          </div>
 
-          {history.length > 0 ? (
-            <div>
-              <p className="mb-2 text-[10px] font-black uppercase text-neutral-500">Histórico</p>
-              <div className="max-h-24 space-y-2 overflow-y-auto">
-                {history.slice(0, 5).map((h) => (
-                  <div key={h.id} className="rounded-xl bg-neutral-900 px-3 py-2 text-[10px]">
-                    <p className="font-bold">{h.title}</p>
-                    <p className="text-neutral-500">R$ {h.total.toLocaleString('pt-BR')}</p>
+              {/* Simulation Result */}
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 text-left">
+                <p className="text-[10px] font-black uppercase tracking-wider text-primary mb-3">Resumo Financeiro</p>
+                {computed.lines.map((l) => (
+                  <div key={l.label} className="mb-2.5 flex justify-between text-xs items-center">
+                    <span className="text-neutral-400 font-medium">{l.label}</span>
+                    <span className="font-bold text-white">R$ {l.value.toLocaleString('pt-BR')}</span>
                   </div>
                 ))}
+                <div className="mt-4 flex justify-between border-t border-primary/20 pt-4 items-center">
+                  <span className="text-[10px] font-black uppercase text-primary">Resultado Final</span>
+                  <span className="text-xl font-black text-primary">R$ {computed.total.toLocaleString('pt-BR')}</span>
+                </div>
               </div>
             </div>
-          ) : null}
+
+            {/* Calculations History & Action Panel */}
+            <div className="space-y-4 text-left">
+              {history.length > 0 ? (
+                <div>
+                  <p className="mb-2 text-[10px] font-black uppercase text-neutral-500 tracking-wider">Histórico de Simulações</p>
+                  <div className="max-h-24 space-y-2 overflow-y-auto scrollbar-hide">
+                    {history.slice(0, 3).map((h) => (
+                      <div key={h.id} className="rounded-xl border border-neutral-800/60 bg-neutral-900/35 px-4 py-2.5 text-[11px] flex justify-between items-center">
+                        <div>
+                          <p className="font-bold text-neutral-200">{h.title}</p>
+                          <p className="text-[9px] text-neutral-500 font-medium">{new Date(((h as any).timestamp) || Date.now()).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <p className="font-extrabold text-primary">R$ {h.total.toLocaleString('pt-BR')}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 border-t border-neutral-800/60 pt-4 bg-transparent">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  className="flex-1 rounded-2xl bg-neutral-800 py-3.5 text-xs font-black uppercase text-neutral-200 hover:bg-neutral-700/80 hover:text-white transition-all active:scale-[0.98] border border-neutral-700/50 cursor-pointer text-center"
+                >
+                  Salvar Cálculo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleShare()}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-xs font-black uppercase text-white hover:bg-primary/95 transition-all shadow-lg shadow-primary/10 active:scale-[0.98] cursor-pointer text-center"
+                >
+                  <Share2 size={13} strokeWidth={2.5} /> Compartilhar
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="flex gap-2 border-t border-neutral-800 p-4">
-          <button type="button" onClick={handleSave} className="flex-1 rounded-xl bg-neutral-800 py-3 text-xs font-bold">
-            Salvar
-          </button>
-          <button type="button" onClick={() => void handleShare()} className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-primary py-3 text-xs font-bold">
-            <Share2 size={14} /> Compartilhar
-          </button>
-        </div>
       </div>
     </div>
   );

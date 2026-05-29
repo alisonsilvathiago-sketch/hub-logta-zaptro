@@ -1,18 +1,52 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Mic, ArrowUp, ChevronDown, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import {
+  chatOllamaCopilot,
+  isOllamaCopilotPreferred,
+  ollamaModelPrimary,
+  ollamaOfflineHelp,
+  pingOllamaDetailed,
+} from '../../lib/ollamaCopilot';
 import { useZaptroTheme } from '../../context/ZaptroThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useTenant } from '../../context/TenantContext';
+import { buildEffectiveZaptroPromptMestreSystemPrompt } from '../../lib/zaptroPromptMestre';
 import { useNavigate } from 'react-router-dom';
 
 export default function ZaptroCopilot({ variant = 'floating' }: { variant?: 'floating' | 'inline' }) {
   const { palette } = useZaptroTheme();
   const { profile } = useAuth();
+  const { company } = useTenant();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
   const [placeholderText, setPlaceholderText] = useState('');
+  const [ollamaOnline, setOllamaOnline] = useState<boolean | null>(null);
+  const [ollamaModelLabel, setOllamaModelLabel] = useState(ollamaModelPrimary());
+  const useOllama = isOllamaCopilotPreferred();
+
+  useEffect(() => {
+    if (!useOllama) {
+      setOllamaOnline(null);
+      return;
+    }
+    let cancelled = false;
+    const runPing = () => {
+      void pingOllamaDetailed().then((r) => {
+        if (cancelled) return;
+        setOllamaOnline(r.online);
+        setOllamaModelLabel(r.resolvedModel);
+      });
+    };
+    runPing();
+    const interval = window.setInterval(runPing, 15000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [useOllama]);
 
   useEffect(() => {
     const text = "Como posso te ajudar? CRM, WhatsApp, faturamento, motorista, placa, rota, mapa...";
@@ -58,56 +92,63 @@ export default function ZaptroCopilot({ variant = 'floating' }: { variant?: 'flo
     
     try {
       const firstName = profile?.full_name?.split(' ')[0] || 'Comandante';
-      
-      const systemPrompt = `Você é o Assistente Inteligente do sistema Zaptro.
 
-Seu papel é ajudar o usuário a entender tudo o que está acontecendo na operação da empresa em tempo real.
+      const systemPrompt = `${buildEffectiveZaptroPromptMestreSystemPrompt(company)}
 
-Você tem acesso aos dados do sistema, incluindo:
-- CRM (clientes, histórico, leads)
-- Financeiro (faturamento, despesas, relatórios)
-- Logística (rotas, entregas, ocorrências)
-- Motoristas (status, localização, histórico)
-- Frota (veículos, manutenção)
-- Arquivos (documentos e comprovantes)
-- Conversas (WhatsApp e interações)
+Contexto adicional (painel interno Zaptro):
+- Utilizador autenticado: ${firstName}
+- Responda sobre CRM, financeiro, logística, motoristas, frota, arquivos e conversas WhatsApp quando perguntado.
+- Comportamento: humano, natural e directo; use o nome quando fizer sentido.`;
 
-COMPORTAMENTO:
-- Seja humano, natural e direto
-- Sempre fale como um assistente inteligente (não robótico)
-- Use o nome do usuário sempre que possível
-- Considere o horário (bom dia, boa tarde, boa noite)
-- Dê respostas diretas e baseadas em dados`;
+      if (useOllama) {
+        const answer = await chatOllamaCopilot({
+          systemPrompt,
+          userMessage: currentQuery,
+          model: ollamaModelPrimary(),
+        });
+        setResponse(answer);
+        setOllamaOnline(true);
+        return;
+      }
 
       const { data, error } = await supabase.functions.invoke('zaptro-ai-copilot', {
-        body: { 
-          input: currentQuery, 
+        body: {
+          input: currentQuery,
           systemPrompt: systemPrompt,
           model: 'gpt-4o',
           context: {
             userRole: profile?.role || 'admin',
             tenant: 'zaptro',
-            userName: firstName
-          }
-        }
+            userName: firstName,
+          },
+        },
       });
-      
+
       if (error) {
-        console.error("Erro original do Supabase:", error);
+        console.error('Erro original do Supabase:', error);
         throw error;
       }
-      
+
       if (data?.error) {
-        console.error("Erro interno da Edge Function:", data.error);
+        console.error('Erro interno da Edge Function:', data.error);
         throw new Error(data.error);
       }
-      
-      setResponse(data.answer || "Não consegui processar a resposta. Verifique a API Key ou o modelo configurado.");
-    } catch (err: any) {
-      console.error("Erro ao chamar Copilot:", err);
-      // Extrair mensagem de erro detalhada se existir
-      const errorMsg = err?.context?.error || err?.message || err;
-      setResponse(`❌ Erro ao conectar com a IA.\nDetalhe: ${errorMsg}\nVerifique se a OPENAI_API_KEY foi adicionada no painel do Supabase.`);
+
+      setResponse(data.answer || 'Não consegui processar a resposta. Verifique a API Key ou o modelo configurado.');
+    } catch (err: unknown) {
+      console.error('Erro ao chamar Copilot:', err);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      if (useOllama) {
+        setOllamaOnline(false);
+        setResponse(
+          `❌ Assistente IA (Ollama) indisponível.\n\n` +
+            (errorMsg.includes('O Zaptro não alcançou') ? errorMsg : `Detalhe: ${errorMsg}\n\n${ollamaOfflineHelp()}`),
+        );
+      } else {
+        setResponse(
+          `❌ Erro ao conectar com a IA.\nDetalhe: ${errorMsg}\nVerifique se a OPENAI_API_KEY foi adicionada no painel do Supabase.`,
+        );
+      }
     } finally {
       setIsTyping(false);
     }
@@ -163,13 +204,34 @@ COMPORTAMENTO:
         </div>
       )}
       
+      {useOllama && (
+        <div
+          style={{
+            marginBottom: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            color: ollamaOnline === false ? '#ef4444' : ollamaOnline ? '#15803d' : 'rgba(186, 186, 186, 1)',
+          }}
+        >
+          <Sparkles size={12} />
+          Assistente IA · Ollama {ollamaModelLabel}
+          {ollamaOnline === true ? ' · online' : ollamaOnline === false ? ' · offline' : ''}
+        </div>
+      )}
+
       {/* Input Form */}
       <form onSubmit={handleSubmit} style={{ 
         background: isDark ? '#0F172A' : '#F4F4F5', 
         borderRadius: 24, 
         padding: '8px 12px', 
         boxShadow: isDark ? '0 12px 40px rgba(0,0,0,0.5)' : '0 12px 40px rgba(0,0,0,0.08)', 
-        border: `1px solid ${isDark ? '#334155' : '#E4E4E7'}`, 
+        border: `1px solid ${isDark ? '#6B6B6B' : '#E4E4E7'}`, 
         position: 'relative', 
         overflow: 'hidden',
         display: 'flex',
@@ -226,7 +288,7 @@ COMPORTAMENTO:
               
               <button type="submit" disabled={!query.trim() || isTyping} style={{ 
                 width: 36, height: 36, borderRadius: '50%', 
-                background: query.trim() ? (isDark ? '#D9FF00' : '#000000') : (isDark ? '#334155' : '#E4E4E7'), 
+                background: query.trim() ? (isDark ? '#D9FF00' : '#000000') : (isDark ? '#6B6B6B' : '#E4E4E7'), 
                 color: query.trim() ? (isDark ? '#000' : '#FFF') : '#A1A1AA', 
                 border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', 
                 cursor: query.trim() ? 'pointer' : 'not-allowed', transition: 'all 0.2s' 

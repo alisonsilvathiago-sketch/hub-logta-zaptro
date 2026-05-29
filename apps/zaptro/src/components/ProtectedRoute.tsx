@@ -108,7 +108,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             {isMissingTable ? 'Banco de Dados Incompleto' : (isZaptro ? 'Sincronizar Zaptro' : 'Erro de Autenticação')}
           </h2>
           
-          <p style={{ color: '#64748b', maxWidth: '520px', marginBottom: '32px', fontWeight: '500', lineHeight: '1.6' }}>
+          <p style={{ color: '#949494', maxWidth: '520px', marginBottom: '32px', fontWeight: '500', lineHeight: '1.6' }}>
             {isMissingTable 
               ? 'A tabela "profiles" não foi encontrada no seu projeto Supabase do Zaptro. Você precisa rodar o script SQL abaixo no SQL Editor do Supabase.'
               : (isZaptro 
@@ -118,7 +118,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
           {isMissingTable && (
             <div style={{ width: '100%', maxWidth: '600px', backgroundColor: '#0F172A', borderRadius: '16px', padding: '20px', textAlign: 'left', marginBottom: '32px', position: 'relative' }}>
-              <pre style={{ margin: 0, color: '#94A3B8', fontSize: '11px', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+              <pre style={{ margin: 0, color: '#949494', fontSize: '11px', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
                 {`CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email text UNIQUE, full_name text, role text DEFAULT 'USER',
@@ -130,7 +130,7 @@ CREATE POLICY "Public read" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Self update" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Self insert" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);`}
               </pre>
-              <div style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '9px', backgroundColor: '#334155', color: '#FFF', padding: '4px 8px', borderRadius: '6px' }}>
+              <div style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '9px', backgroundColor: '#6B6B6B', color: '#FFF', padding: '4px 8px', borderRadius: '6px' }}>
                 SQL SUGGESTION
               </div>
             </div>
@@ -151,7 +151,7 @@ CREATE POLICY "Self insert" ON public.profiles FOR INSERT WITH CHECK (auth.uid()
                 localStorage.clear();
                 window.location.href = isZaptro ? 'https://zaptro.com.br' : 'https://logta.com.br';
               }}
-              style={{ padding: '14px 32px', borderRadius: '16px', background: 'transparent', color: '#64748B', border: 'none', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}
+              style={{ padding: '14px 32px', borderRadius: '16px', background: 'transparent', color: '#949494', border: 'none', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}
             >
               Cancelar e Sair
             </button>

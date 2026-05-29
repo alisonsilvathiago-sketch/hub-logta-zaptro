@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Edit2, Trash2, User, MessageSquare, Truck, Phone, Save, Loader2, RefreshCw, X, Navigation, Filter } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Search, Edit2, Trash2, User, Truck, Phone, Save, Loader2, RefreshCw, X, Navigation, Filter, Zap } from 'lucide-react';
 import { supabaseZaptro } from '../lib/supabase-zaptro';
 import { useAuth } from '../context/AuthContext';
 import { useZaptroTheme, type ZaptroThemePalette } from '../context/ZaptroThemeContext';
@@ -8,11 +8,31 @@ import ZaptroLayout from '../components/Zaptro/ZaptroLayout';
 import { notifyZaptro } from '../components/Zaptro/ZaptroNotificationSystem';
 import { toastLoading, toastDismiss } from '../lib/toast';
 import { ZAPTRO_SHADOW } from '../constants/zaptroShadows';
-import { isZaptroDemoDriverId, ZAPTRO_DEMO_DRIVERS } from '../constants/zaptroDriversDemo';
-import { ZAPTRO_ROUTES, zaptroDriverProfilePath } from '../constants/zaptroRoutes';
+import {
+  hideZaptroDemoDriverId,
+  isZaptroDemoDriverId,
+  isZaptroDriversDemoEnabled,
+  readHiddenZaptroDemoDriverIds,
+  resetHiddenZaptroDemoDrivers,
+  ZAPTRO_DEMO_DRIVERS,
+} from '../constants/zaptroDriversDemo';
+import { isZaptroPreviewDataEnabled } from '../lib/zaptroPreviewMode';
+import { zaptroAppOrLegacy, ZAPTRO_APP_ROUTES } from '../app/zaptroAppRoutes';
+import { ZAPTRO_ROUTES } from '../constants/zaptroRoutes';
 import { extractPlateFromVehicleText, vehicleTextContainsPlate } from '../utils/zaptroDriverVehicle';
 import ZaptroKpiMetricCard from '../components/Zaptro/ZaptroKpiMetricCard';
-import { ZaptroVehiclesTab } from './ZaptroVehiclesTab';
+import { ZaptroFleetDriversNav } from '../components/Zaptro/ZaptroFleetDriversNav';
+import { ZaptroFleetStatsRow } from '../components/Zaptro/ZaptroFleetStatsRow';
+import { ZaptroDriverRegisterModal } from '../components/Zaptro/ZaptroDriverRegisterModal';
+import { ZaptroListImportToolbar } from '../components/Zaptro/ZaptroListImportToolbar';
+import { exportToExcel } from '../lib/exportToExcel';
+import { downloadCsvTemplate } from '../lib/downloadCsvTemplate';
+import {
+  DRIVER_CSV_TEMPLATE_EXAMPLE,
+  DRIVER_CSV_TEMPLATE_HEADERS,
+  importDriversCsvRows,
+  parseDriversCsv,
+} from '../lib/zaptroDriversImport';
 function buildStyles(p: ZaptroThemePalette): Record<string, React.CSSProperties> {
   const d = p.mode === 'dark';
   const border = p.sidebarBorder;
@@ -21,8 +41,7 @@ function buildStyles(p: ZaptroThemePalette): Record<string, React.CSSProperties>
   const soft = d ? 'rgba(255,255,255,0.06)' : '#f4f4f4';
 
   return {
-    container: { padding: 0, maxWidth: 1200, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
-    headerRow: { display: 'flex', gap: 18, alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap' },
+    headerRow: { display: 'flex', gap: 18, alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', width: '100%', boxSizing: 'border-box' },
     headerIcon: {
       width: 56,
       height: 56,
@@ -35,20 +54,30 @@ function buildStyles(p: ZaptroThemePalette): Record<string, React.CSSProperties>
       flexShrink: 0,
     },
     headerText: { flex: '1 1 240px', minWidth: 0 },
-    title: { fontSize: 30, fontWeight: 700, color: p.text, margin: '0 0 8px 0', letterSpacing: '-1.2px' },
-    subtitle: { margin: 0, fontSize: 15, color: p.textMuted, fontWeight: 600, lineHeight: 1.55, maxWidth: 720 },
+    title: { fontSize: 30, fontWeight: 700, color: '#000', margin: 0, letterSpacing: '-0.02em' },
+    subtitle: {
+      margin: 0,
+      fontSize: 11,
+      color: 'rgba(156, 156, 156, 1)',
+      fontWeight: 500,
+      lineHeight: 1.55,
+      width: '100%',
+      maxWidth: 720,
+    },
     code: { fontSize: 12, fontWeight: 600, fontFamily: 'ui-monospace, monospace', color: p.text },
 
     noTenantBanner: {
       marginBottom: 22,
       padding: '14px 18px',
-      borderRadius: 16,
+      borderRadius: 1,
       border: `1px solid ${d ? 'rgba(250,204,21,0.35)' : '#FDE68A'}`,
       backgroundColor: d ? 'rgba(66,32,6,0.45)' : '#FFFBEB',
-      fontSize: 13,
+      fontSize: 11,
       fontWeight: 600,
       color: d ? '#fde68a' : '#92400E',
       lineHeight: 1.5,
+      width: '100%',
+      boxSizing: 'border-box',
     },
 
     mainLayout: { display: 'flex', gap: 32, alignItems: 'flex-start' },
@@ -109,40 +138,36 @@ function buildStyles(p: ZaptroThemePalette): Record<string, React.CSSProperties>
     },
 
     listSection: { flex: 1, display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 },
-    demoBanner: {
-      padding: '14px 18px',
-      marginBottom: 4,
-      borderRadius: 16,
-      border: `1px solid ${d ? 'rgba(250,204,21,0.35)' : '#FDE68A'}`,
-      backgroundColor: d ? 'rgba(66,32,6,0.4)' : '#FFFBEB',
-      fontSize: 13,
-      fontWeight: 600,
-      color: d ? '#fde68a' : '#92400E',
-      lineHeight: 1.5,
-    },
     toolbar: { display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' },
     toolbarFilters: { display: 'flex', flex: '1 1 320px', gap: 10, flexWrap: 'wrap', minWidth: 0 },
     search: {
       flex: '1 1 200px',
       display: 'flex',
       alignItems: 'center',
-      gap: 12,
+      gap: 10,
+      height: 40,
+      minHeight: 40,
+      maxHeight: 40,
       backgroundColor: surface2,
-      padding: '12px 18px',
-      borderRadius: 16,
+      padding: '0 14px',
+      borderRadius: 18,
       border: `1px solid ${border}`,
       minWidth: 0,
+      boxSizing: 'border-box',
     },
     searchInput: {
       border: 'none',
       outline: 'none',
-      fontSize: 14,
-      fontWeight: 700,
+      fontSize: 12,
+      fontWeight: 600,
       width: '100%',
       minWidth: 0,
-      color: p.text,
+      color: 'rgba(46, 46, 46, 1)',
       backgroundColor: 'transparent',
       fontFamily: 'inherit',
+      padding: 0,
+      margin: 0,
+      lineHeight: 1.2,
     },
     refreshBtn: {
       display: 'flex',
@@ -151,12 +176,15 @@ function buildStyles(p: ZaptroThemePalette): Record<string, React.CSSProperties>
       border: `1px solid ${border}`,
       backgroundColor: surface2,
       color: p.text,
-      padding: '0 18px',
-      borderRadius: 16,
-      fontSize: 13,
-      fontWeight: 600,
+      padding: '0 14px',
+      borderRadius: 18,
+      fontSize: 12,
+      fontWeight: 700,
       cursor: 'pointer',
-      height: 48,
+      height: 40,
+      minHeight: 40,
+      maxHeight: 40,
+      boxSizing: 'border-box',
       fontFamily: 'inherit',
     },
 
@@ -202,6 +230,7 @@ function buildStyles(p: ZaptroThemePalette): Record<string, React.CSSProperties>
     cardBody: { display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18, paddingLeft: 62 },
     infoRow: { display: 'flex', alignItems: 'center', gap: 8 },
     infoText: { fontSize: 13, fontWeight: 700, color: p.textMuted },
+    infoPhone: { fontSize: 13, fontWeight: 800, color: 'rgba(54, 54, 54, 1)' },
 
     cardFooter: {
       borderTop: `1px solid ${border}`,
@@ -213,14 +242,19 @@ function buildStyles(p: ZaptroThemePalette): Record<string, React.CSSProperties>
     },
     footerLabel: { fontSize: 9, fontWeight: 700, color: p.textMuted, letterSpacing: '0.02em' },
     waIcon: {
-      width: 26,
-      height: 26,
-      borderRadius: 8,
-      backgroundColor: d ? 'rgba(16,185,129,0.15)' : '#EEFCEF',
-      border: `1px solid ${d ? 'rgba(16,185,129,0.35)' : border}`,
+      width: 40,
+      height: 40,
+      borderRadius: 14,
+      backgroundColor: '#000000',
+      border: 'none',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      cursor: 'pointer',
+      flexShrink: 0,
+      padding: 0,
+      fontFamily: 'inherit',
+      transition: 'background 0.15s ease, transform 0.15s ease',
     },
 
     loadingState: { padding: 80, textAlign: 'center' },
@@ -334,48 +368,31 @@ function buildStyles(p: ZaptroThemePalette): Record<string, React.CSSProperties>
   };
 }
 
-const ZaptroDriversContent: React.FC = () => {
+export const ZaptroDriversContent: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile } = useAuth();
   const { palette } = useZaptroTheme();
   const s = useMemo(() => buildStyles(palette), [palette]);
   const isDark = palette.mode === 'dark';
-  const location = useLocation();
-  const [activeTab, setActiveTab] = useState<'drivers' | 'vehicles'>(
-    location.pathname.includes('/frota') ? 'vehicles' : 'drivers'
-  );
-
-  useEffect(() => {
-    if (location.pathname.includes('/frota')) {
-      setActiveTab('vehicles');
-    } else {
-      setActiveTab('drivers');
-    }
-  }, [location.pathname]);
 
   const [drivers, setDrivers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [listRefreshing, setListRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [plateFilter, setPlateFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'ativo' | 'inativo'>('all');
-  const [selectedDriver, setSelectedDriver] = useState<any>(null);
-  const [saving, setSaving] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'ativo' | 'inativo' | 'bloqueado'>('all');
+  const [registerOpen, setRegisterOpen] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    vehicle: '',
-    status: 'ativo',
-    driverType: 'agregado',
-    altPhone: '',
-    email: '',
-    address: ''
-  });
-  /** Cartões de demonstração removidos só na UI (não existe linha no servidor). */
-  const [hiddenDemoDriverIds, setHiddenDemoDriverIds] = useState<string[]>([]);
   const [deleteIntent, setDeleteIntent] = useState<{ id: string; name: string; isDemo: boolean } | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [hiddenDemoIds, setHiddenDemoIds] = useState<string[]>(() => readHiddenZaptroDemoDriverIds());
+
+  const demoEnabled = isZaptroDriversDemoEnabled();
+  const visibleDemoDrivers = useMemo(
+    () => ZAPTRO_DEMO_DRIVERS.filter((d) => !hiddenDemoIds.includes(d.id)),
+    [hiddenDemoIds],
+  );
 
   const fetchDrivers = async () => {
     setLoading(true);
@@ -423,108 +440,22 @@ const ZaptroDriversContent: React.FC = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, [deleteIntent, deleteBusy]);
 
-  useEffect(() => {
-    if (selectedDriver) {
-      setFormData({
-        name: selectedDriver.name,
-        phone: selectedDriver.phone,
-        vehicle: selectedDriver.vehicle || '',
-        status: selectedDriver.status,
-        driverType: 'agregado',
-        altPhone: '',
-        email: '',
-        address: ''
-      });
-    } else {
-      setFormData({ name: '', phone: '', vehicle: '', status: 'ativo', driverType: 'agregado', altPhone: '', email: '', address: '' });
-    }
-  }, [selectedDriver]);
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!profile?.company_id) {
-      notifyZaptro(
-        'warning',
-        'Login necessário',
-        'Faça login com sua conta Zaptro em /login para gravar motoristas. O modo dev sem sessão não salva no banco.'
-      );
-      return;
-    }
-
-    const nameOk = formData.name.trim().length >= 2;
-    const digits = formData.phone.replace(/\D/g, '');
-    if (!nameOk) {
-      notifyZaptro('warning', 'Nome incompleto', 'Informe o nome do motorista com pelo menos 2 letras.');
-      return;
-    }
-    if (digits.length < 10) {
-      notifyZaptro(
-        'warning',
-        'WhatsApp inválido',
-        'Use o número com DDD e país (ex.: 5511999999999). Corrija o campo e salve de novo.'
-      );
-      return;
-    }
-
-    const tId = toastLoading('Gravando motorista...');
-    setSaving(true);
-    try {
-      const payload = {
-        company_id: profile.company_id,
-        name: formData.name,
-        vehicle: formData.vehicle,
-        status: formData.status,
-        phone: digits,
-      };
-
-      const editingDemo = selectedDriver && isZaptroDemoDriverId(String(selectedDriver.id));
-      const shouldInsert = !selectedDriver || editingDemo;
-
-      const { error } = shouldInsert
-        ? await supabaseZaptro.from('whatsapp_drivers').insert([payload])
-        : await supabaseZaptro.from('whatsapp_drivers').update(payload).eq('id', selectedDriver.id);
-
-      if (error) throw error;
-      notifyZaptro(
-        'success',
-        selectedDriver && !editingDemo ? 'Motorista atualizado' : 'Motorista cadastrado',
-        selectedDriver && !editingDemo
-          ? 'Os dados foram salvos e já aparecem na lista.'
-          : editingDemo
-            ? 'Registo real criado a partir do exemplo — a lista passa a mostrar só dados da base.'
-            : 'Novo registro criado. Você pode cadastrar outro ou editar na lista ao lado.'
-      );
-      setSelectedDriver(null);
-      await fetchDrivers();
-    } catch (err: any) {
-      notifyZaptro(
-        'error',
-        'Não foi possível salvar',
-        err.message || 'Tente de novo em instantes. Se persistir, abra Configurações e confira sua conexão WhatsApp.'
-      );
-    } finally {
-      toastDismiss(tId);
-      setSaving(false);
-    }
-  };
-
   const runDeleteFromModal = async () => {
     if (!deleteIntent) return;
     const { id, isDemo } = deleteIntent;
-    if (isDemo) {
-      setHiddenDemoDriverIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-      if (selectedDriver && String(selectedDriver.id) === id) setSelectedDriver(null);
-      notifyZaptro('success', 'Exemplo removido', 'O cartão deixou de aparecer na lista de demonstração.');
-      setDeleteIntent(null);
-      return;
-    }
     setDeleteBusy(true);
     const tId = toastLoading('Removendo...');
     try {
+      if (isDemo) {
+        hideZaptroDemoDriverId(id);
+        setHiddenDemoIds(readHiddenZaptroDemoDriverIds());
+        notifyZaptro('success', 'Exemplo removido', 'Recarregue a página para ver todos os exemplos de novo.');
+        setDeleteIntent(null);
+        return;
+      }
       const { error } = await supabaseZaptro.from('whatsapp_drivers').delete().eq('id', id);
       if (error) throw error;
       notifyZaptro('success', 'Motorista removido', 'O registro foi excluído da sua frota.');
-      if (selectedDriver && String(selectedDriver.id) === id) setSelectedDriver(null);
       await fetchDrivers();
       setDeleteIntent(null);
     } catch (err: any) {
@@ -539,10 +470,8 @@ const ZaptroDriversContent: React.FC = () => {
     }
   };
 
-  const showingDemoPlaceholders = drivers.length === 0;
-  const listForDisplay = showingDemoPlaceholders
-    ? ZAPTRO_DEMO_DRIVERS.filter((d) => !hiddenDemoDriverIds.includes(d.id))
-    : drivers;
+  const showingDemoPlaceholders = demoEnabled && drivers.length === 0 && visibleDemoDrivers.length > 0;
+  const listForDisplay = drivers.length > 0 ? drivers : demoEnabled ? visibleDemoDrivers : [];
 
   const q = searchTerm.toLowerCase();
   const plateNorm = plateFilter.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
@@ -561,11 +490,73 @@ const ZaptroDriversContent: React.FC = () => {
     return textOk && plateOk && statusOk;
   });
 
+  const driverStats = useMemo(() => {
+    const total = listForDisplay.length;
+    return {
+      total,
+      ativos: listForDisplay.filter((d) => d.status === 'ativo').length,
+      inativos: listForDisplay.filter((d) => d.status === 'inativo').length,
+      bloqueados: listForDisplay.filter((d) => d.status === 'bloqueado').length,
+    };
+  }, [listForDisplay]);
+
   const iconMuted = palette.textMuted;
+
+  const handleExportDrivers = () => {
+    if (!filteredDrivers.length) {
+      notifyZaptro('warning', 'Exportação', 'Nenhum motorista para exportar.');
+      return;
+    }
+    exportToExcel(
+      filteredDrivers.map((d) => ({
+        nome: d.name ?? '',
+        whatsapp: d.phone ?? '',
+        veiculo: d.vehicle ?? '',
+        status: d.status ?? '',
+      })),
+      'motoristas_frota',
+      { nome: 'Nome', whatsapp: 'WhatsApp', veiculo: 'Veículo', status: 'Status' },
+    );
+    notifyZaptro('success', 'Exportado', `${filteredDrivers.length} motorista(s) exportado(s).`);
+  };
+
+  const handleDownloadDriverTemplate = () => {
+    downloadCsvTemplate(
+      'modelo_motoristas_zaptro.csv',
+      DRIVER_CSV_TEMPLATE_HEADERS,
+      DRIVER_CSV_TEMPLATE_EXAMPLE,
+      'Preencha o modelo e use «Importar motoristas» na barra abaixo.',
+    );
+  };
+
+  const handleImportDrivers = async (file: File) => {
+    if (!profile?.company_id) {
+      notifyZaptro('error', 'Importação', 'Empresa não identificada.');
+      return;
+    }
+    try {
+      const text = await file.text();
+      const rows = parseDriversCsv(text);
+      if (!rows.length) {
+        notifyZaptro('error', 'Importação', 'Nenhuma linha válida. Use o modelo com colunas «nome» e «whatsapp».');
+        return;
+      }
+      notifyZaptro('info', 'Importação', `A importar ${rows.length} motorista(s)...`);
+      const result = await importDriversCsvRows(profile.company_id, rows);
+      await fetchDrivers();
+      notifyZaptro(
+        'success',
+        'Importação concluída',
+        `${result.imported} motorista(s) importado(s)${result.failed ? `, ${result.failed} falharam` : ''}.`,
+      );
+    } catch (err: unknown) {
+      notifyZaptro('error', 'Importação', err instanceof Error ? err.message : 'Falha ao importar.');
+    }
+  };
 
   return (
     <>
-      <div style={s.container}>
+      <div className="zaptro-fleet-module zaptro-fleet-module--tall">
         <div style={{ ...s.headerRow, alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start', flex: '1 1 280px', minWidth: 0 }}>
             <div style={s.headerIcon}>
@@ -574,33 +565,26 @@ const ZaptroDriversContent: React.FC = () => {
             <div style={s.headerText}>
               <h1 style={s.title}>Motoristas</h1>
               <p style={s.subtitle}>
-                Frota de campo: clique num <strong>cartão</strong> para abrir o perfil (<span style={s.code}>/motorista/perfil/…</span>).
+                Frota de campo: clique num <strong>cartão</strong> para abrir o perfil (<span style={s.code}>/app/motoristas/perfil/…</span>).
                 Filtre por <strong>nome</strong>, <strong>telemóvel</strong> ou <strong>placa</strong> (a mesma placa pode aparecer em vários motoristas). Dados em{' '}
                 <span style={s.code}>whatsapp_drivers</span>.
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => navigate(ZAPTRO_ROUTES.ROUTES)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '12px 18px',
-              borderRadius: 16,
-              border: `1px solid ${palette.sidebarBorder}`,
-              backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#F4F4F5',
-              color: palette.text,
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: 'pointer',
-              flexShrink: 0,
-              fontFamily: 'inherit',
-            }}
-          >
-            <Navigation size={18} strokeWidth={2.2} /> Rotas
-          </button>
+        <button
+          type="button"
+          className="zaptro-btn-toolbar"
+          onClick={() =>
+            navigate(zaptroAppOrLegacy(location.pathname, ZAPTRO_APP_ROUTES.ROUTES, ZAPTRO_ROUTES.ROUTES))
+          }
+          style={{
+            border: `1px solid ${palette.sidebarBorder}`,
+            backgroundColor: palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#F4F4F5',
+            color: palette.text,
+          }}
+        >
+          <Navigation size={16} strokeWidth={2.2} /> Rotas
+        </button>
         </div>
 
         {!profile?.company_id && (
@@ -610,155 +594,51 @@ const ZaptroDriversContent: React.FC = () => {
           </div>
         )}
 
-        {/* Tab Switcher Premium - Standard Black Style */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 32, marginTop: 12 }}>
-          <button
-            onClick={() => {
-              setActiveTab('drivers');
-              navigate('/motoristas');
-            }}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 14,
-              backgroundColor: activeTab === 'drivers' ? '#000' : 'transparent',
-              color: activeTab === 'drivers' ? '#D9FF00' : '#64748B',
-              fontWeight: 700,
-              fontSize: 13,
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          >
-            Motoristas da Operação
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('vehicles');
-              navigate('/frota');
-            }}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 14,
-              backgroundColor: activeTab === 'vehicles' ? '#000' : 'transparent',
-              color: activeTab === 'vehicles' ? '#D9FF00' : '#64748B',
-              fontWeight: 700,
-              fontSize: 13,
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          >
-            Frota (Veículos)
-          </button>
-        </div>
+        <ZaptroFleetStatsRow
+          cards={[
+            { label: 'Total motoristas', value: driverStats.total, accent: true },
+            { label: 'Activos', value: driverStats.ativos, hint: 'Com acesso a rotas' },
+            { label: 'Inactivos', value: driverStats.inativos },
+            { label: 'Bloqueados', value: driverStats.bloqueados, hint: 'Sem acesso a links' },
+          ]}
+        />
 
-        {activeTab === 'drivers' ? (
-          <div className="zaptro-drivers-main" style={s.mainLayout}>
-          <div className="zaptro-drivers-form" style={s.formCard}>
-            <h3 style={s.cardTitle}>{selectedDriver ? 'Editar motorista' : 'Novo motorista'}</h3>
-            <form onSubmit={handleSave} style={s.form}>
-              <div style={s.inputGroup}>
-                <label style={s.label}>NOME DO MOTORISTA</label>
-                <input
-                  style={s.input}
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Ex.: Alison Silva"
-                />
+        <div className="zaptro-fleet-module__body">
+          <ZaptroFleetDriversNav active="drivers" onAdd={() => setRegisterOpen(true)} />
+          <div className="zaptro-drivers-main" style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%' }}>
+          <div style={s.listSection}>
+            {showingDemoPlaceholders ? (
+              <div className="zaptro-fleet-demo-banner">
+                Pré-visualização — {visibleDemoDrivers.length} motoristas de exemplo. Use o botão <strong>+</strong> para cadastrar.
               </div>
-              <div style={s.inputGroup}>
-                <label style={s.label}>TIPO DE VÍNCULO</label>
-                <select
-                  style={{ ...s.input, cursor: 'pointer' }}
-                  value={formData.driverType}
-                  onChange={(e) => setFormData({ ...formData, driverType: e.target.value })}
+            ) : null}
+            {demoEnabled && visibleDemoDrivers.length === 0 ? (
+              <div className="zaptro-fleet-demo-banner">
+                Exemplos ocultos neste browser.{' '}
+                <button
+                  type="button"
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#92400E',
+                    fontWeight: 800,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                  onClick={() => {
+                    resetHiddenZaptroDemoDrivers();
+                    setHiddenDemoIds([]);
+                  }}
                 >
-                  <option value="agregado">Motorista Agregado</option>
-                  <option value="clt">Motorista da Empresa (CLT)</option>
-                </select>
-              </div>
-              <div style={s.inputGroup}>
-                <label style={s.label}>WHATSAPP (NÚMERO REAL)</label>
-                <input
-                  style={s.input}
-                  required
-                  placeholder="5511999999999"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <div style={{ ...s.inputGroup, flex: 1 }}>
-                  <label style={s.label}>TELEFONE SECUNDÁRIO</label>
-                  <input
-                    style={s.input}
-                    placeholder="Opcional"
-                    value={formData.altPhone}
-                    onChange={(e) => setFormData({ ...formData, altPhone: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div style={s.inputGroup}>
-                <label style={s.label}>EMAIL</label>
-                <input
-                  type="email"
-                  style={s.input}
-                  placeholder="motorista@email.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-              <div style={s.inputGroup}>
-                <label style={s.label}>ENDEREÇO COMPLETO</label>
-                <input
-                  style={s.input}
-                  placeholder="Onde mora (Rua, Cidade)"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                />
-              </div>
-              <div style={s.inputGroup}>
-                <label style={s.label}>VEÍCULO / PLACA</label>
-                <input
-                  style={s.input}
-                  placeholder="Ex.: Scania · ABC1D23"
-                  value={formData.vehicle}
-                  onChange={(e) => setFormData({ ...formData, vehicle: e.target.value })}
-                />
-              </div>
-              <div style={s.inputGroup}>
-                <label style={s.label}>STATUS OPERACIONAL</label>
-                <select
-                  style={{ ...s.input, cursor: 'pointer' }}
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                >
-                  <option value="ativo">Conexão ativa (liberado)</option>
-                  <option value="inativo">Acesso bloqueado</option>
-                </select>
-              </div>
-              <div style={s.formActions}>
-                {selectedDriver && (
-                  <button type="button" style={s.cancelBtn} onClick={() => setSelectedDriver(null)}>
-                    Cancelar
-                  </button>
-                )}
-                <button type="submit" style={{ ...s.saveBtn, opacity: saving ? 0.85 : 1 }} disabled={saving}>
-                  {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                  {saving ? 'A gravar…' : 'Guardar registo'}
+                  Mostrar motoristas de exemplo
                 </button>
               </div>
-            </form>
-          </div>
-
-          <div style={s.listSection}>
+            ) : null}
             <div style={s.toolbar}>
               <div style={s.toolbarFilters}>
                 <div style={{ ...s.search, flex: '1 1 200px' }}>
-                  <Search size={18} color={iconMuted} />
+                  <Search size={16} color={iconMuted} />
                   <input
                     placeholder="Nome ou telemóvel…"
                     style={s.searchInput}
@@ -767,7 +647,7 @@ const ZaptroDriversContent: React.FC = () => {
                   />
                 </div>
                 <div style={{ ...s.search, flex: '1 1 140px', maxWidth: 200 }}>
-                  <Truck size={18} color={iconMuted} />
+                  <Truck size={16} color={iconMuted} />
                   <input
                     placeholder="Placa (ex.: ABC1D23)"
                     style={s.searchInput}
@@ -776,7 +656,7 @@ const ZaptroDriversContent: React.FC = () => {
                   />
                 </div>
                 <div style={{ ...s.search, flex: '1 1 120px', maxWidth: 160 }}>
-                  <Filter size={18} color={iconMuted} />
+                  <Filter size={16} color={iconMuted} />
                   <select
                     style={{ ...s.searchInput, cursor: 'pointer', appearance: 'none', background: 'transparent' }}
                     value={statusFilter}
@@ -785,9 +665,20 @@ const ZaptroDriversContent: React.FC = () => {
                     <option value="all">Status: Todos</option>
                     <option value="ativo">Status: Ativo</option>
                     <option value="inativo">Status: Inativo</option>
+                    <option value="bloqueado">Status: Bloqueado</option>
                   </select>
                 </div>
               </div>
+              <ZaptroListImportToolbar
+                inputId="zaptro-drivers-import-input"
+                exportLabel="Baixar motoristas"
+                importLabel="Importar motoristas"
+                templateLabel="Modelo"
+                onExport={handleExportDrivers}
+                onImport={handleImportDrivers}
+                onDownloadTemplate={handleDownloadDriverTemplate}
+                exportDisabled={filteredDrivers.length === 0}
+              />
               <button
                 type="button"
                 style={{ ...s.refreshBtn, opacity: listRefreshing ? 0.7 : 1 }}
@@ -808,19 +699,13 @@ const ZaptroDriversContent: React.FC = () => {
                 <p style={s.emptyTitle}>Nenhum motorista nesta busca</p>
                 <p style={s.emptySub}>
                   {searchTerm || plateFilter
-                    ? 'Limpe os filtros ou cadastre alguém novo no formulário à esquerda.'
-                    : 'Use o formulário à esquerda para cadastrar o primeiro motorista da frota.'}
+                    ? 'Limpe os filtros ou use o botão + para cadastrar.'
+                    : demoEnabled && hiddenDemoIds.length > 0
+                      ? 'Os exemplos foram ocultados neste browser. Recarregue a página ou cadastre um motorista real.'
+                      : 'Use o botão + para cadastrar o primeiro motorista da frota.'}
                 </p>
               </div>
             ) : (
-              <>
-                {showingDemoPlaceholders && (
-                  <div style={s.demoBanner}>
-                    <strong>Pré-visualização:</strong> motoristas abaixo são fictícios. Quando existirem registos reais,
-                    a lista substitui os exemplos. Pode editar um exemplo e guardar para criar um registo real (com
-                    empresa ligada).
-                  </div>
-                )}
                 <div style={s.grid}>
                   {filteredDrivers.map((d) => (
                     <div
@@ -829,17 +714,25 @@ const ZaptroDriversContent: React.FC = () => {
                       tabIndex={0}
                       className="zaptro-driver-card"
                       style={{ ...s.card, cursor: 'pointer' }}
-                      onClick={() => navigate(zaptroDriverProfilePath(String(d.id)))}
+                      onClick={() => navigate(ZAPTRO_APP_ROUTES.driverProfile(String(d.id)))}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          navigate(zaptroDriverProfilePath(String(d.id)));
+                          navigate(ZAPTRO_APP_ROUTES.driverProfile(String(d.id)));
                         }
                       }}
                     >
                       <div style={s.cardHeader}>
                         <div style={s.avatar}>
-                          <User size={22} color={isDark ? palette.lime : '#0f172a'} />
+                          {d.photo_url ? (
+                            <img
+                              src={d.photo_url}
+                              alt=""
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 12 }}
+                            />
+                          ) : (
+                            <User size={22} color={isDark ? palette.lime : '#0f172a'} />
+                          )}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <h3 style={s.driverName}>{d.name}</h3>
@@ -847,10 +740,15 @@ const ZaptroDriversContent: React.FC = () => {
                             <div
                               style={{
                                 ...s.statusDot,
-                                backgroundColor: d.status === 'ativo' ? '#22c55e' : '#ef4444',
+                                backgroundColor:
+                                  d.status === 'ativo' ? '#22c55e' : d.status === 'bloqueado' ? '#ef4444' : '#949494',
                               }}
                             />
-                            {d.status === 'ativo' ? 'OPERACIONAL' : 'DISPONÍVEL'}
+                            {d.status === 'ativo'
+                              ? 'OPERACIONAL'
+                              : d.status === 'bloqueado'
+                                ? 'BLOQUEADO'
+                                : 'INACTIVO'}
                           </div>
                         </div>
                         <div style={s.actions}>
@@ -891,7 +789,7 @@ const ZaptroDriversContent: React.FC = () => {
                       </div>
                       <div style={s.cardBody}>
                         <div style={s.infoRow}>
-                          <Phone size={14} color={iconMuted} /> <span style={s.infoText}>{d.phone}</span>
+                          <Phone size={14} color={iconMuted} /> <span style={s.infoPhone}>{d.phone}</span>
                         </div>
                         <div style={s.infoRow}>
                           <Truck size={14} color={iconMuted} /> <span style={s.infoText}>{d.vehicle || 'Sem veículo'}</span>
@@ -899,21 +797,39 @@ const ZaptroDriversContent: React.FC = () => {
                       </div>
                       <div style={s.cardFooter}>
                         <span style={s.footerLabel}>WHATSAPP · CANAL ZAPTRO</span>
-                        <div style={s.waIcon}>
-                          <MessageSquare size={12} color="#22c55e" />
-                        </div>
+                        <button
+                          type="button"
+                          className="zaptro-driver-card__inbox-btn"
+                          style={s.waIcon}
+                          title="Conversar com motorista"
+                          aria-label={`Conversar com ${d.name}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const digits = (d.phone || '').replace(/\D/g, '');
+                            if (digits.length < 10) {
+                              notifyZaptro('warning', 'Sem WhatsApp', 'Motorista sem número válido para conversar.');
+                              return;
+                            }
+                            navigate(`${ZAPTRO_APP_ROUTES.INBOX}?c=${encodeURIComponent(digits)}`);
+                          }}
+                        >
+                          <Zap size={18} strokeWidth={1.9} color="#d9ff00" />
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
-              </>
             )}
           </div>
+          </div>
         </div>
-        ) : (
-          <ZaptroVehiclesTab />
-        )}
       </div>
+
+      <ZaptroDriverRegisterModal
+        isOpen={registerOpen}
+        onClose={() => setRegisterOpen(false)}
+        onSaved={() => void fetchDrivers()}
+      />
 
       {deleteIntent && (
         <div
@@ -989,6 +905,10 @@ const ZaptroDriversContent: React.FC = () => {
         .zaptro-driver-card:hover {
           transform: translateY(-2px);
           box-shadow: ${isDark ? '0 12px 40px rgba(0,0,0,0.35)' : '0 14px 40px rgba(15,23,42,0.08)'};
+        }
+        .zaptro-driver-card__inbox-btn:hover {
+          background: #111111 !important;
+          transform: translateY(-1px);
         }
         @media (max-width: 960px) {
           .zaptro-drivers-main {

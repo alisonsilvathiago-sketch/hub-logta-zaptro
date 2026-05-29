@@ -164,7 +164,7 @@ const MasterFinanceiro: React.FC = () => {
                 gap: 4,
                 fontSize: 14,
                 fontWeight: 800,
-                color: '#10B981',
+                color: '#0061FF',
               }}
             >
               ECOSSISTEMA <ArrowUpRight size={14} />
@@ -196,7 +196,7 @@ const MasterFinanceiro: React.FC = () => {
           iconVariant="solid"
           accent="#0052D9"
           topRight={
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#10B981' }}>SEGURO</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#0061FF' }}>SEGURO</span>
           }
           value="0"
         />
@@ -356,11 +356,11 @@ const styles: Record<string, any> = {
   refCell: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--accent)', fontWeight: '700' },
   price: { fontSize: '16px', fontWeight: '800', color: 'var(--secondary)' },
 
-  badgeSuccess: { padding: '6px 12px', backgroundColor: '#F0FDF4', color: '#16A34A', fontSize: '10px', fontWeight: '800', borderRadius: '10px' },
+  badgeSuccess: { padding: '6px 12px', backgroundColor: '#EFF6FF', color: '#1D4ED8', fontSize: '10px', fontWeight: '800', borderRadius: '10px' },
   badgeWarning: { padding: '6px 12px', backgroundColor: '#FFFBEB', color: '#D97706', fontSize: '10px', fontWeight: '800', borderRadius: '10px' },
   badgeDanger: { padding: '6px 12px', backgroundColor: '#FEF2F2', color: '#EF4444', fontSize: '10px', fontWeight: '800', borderRadius: '10px' },
 
-  nfBadgeOk: { display: 'flex', alignItems: 'center', gap: '6px', color: '#16A34A', fontSize: '11px', fontWeight: '900' },
+  nfBadgeOk: { display: 'flex', alignItems: 'center', gap: '6px', color: '#1D4ED8', fontSize: '11px', fontWeight: '900' },
   nfBadgePending: { display: 'flex', alignItems: 'center', gap: '6px', color: '#D97706', fontSize: '11px', fontWeight: '900' },
   
   reconcileBtn: { padding: '8px 16px', backgroundColor: 'var(--bg-active)', color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: '12px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', transition: 'all 0.2s' },

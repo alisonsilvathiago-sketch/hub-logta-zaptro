@@ -8,7 +8,7 @@
   "rewrites": [
     {
       "source": "/supabase-api/:path*",
-      "destination": "https://kgktwaziasxgeseucsoy.supabase.co/:path*"
+      "destination": "https://rrjnkmgkhbtapumgmhhr.supabase.co/:path*"
     },
     { "source": "/login-whatsapp", "destination": "/index.html" },
     { "source": "/vendas-whatsapp", "destination": "/index.html" },

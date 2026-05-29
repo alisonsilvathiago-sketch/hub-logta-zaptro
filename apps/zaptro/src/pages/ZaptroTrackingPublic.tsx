@@ -74,10 +74,10 @@ const ZaptroTrackingPublic: React.FC = () => {
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'em_rota': return { color: '#D9FF00', label: 'Emapa Rota', icon: Truck };
-      case 'coleta': return { color: '#64748B', label: 'Em Coleta', icon: Package };
+      case 'coleta': return { color: '#949494', label: 'Em Coleta', icon: Package };
       case 'entregue': return { color: '#10B981', label: 'Entregue', icon: CheckCircle2 };
       case 'atraso': return { color: '#EF4444', label: 'Atraso', icon: AlertCircle };
-      default: return { color: '#94A3B8', label: 'Pendente', icon: Clock };
+      default: return { color: '#949494', label: 'Pendente', icon: Clock };
     }
   };
 
@@ -135,14 +135,14 @@ const ZaptroTrackingPublic: React.FC = () => {
 
              <div style={styles.detailsGrid}>
                 <div style={styles.detailItem}>
-                   <MapPin size={18} color="#94A3B8" />
+                   <MapPin size={18} color="#949494" />
                    <div>
                       <span style={styles.detailLabel}>Destino Final</span>
                       <strong style={styles.detailValue}>{shipment.destination}</strong>
                    </div>
                 </div>
                 <div style={styles.detailItem}>
-                   <Clock size={18} color="#94A3B8" />
+                   <Clock size={18} color="#949494" />
                    <div>
                       <span style={styles.detailLabel}>Última Atualização</span>
                       <strong style={styles.detailValue}>{new Date(shipment.updated_at).toLocaleString('pt-BR')}</strong>
@@ -195,7 +195,7 @@ const styles: Record<string, any> = {
   brand: { display: 'flex', alignItems: 'center', gap: '12px' },
   logoBox: { width: '40px', height: '40px', backgroundColor: '#CCFF00', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   brandName: { fontSize: '18px', fontWeight: '700', letterSpacing: '-0.5px' },
-  companyInfo: { fontSize: '13px', color: '#64748B' },
+  companyInfo: { fontSize: '13px', color: '#949494' },
 
   content: { maxWidth: '1000px', margin: '0 auto', padding: '0 40px 80px' },
   mainCard: { backgroundColor: 'white', borderRadius: '40px', border: '1px solid #e8e8e8', padding: '48px', marginBottom: '32px', boxShadow: ZAPTRO_SHADOW.lg },
@@ -225,16 +225,16 @@ const styles: Record<string, any> = {
   timelineContent: { paddingBottom: '32px', flex: 1 },
   timelineMeta: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' },
   timelineStatus: { fontSize: '15px', fontWeight: '700', color: '#0F172A' },
-  timelineTime: { fontSize: '12px', color: '#94A3B8', fontWeight: '600' },
-  timelineNotes: { fontSize: '13px', color: '#64748B', fontWeight: '500', margin: 0 },
-  emptyTimeline: { textAlign: 'center', color: '#94A3B8', fontSize: '14px', fontWeight: '600' },
+  timelineTime: { fontSize: '12px', color: '#949494', fontWeight: '600' },
+  timelineNotes: { fontSize: '13px', color: '#949494', fontWeight: '500', margin: 0 },
+  emptyTimeline: { textAlign: 'center', color: '#949494', fontSize: '14px', fontWeight: '600' },
 
   footer: { textAlign: 'center', padding: '40px' },
   secureBadge: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: '#EEFCEF', color: '#10B981', borderRadius: '12px', fontSize: '11px', fontWeight: '700', marginBottom: '12px' },
-  footerNote: { fontSize: '12px', color: '#94A3B8', fontWeight: '500' },
+  footerNote: { fontSize: '12px', color: '#949494', fontWeight: '500' },
 
   errorTitle: { fontSize: '24px', fontWeight: '700', margin: '0 0 12px 0' },
-  errorText: { fontSize: '16px', color: '#64748B', margin: '0 0 32px 0' },
+  errorText: { fontSize: '16px', color: '#949494', margin: '0 0 32px 0' },
   backBtn: { padding: '16px 32px', backgroundColor: '#0F172A', color: 'white', border: 'none', borderRadius: '16px', fontWeight: '700', cursor: 'pointer' }
 };
 

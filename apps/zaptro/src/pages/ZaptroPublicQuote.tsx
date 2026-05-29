@@ -14,7 +14,7 @@ import {
 const LIME = '#D9FF00';
 const PAGE_BG = '#ffffff';
 const TEXT = '#0f172a';
-const TEXT_MUTED = '#64748b';
+const TEXT_MUTED = '#949494';
 const TEXT_SOFT = '#475569';
 const BORDER = '#e4e4e4';
 const CARD_BG = '#f4f4f4';
@@ -383,14 +383,14 @@ const ZaptroPublicQuote: React.FC = () => {
                   </div>
                   <div>
                     <div style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>ZAPTRO</div>
-                    <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Transporte inteligente</div>
+                    <div style={{ fontSize: 11, color: '#949494', fontWeight: 600 }}>Transporte inteligente</div>
                   </div>
                 </div>
               )}
             </div>
             <div style={{ textAlign: 'right', minWidth: 140 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', color: '#334155' }}>{issuer.toUpperCase()}</div>
-              <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, lineHeight: 1.4 }}>Documento para aprovação interna</div>
+              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', color: '#6B6B6B' }}>{issuer.toUpperCase()}</div>
+              <div style={{ fontSize: 11, color: '#949494', marginTop: 4, lineHeight: 1.4 }}>Documento para aprovação interna</div>
             </div>
           </div>
 
@@ -405,7 +405,7 @@ const ZaptroPublicQuote: React.FC = () => {
             }}
           >
             <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: '#64748b', marginBottom: 8 }}>DESTINATÁRIO</div>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: '#949494', marginBottom: 8 }}>DESTINATÁRIO</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>{snap.clientName}</div>
               <div style={{ fontSize: 11, color: '#475569', marginTop: 6, lineHeight: 1.45 }}>
                 Orçamento de frete rodoviário conforme dados abaixo.
@@ -414,15 +414,15 @@ const ZaptroPublicQuote: React.FC = () => {
             <div style={{ textAlign: 'right', flex: '0 1 auto' }}>
               <div style={{ fontSize: 28, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.03em' }}>Orçamento</div>
               <div style={{ marginTop: 10, fontSize: 11 }}>
-                <span style={{ fontWeight: 600, color: '#334155' }}>REF.</span>{' '}
+                <span style={{ fontWeight: 600, color: '#6B6B6B' }}>REF.</span>{' '}
                 <span style={{ color: '#0f172a' }}>{quote.id}</span>
               </div>
               <div style={{ marginTop: 4, fontSize: 11 }}>
-                <span style={{ fontWeight: 600, color: '#334155' }}>DATA</span>{' '}
+                <span style={{ fontWeight: 600, color: '#6B6B6B' }}>DATA</span>{' '}
                 <span style={{ color: '#0f172a' }}>{quoteDate}</span>
               </div>
               <div style={{ marginTop: 4, fontSize: 11 }}>
-                <span style={{ fontWeight: 600, color: '#334155' }}>STATUS</span>{' '}
+                <span style={{ fontWeight: 600, color: '#6B6B6B' }}>STATUS</span>{' '}
                 <span style={{ color: '#0f172a' }}>{statusPdf}</span>
               </div>
             </div>
@@ -448,7 +448,7 @@ const ZaptroPublicQuote: React.FC = () => {
                       fontSize: 10,
                       fontWeight: 700,
                       letterSpacing: '0.02em',
-                      color: '#64748b',
+                      color: '#949494',
                     }}
                   >
                     {h}
@@ -459,7 +459,7 @@ const ZaptroPublicQuote: React.FC = () => {
             <tbody>
               <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
                 <td style={{ padding: '14px 8px', verticalAlign: 'top', fontWeight: 700, color: '#0f172a' }}>Frete rodoviário</td>
-                <td style={{ padding: '14px 8px', verticalAlign: 'top', color: '#334155', lineHeight: 1.5 }}>
+                <td style={{ padding: '14px 8px', verticalAlign: 'top', color: '#6B6B6B', lineHeight: 1.5 }}>
                   <div>
                     <strong>Rota:</strong> {routeLine}
                   </div>
@@ -495,7 +495,7 @@ const ZaptroPublicQuote: React.FC = () => {
                   borderTop: '2px solid #e2e8f0',
                 }}
               >
-                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', color: '#334155' }}>TOTAL</span>
+                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', color: '#6B6B6B' }}>TOTAL</span>
                 <span style={{ fontSize: 22, fontWeight: 700, color: accent }}>{valFull}</span>
               </div>
             </div>
@@ -506,13 +506,13 @@ const ZaptroPublicQuote: React.FC = () => {
               margin: '32px 0 0',
               textAlign: 'center',
               fontSize: 11,
-              color: '#64748b',
+              color: '#949494',
               lineHeight: 1.5,
             }}
           >
             Documento gerado para apresentação interna. O valor e condições vinculam-se ao registo no CRM da transportadora.
           </p>
-          <p style={{ margin: '16px 0 0', textAlign: 'center', fontSize: 10, color: '#94a3b8' }}>
+          <p style={{ margin: '16px 0 0', textAlign: 'center', fontSize: 10, color: '#949494' }}>
             {issuer} · ref. {quote.id}
           </p>
         </div>

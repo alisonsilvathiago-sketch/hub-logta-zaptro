@@ -18,17 +18,21 @@ import {
   Activity,
   Layers,
   Trophy,
+  Save,
 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import LogtaModal from '../components/Modal';
+import '../components/zaptroLandscapeModal.css';
 import ZaptroLayout from '../components/Zaptro/ZaptroLayout';
 import { ZAPTRO_SHADOW } from '../constants/zaptroShadows';
 import ZaptroKpiMetricCard from '../components/Zaptro/ZaptroKpiMetricCard';
 import { ZAPTRO_FIELD_BG, ZAPTRO_SECTION_BORDER } from '../constants/zaptroUi';
 import { useAuth } from '../context/AuthContext';
 import { useTenant } from '../context/TenantContext';
-import type { Company } from '../types';
+import type { Company, Profile } from '../types';
 import { supabaseZaptro } from '../lib/supabase-zaptro';
-import { ZAPTRO_ROUTES, zaptroTeamMemberProfilePath } from '../constants/zaptroRoutes';
+import { ZAPTRO_APP_ROUTES } from '../app/zaptroAppRoutes';
+import { ZAPTRO_ROUTES } from '../constants/zaptroRoutes';
 import { resolveMemberAvatarUrl } from '../utils/zaptroAvatar';
 import { isZaptroTenantAdminRole } from '../utils/zaptroPermissions';
 import { ZAPTRO_PAGE_PERMISSION_DEFS, sanitizeZaptroPagePermissions } from '../utils/zaptroPagePermissionMap';
@@ -36,6 +40,10 @@ import { isZaptroBrandingEntitledByPlan } from '../utils/zaptroBrandingEntitleme
 import { notifyZaptro } from '../components/Zaptro/ZaptroNotificationSystem';
 import { formatZaptroDbErrorForToast } from '../utils/zaptroSchemaErrors';
 import { useZaptroTheme } from '../context/ZaptroThemeContext';
+import {
+  buildZaptroDemoTeamMembers,
+  isZaptroTeamDemoEnabled,
+} from '../constants/zaptroTeamDemo';
 
 type MemberRow = {
   id: string;
@@ -144,9 +152,81 @@ function canonicalTeamRoleValue(role: string | null | undefined): string {
   return found?.value ?? 'agent';
 }
 
+function TeamMemberLandscapeAvatar({
+  member,
+  selfId,
+  sessionProfile,
+}: {
+  member: MemberRow;
+  selfId?: string | null;
+  sessionProfile: Pick<Profile, 'id' | 'avatar_url'> | null;
+}) {
+  const av = resolveMemberAvatarUrl(
+    { id: member.id, avatar_url: member.avatar_url },
+    selfId,
+    sessionProfile,
+  );
+  if (av) {
+    return (
+      <div className="zaptro-modal-landscape-hero__photo zaptro-modal-landscape-hero__photo--static" aria-hidden>
+        <img src={av} alt="" className="zaptro-modal-landscape-hero__photo-img" />
+      </div>
+    );
+  }
+  return (
+    <div className="zaptro-modal-landscape-hero__icon" aria-hidden>
+      {(member.full_name || '?')[0].toUpperCase()}
+    </div>
+  );
+}
+
+type TeamPermGridProps = {
+  company: Company | null;
+  checkedIds: string[];
+  onToggle?: (id: string) => void;
+  readOnly?: boolean;
+};
+
+function TeamPagePermGrid({ company, checkedIds, onToggle, readOnly }: TeamPermGridProps) {
+  const defs = ZAPTRO_PAGE_PERMISSION_DEFS.filter(
+    (d) => !d.requiresBrandingPlan || isZaptroBrandingEntitledByPlan(company),
+  );
+  const label = (id: string) => ZAPTRO_PAGE_PERMISSION_DEFS.find((d) => d.id === id)?.label ?? id;
+
+  if (readOnly) {
+    const ids = checkedIds.length ? checkedIds : [];
+    if (ids.length === 0) {
+      return <p className="zaptro-team-perm-empty">Sem páginas atribuídas.</p>;
+    }
+    return (
+      <ul className="zaptro-team-perm-readonly">
+        {ids.map((id) => (
+          <li key={id}>{label(id)}</li>
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <div className="zaptro-team-perm-grid">
+      {defs.map((d) => (
+        <label key={d.id} className="zaptro-team-perm-item">
+          <ZaptroPermCheckbox
+            checked={checkedIds.includes(d.id)}
+            onChange={() => onToggle?.(d.id)}
+            borderColor="#ebebec"
+            isDark={false}
+          />
+          <span>{d.label}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
 const ZaptroTeamContent: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, onlineUsers, refreshProfile } = useAuth();
+  const { profile, onlineUsers = [], refreshProfile } = useAuth();
   const { company } = useTenant();
   const { palette } = useZaptroTheme();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -189,13 +269,17 @@ const ZaptroTeamContent: React.FC = () => {
 
   const isDark = palette.mode === 'dark';
   const modalCardBg = isDark ? '#111111' : '#FFFFFF';
-  const modalBorder = isDark ? '#334155' : '#E2E8F0';
+  const modalBorder = isDark ? '#6B6B6B' : '#E2E8F0';
   const modalText = palette.text;
   const modalMuted = palette.textMuted;
 
   const loadMembers = useCallback(async () => {
     if (!profile?.company_id) {
-      setMembers([]);
+      if (isZaptroTeamDemoEnabled()) {
+        setMembers(buildZaptroDemoTeamMembers() as MemberRow[]);
+      } else {
+        setMembers([]);
+      }
       setLoading(false);
       return;
     }
@@ -208,10 +292,22 @@ const ZaptroTeamContent: React.FC = () => {
         .order('full_name', { ascending: true });
 
       if (error) throw error;
-      setMembers((data as MemberRow[]) || []);
+      let list = (data as MemberRow[]) || [];
+      if (isZaptroTeamDemoEnabled() && list.length === 0) {
+        list = buildZaptroDemoTeamMembers(profile.company_id) as MemberRow[];
+      } else if (isZaptroTeamDemoEnabled()) {
+        const demo = buildZaptroDemoTeamMembers(profile.company_id);
+        const ids = new Set(list.map((m) => m.id));
+        list = [...list, ...demo.filter((d) => !ids.has(d.id))] as MemberRow[];
+      }
+      setMembers(list);
     } catch {
-      notifyZaptro('error', 'Equipe', 'Não foi possível carregar os colaboradores. Atualize a página.');
-      setMembers([]);
+      if (isZaptroTeamDemoEnabled() && profile?.company_id) {
+        setMembers(buildZaptroDemoTeamMembers(profile.company_id) as MemberRow[]);
+      } else {
+        notifyZaptro('error', 'Equipe', 'Não foi possível carregar os colaboradores. Atualize a página.');
+        setMembers([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -393,31 +489,8 @@ const ZaptroTeamContent: React.FC = () => {
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '12px 14px',
-    borderRadius: 14,
-    border: `1px solid ${modalBorder}`,
-    backgroundColor: isDark ? '#0f172a' : '#f4f4f4',
-    color: modalText,
-    fontWeight: 700,
-    fontSize: 14,
-    boxSizing: 'border-box',
-    fontFamily: 'inherit',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: 12,
-    fontWeight: 600,
-    color: modalMuted,
-    marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: '0.02em',
-  };
-
   const body = (
-    <div style={styles.container}>
+    <div className="zaptro-team-page" style={styles.container}>
       <style>{`
         .zaptro-perm-cb-wrap:focus-within {
           outline: 2px solid #d9ff00;
@@ -440,7 +513,7 @@ const ZaptroTeamContent: React.FC = () => {
         </div>
         {isTenantAdmin && (
           <button type="button" style={styles.primaryBtn} onClick={() => setAddOpen(true)}>
-            <UserPlus size={20} /> ADICIONAR MEMBRO
+            <UserPlus size={18} /> Adicionar membro
           </button>
         )}
       </header>
@@ -570,10 +643,10 @@ const ZaptroTeamContent: React.FC = () => {
         >
           {loading ? (
             <div style={styles.loadingBox}>
-              <Loader2 className="animate-spin" size={32} color="#64748B" />
+              <Loader2 className="animate-spin" size={32} color="#949494" />
               <span>Carregando colaboradores…</span>
             </div>
-          ) : !profile?.company_id ? (
+          ) : !profile?.company_id && !isZaptroTeamDemoEnabled() ? (
             <div style={styles.emptyBox}>Associe uma transportadora ao seu login para listar a equipe.</div>
           ) : filtered.length === 0 ? (
             <div style={styles.emptyBox}>
@@ -593,7 +666,7 @@ const ZaptroTeamContent: React.FC = () => {
                   role="button"
                   tabIndex={0}
                   style={{ ...styles.memberCard, cursor: 'pointer' }}
-                  onClick={() => navigate(zaptroTeamMemberProfilePath(m.id))}
+                  onClick={() => navigate(ZAPTRO_APP_ROUTES.teamMemberProfile(m.id))}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
@@ -611,7 +684,7 @@ const ZaptroTeamContent: React.FC = () => {
                       <div
                         style={{
                           ...styles.statusDot,
-                          backgroundColor: on ? '#10B981' : '#94A3B8',
+                          backgroundColor: on ? '#10B981' : '#949494',
                         }}
                         title={on ? 'Sessão ativa no painel' : 'Fora do painel ou sem presença'}
                       />
@@ -622,7 +695,7 @@ const ZaptroTeamContent: React.FC = () => {
                     </div>
                   </div>
                   <div style={styles.emailRow}>
-                    <Mail size={14} color="#94A3B8" />
+                    <Mail size={14} color="#949494" />
                     <span style={styles.emailText}>{displayEmail(m)}</span>
                   </div>
                   <div style={styles.mStats}>
@@ -666,7 +739,7 @@ const ZaptroTeamContent: React.FC = () => {
                           type="button"
                           style={{
                             ...styles.iconBtn,
-                            color: m.id === profile?.id ? '#E2E8F0' : '#64748B',
+                            color: m.id === profile?.id ? '#E2E8F0' : '#949494',
                             cursor: m.id === profile?.id ? 'not-allowed' : 'pointer',
                           }}
                           title={m.id === profile?.id ? 'Não pode remover a si mesmo' : 'Excluir permissão / vínculo'}
@@ -680,7 +753,7 @@ const ZaptroTeamContent: React.FC = () => {
                         </button>
                       </>
                     ) : (
-                      <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 700 }}>Ações restritas ao administrador</div>
+                      <div style={{ fontSize: '11px', color: '#949494', fontWeight: 700 }}>Ações restritas ao administrador</div>
                     )}
                   </div>
                 </div>
@@ -709,10 +782,10 @@ const ZaptroTeamContent: React.FC = () => {
           </div>
           {loading ? (
             <div style={styles.rankingLoading}>
-              <Loader2 className="animate-spin" size={28} color="#64748B" />
+              <Loader2 className="animate-spin" size={28} color="#949494" />
               <span>A carregar…</span>
             </div>
-          ) : !profile?.company_id ? (
+          ) : !profile?.company_id && !isZaptroTeamDemoEnabled() ? (
             <p style={styles.tabPanelEmpty}>Associe uma transportadora para ver o ranking.</p>
           ) : rankedMembers.length === 0 ? (
             <p style={styles.tabPanelEmpty}>Nenhum colaborador com o filtro actual.</p>
@@ -726,7 +799,7 @@ const ZaptroTeamContent: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                       <span style={{ 
                         ...styles.rankingPos, 
-                        color: idx < 3 ? '#d9ff00' : '#94a3b8',
+                        color: idx < 3 ? '#d9ff00' : '#949494',
                         background: idx < 3 ? '#000' : 'transparent',
                         width: 32,
                         height: 32,
@@ -743,7 +816,7 @@ const ZaptroTeamContent: React.FC = () => {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
                       <div style={{ textAlign: 'right', display: 'none' }}>
-                        <div style={{ fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>Pontuação</div>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: '#949494', textTransform: 'uppercase' }}>Pontuação</div>
                         <div style={{ fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{score}</div>
                       </div>
                       <div style={styles.rankingActions}>
@@ -756,7 +829,7 @@ const ZaptroTeamContent: React.FC = () => {
                         >
                           {on ? 'No painel' : 'Ausente'}
                         </span>
-                        <button type="button" style={styles.rankingOpenBtn} onClick={() => navigate(zaptroTeamMemberProfilePath(m.id))}>
+                        <button type="button" style={styles.rankingOpenBtn} onClick={() => navigate(ZAPTRO_APP_ROUTES.teamMemberProfile(m.id))}>
                           Ver Perfil
                         </button>
                       </div>
@@ -788,10 +861,10 @@ const ZaptroTeamContent: React.FC = () => {
           </div>
           {loading ? (
             <div style={styles.rankingLoading}>
-              <Loader2 className="animate-spin" size={28} color="#64748B" />
+              <Loader2 className="animate-spin" size={28} color="#949494" />
               <span>A carregar…</span>
             </div>
-          ) : !profile?.company_id ? (
+          ) : !profile?.company_id && !isZaptroTeamDemoEnabled() ? (
             <p style={styles.tabPanelEmpty}>Associe uma transportadora para listar acessos.</p>
           ) : filtered.length === 0 ? (
             <p style={styles.tabPanelEmpty}>Nenhum colaborador com o filtro actual.</p>
@@ -830,237 +903,207 @@ const ZaptroTeamContent: React.FC = () => {
       )}
 
       {addOpen && (
-        <div style={styles.modalOverlay} onClick={() => setAddOpen(false)}>
-          <div
-            style={{
-              ...styles.modalCard,
-              width: 'min(94vw, 920px)',
-              maxWidth: 920,
-              height: 'auto',
-              maxHeight: '92dvh',
-              backgroundColor: modalCardBg,
-              border: `1px solid ${modalBorder}`,
-              color: modalText,
-              borderRadius: 32,
-              overflowY: 'auto',
-            }}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-member-title"
-          >
-            <header style={{ ...styles.modalHead, marginBottom: 20 }}>
-              <h2 id="add-member-title" style={{ ...styles.modalTitle, color: modalText }}>
-                Novo colaborador
-              </h2>
-              <button type="button" style={styles.modalClose} aria-label="Fechar" onClick={() => setAddOpen(false)}>
-                <X size={22} color={modalMuted} />
-              </button>
-            </header>
-
-            {/* 2-COLUMN HORIZONTAL LAYOUT */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
-              {/* LEFT — Dados básicos */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div>
-                  <label style={labelStyle}>Nome completo</label>
-                  <input style={inputStyle} value={addForm.full_name} onChange={(e) => setAddForm((f) => ({ ...f, full_name: e.target.value }))} placeholder="Ex: Maria Silva" />
+        <LogtaModal isOpen={addOpen} onClose={() => setAddOpen(false)} title="Novo colaborador" width="960px" variant="landscape">
+          <div className="zaptro-modal-landscape-body">
+            <div className="zaptro-modal-landscape__left">
+              <div className="zaptro-modal-landscape-hero">
+                <div className="zaptro-modal-landscape-hero__icon" aria-hidden>
+                  <UserPlus size={24} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <label style={labelStyle}>E-mail</label>
-                  <input style={inputStyle} type="email" autoComplete="off" value={addForm.email} onChange={(e) => setAddForm((f) => ({ ...f, email: e.target.value }))} placeholder="email@empresa.com" />
+                  <h2 className="zaptro-modal-landscape-hero__title">Novo colaborador</h2>
+                  <p className="zaptro-modal-landscape-hero__subtitle">Dados de acesso e função na transportadora</p>
                 </div>
-                <div>
-                  <label style={labelStyle}>Senha inicial</label>
-                  <input style={inputStyle} type="password" autoComplete="new-password" value={addForm.password} onChange={(e) => setAddForm((f) => ({ ...f, password: e.target.value }))} placeholder="Mínimo 6 caracteres" />
-                </div>
-                <div>
-                  <label style={labelStyle}>Função</label>
-                  <select style={{ ...inputStyle, cursor: 'pointer' }} value={addForm.role} onChange={(e) => setAddForm((f) => ({ ...f, role: e.target.value }))}>
+              </div>
+              <div className="zaptro-modal-landscape-fields">
+                <label className="zaptro-modal-landscape-field">
+                  <span className="zaptro-modal-landscape-field__label">Nome completo</span>
+                  <input
+                    className="zaptro-modal-landscape-field__input"
+                    value={addForm.full_name}
+                    onChange={(e) => setAddForm((f) => ({ ...f, full_name: e.target.value }))}
+                    placeholder="Ex: Maria Silva"
+                  />
+                </label>
+                <label className="zaptro-modal-landscape-field">
+                  <span className="zaptro-modal-landscape-field__label">E-mail corporativo</span>
+                  <input
+                    className="zaptro-modal-landscape-field__input"
+                    type="email"
+                    autoComplete="off"
+                    value={addForm.email}
+                    onChange={(e) => setAddForm((f) => ({ ...f, email: e.target.value }))}
+                    placeholder="email@empresa.com"
+                  />
+                </label>
+                <label className="zaptro-modal-landscape-field">
+                  <span className="zaptro-modal-landscape-field__label">Senha inicial</span>
+                  <input
+                    className="zaptro-modal-landscape-field__input"
+                    type="password"
+                    autoComplete="new-password"
+                    value={addForm.password}
+                    onChange={(e) => setAddForm((f) => ({ ...f, password: e.target.value }))}
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                </label>
+                <label className="zaptro-modal-landscape-field">
+                  <span className="zaptro-modal-landscape-field__label">Área / função</span>
+                  <select
+                    className="zaptro-modal-landscape-field__select"
+                    value={addForm.role}
+                    onChange={(e) => setAddForm((f) => ({ ...f, role: e.target.value }))}
+                  >
                     {TEAM_ROLE_OPTIONS.filter((o) => o.value !== 'ADMIN').map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
                     ))}
                   </select>
-                </div>
-              </div>
-
-              {/* RIGHT — Permissões */}
-              <div>
-                <label style={{ ...labelStyle, marginBottom: 10, display: 'block' }}>
-                  Páginas que pode acessar
                 </label>
-                <div style={{ ...styles.permCheckGrid, maxHeight: 260, overflowY: 'auto' }}>
-                  {ZAPTRO_PAGE_PERMISSION_DEFS.filter(
-                    (d) => !d.requiresBrandingPlan || isZaptroBrandingEntitledByPlan(company),
-                  ).map((d) => (
-                    <label key={d.id} style={{ ...styles.permCheckLabel, color: modalText }}>
-                      <ZaptroPermCheckbox
-                        checked={addForm.pagePerms.includes(d.id)}
-                        onChange={() => toggleAddPagePerm(d.id)}
-                        borderColor={modalBorder}
-                        isDark={isDark}
-                      />
-                      <span>{d.label}</span>
-                    </label>
-                  ))}
+              </div>
+              <div className="zaptro-modal-landscape-tip">
+                <div className="zaptro-modal-landscape-tip__inner">
+                  <Info size={18} strokeWidth={2} color="#000" aria-hidden />
+                  <p className="zaptro-modal-landscape-tip__text">
+                    O colaborador recebe acesso ao painel conforme as <strong>páginas marcadas</strong> à direita. Pode
+                    ajustar depois no cartão da equipa.
+                  </p>
                 </div>
               </div>
             </div>
-
-            <footer style={{ ...styles.modalFooter, marginTop: 24 }}>
-              <button type="button" style={styles.btnGhost} onClick={() => setAddOpen(false)}>
-                Cancelar
-              </button>
-              <button type="button" style={styles.btnPrimary} onClick={() => void submitAddMember()}>
-                Guardar
-              </button>
-            </footer>
+            <div className="zaptro-modal-landscape__right">
+              <h3 className="zaptro-modal-landscape-right-title">Acessos ao painel</h3>
+              <p className="zaptro-team-perm-hint">Selecione as páginas que este colaborador pode abrir no menu lateral.</p>
+              <TeamPagePermGrid company={company} checkedIds={addForm.pagePerms} onToggle={toggleAddPagePerm} />
+              <div className="zaptro-modal-landscape-actions">
+                <button
+                  type="button"
+                  className="zaptro-modal-landscape-btn zaptro-modal-landscape-btn--ghost"
+                  onClick={() => setAddOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="zaptro-modal-landscape-btn zaptro-modal-landscape-btn--primary"
+                  onClick={() => void submitAddMember()}
+                >
+                  <Save size={18} />
+                  Guardar colaborador
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        </LogtaModal>
       )}
 
-
       {memberDialog && (
-        <div style={styles.modalOverlay} onClick={() => setMemberDialog(null)}>
-          <div
-            style={{
-              ...styles.modalCard,
-              ...styles.modalWide,
-              backgroundColor: modalCardBg,
-              border: `1px solid ${modalBorder}`,
-              color: modalText,
-            }}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="member-dialog-title"
-          >
-            <header style={styles.modalHead}>
-              <h2 id="member-dialog-title" style={{ ...styles.modalTitle, color: modalText }}>
-                Colaborador
-              </h2>
-              <button type="button" style={styles.modalClose} aria-label="Fechar" onClick={() => setMemberDialog(null)}>
-                <X size={22} color={modalMuted} />
-              </button>
-            </header>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
-              {/* LEFT — Profile & Basic Info */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 8 }}>
-                  {(() => {
-                    const av = resolveMemberAvatarUrl(
-                      { id: memberDialog.id, avatar_url: memberDialog.avatar_url },
-                      profile?.id,
-                      profile ? { id: profile.id, avatar_url: profile.avatar_url } : null,
-                    );
-                    return av ? (
-                      <img src={av} alt="" style={{ width: 64, height: 64, borderRadius: 18, objectFit: 'cover' }} />
-                    ) : (
-                      <div
-                        style={{
-                          width: 64,
-                          height: 64,
-                          borderRadius: 18,
-                          backgroundColor: '#000',
-                          color: '#D9FF00',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 700,
-                          fontSize: 22,
-                        }}
-                      >
-                        {(memberDialog.full_name || '?')[0].toUpperCase()}
-                      </div>
-                    );
-                  })()}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: modalText }}>{memberDialog.full_name || 'Sem nome'}</p>
-                    <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 700, color: modalMuted }}>{roleLabel(memberDialog.role)}</p>
+        <LogtaModal
+          isOpen={!!memberDialog}
+          onClose={() => setMemberDialog(null)}
+          title={memberDialog.full_name || 'Colaborador'}
+          width="960px"
+          variant="landscape"
+        >
+          <div className="zaptro-modal-landscape-body">
+            <div className="zaptro-modal-landscape__left">
+              <div className="zaptro-modal-landscape-hero">
+                <TeamMemberLandscapeAvatar
+                  member={memberDialog}
+                  selfId={profile?.id}
+                  sessionProfile={profile ? { id: profile.id, avatar_url: profile.avatar_url } : null}
+                />
+                <div>
+                  <h2 className="zaptro-modal-landscape-hero__title">{memberDialog.full_name || 'Sem nome'}</h2>
+                  <p className="zaptro-modal-landscape-hero__subtitle">
+                    {roleLabel(memberDialog.role)} · {displayEmail(memberDialog)}
+                  </p>
+                </div>
+              </div>
+              {isTenantAdmin ? (
+                <div className="zaptro-modal-landscape-fields">
+                  <label className="zaptro-modal-landscape-field">
+                    <span className="zaptro-modal-landscape-field__label">Nome completo</span>
+                    <input
+                      className="zaptro-modal-landscape-field__input"
+                      value={editForm.full_name}
+                      onChange={(e) => setEditForm((f) => ({ ...f, full_name: e.target.value }))}
+                    />
+                  </label>
+                  <label className="zaptro-modal-landscape-field">
+                    <span className="zaptro-modal-landscape-field__label">E-mail corporativo</span>
+                    <input
+                      className="zaptro-modal-landscape-field__input"
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                    />
+                  </label>
+                  <label className="zaptro-modal-landscape-field">
+                    <span className="zaptro-modal-landscape-field__label">Área / função</span>
+                    <select
+                      className="zaptro-modal-landscape-field__select"
+                      value={editForm.role}
+                      onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
+                    >
+                      {TEAM_ROLE_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ) : (
+                <div className="zaptro-modal-landscape-tip">
+                  <div className="zaptro-modal-landscape-tip__inner">
+                    <Shield size={18} strokeWidth={2} color="#000" aria-hidden />
+                    <p className="zaptro-modal-landscape-tip__text">
+                      Apenas o <strong>administrador</strong> pode alterar dados e permissões. Contacte a gestão se
+                      precisar de outro acesso.
+                    </p>
                   </div>
                 </div>
-
-                {isTenantAdmin && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <div>
-                      <label style={labelStyle}>Nome completo</label>
-                      <input style={inputStyle} value={editForm.full_name} onChange={(e) => setEditForm((f) => ({ ...f, full_name: e.target.value }))} />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>E-mail corporativo</label>
-                      <input
-                        style={inputStyle}
-                        type="email"
-                        value={editForm.email}
-                        onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Área / função</label>
-                      <select
-                        style={{ ...inputStyle, cursor: 'pointer' }}
-                        value={editForm.role}
-                        onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
-                      >
-                        {TEAM_ROLE_OPTIONS.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* RIGHT — Permissions */}
-              <div style={{ borderLeft: `1px solid ${modalBorder}`, paddingLeft: 24 }}>
-                <label style={labelStyle}>Acessos ao painel</label>
+              )}
+            </div>
+            <div className="zaptro-modal-landscape__right">
+              <h3 className="zaptro-modal-landscape-right-title">Acessos ao painel</h3>
+              <p className="zaptro-team-perm-hint">
+                {isTenantAdmin
+                  ? 'Marque as páginas que esta pessoa pode visualizar no menu lateral do Zaptro.'
+                  : 'Páginas atribuídas a este colaborador (somente leitura).'}
+              </p>
+              <TeamPagePermGrid
+                company={company}
+                checkedIds={
+                  isTenantAdmin ? editForm.pagePerms : normalizeMemberPagePerms(memberDialog.permissions, company)
+                }
+                onToggle={isTenantAdmin ? toggleEditPagePerm : undefined}
+                readOnly={!isTenantAdmin}
+              />
+              <div className="zaptro-modal-landscape-actions">
+                <button
+                  type="button"
+                  className="zaptro-modal-landscape-btn zaptro-modal-landscape-btn--ghost"
+                  onClick={() => setMemberDialog(null)}
+                >
+                  {isTenantAdmin ? 'Cancelar' : 'Fechar'}
+                </button>
                 {isTenantAdmin ? (
-                  <>
-                    <p style={{ ...styles.modalHint, color: modalMuted, marginTop: 0, marginBottom: 12, fontSize: 12 }}>
-                      Selecione as páginas que este colaborador pode visualizar no menu lateral.
-                    </p>
-                    <div style={{ ...styles.permCheckGrid, maxHeight: 380 }}>
-                      {ZAPTRO_PAGE_PERMISSION_DEFS.filter(
-                        (d) => !d.requiresBrandingPlan || isZaptroBrandingEntitledByPlan(company),
-                      ).map((d) => (
-                        <label key={d.id} style={{ ...styles.permCheckLabel, color: modalText }}>
-                          <ZaptroPermCheckbox
-                            checked={editForm.pagePerms.includes(d.id)}
-                            onChange={() => toggleEditPagePerm(d.id)}
-                            borderColor={modalBorder}
-                            isDark={isDark}
-                          />
-                          <span>{pageLabel(d.id)}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <ul style={{ ...styles.permReadonlyList, margin: '0', color: modalMuted }}>
-                    {normalizeMemberPagePerms(memberDialog.permissions, company).map((id) => (
-                      <li key={id} style={{ margin: 0 }}>
-                        {pageLabel(id)}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                  <button
+                    type="button"
+                    className="zaptro-modal-landscape-btn zaptro-modal-landscape-btn--primary"
+                    onClick={() => void saveEdit()}
+                  >
+                    <Save size={18} />
+                    Salvar alterações
+                  </button>
+                ) : null}
               </div>
             </div>
-
-            <footer style={styles.modalFooter}>
-              <button type="button" style={styles.btnGhost} onClick={() => setMemberDialog(null)}>
-                {isTenantAdmin ? 'Cancelar' : 'Fechar'}
-              </button>
-              {isTenantAdmin && (
-                <button type="button" style={styles.btnPrimary} onClick={() => void saveEdit()}>
-                  Salvar alterações
-                </button>
-              )}
-            </footer>
           </div>
-        </div>
+        </LogtaModal>
       )}
 
       {deleteTarget && (
@@ -1163,22 +1206,24 @@ const ZaptroTeam: React.FC<ZaptroTeamProps> = ({ hideLayout = false }) => {
 };
 
 const styles: Record<string, React.CSSProperties> = {
-  container: { backgroundColor: 'transparent', width: '100%', maxWidth: 1360, margin: '0 auto', minWidth: 0, boxSizing: 'border-box' },
+  container: { backgroundColor: 'transparent', width: '100%', maxWidth: '100%', margin: 0, minWidth: 0, boxSizing: 'border-box' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' },
   title: { fontSize: '38px', fontWeight: 700, margin: 0, letterSpacing: '-2px' },
   subtitle: { fontSize: '15px', fontWeight: 600, marginTop: '6px' },
   primaryBtn: {
     backgroundColor: '#000',
-    color: '#FFF',
+    color: '#D9FF00',
     border: 'none',
-    padding: '18px 25px',
-    borderRadius: '18px',
-    fontWeight: 700,
-    fontSize: '14px',
+    height: 40,
+    padding: '0 14px',
+    borderRadius: '14px',
+    fontWeight: 800,
+    fontSize: '12px',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
+    gap: '10px',
+    letterSpacing: 0,
   },
   infoStrip: {
     display: 'flex',
@@ -1247,11 +1292,11 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '12px',
     padding: '48px',
-    color: '#64748B',
+    color: '#949494',
     fontWeight: 600,
     fontSize: '14px',
   },
-  emptyBox: { gridColumn: '1 / -1', padding: '40px', textAlign: 'center', color: '#64748B', fontWeight: 700, fontSize: '14px' },
+  emptyBox: { gridColumn: '1 / -1', padding: '40px', textAlign: 'center', color: '#949494', fontWeight: 700, fontSize: '14px' },
   memberCard: {
     padding: '26px',
     backgroundColor: '#FFF',
@@ -1277,7 +1322,7 @@ const styles: Record<string, React.CSSProperties> = {
   avatarImg: { width: '56px', height: '56px', borderRadius: '18px', objectFit: 'cover', display: 'block', flexShrink: 0 },
   mInfo: { flex: 1, minWidth: 0 },
   mName: { margin: 0, fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em' },
-  mRole: { fontSize: '11px', color: '#94A3B8', fontWeight: 700 },
+  mRole: { fontSize: '11px', color: '#949494', fontWeight: 700 },
   statusDot: {
     width: '12px',
     height: '12px',
@@ -1289,12 +1334,12 @@ const styles: Record<string, React.CSSProperties> = {
     boxSizing: 'border-box',
   },
   emailRow: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', minWidth: 0 },
-  emailText: { fontSize: '12px', fontWeight: 700, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  emailText: { fontSize: '12px', fontWeight: 700, color: '#949494', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   mStats: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', backgroundColor: '#FBFBFC', padding: '16px', borderRadius: '16px', marginBottom: '18px' },
-  mStatItem: { display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '10px', fontWeight: 700, color: '#94A3B8' },
+  mStatItem: { display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '10px', fontWeight: 700, color: '#949494' },
   cardActions: { display: 'flex', gap: '10px', paddingTop: '16px', borderTop: '1px solid #EBEBEC' },
-  iconBtn: { padding: '10px', background: 'transparent', border: '1px solid #EBEBEC', borderRadius: '12px', cursor: 'pointer', color: '#64748B' },
-  placeholderTab: { padding: '48px 24px', textAlign: 'center', color: '#64748B', fontWeight: 700, fontSize: '14px', lineHeight: 1.6 },
+  iconBtn: { padding: '10px', background: 'transparent', border: '1px solid #EBEBEC', borderRadius: '12px', cursor: 'pointer', color: '#949494' },
+  placeholderTab: { padding: '48px 24px', textAlign: 'center', color: '#949494', fontWeight: 700, fontSize: '14px', lineHeight: 1.6 },
   linkBtn: { background: 'none', border: 'none', color: '#000000', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', padding: 0, font: 'inherit' },
   tabPanel: {
     padding: '8px 0 24px',
@@ -1314,13 +1359,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tabPanelTitle: { margin: '0 0 8px 0', fontSize: 18, fontWeight: 700, letterSpacing: '-0.3px', color: '#0f172a' },
   tabPanelLead: { margin: 0, fontSize: 13, fontWeight: 650, color: '#52525b', lineHeight: 1.55 },
-  tabPanelEmpty: { margin: '24px 0', color: '#64748B', fontWeight: 700, fontSize: 14 },
+  tabPanelEmpty: { margin: '24px 0', color: '#949494', fontWeight: 700, fontSize: 14 },
   rankingLoading: {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
     padding: '32px 0',
-    color: '#64748B',
+    color: '#949494',
     fontWeight: 600,
     fontSize: 14,
   },
@@ -1348,7 +1393,7 @@ const styles: Record<string, React.CSSProperties> = {
   rankingPos: {
     fontSize: 18,
     fontWeight: 700,
-    color: '#94a3b8',
+    color: '#949494',
     textAlign: 'center',
   },
   rankingMain: { minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 },
@@ -1416,7 +1461,7 @@ const styles: Record<string, React.CSSProperties> = {
     maxWidth: '100%',
     lineHeight: 1.3,
   },
-  accessChipMuted: { fontSize: 12, fontWeight: 700, color: '#94a3b8' },
+  accessChipMuted: { fontSize: 12, fontWeight: 700, color: '#949494' },
 
   modalOverlay: {
     position: 'fixed',
@@ -1432,6 +1477,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 20,
     boxSizing: 'border-box',
     animation: 'zaptroFadeIn 0.3s ease',
   },
@@ -1487,6 +1533,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '32px',
     padding: '40px',
     animation: 'zaptroFadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+    margin: '10px 20px',
   },
   deleteCard: {
     width: '100%',
@@ -1499,7 +1546,7 @@ const styles: Record<string, React.CSSProperties> = {
   deleteModalTitle: { margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2 },
   modalHead: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 8 },
   modalTitle: { margin: 0, fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em' },
-  modalHint: { margin: '0 0 24px', fontSize: 14, fontWeight: 500, lineHeight: 1.6, color: '#64748B' },
+  modalHint: { margin: '0 0 24px', fontSize: 14, fontWeight: 500, lineHeight: 1.6, color: '#949494' },
   modalClose: { border: 'none', background: 'transparent', cursor: 'pointer', padding: 4, borderRadius: 12, flexShrink: 0 },
   modalFooter: { display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, flexWrap: 'wrap' },
   btnGhost: {
@@ -1510,7 +1557,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     fontSize: 14,
     cursor: 'pointer',
-    color: '#64748B',
+    color: '#949494',
   },
   btnPrimary: {
     padding: '14px 22px',
@@ -1542,7 +1589,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 16,
     border: '1px solid #E2E8F0',
     background: 'transparent',
-    color: '#64748B',
+    color: '#949494',
     fontWeight: 600,
     fontSize: 14,
     cursor: 'pointer',

@@ -59,7 +59,7 @@ const MasterReports: React.FC = () => {
               </div>
               <div style={styles.miniStat}>
                  <p style={styles.statLabel}>Avg. Latency</p>
-                 <h3 style={{...styles.statValue, color: '#10b981'}}>18ms</h3>
+                 <h3 style={{...styles.statValue, color: '#0061FF'}}>18ms</h3>
                  <div style={styles.statTrend}><Zap size={12} /> Optimization: HIGH</div>
               </div>
               <div style={styles.miniStat}>
@@ -92,7 +92,7 @@ const MasterReports: React.FC = () => {
                              <div style={styles.tenantName}>Tenant {i} Enterprise</div>
                              <div style={styles.tenantMeta}>$4,250.00 / mo</div>
                           </div>
-                          <ArrowUpRight size={14} color="#10b981" />
+                          <ArrowUpRight size={14} color="#0061FF" />
                        </div>
                     ))}
                  </div>
@@ -304,7 +304,7 @@ const SupportTicketsContent: React.FC = () => {
       <header style={styles.header}>
         <div>
           <h1 style={styles.title}>Suporte Master & Governança</h1>
-          <p style={styles.subtitle}>Atendimento estratégico prioritário para administradores Logta/Zaptro.</p>
+          <p style={styles.subtitle}>Atendimento estratégico prioritário para administradores Logta.</p>
         </div>
         <div style={styles.stats}>
            <div style={styles.miniStat}>
@@ -364,10 +364,10 @@ const SupportTicketsContent: React.FC = () => {
                      <h3 style={styles.ticketSubject}>{ticket.subject || 'Dúvida Técnica Master'}</h3>
                      <div style={styles.ticketFooter}>
                         <div style={styles.clientBadge}>
-                           <div style={{...styles.onlineDot, backgroundColor: onlineUsers.has(ticket.profiles?.id) ? '#10b981' : '#cbd5e1'}} />
+                           <div style={{...styles.onlineDot, backgroundColor: onlineUsers.has(ticket.profiles?.id) ? '#0061FF' : '#cbd5e1'}} />
                            <span style={{fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500'}}>{ticket.profiles?.full_name?.split(' ')[0] || '---'}</span>
                         </div>
-                        <div style={{...styles.statusIndicator, color: ticket.status === 'open' ? '#ef4444' : ticket.status === 'progress' ? 'var(--primary)' : '#10b981'}}>
+                        <div style={{...styles.statusIndicator, color: ticket.status === 'open' ? '#ef4444' : ticket.status === 'progress' ? 'var(--primary)' : '#0061FF'}}>
                            {ticket.status?.toUpperCase()}
                         </div>
                      </div>
@@ -393,7 +393,7 @@ const SupportTicketsContent: React.FC = () => {
                      <div style={{display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer'}} onClick={() => setIsDetailsOpen(!isDetailsOpen)}>
                         <div style={styles.chatAvatarWrapper}>
                            <div style={styles.chatAvatar}>{selectedTicket.companies?.name?.[0]}</div>
-                           <div style={{...styles.presenceIndicator, backgroundColor: onlineUsers.has(selectedTicket.profiles?.id) ? '#10b981' : '#cbd5e1'}} />
+                           <div style={{...styles.presenceIndicator, backgroundColor: onlineUsers.has(selectedTicket.profiles?.id) ? '#0061FF' : '#cbd5e1'}} />
                         </div>
                         <div>
                            <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
@@ -468,7 +468,7 @@ const SupportTicketsContent: React.FC = () => {
 
                           <div style={styles.insightGrid}>
                              <div style={styles.insightCard}>
-                                <TrendingUp size={16} color="#10b981" />
+                                <TrendingUp size={16} color="#0061FF" />
                                 <div style={styles.insightLabel}>RECEITA LTV</div>
                                 <div style={styles.insightValue}>R$ {customerData?.faturamento?.toLocaleString('pt-BR') || '0,00'}</div>
                              </div>
@@ -532,7 +532,7 @@ const styles: Record<string, any> = {
 
   container: { padding: '0', backgroundColor: 'transparent' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
-  title: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: 0, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
+  title: { fontSize: '29px', fontWeight: '700', color: '#000000', margin: 0, letterSpacing: 0 },
   subtitle: { ...HUB_PAGE_SUBTITLE },
   stats: { display: 'flex', alignItems: 'center', gap: '32px', backgroundColor: 'white', padding: '20px 32px', borderRadius: '32px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', border: '1px solid var(--border)' },
   miniStat: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
@@ -596,7 +596,7 @@ const styles: Record<string, any> = {
   detailsContent: { flex: 1, overflowY: 'auto', padding: '32px' },
   clientProfileBox: { textAlign: 'center', marginBottom: '40px' },
   bigAvatar: { width: '96px', height: '96px', borderRadius: '32px', backgroundColor: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', fontWeight: '700', margin: '0 auto' },
-  statusLabelActive: { fontSize: '10px', fontWeight: '800', color: '#16A34A', backgroundColor: '#F0FDF4', padding: '6px 16px', borderRadius: '12px', textTransform: 'uppercase' },
+  statusLabelActive: { fontSize: '10px', fontWeight: '800', color: '#1D4ED8', backgroundColor: '#EFF6FF', padding: '6px 16px', borderRadius: '12px', textTransform: 'uppercase' },
 
   insightGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '40px' },
   insightCard: { padding: '20px', borderRadius: '24px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' },

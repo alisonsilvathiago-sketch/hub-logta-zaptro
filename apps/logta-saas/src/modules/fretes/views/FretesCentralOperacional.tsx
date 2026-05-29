@@ -117,7 +117,7 @@ export function FretesCentralOperacional() {
             <>
               {grupos.atraso.length > 0 && (
                 <section>
-                  <h3 className="logta-panel-section-title mb-4">Atrasos & entregas</h3>
+                  <h3 className="logta-panel-section-title">Atrasos & entregas</h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     {grupos.atraso.map((a) => (
                       <AlertCard key={a.id} alert={a} onOpen={() => navigate(a.actionPath)} />
@@ -127,7 +127,7 @@ export function FretesCentralOperacional() {
               )}
               {grupos.motorista.length > 0 && (
                 <section>
-                  <h3 className="logta-panel-section-title mb-4">Motoristas & jornada</h3>
+                  <h3 className="logta-panel-section-title">Motoristas & jornada</h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     {grupos.motorista.map((a) => (
                       <AlertCard key={a.id} alert={a} onOpen={() => navigate(a.actionPath)} />
@@ -137,7 +137,7 @@ export function FretesCentralOperacional() {
               )}
               {grupos.custo.length > 0 && (
                 <section>
-                  <h3 className="logta-panel-section-title mb-4">Custos & margem</h3>
+                  <h3 className="logta-panel-section-title">Custos & margem</h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     {grupos.custo.map((a) => (
                       <AlertCard key={a.id} alert={a} onOpen={() => navigate(a.actionPath)} />

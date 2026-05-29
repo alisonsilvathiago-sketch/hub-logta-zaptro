@@ -68,7 +68,7 @@ const FAQPage: React.FC = () => {
         <p style={styles.subtitle}>Encontre respostas rápidas sobre a plataforma Logta 360° e leve sua transportadora para o próximo nível.</p>
         
         <div style={styles.searchBox}>
-           <Search size={20} color="#94a3b8" />
+           <Search size={20} color="#949494" />
            <input 
               placeholder="Digite sua dúvida (ex: White Label, Rastreamento...)" 
               style={styles.searchInput}
@@ -86,11 +86,11 @@ const FAQPage: React.FC = () => {
                   <button style={styles.questionBtn} onClick={() => setOpenIndex(openIndex === i ? null : i)}>
                      <div style={styles.qText}>
                         <div style={{...styles.iconBox, backgroundColor: openIndex === i ? 'var(--primary-light)' : 'white'}}>
-                           <f.icon size={20} color={openIndex === i ? 'var(--primary)' : '#64748B'} />
+                           <f.icon size={20} color={openIndex === i ? 'var(--primary)' : '#949494'} />
                         </div>
                         <span>{f.q}</span>
                      </div>
-                     {openIndex === i ? <ChevronUp size={20} color="var(--primary)" /> : <ChevronDown size={20} color="#94A3B8" />}
+                     {openIndex === i ? <ChevronUp size={20} color="var(--primary)" /> : <ChevronDown size={20} color="#949494" />}
                   </button>
                   {openIndex === i && (
                      <div className="animate-fade-in" style={styles.answerArea}>
@@ -125,7 +125,7 @@ const styles: Record<string, any> = {
      display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '8px' 
   },
   title: { fontSize: '40px', fontWeight: '700', color: '#0F172A', letterSpacing: '-2.0px', margin: 0 },
-  subtitle: { fontSize: '16px', color: '#64748B', maxWidth: '600px', lineHeight: '1.6', marginTop: '12px' },
+  subtitle: { fontSize: '16px', color: '#949494', maxWidth: '600px', lineHeight: '1.6', marginTop: '12px' },
   searchBox: { 
      width: '100%', maxWidth: '700px', backgroundColor: 'white', borderRadius: '24px', 
      padding: '0 24px', display: 'flex', alignItems: 'center', gap: '16px', height: '60px', 
@@ -150,12 +150,12 @@ const styles: Record<string, any> = {
      display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'white' 
   },
   ctaTitle: { fontSize: '24px', fontWeight: '700', margin: 0 },
-  ctaDesc: { fontSize: '15px', color: '#94A3B8', marginTop: '8px', margin: 0 },
+  ctaDesc: { fontSize: '15px', color: '#949494', marginTop: '8px', margin: 0 },
   ctaBtn: { 
      padding: '16px 32px', backgroundColor: 'var(--primary)', color: 'white', border: 'none', 
      borderRadius: '16px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' 
   },
-  footer: { marginTop: '100px', textAlign: 'center' as const, color: '#94A3B8', fontSize: '13px' }
+  footer: { marginTop: '100px', textAlign: 'center' as const, color: '#949494', fontSize: '13px' }
 };
 
 export default FAQPage;

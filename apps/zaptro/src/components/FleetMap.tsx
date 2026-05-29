@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { ZAPTRO_ROUTES } from '../constants/zaptroRoutes';
 import { readRouteLive } from '../constants/zaptroRouteLiveStore';
 import { ZAPTRO_MAP_ROUTE_HANDOFF_KEY, type ZaptroMapRouteHandoffPayload } from '../constants/zaptroMapRouteHandoff';
+import { supabase } from '../lib/supabase';
 
 // Corrigindo ícones padrão do Leaflet no React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -101,16 +102,22 @@ const FleetMap: React.FC<FleetMapProps> = ({ routes = [] }) => {
   const isDark = palette.mode === 'dark';
   const navigate = useNavigate();
   
-  // Combine internal mock for "fleet" (vehicles) with external "routes" (shipments)
   const [vehicles, setVehicles] = useState<any[]>([]);
 
   useEffect(() => {
-    // Keep some mock vehicles for visual fullness
-    const mockVehicles = [
-      { id: 'v1', name: 'Caminhão 01', lat: -23.5505, lng: -46.6333, status: 'moving', driver: 'João Silva', speed: '65 km/h', type: 'truck' },
-      { id: 'v2', name: 'Caminhão 04', lat: -23.5600, lng: -46.6500, status: 'stopped', driver: 'Maria Santos', speed: '0 km/h', type: 'van' },
-    ];
-    setVehicles(mockVehicles);
+    const fetchVehicles = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('veiculos')
+          .select('*')
+          .not('lat', 'is', null);
+        
+        if (data) setVehicles(data);
+      } catch (err) {
+        console.error('Erro ao buscar veículos para o mapa:', err);
+      }
+    };
+    fetchVehicles();
   }, []);
 
   // Map real routes to markers
@@ -119,8 +126,8 @@ const FleetMap: React.FC<FleetMapProps> = ({ routes = [] }) => {
       const live = readRouteLive(r.token);
       return {
         ...r,
-        lat: live?.lastLat ?? -23.5505 + (Math.random() - 0.5) * 0.1, // Fallback to random SP if no GPS yet
-        lng: live?.lastLng ?? -46.6333 + (Math.random() - 0.5) * 0.1,
+        lat: live?.lastLat ?? -23.5505, // Coordenada base SP se não houver GPS
+        lng: live?.lastLng ?? -46.6333,
         liveStatus: live?.status || 'assigned'
       };
     });
@@ -146,7 +153,7 @@ const FleetMap: React.FC<FleetMapProps> = ({ routes = [] }) => {
           <TileLayer attribution={tile.attribution} url={tile.url} />
           <CustomMapControls />
 
-        {/* VEÍCULOS MOCK */}
+        {/* VEÍCULOS DA FROTA */}
         {vehicles.map(vehicle => (
           <Marker 
             key={vehicle.id} 
@@ -220,7 +227,7 @@ const styles = {
   popupHeader: { display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #e8e8e8', paddingBottom: '8px' },
   pTitle: { fontSize: '14px', fontWeight: '700', color: '#000000', margin: 0 },
   pBody: { display: 'flex', flexDirection: 'column' as const, gap: '4px' },
-  pText: { fontSize: '11px', color: '#64748b', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' },
+  pText: { fontSize: '11px', color: '#949494', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' },
   pStatus: { fontSize: '10px', fontWeight: '600', padding: '4px 8px', borderRadius: '6px', textAlign: 'center' as const, marginTop: '4px' },
   pBtn: { marginTop: '8px', width: '100%', backgroundColor: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', padding: '6px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' },
 

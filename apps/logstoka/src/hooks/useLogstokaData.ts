@@ -1,20 +1,28 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
+import {
+  DEMO_ALERTS,
+  DEMO_DASHBOARD,
+  DEMO_PRODUCTS,
+  DEMO_STOCK,
+  filterDemoProducts,
+} from '@/lib/logstokaDemoSeed';
 import type { DashboardSummary, LsAlert, LsProduct, LsStockRow } from '@/types';
 
 export function useDashboardSummary() {
   const { companyId } = useLogstokaTenant();
-  const [summary, setSummary] = useState<DashboardSummary>({
-    today: { entries: 0, exits: 0, transfers: 0, returns: 0 },
-    stock: { totalQuantity: 0, totalValue: 0 },
-    lowStockCount: 0,
-    staleProducts: { days30: 0, days60: 0, days90: 0 },
-  });
+  const [summary, setSummary] = useState<DashboardSummary>(DEMO_DASHBOARD);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!companyId) {
+      setLoading(false);
+      return;
+    }
+    if (isLogstokaDemoCompany(companyId)) {
+      setSummary(DEMO_DASHBOARD);
       setLoading(false);
       return;
     }
@@ -88,17 +96,26 @@ export function useDashboardSummary() {
   return { summary, loading, reload: load };
 }
 
-export function useProducts(page = 1, search = '') {
+export function useProducts(page = 1, search = '', customLimit?: number) {
   const { companyId } = useLogstokaTenant();
   const [products, setProducts] = useState<LsProduct[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
-  const limit = 25;
+  const limit = customLimit ?? 25;
 
   useEffect(() => {
     if (!companyId) return;
     setLoading(true);
+
+    if (isLogstokaDemoCompany(companyId)) {
+      const { products: list, total: t } = filterDemoProducts(search, page, limit);
+      setProducts(list);
+      setTotal(t);
+      setLoading(false);
+      return;
+    }
+
     const from = (page - 1) * limit;
     let query = supabase
       .from('ls_products')
@@ -132,6 +149,11 @@ export function useStock() {
 
   useEffect(() => {
     if (!companyId) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      setRows(DEMO_STOCK);
+      setLoading(false);
+      return;
+    }
     void supabase
       .from('ls_stock')
       .select('*, ls_products(sku, name), ls_warehouses(name, code)')
@@ -153,6 +175,10 @@ export function useAlerts() {
 
   useEffect(() => {
     if (!companyId) return;
+    if (isLogstokaDemoCompany(companyId)) {
+      setAlerts(DEMO_ALERTS);
+      return;
+    }
     void supabase
       .from('ls_alerts')
       .select('*')

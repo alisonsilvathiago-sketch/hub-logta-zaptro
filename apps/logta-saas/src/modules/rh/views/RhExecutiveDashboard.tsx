@@ -5,6 +5,7 @@ import {
   AlertCircle,
   Award,
   Briefcase,
+  Calendar,
   ChevronRight,
   Clock,
   DollarSign,
@@ -93,7 +94,7 @@ export function RhExecutiveDashboard({ stats }: RhExecutiveDashboardProps) {
       </div>
 
       <div>
-        <h3 className="logta-panel-section-title mb-4">Centro operacional RH</h3>
+        <h3 className="logta-panel-section-title">Centro operacional RH</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {hubs.map((hub) => {
             const Icon = hub.icon;
@@ -118,92 +119,7 @@ export function RhExecutiveDashboard({ stats }: RhExecutiveDashboardProps) {
         </div>
       </div>
 
-      <div className="logta-performance-section grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="logta-panel-card lg:col-span-2 p-8">
-          <h3 className="logta-card-heading mb-8">Eficiência da Equipe (Mês)</h3>
-          <div className="space-y-6">
-            {[
-              { role: 'Motoristas Próprios', efficiency: 94, color: 'bg-primary' },
-              { role: 'Motoristas Agregados', efficiency: 82, color: 'bg-blue-500' },
-              { role: 'Equipe Logística', efficiency: 88, color: 'bg-gray-900' },
-              { role: 'Administrativo', efficiency: 96, color: 'bg-green-500' },
-            ].map((item, i) => (
-              <div key={i} className="space-y-2">
-                <div className="flex items-end justify-between">
-                  <span className="text-xs font-bold text-gray-900">{item.role}</span>
-                  <span className="text-[10px] font-black text-gray-400">{item.efficiency}% de Eficiência</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
-                  <div className={`h-full ${item.color}`} style={{ width: `${item.efficiency}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="logta-panel-card--dark logta-panel-card--retention relative overflow-hidden p-8">
-          <div className="relative z-10">
-            <div className="mb-6 flex items-center gap-2">
-              <Sparkles className="text-primary" size={18} />
-              <h3 className="logta-card-heading text-white">IA Logta RH</h3>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Activity size={18} className="shrink-0 text-primary" />
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-normal text-primary">Jornada</p>
-                  <p className="text-xs text-gray-400">Monitoramento de excesso de jornada ativo.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Award size={18} className="shrink-0 text-yellow-400" />
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-normal text-yellow-400">Performance</p>
-                  <p className="text-xs text-gray-400">Ranking e KPIs sincronizados com operações.</p>
-                </div>
-              </div>
-              {stats.alertas > 0 ? (
-                <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <AlertCircle size={18} className="shrink-0 text-red-500" />
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-normal text-red-500">Documentos</p>
-                    <p className="text-xs text-gray-400">{stats.alertas} pendências críticas.</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <ShieldCheck size={18} className="shrink-0 text-green-500" />
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-normal text-green-500">Conformidade</p>
-                    <p className="text-xs text-gray-400">Documentação em dia na operação.</p>
-                  </div>
-                </div>
-              )}
-            </div>
-            <Link
-              to="/rh/alertas"
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-xs font-bold text-white hover:opacity-90"
-            >
-              Ver central de alertas
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Link to="/rh/equipe" className="logta-panel-card flex items-center justify-between p-6 hover:border-primary/30">
-          <span className="text-sm font-bold text-gray-900">Gestão de Equipe</span>
-          <ChevronRight size={18} className="text-gray-300" />
-        </Link>
-        <Link to="/rh/motoristas" className="logta-panel-card flex items-center justify-between p-6 hover:border-primary/30">
-          <span className="text-sm font-bold text-gray-900">Motoristas</span>
-          <ChevronRight size={18} className="text-gray-300" />
-        </Link>
-        <Link to="/rh/desempenho" className="logta-panel-card flex items-center justify-between p-6 hover:border-primary/30">
-          <span className="text-sm font-bold text-gray-900">Ranking</span>
-          <ChevronRight size={18} className="text-gray-300" />
-        </Link>
-      </div>
     </div>
   );
 }

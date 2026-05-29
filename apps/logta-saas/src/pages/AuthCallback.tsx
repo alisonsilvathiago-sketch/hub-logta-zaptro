@@ -12,6 +12,13 @@ const AuthCallback = () => {
   const [message, setMessage] = useState('Conectando à sua conta…');
 
   useEffect(() => {
+    document.body.classList.add('logta-public-auth');
+    return () => {
+      document.body.classList.remove('logta-public-auth');
+    };
+  }, []);
+
+  useEffect(() => {
     let alive = true;
     (async () => {
       await new Promise((r) => setTimeout(r, 150));
@@ -43,7 +50,7 @@ const AuthCallback = () => {
   }, [navigate]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#F9FAFB] px-6 text-center font-sans">
+    <div className="logta-auth-page flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[#F9FAFB] px-6 text-center font-sans">
       <div className="h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-primary" />
       <p className="max-w-sm text-sm font-semibold text-gray-600">{message}</p>
     </div>

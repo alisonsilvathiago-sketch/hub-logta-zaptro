@@ -17,11 +17,13 @@ import {
   Shield,
   Radio,
   FileCheck,
-  LifeBuoy
+  LifeBuoy,
+  ChevronDown
 } from 'lucide-react';
 import { LogtaEmptyState } from '../components/EmptyState';
 import { LogtaWaveTabStrip } from '../components/LogtaWaveTabStrip';
 import { LogtaModuleHeader } from '../components/LogtaModuleHeader';
+import { appendLocalFinanceTransaction } from '../lib/financeLocalStorage';
 
 // --- Sub-View Components ---
 
@@ -224,19 +226,119 @@ const PGRRulesView = () => {
 
 const SegurosView = () => {
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
+  const [isNovoEndossoOpen, setIsNovoEndossoOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const policies = [
-    { id: 'POL-2024-88', branch: 'RCTR-C', insurer: 'Porto Seguro S.A.', expire: '15/01/2027', lmg: 'R$ 5.000.000', status: 'Ativo', desc: 'Responsabilidade Civil Obrigatória do Transportador Rodoviário de Carga' },
-    { id: 'POL-2024-92', branch: 'RCF-DC', insurer: 'Tokio Marine S.A.', expire: '22/03/2027', lmg: 'R$ 2.500.000', status: 'Ativo', desc: 'Responsabilidade Civil Facultativa por Desaparecimento de Carga (Roubo/Furto)' },
-    { id: 'POL-2023-45', branch: 'Vida Motorista', insurer: 'Azul Seguros', expire: '10/12/2025', lmg: 'R$ 100.000', status: 'Renovando', desc: 'Seguro de Vida em Grupo e Acidentes Pessoais para Motoristas de Pesados' },
-  ];
+  const [policies, setPolicies] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('logta-seguros-policies');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      { id: 'POL-2024-88', branch: 'RCTR-C', insurer: 'Porto Seguro S.A.', expire: '15/01/2027', lmg: 'R$ 5.000.000', status: 'Ativo', desc: 'Responsabilidade Civil Obrigatória do Transportador Rodoviário de Carga' },
+      { id: 'POL-2024-92', branch: 'RCF-DC', insurer: 'Tokio Marine S.A.', expire: '22/03/2027', lmg: 'R$ 2.500.000', status: 'Ativo', desc: 'Responsabilidade Civil Facultativa por Desaparecimento de Carga (Roubo/Furto)' },
+      { id: 'POL-2023-45', branch: 'Vida Motorista', insurer: 'Azul Seguros', expire: '10/12/2025', lmg: 'R$ 100.000', status: 'Renovando', desc: 'Seguro de Vida em Grupo e Acidentes Pessoais para Motoristas de Pesados' },
+    ];
+  });
+
+  const [form, setForm] = useState({
+    id: '',
+    branch: 'RCTR-C',
+    insurer: '',
+    expire: new Date().toISOString().slice(0, 10),
+    lmg: '',
+    desc: '',
+    status: 'Ativo',
+  });
+
+  const handleCreatePolicy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.id.trim()) return;
+
+    setSaving(true);
+    const amountNum = Number(form.lmg.replace(/\./g, '').replace(',', '.'));
+    const formattedLmg = `R$ ${amountNum.toLocaleString('pt-BR')}`;
+
+    const newPolicy = {
+      id: form.id.toUpperCase().trim(),
+      branch: form.branch,
+      insurer: form.insurer.trim() || 'Porto Seguro S.A.',
+      expire: new Date(`${form.expire}T12:00:00`).toLocaleDateString('pt-BR'),
+      lmg: formattedLmg,
+      status: form.status,
+      desc: form.desc.trim() || 'Apólice de Seguro de Frota/Carga',
+    };
+
+    const updated = [newPolicy, ...policies];
+    setPolicies(updated);
+    try {
+      localStorage.setItem('logta-seguros-policies', JSON.stringify(updated));
+    } catch {}
+
+    // Vincula a despesa ao Financeiro de forma automática
+    try {
+      const txId = `seguro-${Date.now()}`;
+      const description = `Apólice de Seguro — Ramo ${form.branch} (LMG: ${formattedLmg}) · ${newPolicy.insurer} [apolice:${newPolicy.id}]`;
+      // Lança a despesa mensal padrão
+      const premiumAmount = 3100;
+      const now = new Date(`${form.expire}T12:00:00`).toISOString();
+
+      const companyId = localStorage.getItem('logta_tenant_config') 
+        ? JSON.parse(localStorage.getItem('logta_tenant_config') || '{}').id 
+        : 'demo-company';
+
+      appendLocalFinanceTransaction(companyId, {
+        id: txId,
+        type: 'expense',
+        amount: premiumAmount,
+        description,
+        category: 'seguro',
+        paid_at: now,
+        created_at: now,
+        company_id: companyId,
+      });
+
+      // Salva no banco de dados Supabase
+      const { supabase } = await import('../lib/supabase');
+      await supabase.from('transactions').insert([
+        {
+          type: 'expense',
+          description,
+          amount: premiumAmount,
+          paid_at: now,
+          category: 'seguro',
+          company_id: companyId,
+        }
+      ]);
+    } catch (err) {
+      console.error('Falha ao vincular com financeiro:', err);
+    }
+
+    const { showToast } = await import('../components/Toast');
+    showToast('success', 'Apólice/Endosso cadastrado e lançado no Financeiro.', 'Seguros');
+
+    setSaving(false);
+    setIsNovoEndossoOpen(false);
+    setForm({
+      id: '',
+      branch: 'RCTR-C',
+      insurer: '',
+      expire: new Date().toISOString().slice(0, 10),
+      lmg: '',
+      desc: '',
+      status: 'Ativo',
+    });
+  };
 
   return (
     <div className="space-y-8 text-left relative">
       <div className="logta-panel-card p-8">
         <div className="flex justify-between items-center mb-8">
           <h3 className="logta-card-heading">Controle de Apólices e Endossos</h3>
-          <button className="px-6 py-3 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-normal flex items-center gap-2 hover:bg-black transition-all">
+          <button 
+            onClick={() => setIsNovoEndossoOpen(true)}
+            className="px-6 py-3 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-normal flex items-center gap-2 hover:bg-black transition-all"
+          >
             <FileText size={18} /> Novo Endosso
           </button>
         </div>
@@ -342,7 +444,7 @@ const SegurosView = () => {
                 </div>
                 <div className="p-4 bg-neutral-900 rounded-2xl border border-neutral-800">
                   <p className="text-[9px] font-black text-neutral-400 uppercase tracking-normal mb-0.5">LMG (Limite Máximo)</p>
-                  <p className="text-xs font-black text-primary">{selectedPolicy.lmg},00</p>
+                  <p className="text-xs font-black text-primary">{selectedPolicy.lmg}</p>
                 </div>
                 <div className="p-4 bg-neutral-900 rounded-2xl border border-neutral-800">
                   <p className="text-[9px] font-black text-neutral-400 uppercase tracking-normal mb-0.5">Sub-limite por Evento</p>
@@ -382,6 +484,123 @@ const SegurosView = () => {
                 Fechar Detalhes
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Novo Endosso Modal */}
+      {isNovoEndossoOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-lg animate-in zoom-in-95 rounded-[40px] border border-neutral-800 bg-[#18191B] p-8 shadow-2xl duration-300 text-left text-white">
+            <div className="flex justify-between items-start mb-6 pb-4 border-b border-neutral-800">
+              <div>
+                <span className="text-[9px] font-black text-primary bg-primary/10 px-2 py-1 rounded uppercase tracking-normal block w-fit mb-2">
+                  Gestão PGR
+                </span>
+                <h3 className="logta-modal-title leading-none tracking-tight">
+                  Novo Endosso / Apólice
+                </h3>
+                <p className="text-xs text-neutral-400 font-bold uppercase tracking-normal mt-1.5">
+                  Cadastrar cobertura de seguro e lançar prêmio
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsNovoEndossoOpen(false)}
+                className="w-10 h-10 bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white rounded-xl flex items-center justify-center transition-all cursor-pointer"
+              >
+                <Plus size={20} className="rotate-45" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreatePolicy} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">RAMO DO SEGURO</label>
+                <div className="relative">
+                  <select
+                    value={form.branch}
+                    onChange={(e) => setForm({ ...form, branch: e.target.value })}
+                    className="w-full appearance-none rounded-xl border border-neutral-800 bg-neutral-900 p-3 pr-10 text-sm font-semibold text-white outline-none focus:border-primary"
+                  >
+                    <option value="RCTR-C">RCTR-C (Responsabilidade Civil Obrigatória)</option>
+                    <option value="RCF-DC">RCF-DC (Desaparecimento de Carga/Roubo)</option>
+                    <option value="Vida Motorista">Vida Motorista (Acidentes Pessoais)</option>
+                    <option value="Casco/Frota">Casco/Frota (Danos ao Veículo)</option>
+                    <option value="Outro">Outro Ramo</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                    <ChevronDown size={16} className="text-white" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">SEGURADORA</label>
+                  <input
+                    required
+                    type="text"
+                    value={form.insurer}
+                    onChange={(e) => setForm({ ...form, insurer: e.target.value })}
+                    placeholder="Ex: Porto Seguro S.A."
+                    className="w-full rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-sm font-semibold text-white outline-none focus:border-primary"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">NÚMERO DA APÓLICE</label>
+                  <input
+                    required
+                    type="text"
+                    value={form.id}
+                    onChange={(e) => setForm({ ...form, id: e.target.value })}
+                    placeholder="Ex: POL-2026-99"
+                    className="w-full rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-sm font-semibold text-white outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">LIMITE MÁXIMO (LMG)</label>
+                  <input
+                    required
+                    type="text"
+                    value={form.lmg}
+                    onChange={(e) => setForm({ ...form, lmg: e.target.value })}
+                    placeholder="Ex: 5.000.000"
+                    className="w-full rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-sm font-semibold text-white outline-none focus:border-primary"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">VIGÊNCIA LIMITE</label>
+                  <input
+                    required
+                    type="date"
+                    value={form.expire}
+                    onChange={(e) => setForm({ ...form, expire: e.target.value })}
+                    className="w-full rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-sm font-semibold text-white outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">DESCRIÇÃO DA COBERTURA</label>
+                <textarea
+                  value={form.desc}
+                  onChange={(e) => setForm({ ...form, desc: e.target.value })}
+                  rows={2}
+                  placeholder="Responsabilidade Civil Facultativa, Cobertura contra colisão, capotamento, incêndio..."
+                  className="w-full resize-none rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-sm font-semibold text-white outline-none focus:border-primary"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full rounded-xl bg-primary py-4 text-xs font-bold text-white shadow-lg shadow-primary/20 hover:opacity-90 disabled:opacity-60"
+              >
+                {saving ? 'Salvando...' : 'Salvar e lançar no Financeiro'}
+              </button>
+            </form>
           </div>
         </div>
       )}

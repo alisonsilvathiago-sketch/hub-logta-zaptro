@@ -14,11 +14,7 @@ interface MaintenanceTask {
   cost?: number;
 }
 
-const mockTasks: MaintenanceTask[] = [
-  { id: '1', vehicle: 'ABC-1234', type: 'Preventiva', description: 'Troca de Óleo e Filtros', date: '2024-05-10', status: 'scheduled' },
-  { id: '2', vehicle: 'XYZ-5678', type: 'Corretiva', description: 'Reparo no Sistema de Freios', date: '2024-05-01', status: 'in_progress' },
-  { id: '3', vehicle: 'KJH-9012', type: 'Preditiva', description: 'Análise de Desgaste de Pneus (IA)', date: '2024-04-25', status: 'completed', cost: 1250 },
-];
+
 
 const MaintenancePage: React.FC = () => {
   const { profile } = useAuth();
@@ -35,19 +31,17 @@ const MaintenancePage: React.FC = () => {
         .order('scheduled_date', { ascending: true });
 
       if (error) {
-        console.warn('Tabela maintenance_tasks ainda não existe. Usando dados mockados.');
-        setTasks(mockTasks);
-      } else if (data && data.length > 0) {
+        console.error('Erro ao buscar tarefas:', error);
+        setTasks([]);
+      } else if (data) {
         setTasks(data.map((t: any) => ({
           ...t,
           vehicle: t.vehicles?.plate || 'Desconhecido',
           date: t.scheduled_date
         })));
-      } else {
-        setTasks(mockTasks);
       }
     } catch (err) {
-      setTasks(mockTasks);
+      setTasks([]);
     } finally {
       setLoading(false);
     }
@@ -76,28 +70,28 @@ const MaintenancePage: React.FC = () => {
              <Clock size={20} color="#0061FF" />
              <span style={styles.statLabel}>Agendadas</span>
           </div>
-          <span style={styles.statValue}>12</span>
+          <span style={styles.statValue}>{tasks.filter(t => t.status === 'scheduled').length}</span>
         </div>
         <div style={styles.statCard}>
           <div style={styles.statHeader}>
              <Wrench size={20} color="#F59E0B" />
              <span style={styles.statLabel}>Em Oficina</span>
           </div>
-          <span style={styles.statValue}>4</span>
+          <span style={styles.statValue}>{tasks.filter(t => t.status === 'in_progress').length}</span>
         </div>
         <div style={styles.statCard}>
           <div style={styles.statHeader}>
              <Fuel size={20} color="#10B981" />
-             <span style={styles.statLabel}>Custo/Km (Médio)</span>
+             <span style={styles.statLabel}>Custo Médio</span>
           </div>
-          <span style={styles.statValue}>R$ 0,85</span>
+          <span style={styles.statValue}>R$ {tasks.filter(t => t.cost).reduce((acc, t) => acc + (t.cost || 0), 0).toLocaleString('pt-BR')}</span>
         </div>
         <div style={styles.statCard}>
           <div style={styles.statHeader}>
              <AlertTriangle size={20} color="#EF4444" />
-             <span style={styles.statLabel}>Alertas IA</span>
+             <span style={styles.statLabel}>Total Concluídas</span>
           </div>
-          <span style={styles.statValue}>3</span>
+          <span style={styles.statValue}>{tasks.filter(t => t.status === 'completed').length}</span>
         </div>
       </div>
 

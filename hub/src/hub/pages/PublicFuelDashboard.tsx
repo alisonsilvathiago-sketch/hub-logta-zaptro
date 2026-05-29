@@ -66,7 +66,6 @@ const PublicFuelDashboard: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         color: '#FFF',
-        fontFamily: 'system-ui, sans-serif'
       }}>
         <div style={{
           width: '48px',
@@ -120,8 +119,7 @@ const PublicFuelDashboard: React.FC = () => {
       minHeight: '100vh',
       backgroundColor: '#E6B012', // Exact Petrobras Golden Yellow background
       color: '#000000',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      display: 'flex',
+            display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       position: 'relative',

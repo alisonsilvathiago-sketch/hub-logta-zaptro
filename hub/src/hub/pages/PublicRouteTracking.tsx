@@ -58,8 +58,7 @@ const PublicRouteTracking: React.FC = () => {
       width: '100vw',
       backgroundColor: '#FFFFFF',
       color: '#0F172A',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      position: 'relative',
+            position: 'relative',
       overflow: 'hidden'
     }}>
       {/* Dynamic Keyframes */}
@@ -184,7 +183,7 @@ const PublicRouteTracking: React.FC = () => {
                   <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: 900, color: '#0F172A' }}>{vehicleName}</h4>
                   <p style={{ margin: '0 0 6px 0', fontSize: '11px', color: '#64748B', fontWeight: 600 }}>Motorista: {driverName}</p>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 800, color: '#0061FF', borderTop: '1px solid #F1F5F9', paddingTop: '6px' }}>
-                    <span style={{ color: '#10B981' }}>CLIQUE PARA FOTO</span>
+                    <span style={{ color: '#0061FF' }}>CLIQUE PARA FOTO</span>
                   </div>
                 </div>
               </Popup>
@@ -257,8 +256,8 @@ const PublicRouteTracking: React.FC = () => {
         </div>
         <div className="gps-status-divider" style={{ height: '16px', width: '1px', backgroundColor: '#E2E8F0' }} />
         <div className="gps-status" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="pulse-active" style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block', boxShadow: '0 0 10px #10B981' }} />
-          <span style={{ fontSize: '11px', fontWeight: '800', color: '#10B981', letterSpacing: '0.5px' }}>SINAL GPS ATIVO</span>
+          <span className="pulse-active" style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF', display: 'inline-block', boxShadow: '0 0 10px #0061FF' }} />
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#0061FF', letterSpacing: '0.5px' }}>SINAL GPS ATIVO</span>
         </div>
       </div>
 
@@ -388,13 +387,13 @@ const PublicRouteTracking: React.FC = () => {
                   width: '20px', 
                   height: '20px', 
                   borderRadius: '50%', 
-                  border: '2px solid #10B981', 
+                  border: '2px solid #0061FF', 
                   backgroundColor: '#FFFFFF', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center' 
                 }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981' }} />
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0061FF' }} />
                 </div>
                 <div>
                   <p style={{ fontSize: '12px', fontWeight: '800', color: '#0F172A', margin: 0 }}>{destination}</p>
@@ -537,7 +536,7 @@ const PublicRouteTracking: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(16, 185, 129, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981', fontWeight: '800', fontSize: '11px' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(0, 97, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0061FF', fontWeight: '800', fontSize: '11px' }}>
                     JS
                   </div>
                   <div>
@@ -723,7 +722,7 @@ const PublicRouteTracking: React.FC = () => {
               </div>
               <div>
                 <span style={{ fontSize: '10px', color: '#64748B', fontWeight: '700' }}>VELOCIDADE</span>
-                <p style={{ fontSize: '13px', fontWeight: '800', color: '#10B981', margin: '2px 0 0 0' }}>62 km/h (Média)</p>
+                <p style={{ fontSize: '13px', fontWeight: '800', color: '#0061FF', margin: '2px 0 0 0' }}>62 km/h (Média)</p>
               </div>
               <div>
                 <span style={{ fontSize: '10px', color: '#64748B', fontWeight: '700' }}>TEMPERATURA</span>
@@ -830,7 +829,7 @@ const PublicRouteTracking: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', paddingBottom: '8px', borderBottom: '1px dashed #F1F5F9' }}>
                   <span style={{ color: '#64748B' }}>08.05.2026 - 16:32</span>
-                  <span style={{ fontWeight: '800', color: '#10B981' }}>Posição em tempo real capturada via Satélite no KM 42 da Rodovia.</span>
+                  <span style={{ fontWeight: '800', color: '#0061FF' }}>Posição em tempo real capturada via Satélite no KM 42 da Rodovia.</span>
                 </div>
               </div>
 

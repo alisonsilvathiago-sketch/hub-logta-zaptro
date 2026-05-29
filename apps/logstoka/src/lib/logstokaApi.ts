@@ -90,4 +90,22 @@ export const logstokaApi = {
     apiFetch(`/v1/transfers/${id}/ship`, { method: 'PATCH', body: '{}' }),
   receiveTransfer: (id: string) =>
     apiFetch(`/v1/transfers/${id}/receive`, { method: 'PATCH', body: '{}' }),
+  aiHealth: () => apiFetch<{ ollama: { online: boolean; model: string } }>('/v1/ai/health'),
+  aiChat: (payload: {
+    message: string;
+    history?: Array<{ role: string; content: string }>;
+    screen?: string;
+    user_name?: string;
+    company_name?: string;
+  }) =>
+    apiFetch<{ reply: string; intents?: string[]; agents?: string[]; model?: string }>('/v1/ai/chat', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  aiDailyBriefing: () => apiFetch<{ briefing: string }>('/v1/ai/daily-briefing'),
+  aiValidateImport: (payload: { file_type: string; content?: string; base64?: string }) =>
+    apiFetch<{ valid: boolean; rows_total: number; issues: unknown[]; summary: string }>(
+      '/v1/ai/validate-import',
+      { method: 'POST', body: JSON.stringify(payload) },
+    ),
 };
