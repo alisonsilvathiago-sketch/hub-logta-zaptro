@@ -4,17 +4,30 @@
   "version": "1.0.0",
   "description": "Monorepo for Logta and Zaptro",
   "scripts": {
-    "install:hub": "cd hub && npm install",
-    "build:hub": "cd hub && npm run build",
-    "install:logdock": "npm ci --prefix apps/logdock",
+    "install:hub": "npm install --prefix hub",
+    "build:hub": "NODE_OPTIONS=--max-old-space-size=4096 npm run build --prefix hub",
+    "install:logdock": "npm install --prefix apps/logdock",
     "build:logdock": "npm run build --prefix apps/logdock",
-    "build": "npm run install:hub && npm run build:hub",
-    "dev:hub": "cd hub && npm run dev",
+    "install:logta-saas": "npm install --prefix apps/logta-saas",
+    "build:logta-saas": "npm run build --prefix apps/logta-saas",
+    "install:zaptro": "npm install --prefix apps/zaptro",
+    "build:zaptro": "npm run build --prefix apps/zaptro",
+    "build:all": "npm run build:hub && npm run build:logdock && npm run build:logta-saas && npm run build:zaptro && npm run build:logstoka",
+    "dev:hub": "npm run dev --prefix hub",
     "dev:zaptro": "npm run dev --prefix apps/zaptro",
     "dev:logdock": "npm run dev --prefix apps/logdock",
-    "dev:logta-saas": "npm run dev --prefix \"apps/logta Saas\""
+    "dev:logta-saas": "npm run dev --prefix apps/logta-saas",
+    "install:logstoka": "npm install --prefix apps/logstoka && npm install --prefix apps/logstoka/server",
+    "build:logstoka": "npm run build --prefix apps/logstoka/server && npm run build --prefix apps/logstoka",
+    "dev:logstoka": "npm run dev --prefix apps/logstoka",
+    "dev:logstoka:all": "npm run dev --prefix apps/logstoka/server & npm run dev --prefix apps/logstoka",
+    "localhost": "bash ./iniciar-localhost.sh",
+    "dev:localhost": "bash ./iniciar-localhost.sh"
   },
   "devDependencies": {
     "vite": "^8.0.10"
+  },
+  "dependencies": {
+    "http-proxy": "^1.18.1"
   }
 }

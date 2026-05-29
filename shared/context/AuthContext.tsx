@@ -13,6 +13,8 @@ interface AuthContextType {
   setIsLoggingIn: (val: boolean) => void;
   impersonate: (companyId: string, origin?: string) => void;
   refreshProfile: () => Promise<void>;
+  /** IDs de perfis com sessão activa no painel (presença); vazio até ligar realtime. */
+  onlineUsers: string[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -78,49 +80,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // 🔍 Support for dev sessions in localhost
-    const devSessionRaw =
-      typeof window !== 'undefined' && window.location.hostname === 'localhost'
-        ? localStorage.getItem('hub-dev-session')
-        : null;
+    // 🔐 Master Direct Login Bypass
+    // Se viemos do Hub Master com um token, autenticamos direto
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlToken = searchParams.get('token');
+    const masterBypass = searchParams.get('master_bypass');
 
-    if (devSessionRaw) {
-      try {
-        const devSession = JSON.parse(devSessionRaw);
-        const devId = 'hub-dev-local-user';
-        const devEmail = devSession?.email || 'adm@teste.com';
-        const devRole: Profile['role'] =
-          devSession?.role === 'MASTER_ADMIN' || devSession?.role === 'ADMIN' || devSession?.role === 'USER'
-            ? devSession.role
-            : 'MASTER';
-
-        setUser({ id: devId, email: devEmail });
-        setProfile({
-          id: devId,
-          email: devEmail,
-          full_name: devSession?.full_name || 'Master Developer',
-          role: devRole,
-          avatar_url: devSession?.avatar_url || undefined,
-          company_id: localStorage.getItem('hub-impersonate-tenant') || undefined
-        } as Profile);
-        setIsLoading(false);
-        return;
-      } catch {
-        localStorage.removeItem('hub-dev-session');
-      }
+    if (urlToken && masterBypass === 'true') {
+      supabase.auth.setSession({ access_token: urlToken, refresh_token: '' }).then(({ data, error }) => {
+        if (!error && data.session) {
+          setUser(data.session.user);
+          loadProfile(data.session.user.id);
+          // Limpa a URL para não ficar expondo o token
+          const newUrl = window.location.pathname + window.location.hash;
+          window.history.replaceState({}, '', newUrl);
+        } else {
+          setIsLoading(false);
+        }
+      });
+      return;
     }
 
-    // 🚀 Standard SSO Flow
+    // Real Supabase session only
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) loadProfile(session.user.id);
-      else setIsLoading(false);
+      if (session?.user) {
+        setUser(session.user);
+        loadProfile(session.user.id);
+      } else {
+        setUser(null);
+        setIsLoading(false);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) loadProfile(session.user.id);
-      else {
+      if (session?.user) {
+        loadProfile(session.user.id);
+      } else {
         setProfile(null);
         setIsLoading(false);
       }
@@ -142,7 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const hostname = window.location.hostname;
     
     // Porta Mapping
-    const ports: Record<string, string> = { 'zaptro': '5174', 'logta': '5173', 'logdock': '5176' };
+    const ports: Record<string, string> = { 'zaptro': '5174', 'logta': '5173', 'logdock': '5176', 'logstoka': '5177' };
     const port = ports[origin] || '5173';
     
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
@@ -151,7 +147,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const targetDomains: Record<string, string> = {
         'zaptro': 'app.zaptro.com.br',
         'logta': 'app.logta.com.br',
-        'logdock': 'app.logdock.com.br'
+        'logdock': 'app.logdock.com.br',
+        'logstoka': 'app.logstoka.com.br'
       };
       const targetDomain = targetDomains[origin] || 'app.logta.com.br';
       window.open(`https://${targetDomain}/master/connect?tenant=${companyId}`, '_blank');
@@ -159,6 +156,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshProfile = async () => {
+    if (user?.id === 'hub-dev-local-user') {
+      try {
+        const devSessionRaw = localStorage.getItem('hub-dev-session');
+        if (devSessionRaw) {
+          const devSession = JSON.parse(devSessionRaw);
+          setProfile((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  full_name: devSession?.full_name ?? prev.full_name,
+                  avatar_url: devSession?.avatar_url ?? prev.avatar_url,
+                  role: devSession?.role ?? prev.role,
+                }
+              : prev,
+          );
+        }
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
     if (user?.id) await loadProfile(user.id);
   };
 
@@ -175,7 +193,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoggingOut,
       setIsLoggingIn,
       impersonate,
-      refreshProfile
+      refreshProfile,
+      onlineUsers: user?.id ? [user.id] : [],
     }}>
       {children}
     </AuthContext.Provider>

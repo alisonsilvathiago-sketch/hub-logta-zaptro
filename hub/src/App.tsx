@@ -1,56 +1,48 @@
-import React from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Toaster, toast } from 'sonner';
-import { CheckCircle, AlertCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import React, { Suspense } from 'react';
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { HubThemeToaster } from './hub/components/HubThemeToaster';
+import { AlertTriangle, RefreshCw, Box } from 'lucide-react';
 import HubLogin from './hub/pages/Login';
-
-// Master Layout & Pages
 import MasterLayout from './hub/layouts/MasterLayout';
-import Dashboard from './hub/modules/hub/Dashboard';
-import Inicio from './hub/modules/hub/Inicio';
-import CompanyManagement from './hub/modules/hub/Companies';
-import CompanyProfile from './hub/modules/hub/CompanyProfile';
-import BillingManagement from './hub/modules/hub/Billing';
-import Settings from './hub/modules/hub/GlobalSettings';
-import AccountSettings from './hub/modules/core/Profile';
-import Infrastructure from './hub/modules/hub/Infrastructure';
-import CRM from './hub/modules/hub/CRM';
-import Agenda from './hub/modules/hub/Agenda';
-import ClientsList from './hub/modules/clients/ClientsList';
-import CustomerDetail from './hub/modules/hub/CustomerDetail';
-import Reports from './hub/modules/hub/Reports';
-import TeamMemberDetail from './hub/modules/core/MemberDetail';
-import PublicCheckout from './hub/pages/PublicCheckout';
-import PaymentCheckout from './hub/pages/PaymentCheckout';
-import ClientBackup from './hub/pages/ClientBackup';
-import HubNotifications from './hub/pages/HubNotifications';
-import HubChat from './hub/modules/hub/Chat';
-import LogisticaHub from './hub/modules/hub/Logistica';
-import Workflows from './hub/modules/hub/Workflows';
-import IntegrationsPage from './hub/modules/hub/IntegrationsPage';
-import IaGatewayCenter from './hub/modules/hub/IaGateway';
-import PublicFuelDashboard from './hub/pages/PublicFuelDashboard';
-import AnalyticalFuelDashboard from './hub/pages/AnalyticalFuelDashboard';
-import PublicRouteTracking from './hub/pages/PublicRouteTracking';
 import ErrorBoundary from '@shared/components/ErrorBoundary';
-import { KeyboardProvider } from './core/context/KeyboardContext';
 import CommandPalette from '@shared/components/CommandPalette';
-import HubLogDock from './hub/modules/hub/LogDock';
-import LogDockLogin from './hub/pages/LogDockLogin';
-import LogDockLayout from './hub/layouts/LogDockLayout';
+import { KeyboardProvider } from './core/context/KeyboardContext';
+import { WhiteLabelProvider } from './core/context/WhiteLabelContext';
 import GlobalLoader from '@shared/components/GlobalLoader';
-import MasterKnowledge from './hub/modules/hub/Knowledge';
-import LogDockAdmin from './hub/modules/hub/LogDockAdmin';
-import LogDockClientProfile from './hub/modules/hub/LogDockClientProfile';
-import ZaptroAdmin from './hub/modules/hub/ZaptroAdmin';
-import ZaptroClientProfile from './hub/modules/hub/ZaptroClientProfile';
-import LogtaAdmin from './hub/modules/hub/LogtaAdmin';
-import LogtaClientProfile from './hub/modules/hub/LogtaClientProfile';
-import CreditsAdmin from './hub/modules/hub/CreditsAdmin';
-import BackupsAdmin from './hub/modules/hub/BackupsAdmin';
-import CreditsClientProfile from './hub/modules/hub/CreditsClientProfile';
-import BackupsClientProfile from './hub/modules/hub/BackupsClientProfile';
-import EvolutionManager from './hub/modules/hub/EvolutionManager';
+
+const Inicio = React.lazy(() => import('./hub/modules/hub/Inicio'));
+const CompanyManagement = React.lazy(() => import('./hub/modules/hub/Companies'));
+const CompanyProfile = React.lazy(() => import('./hub/modules/hub/CompanyProfile'));
+const BillingManagement = React.lazy(() => import('./hub/modules/hub/Billing'));
+const Settings = React.lazy(() => import('./hub/modules/hub/GlobalSettings'));
+const AccountSettings = React.lazy(() => import('./hub/modules/core/Profile'));
+const CRM = React.lazy(() => import('./hub/modules/hub/CRM'));
+const Agenda = React.lazy(() => import('./hub/modules/hub/Agenda'));
+const ClientsList = React.lazy(() => import('./hub/modules/clients/ClientsList'));
+const CustomerDetail = React.lazy(() => import('./hub/modules/hub/CustomerDetail'));
+const TeamMemberDetail = React.lazy(() => import('./hub/modules/core/MemberDetail'));
+const PublicCheckout = React.lazy(() => import('./hub/pages/PublicCheckout'));
+const PaymentCheckout = React.lazy(() => import('./hub/pages/PaymentCheckout'));
+const HubChat = React.lazy(() => import('./hub/modules/hub/Chat'));
+const LogisticaHub = React.lazy(() => import('./hub/modules/hub/Logistica'));
+const PublicFuelDashboard = React.lazy(() => import('./hub/pages/PublicFuelDashboard'));
+const AnalyticalFuelDashboard = React.lazy(() => import('./hub/pages/AnalyticalFuelDashboard'));
+const PublicRouteTracking = React.lazy(() => import('./hub/pages/PublicRouteTracking'));
+const MasterKnowledge = React.lazy(() => import('./hub/modules/hub/Knowledge'));
+const LogtaAdmin = React.lazy(() => import('./hub/modules/hub/LogtaAdmin'));
+const LogtaClientProfile = React.lazy(() => import('./hub/modules/hub/LogtaClientProfile'));
+const ZaptroAdmin = React.lazy(() => import('./hub/modules/hub/ZaptroAdmin'));
+const BackupsAdmin = React.lazy(() => import('./hub/modules/hub/BackupsAdmin'));
+const BackupsClientProfile = React.lazy(() => import('./hub/modules/hub/BackupsClientProfile'));
+const EvolutionManager = React.lazy(() => import('./hub/modules/hub/EvolutionManager'));
+const AuditLogs = React.lazy(() => import('./hub/modules/hub/AuditLogs'));
+const LogDockAdmin = React.lazy(() => import('./hub/modules/hub/LogDockAdmin'));
+const LogStokaAdmin = React.lazy(() => import('./hub/modules/hub/LogStokaAdmin'));
+const WhatsappAdmin = React.lazy(() => import('./hub/modules/hub/WhatsappAdmin'));
+const IAGatewayAdmin = React.lazy(() => import('./hub/modules/hub/IAGatewayAdmin'));
+
+const HubRouteFallback = () => <GlobalLoader />;
 
 import { runMasterAuditSync } from './core/lib/masterIntelligence';
 import { subscribeToEvents } from './core/lib/eventBridge';
@@ -90,6 +82,17 @@ function NavigateToSettingsEquipeUsuariosHub() {
   return <Navigate to={`/master/settings/equipe${qs ? `?${qs}` : '?tab=usuarios-hub'}`} replace />;
 }
 
+/** Rotas legadas `/master/integracoes/:tab` → Configurações › Integrações (sub-aba interna). */
+function NavigateIntegracoesToSettings() {
+  const { tab } = useParams<{ tab: string }>();
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  params.set('tab', 'integracoes');
+  if (tab && tab !== 'google') params.set('sub', tab);
+  else params.delete('sub');
+  return <Navigate to={`/master/settings?${params.toString()}`} replace />;
+}
+
 const App: React.FC = () => {
   React.useEffect(() => {
     // 🧠 Master Intelligence Background Guardian
@@ -111,7 +114,7 @@ const App: React.FC = () => {
       }
       if (event.type === 'POD_PENDING') {
         toast.warning(`Comprovante Pendente: ${event.payload.client_name}`, {
-          description: 'Uma carga foi entregue e o canhoto precisa ser validado no LogDock.',
+          description: 'Uma carga foi entregue e o canhoto precisa ser validado.',
           icon: <Box size={16} />
         });
       }
@@ -155,38 +158,18 @@ const App: React.FC = () => {
 
   return (
     <>
-      <Toaster
-        position="bottom-right"
-        closeButton
-        expand={false}
-        theme="light"
-        toastOptions={{
-          style: {
-            background: '#FFFFFF',
-            color: '#0F172A',
-            border: '1px solid #E2E8F0',
-            borderRadius: '16px',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-          },
-          success: {
-            icon: <CheckCircle size={20} color="#10B981" />,
-          },
-          error: {
-            icon: <AlertCircle size={20} color="#EF4444" />,
-          },
-          warning: {
-            icon: <AlertTriangle size={20} color="#F59E0B" />,
-          },
-        }}
-      />
-      <KeyboardProvider>
-        <GlobalLoader />
-        <CommandPalette />
+      <HubThemeToaster />
+      <WhiteLabelProvider>
+        <KeyboardProvider>
+          <GlobalLoader />
+          <CommandPalette />
 
+        <Suspense fallback={<HubRouteFallback />}>
         <Routes>
           <Route path="/" element={<HubLogin />} />
-          <Route path="/app" element={<Navigate to="/logdock/app" replace />} />
-          <Route path="/auth/logdock" element={<LogDockLogin />} />
+          <Route path="/app" element={<Navigate to="/master" replace />} />
+          <Route path="/auth/logdock" element={<Navigate to="/" replace />} />
+          <Route path="/logdock/*" element={<Navigate to="/master" replace />} />
           
           {/* Rota de Checkout Público */}
           <Route path="/checkout" element={<PublicCheckout />} />
@@ -197,15 +180,6 @@ const App: React.FC = () => {
           <Route path="/rastreamento-publico" element={<PublicRouteTracking />} />
           <Route path="/rastreamento-publico/:id" element={<PublicRouteTracking />} />
           
-          {/* Rota Expandida LogDock (Focada) */}
-          <Route path="/logdock" element={
-            <ErrorBoundary>
-              <LogDockLayout />
-            </ErrorBoundary>
-          }>
-            <Route path="app" element={<HubLogDock />} />
-          </Route>
-
           {/* Rotas do Hub Master */}
           <Route path="/master" element={
             <ErrorBoundary>
@@ -214,7 +188,7 @@ const App: React.FC = () => {
           }>
             {/* Core Hub Routes */}
             <Route index element={<Inicio />} />
-            <Route path="resultados" element={<Dashboard />} />
+            <Route path="resultados" element={<Navigate to="/master#operacional" replace />} />
             
             {/* CRM Routes */}
             <Route path="crm" element={<CRM />} />
@@ -234,10 +208,11 @@ const App: React.FC = () => {
             <Route path="billing/*" element={<BillingManagement />} />
             <Route path="financeiro" element={<Navigate to="/master/billing?tab=financeiro" replace />} />
 
-            {/* Security & Infrastructure Unified */}
-            <Route path="infrastructure/*" element={<Infrastructure />} />
-            <Route path="backup" element={<Navigate to="/master/infrastructure/storage" replace />} />
-            <Route path="security" element={<Navigate to="/master/infrastructure/security" replace />} />
+            {/* Infraestrutura removida do menu — rotas legadas redirecionam para Configurações */}
+            <Route path="infrastructure/audit" element={<AuditLogs />} />
+            <Route path="infrastructure/*" element={<Navigate to="/master/settings" replace />} />
+            <Route path="backup" element={<Navigate to="/master/settings" replace />} />
+            <Route path="security" element={<Navigate to="/master/settings?tab=seguranca" replace />} />
 
             {/* Logistics Unified */}
             <Route path="logistica" element={<LogisticaHub />} />
@@ -251,8 +226,8 @@ const App: React.FC = () => {
             {/* Support & Admin */}
             <Route path="admins" element={<NavigateToSettingsEquipeUsuariosHub />} />
             <Route path="settings/ia-gateway" element={<Navigate to="/master/ia-gateway" replace />} />
-            <Route path="settings/interacoes" element={<Navigate to="/master/integracoes" replace />} />
-            <Route path="settings/notificacoes" element={<Navigate to="/master/notifications" replace />} />
+            <Route path="settings/interacoes" element={<Navigate to="/master/settings?tab=integracoes" replace />} />
+            <Route path="settings/notificacoes" element={<Navigate to="/master/settings?tab=notificacoes" replace />} />
             <Route path="settings/*" element={<Settings />} />
             <Route path="account" element={<AccountSettings />} />
             <Route path="team/colaborador/:id" element={<TeamMemberDetail />} />
@@ -260,24 +235,26 @@ const App: React.FC = () => {
             <Route path="staff" element={<Navigate to="/master/settings/equipe" replace />} />
             <Route path="analytics" element={<Navigate to="/master/companies/metricas-score" replace />} />
             <Route path="plans" element={<Navigate to="/master/billing/planos" replace />} />
-            <Route path="notifications" element={<HubNotifications />} />
-            <Route path="ia-gateway" element={<IaGatewayCenter />} />
-            <Route path="automacoes" element={<Workflows />} />
+            <Route path="notifications" element={<Navigate to="/master/settings?tab=notificacoes" replace />} />
+            <Route path="automacoes" element={<Navigate to="/master/settings?tab=automacoes" replace />} />
+            <Route path="automacoes/*" element={<Navigate to="/master/settings?tab=automacoes" replace />} />
             <Route path="automacoes/ia-gateway" element={<Navigate to="/master/ia-gateway" replace />} />
-            <Route path="logdock-cloud" element={<HubLogDock />} />
-            <Route path="logdock" element={<LogDockAdmin />} />
-            <Route path="logdock/:id" element={<LogDockClientProfile />} />
-            <Route path="zaptro" element={<ZaptroAdmin />} />
-            <Route path="zaptro/:id" element={<ZaptroClientProfile />} />
+            <Route path="ia-gateway" element={<IAGatewayAdmin />} />
+            <Route path="whatsapp" element={<WhatsappAdmin />} />
+            <Route path="credits/*" element={<Navigate to="/master" replace />} />
             <Route path="logta" element={<LogtaAdmin />} />
             <Route path="logta/:id" element={<LogtaClientProfile />} />
-            <Route path="credits" element={<CreditsAdmin />} />
-            <Route path="credits/:id" element={<CreditsClientProfile />} />
+            <Route path="zaptro" element={<ZaptroAdmin />} />
+            <Route path="zaptro/:id/m/:metric" element={<ZaptroAdmin />} />
+            <Route path="zaptro/:id" element={<ZaptroAdmin />} />
+            <Route path="logdock" element={<LogDockAdmin />} />
+            <Route path="logdock/:id" element={<LogDockAdmin />} />
+            <Route path="logstoka" element={<LogStokaAdmin />} />
             <Route path="backups" element={<BackupsAdmin />} />
             <Route path="backups/:id" element={<BackupsClientProfile />} />
             <Route path="evolution" element={<EvolutionManager />} />
-            <Route path="integracoes" element={<IntegrationsPage />} />
-            <Route path="integracoes/:tab" element={<IntegrationsPage />} />
+            <Route path="integracoes" element={<Navigate to="/master/settings?tab=integracoes" replace />} />
+            <Route path="integracoes/:tab" element={<NavigateIntegracoesToSettings />} />
             <Route path="biblioteca" element={<MasterKnowledge />} />
             <Route path="profile" element={<AccountSettings />} />
             <Route path="configuracoes/perfil" element={<Navigate to="/master/account" replace />} />
@@ -286,7 +263,9 @@ const App: React.FC = () => {
           <Route path="/dashboard" element={<Navigate to="/master" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </KeyboardProvider>
+    </WhiteLabelProvider>
     </>
   );
 };

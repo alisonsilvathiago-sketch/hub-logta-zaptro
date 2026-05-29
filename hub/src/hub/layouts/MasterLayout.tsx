@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import '../styles/hubShellEnterprise.css';
 import Header from '../components/Header';
 import MasterSidebar from '../components/MasterSidebar';
 import SpotlightSearch from '../components/SpotlightSearch';
 import GlobalActivityTicker from '../components/GlobalActivityTicker';
+import HubProjectAiDrawer from '../components/HubProjectAiDrawer';
+import { HubProjectAiProvider } from '@hub/context/HubProjectAiContext';
+import { HubMasterNotificationsProvider } from '@hub/context/HubMasterNotificationsContext';
+import HubNotificationToastStack from '@hub/components/HubNotificationToastStack';
 import { supabase } from '@core/lib/supabase';
 import { AlertCircle, WifiOff } from 'lucide-react';
 import { useAuth } from '@core/context/AuthContext';
@@ -45,7 +50,7 @@ const HubMasterLoaderSplash: React.FC<{ greetingName?: string | null }> = ({ gre
           boxSizing: 'border-box',
           padding: '12px 24px',
           textAlign: 'center',
-          fontSize: 46,
+          fontSize: 40,
           fontWeight: 900,
           lineHeight: 1.15,
           letterSpacing: '-0.02em',
@@ -54,8 +59,7 @@ const HubMasterLoaderSplash: React.FC<{ greetingName?: string | null }> = ({ gre
           backgroundImage: 'none',
           WebkitBackgroundClip: 'unset',
           backgroundClip: 'unset',
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-          border: 'none',
+                    border: 'none',
           borderRadius: 0,
           boxShadow: 'none',
         }}
@@ -77,7 +81,7 @@ const HubMasterLoaderSplash: React.FC<{ greetingName?: string | null }> = ({ gre
           border-radius: 0 !important;
           box-shadow: none !important;
           font-weight: 900 !important;
-          font-size: 46px !important;
+          font-size: 40px !important;
         }
       `}</style>
     </>
@@ -239,7 +243,7 @@ const MasterLayout: React.FC = () => {
         textAlign: 'center', padding: '40px'
       }}>
         <AlertCircle size={48} color="#EF4444" style={{ marginBottom: '24px' }} />
-        <h1 style={{ fontSize: '29px', fontWeight: '800', marginBottom: '12px', letterSpacing: 0, color: '#000000', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }}>Acesso Negado</h1>
+        <h1 style={{ fontSize: '29px', fontWeight: '800', marginBottom: '12px', letterSpacing: 0, color: '#000000' }}>Acesso Negado</h1>
         <p style={{ color: '#94A3B8', maxWidth: '400px', marginBottom: '32px' }}>
           Sua conta não possui permissões administrativas para acessar o Hub Master.
         </p>
@@ -257,16 +261,31 @@ const MasterLayout: React.FC = () => {
   }
 
   const isMasterHome = location.pathname === '/master' || location.pathname === '/master/';
-  const isFullWidthPage = isMasterHome || location.pathname.includes('/hubchat');
+  const isProjectPage = ['/master/logta', '/master/zaptro', '/master/logdock', '/master/logstoka', '/master/whatsapp', '/master/ia-gateway'].some((p) => location.pathname.startsWith(p));
+  const isMasterShellPage =
+    location.pathname.startsWith('/master/settings') ||
+    location.pathname.startsWith('/master/billing') ||
+    location.pathname.startsWith('/master/companies') ||
+    location.pathname.startsWith('/master/logistica') ||
+    location.pathname.startsWith('/master/crm') ||
+    location.pathname.startsWith('/master/agenda');
+  const isFullWidthPage = isMasterHome || location.pathname.includes('/hubchat') || isProjectPage;
+  const isHubChatPage = location.pathname.includes('/hubchat');
+  /** Inset do frame: desligado em shells com menu lateral próprio (Configurações, Financeiro, Empresas) e em projetos */
+  const useOutletPageInset = !isProjectPage && !isMasterShellPage;
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      minHeight: '100vh', 
-      backgroundColor: '#F8FAFC',
-      fontFamily: "'Inter', sans-serif",
-      position: 'relative'
-    }}>
+    <HubMasterNotificationsProvider>
+    <HubProjectAiProvider>
+    <div
+      className="master-layout-container hub-master-shell"
+      style={{
+        display: 'flex',
+        minHeight: '100vh',
+        backgroundColor: 'var(--hub-bg)',
+        position: 'relative',
+      }}
+    >
       {/* Alerta de Conexão Inteligente */}
       {connectionError && (
         <div style={{
@@ -274,201 +293,60 @@ const MasterLayout: React.FC = () => {
           backgroundColor: '#EF4444', color: 'white', padding: '12px 24px', borderRadius: '24px',
           zIndex: 10001, fontSize: '12px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '12px',
           boxShadow: '0 20px 40px rgba(239, 68, 68, 0.4)', letterSpacing: '0.5px', textTransform: 'uppercase',
-          animation: 'slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
         }}>
-          <style>{`
-            @keyframes slideDown {
-              from { transform: translate(-50%, -100%); opacity: 0; }
-              to { transform: translate(-50%, 0); opacity: 1; }
-            }
-          `}</style>
           <WifiOff size={18} /> Instabilidade detectada na rede master. 
         </div>
       )}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
-        :root {
-          --primary: #0061FF;
-          --primary-dark: #0052D9;
-          --bg-main: #F8FAFC;
-          --bg-card: #ffffff;
-          --text-title: #111827;
-          --text-subtitle: #6B7280;
-          --text-body: #374151;
-          --text-primary: #0F172A;
-          --text-secondary: #64748B;
-          --border: #E2E8F0;
-          --accent: #0061FF;
-          --accent-glow: #38BDF8;
-          --accent-light: #F0F7FF;
-          --bg-overlay: rgba(99, 102, 241, 0.05);
-          --bg-secondary: #F1F5F9;
-          --secondary: #0F172A;
-        }
 
-        * {
-          font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-          box-sizing: border-box;
-        }
-
-        body {
-          margin: 0;
-          background-color: var(--bg-main);
-          color: var(--text-body);
-          -webkit-font-smoothing: antialiased;
-          font-size: 16px;
-          line-height: 1.6;
-          letter-spacing: 0.2px;
-        }
-
-        h1, .h1-style, .page-title, .title-main {
-          font-size: 29px !important;
-          font-weight: 800 !important;
-          color: #000000 !important;
-          letter-spacing: 0 !important;
-          line-height: 1.2 !important;
-          margin-bottom: 4px !important;
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-          background-image: none !important;
-          background-clip: unset !important;
-          -webkit-background-clip: unset !important;
-        }
-
-        h2, .h2-style {
-          font-size: 22px !important;
-          font-weight: 800 !important;
-          color: #000000 !important;
-          line-height: 1.25 !important;
-          margin-bottom: 12px !important;
-          letter-spacing: 0 !important;
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-          background-image: none !important;
-          background-clip: unset !important;
-          -webkit-background-clip: unset !important;
-        }
-
-        h3, .h3-style {
-          font-size: 16px !important;
-          font-weight: 700 !important;
-          color: #000000 !important;
-          line-height: 1.25 !important;
-          margin-bottom: 8px !important;
-          letter-spacing: 0 !important;
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-          background-image: none !important;
-          background-clip: unset !important;
-          -webkit-background-clip: unset !important;
-        }
-
-        p, span, div {
-          color: var(--text-body);
-        }
-
-        .text-subtitle {
-          color: rgba(0, 0, 0, 0.46) !important;
-          font-size: 12px !important;
-          font-weight: 500 !important;
-          margin: 0 !important;
-          padding: 7px 0 !important;
-          max-width: 510px !important;
-          line-height: 1.5 !important;
-          letter-spacing: 0 !important;
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-        }
-
-        main table th {
-          font-size: 10px !important;
-          line-height: 1 !important;
-          letter-spacing: 0 !important;
-        }
-
-        .animate-fade-in {
-          animation: fadeIn 0.4s ease-out;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .kpi-value, .stat-value, .metric-value {
-          font-size: 20px !important;
-          font-weight: 800 !important;
-          color: #000000 !important;
-          letter-spacing: -0.2px !important;
-          line-height: 1 !important;
-          margin: 2px 0 !important;
-        }
-
-        .kpi-label, .stat-label, .metric-label {
-          font-size: 12px !important;
-          font-weight: 700 !important;
-          color: #94A3B8 !important;
-          text-transform: uppercase !important;
-          letter-spacing: 1px !important;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: #E2E8F0;
-          border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: #CBD5E1;
-        }
-      `}</style>
-
-      {/* SIDEBAR FIXED (80px wide base) */}
+      {/* SIDEBAR FIXED */}
       {!isMobile && <MasterSidebar />}
       
-      <div style={{ 
-        flex: 1, 
-        display: 'flex', 
-        flexDirection: 'column',
-        minWidth: 0,
-        height: '100vh',
-        overflow: 'hidden',
-        marginLeft: isMobile ? 0 : '80px',
-        transition: 'margin-left 0.3s ease'
-      }}>
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          width: isMobile ? '100%' : 'calc(100% - 64px)',
+          marginLeft: isMobile ? 0 : 64,
+          height: '100vh',
+          overflow: 'hidden',
+          boxSizing: 'border-box',
+          transition: 'margin-left 0.2s ease, width 0.2s ease',
+        }}
+      >
         <Header 
           onMenuClick={() => setIsMobileMenuOpen(true)} 
           isMobile={isMobile} 
         />
         
-        <main style={{ 
-          flex: 1, 
-          minHeight: 0,
-          overflowY: isFullWidthPage ? 'hidden' : 'auto',
-          backgroundColor: '#F8FAFC',
-          padding: isMasterHome ? '0' : isFullWidthPage ? '0 24px' : (isMobile ? '20px' : '40px'),
-          backgroundImage: 'radial-gradient(circle at 50% 0%, rgba(217, 255, 0, 0.03) 0%, transparent 50%)',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          {/* CENTERED CONTENT WRAPPER */}
-          <div style={{
-            maxWidth: isFullWidthPage ? '100%' : '1400px',
-            margin: '0 auto',
-            width: '100%',
-            flex: isFullWidthPage ? 1 : undefined,
-            minHeight: isFullWidthPage ? 0 : undefined,
-            height: isFullWidthPage ? '665px' : 'auto',
-            padding: '0',
-            position: 'relative',
-            display: isFullWidthPage ? 'flex' : undefined,
-            flexDirection: isFullWidthPage ? 'column' : undefined,
-            gap: isFullWidthPage ? 0 : undefined,
-            boxSizing: 'border-box'
-          }}>
+        <main
+          className="hub-master-main"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: isHubChatPage ? 'hidden' : 'auto',
+            padding: 0,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div
+            className={`hub-master-outlet-frame${useOutletPageInset ? ' hub-master-outlet-frame--inset' : ''}`}
+            style={{
+              maxWidth: isFullWidthPage || isMasterShellPage ? '100%' : '1400px',
+              margin: isFullWidthPage || isMasterShellPage ? '0' : '0 auto',
+              width: '100%',
+              minWidth: 0,
+              flex: isHubChatPage ? 1 : undefined,
+              minHeight: isHubChatPage ? 0 : undefined,
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-start',
+              alignItems: 'stretch',
+            }}
+          >
             <Outlet />
           </div>
         </main>
@@ -477,11 +355,11 @@ const MasterLayout: React.FC = () => {
       {/* MOBILE OVERLAY MENU */}
       {isMobile && isMobileMenuOpen && (
         <div 
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 1100 }}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1100 }}
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <div 
-            style={{ width: '280px', height: '100%', backgroundColor: '#FFFFFF', boxShadow: '10px 0 32px rgba(15, 23, 42, 0.08)' }}
+            style={{ width: '280px', height: '100%', backgroundColor: 'var(--hub-bg)' }}
             onClick={e => e.stopPropagation()}
           >
             <MasterSidebar variant="drawer" />
@@ -497,7 +375,13 @@ const MasterLayout: React.FC = () => {
 
       {/* GLOBAL ACTIVITY TICKER */}
       <GlobalActivityTicker />
+
+      <HubNotificationToastStack />
+
+      <HubProjectAiDrawer />
     </div>
+    </HubProjectAiProvider>
+    </HubMasterNotificationsProvider>
   );
 };
 

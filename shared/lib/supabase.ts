@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+export const IS_LOCALHOST = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+export const SYSTEM_ACTIVE = IS_LOCALHOST;
 
 const envUrl = import.meta.env.VITE_SUPABASE_URL;
 /** Supabase passou a expor "publishable key"; anon continua válida no painel. */
@@ -67,6 +69,7 @@ const cookieStorage = {
     if (hostname.includes('logta.com.br')) domain = '; domain=.logta.com.br';
     else if (hostname.includes('zaptro.com.br')) domain = '; domain=.zaptro.com.br';
     else if (hostname.includes('logdock.com.br')) domain = '; domain=.logdock.com.br';
+    else if (hostname.includes('logstoka.com.br')) domain = '; domain=.logstoka.com.br';
     
     const domainAttr = domain ? domain : '';
     const secure =
@@ -81,6 +84,7 @@ const cookieStorage = {
     if (hostname.includes('logta.com.br')) domain = '; domain=.logta.com.br';
     else if (hostname.includes('zaptro.com.br')) domain = '; domain=.zaptro.com.br';
     else if (hostname.includes('logdock.com.br')) domain = '; domain=.logdock.com.br';
+    else if (hostname.includes('logstoka.com.br')) domain = '; domain=.logstoka.com.br';
     
     const domainAttr = domain ? domain : '';
     document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC${domainAttr}`;
@@ -96,6 +100,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         flowType: 'pkce',
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        lock: (name: any, timeout: any, fn: any) => {
+          if (typeof timeout === 'function') return timeout();
+          if (typeof fn === 'function') return fn();
+          return Promise.resolve();
+        },
       }
     : {
         persistSession: false,

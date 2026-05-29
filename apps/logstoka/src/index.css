@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+@import "@shared/index.css";
+
+:root {
+  --ls-brand: #059669;
+  --ls-brand-dark: #047857;
+  --ls-surface: #0f172a;
+  --ls-panel: #111827;
+  --ls-border: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  font-family: Inter, system-ui, sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.ls-card {
+  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+}
+
+.ls-stat {
+  @apply rounded-2xl border border-slate-200 bg-white p-5;
+}
+
+.ls-btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50;
+}
+
+.ls-btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50;
+}
+
+.ls-input {
+  @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none ring-emerald-500 focus:ring-2;
+}
+
+.ls-label {
+  @apply mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500;
+}
+
+.ls-badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold;
+}
+
+.ls-table-wrap {
+  @apply overflow-x-auto rounded-2xl border border-slate-200 bg-white;
+}
+
+.ls-table {
+  @apply w-full text-left text-sm;
+}
+
+.ls-table th {
+  @apply border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500;
+}
+
+.ls-table td {
+  @apply border-b border-slate-100 px-4 py-3 text-slate-700;
+}
+
+@media (max-width: 768px) {
+  .ls-hide-mobile {
+    display: none;
+  }
+}
