@@ -25,7 +25,7 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
   { to: `${SETTINGS_BASE}/empresa`, label: 'Perfil da Empresa', icon: Building2 },
   { to: `${SETTINGS_BASE}/equipe`, label: 'Equipe e Permissões', icon: Users },
   { to: `${SETTINGS_BASE}/api-webhooks`, label: 'API e Webhooks', icon: Webhook },
-  { to: `${SETTINGS_BASE}/integracoes`, label: 'Integrações', icon: Zap },
+  { to: '/app/integrations', label: 'Integrações', icon: Zap },
   { to: `${SETTINGS_BASE}/notificacoes`, label: 'Notificações', icon: Bell },
   { to: `${SETTINGS_BASE}/auditoria`, label: 'Auditoria e Logs', icon: ScrollText },
   { to: `${SETTINGS_BASE}/seguranca`, label: 'Segurança', icon: Shield },

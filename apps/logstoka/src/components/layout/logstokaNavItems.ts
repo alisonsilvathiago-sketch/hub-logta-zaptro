@@ -8,6 +8,7 @@ import {
   FileUp,
   LayoutDashboard,
   Package,
+  Plug,
   ScanLine,
   Settings,
   Sparkles,
@@ -37,5 +38,6 @@ export const LOGSTOKA_NAV: LogstokaNavItem[] = [
   { to: '/app/conference', label: 'Conferência', icon: ScanLine },
   { to: '/app/imports', label: 'Importações', icon: FileUp },
   { to: '/app/reports', label: 'Relatórios', icon: BarChart3, perm: 'reports.read' },
+  { to: '/app/integrations', label: 'Integrações', icon: Plug, perm: 'settings.read' },
   { to: '/app/configuracoes', label: 'Configurações', icon: Settings, perm: 'settings.read' },
 ];

@@ -29,6 +29,7 @@ const PickingDetailPage = lazy(() => import('@/modules/picking/PickingDetailPage
 const AlertDetailPage = lazy(() => import('@/modules/alerts/AlertDetailPage'));
 const CollaboratorDetailPage = lazy(() => import('@/modules/team/CollaboratorDetailPage'));
 const IntegrationLogDetailPage = lazy(() => import('@/modules/integrations/IntegrationLogDetailPage'));
+const IntegrationsCentralPage = lazy(() => import('@/modules/integrations/IntegrationsCentralPage'));
 const ImportsPage = lazy(() => import('@/modules/imports/ImportsPage'));
 const ReportsPage = lazy(() => import('@/modules/reports/ReportsPage'));
 const MarketplaceRankingPage = lazy(() => import('@/modules/integrations/MarketplaceRankingPage'));
@@ -101,7 +102,9 @@ const App: React.FC = () => (
           <Route path="imports" element={<ImportsPage />} />
           <Route path="reports" element={<ReportsPage />} />
 
-          {/* Hub operacional por marketplace — /app/mercadolivre, /app/shopee, … */}
+          <Route path="integrations/marketplaces" element={<Navigate to="/app/configuracoes/integracoes/marketplaces" replace />} />
+          <Route path="integrations/logs/:id" element={<LegacyIntegrationLogRedirect />} />
+          <Route path="integrations" element={<IntegrationsCentralPage />} />
           <Route path="mercadolivre" element={<MarketplaceHubPage />} />
           <Route path="marcadolivre" element={<Navigate to="/app/mercadolivre" replace />} />
           <Route path="shopee" element={<MarketplaceHubPage />} />
@@ -121,7 +124,7 @@ const App: React.FC = () => (
             <Route path="integracoes/marketplaces" element={<MarketplaceRankingPage embedded />} />
             <Route path="integracoes/:marketplace/:storeSlug" element={<MarketplaceStorePage embedded />} />
             <Route path="integracoes/:marketplace" element={<MarketplaceStorePage embedded />} />
-            <Route path="integracoes" element={<SettingsIntegrationsPanel />} />
+            <Route path="integracoes" element={<Navigate to="/app/integrations" replace />} />
             <Route path="notificacoes" element={<SettingsNotificationsPanel />} />
             <Route path="notificacoes/:id" element={<AlertDetailPage embedded />} />
             <Route path="auditoria" element={<SettingsAuditPanel />} />
@@ -137,9 +140,7 @@ const App: React.FC = () => (
           <Route path="colaboradores/:id" element={<LegacyCollaboratorRedirect />} />
           <Route path="colaboradores" element={<Navigate to="/app/configuracoes/equipe" replace />} />
           <Route path="interacoes" element={<Navigate to="/app/configuracoes/auditoria" replace />} />
-          <Route path="integrations/marketplaces" element={<Navigate to="/app/configuracoes/integracoes/marketplaces" replace />} />
-          <Route path="integrations/logs/:id" element={<LegacyIntegrationLogRedirect />} />
-          <Route path="integrations" element={<Navigate to="/app/configuracoes/integracoes" replace />} />
+          <Route path="configuracoes/integracoes" element={<Navigate to="/app/integrations" replace />} />
           <Route path="alerts/:id" element={<LegacyAlertRedirect />} />
           <Route path="alerts" element={<LegacyAlertRedirect />} />
         </Route>

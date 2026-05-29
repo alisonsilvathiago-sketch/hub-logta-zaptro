@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Loader2,
   AlertCircle,
@@ -9,7 +10,24 @@ import {
 import { supabase } from '@core/lib/supabase';
 import { toastSuccess, toastError } from '@core/lib/toast';
 
+function getLogstokaOrigin(): string {
+  const raw = import.meta.env.VITE_LOGSTOKA_APP_ORIGIN as string | undefined;
+  if (raw?.trim()) return raw.replace(/\/$/, '');
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:5177';
+  }
+  return 'https://app.logstoka.com.br';
+}
+
+function redirectToLogstokaApp(accessToken: string) {
+  const origin = getLogstokaOrigin();
+  const params = new URLSearchParams({ token: accessToken, master_bypass: 'true' });
+  window.location.href = `${origin}/app?${params.toString()}`;
+}
+
 const Login: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const targetApp = searchParams.get('app');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -25,11 +43,15 @@ const Login: React.FC = () => {
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token && targetApp === 'logstoka') {
+        redirectToLogstokaApp(session.access_token);
+        return;
+      }
       if (session) {
         window.location.href = '/master';
       }
     });
-  }, []);
+  }, [targetApp]);
 
   const isDev = window.location.hostname === 'localhost';
 
@@ -59,6 +81,12 @@ const Login: React.FC = () => {
       });
 
       if (authError) throw authError;
+
+      if (data.session?.access_token && targetApp === 'logstoka') {
+        toastSuccess('Bem-vindo ao LogStoka!');
+        redirectToLogstokaApp(data.session.access_token);
+        return;
+      }
 
       if (data.user) {
         toastSuccess('Bem-vindo ao Hub Master!');

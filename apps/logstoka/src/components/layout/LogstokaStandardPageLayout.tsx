@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const LOGSTOKA_PAGE_TITLE_CLASS = 'text-[21px] font-bold leading-snug tracking-normal text-gray-900';
+export const LOGSTOKA_PAGE_TITLE_CLASS = 'text-[21px] font-bold leading-snug tracking-normal text-[#383838]';
 export const LOGSTOKA_ROW_TITLE_CLASS = 'truncate text-[14px] font-bold text-gray-900';
 
 export type LogstokaKpiStripItem = {

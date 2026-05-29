@@ -17,7 +17,7 @@ const LoginBrandWordmark = () => (
     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#111827] text-white sm:h-12 sm:w-12">
       <Truck size={24} strokeWidth={2.2} />
     </span>
-    <div className="flex items-start text-[#0f172a]">
+    <div className="flex items-start text-[#383838]">
       <span className="text-2xl font-extrabold leading-none tracking-[-0.04em] sm:text-3xl md:text-4xl">
         LogStoka
       </span>

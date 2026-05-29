@@ -27,6 +27,9 @@ function resolveCrumbs(pathname: string): { strong: string; muted: string } {
   if (pathname === '/app' || pathname === '/app/') {
     return { strong: 'LogStoka IA', muted: 'Pergunte sobre o estoque' };
   }
+  if (pathname.startsWith('/app/integrations')) {
+    return { strong: 'Integrações', muted: 'Central multicanal · OAuth & sync' };
+  }
   if (pathname.startsWith('/app/configuracoes')) {
     return { strong: 'Configurações', muted: settingsSectionLabel(pathname) };
   }

@@ -4,6 +4,12 @@ import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import { DEMO_INTEGRATION_LOGS, DEMO_WEBHOOKS } from '@/lib/logstokaDemoSeed';
+import {
+  listMarketplaceIntegrationUrls,
+  LOGSTOKA_DOMAINS,
+  MERCADOLIVRE_OAUTH_MODES,
+  oauthCallbackUrl,
+} from '@/lib/logstokaApiDomains';
 import { SETTINGS_BASE } from '@/modules/settings/settingsNav';
 import Modal from '@/components/ui/Modal';
 import ClickableTableRow from '@/components/ui/ClickableTableRow';
@@ -152,14 +158,33 @@ const SettingsApiWebhooksPanel: React.FC = () => {
 
       {tab === 'webhooks-in' && (
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">Endpoints públicos para receber eventos de marketplaces e ERPs.</p>
-          <code className="block rounded-xl bg-slate-950 p-4 text-xs text-orange-300">
-            POST /webhooks/orders · /webhooks/marketplaces · Header: x-company-id
-          </code>
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm">
-            <p className="font-bold">Eventos aceitos</p>
-            <p className="mt-1 text-slate-600">order.paid · order.cancelled · stock.sync · return.opened</p>
+          <p className="text-sm text-slate-500">
+            Endpoints públicos em <strong>{LOGSTOKA_DOMAINS.api}</strong> — configure no painel de cada marketplace.
+          </p>
+          <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-4 text-sm">
+            <p className="font-bold text-[#404040]">Mercado Livre — OAuth</p>
+            <p className="mt-1 text-xs text-[#525252]">
+              Redirect URI:{' '}
+              <code className="text-orange-800">{oauthCallbackUrl('mercadolivre')}</code>
+            </p>
+            <p className="mt-2 text-xs text-[#a3a3a3]">
+              {MERCADOLIVRE_OAUTH_MODES.authorizationCode ? '✅' : '❌'} Authorization Code ·{' '}
+              {MERCADOLIVRE_OAUTH_MODES.refreshToken ? '✅' : '❌'} Refresh Token ·{' '}
+              {MERCADOLIVRE_OAUTH_MODES.clientCredentials ? '✅' : '❌'} Client Credentials
+            </p>
           </div>
+          <div className="space-y-2">
+            {listMarketplaceIntegrationUrls().map(({ slug, oauthCallback, webhook }) => (
+              <div key={slug} className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs">
+                <p className="font-black uppercase tracking-wide text-[#525252]">{slug}</p>
+                <p className="mt-1 font-mono text-[#a3a3a3]">OAuth {oauthCallback}</p>
+                <p className="mt-0.5 font-mono text-orange-700">POST {webhook}</p>
+              </div>
+            ))}
+          </div>
+          <code className="block rounded-xl bg-slate-950 p-4 text-xs text-orange-300">
+            Legado: POST /webhooks/orders · /webhooks/marketplaces · Header: x-company-id
+          </code>
         </div>
       )}
 

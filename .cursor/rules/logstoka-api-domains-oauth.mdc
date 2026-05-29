@@ -1,0 +1,62 @@
+---
+description: LogStoka — domínios produção, OAuth callbacks e webhooks por marketplace
+globs: apps/logstoka/**
+alwaysApply: false
+---
+
+# DOMÍNIOS E API PÚBLICA — LOGSTOKA
+
+## Produção
+
+| Papel | URL |
+|-------|-----|
+| Landing | `https://logstoka.com.br` |
+| App (WMS) | `https://app.logstoka.com.br` |
+| API | `https://api.logstoka.com.br` |
+
+**Antes de OAuth Mercado Livre:** DNS `api.logstoka.com.br` → VPS (A) ou backend (CNAME). Sem subdomínio ativo, ML rejeita Redirect URI.
+
+Env: `LOGSTOKA_API_PUBLIC_URL` / `VITE_LOGSTOKA_API_PUBLIC_URL` = `https://api.logstoka.com.br`
+
+## OAuth Redirect URIs (path exato)
+
+```
+/integrations/mercadolivre/callback
+/integrations/shopee/callback
+/integrations/tiktok/callback
+/integrations/amazon/callback
+/integrations/magalu/callback
+```
+
+URL completa ML (exemplo oficial):
+
+```
+https://api.logstoka.com.br/integrations/mercadolivre/callback
+```
+
+### Mercado Livre Developers
+
+- ✅ Authorization Code
+- ✅ Refresh Token
+- ❌ Client Credentials — **não usar**
+
+## Webhooks entrada
+
+```
+POST /webhooks/mercadolivre
+POST /webhooks/shopee
+POST /webhooks/tiktok
+POST /webhooks/amazon
+POST /webhooks/magalu
+```
+
+Pipeline: fila assíncrona → idempotência → persistência → sync estoque (ver `logstoka-integrations-webhooks-hub.mdc`).
+
+## Implementação
+
+- Frontend: `src/lib/logstokaApiDomains.ts`
+- Backend: `server/src/lib/apiDomains.ts`, `server/src/routes/integrationRoutes.ts`
+- Doc: `apps/logstoka/LOGSTOKA_API_DOMAINS.md`
+- Catálogo: `GET /integrations/catalog`
+
+Nunca hardcodar URLs diferentes desta spec em novos conectores.

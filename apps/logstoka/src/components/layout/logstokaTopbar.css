@@ -62,7 +62,7 @@
   width: 1px;
   height: 32px;
   flex-shrink: 0;
-  background: rgba(15, 23, 42, 0.1);
+  background: rgba(56, 56, 56, 0.1);
 }
 
 .lsdash-topbar--inicio .lsdash-topbar-right .lsdash-topbar-sep {
@@ -76,8 +76,8 @@
   flex-shrink: 0;
   padding: 4px 8px;
   border-radius: 16px;
-  background: rgba(15, 23, 42, 0.03);
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  background: rgba(56, 56, 56, 0.03);
+  border: 1px solid rgba(56, 56, 56, 0.06);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -99,8 +99,8 @@
 }
 
 .lsdash-integration-logo:hover {
-  background: rgba(15, 23, 42, 0.05);
-  border-color: rgba(15, 23, 42, 0.08);
+  background: rgba(56, 56, 56, 0.05);
+  border-color: rgba(56, 56, 56, 0.08);
   transform: translateY(-1px);
 }
 
@@ -160,7 +160,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(56, 56, 56, 0.08);
   background: #fff;
   cursor: pointer;
   color: #111827;
@@ -233,7 +233,7 @@
   width: 40px;
   height: 40px;
   border-radius: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(56, 56, 56, 0.08);
   background: #fff;
   cursor: pointer;
   overflow: hidden;
@@ -264,8 +264,8 @@
   width: 320px;
   border-radius: 18px;
   background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.18);
+  border: 1px solid rgba(56, 56, 56, 0.08);
+  box-shadow: 0 22px 48px rgba(56, 56, 56, 0.18);
   overflow: hidden;
   z-index: 60;
 }
@@ -345,13 +345,13 @@
 
 .lsdash-menu-items button:hover,
 .lsdash-menu-items a:hover {
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(56, 56, 56, 0.04);
   color: #111827;
 }
 
 .lsdash-menu-sep {
   height: 1px;
-  background: rgba(15, 23, 42, 0.08);
+  background: rgba(56, 56, 56, 0.08);
 }
 
 .lsdash-menu-link--logout {

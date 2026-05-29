@@ -1,5 +1,5 @@
 const DEFAULT_HUB = 'http://localhost:5175';
-const DEFAULT_APP = 'http://localhost:5177';
+const DEFAULT_APP = import.meta.env.PROD ? 'https://app.logstoka.com.br' : 'http://localhost:5177';
 
 export function getHubAppUrl(): string {
   return (import.meta.env.VITE_HUB_APP_URL as string | undefined)?.replace(/\/$/, '') || DEFAULT_HUB;

@@ -6,7 +6,7 @@
   max-height: 100dvh;
   overflow: hidden;
   background: #fefefe;
-  color: #0f172a;
+  color: var(--ls-text);
   font-family: Inter, system-ui, sans-serif;
 }
 
@@ -27,10 +27,10 @@
   gap: 4px;
   background: #ffffff;
   border-radius: 23px;
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(56, 56, 56, 0.06);
   box-shadow:
-    0 4px 6px rgba(15, 23, 42, 0.04),
-    0 12px 32px rgba(15, 23, 42, 0.08);
+    0 4px 6px rgba(56, 56, 56, 0.04),
+    0 12px 32px rgba(56, 56, 56, 0.08);
 }
 
 .logstoka-app-brand {
@@ -160,8 +160,8 @@
   white-space: nowrap;
   pointer-events: none;
   box-shadow:
-    0 4px 12px rgba(15, 23, 42, 0.18),
-    0 2px 4px rgba(15, 23, 42, 0.08);
+    0 4px 12px rgba(56, 56, 56, 0.18),
+    0 2px 4px rgba(56, 56, 56, 0.08);
   animation: logstoka-sidebar-tooltip-in 0.15s ease;
 }
 

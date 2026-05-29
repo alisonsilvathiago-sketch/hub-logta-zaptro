@@ -6,6 +6,7 @@ import {
   processOrderWebhook,
   processReportImport,
 } from '../services/orderImportService.js';
+import { persistMercadoLivreOAuth } from '../services/integrationStoreService.js';
 
 export function registerQueueHandlers(cfg: LogstokaConfig) {
   logstokaQueue.register('webhook.inbound', async (job) => {
@@ -110,6 +111,38 @@ export function registerQueueHandlers(cfg: LogstokaConfig) {
 
   logstokaQueue.register('integration.sync', async (job) => {
     console.info('[logstoka-integration] sync queued', job.payload);
+  });
+
+  logstokaQueue.register('integration.oauth', async (job) => {
+    const payload = job.payload as {
+      marketplace?: string;
+      companyId?: string;
+      tokens?: {
+        access_token: string;
+        refresh_token: string;
+        user_id: number;
+        seller_id: string;
+      };
+      user?: { nickname?: string };
+    };
+
+    if (payload.marketplace === 'mercadolivre' && payload.companyId && payload.tokens) {
+      const admin = getSupabaseAdmin(cfg);
+      if (admin) {
+        await persistMercadoLivreOAuth(admin, payload.companyId, {
+          access_token: payload.tokens.access_token,
+          refresh_token: payload.tokens.refresh_token,
+          user_id: payload.tokens.user_id,
+          seller_id: payload.tokens.seller_id,
+          nickname: payload.user?.nickname ?? 'Mercado Livre',
+        });
+      }
+    }
+
+    console.info('[logstoka-integration] oauth processed', {
+      marketplace: payload.marketplace,
+      companyId: payload.companyId,
+    });
   });
 
   logstokaQueue.register('webhook.outbound', async (job) => {

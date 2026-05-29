@@ -5,6 +5,8 @@ import { marketplaceHubPath } from '@/lib/marketplaceHub';
 import { getStoresByMarketplace } from '@/lib/marketplaceStores';
 import { MARKETPLACE_LABELS } from '@/types';
 import type { Marketplace } from '@/types';
+import { oauthCallbackUrl, LOGSTOKA_DOMAINS } from '@/lib/logstokaApiDomains';
+import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
 import { SETTINGS_BASE } from '@/modules/settings/settingsNav';
 
 const SettingsIntegrationsPanel: React.FC = () => (
@@ -19,6 +21,25 @@ const SettingsIntegrationsPanel: React.FC = () => (
       </div>
       <Link to={`${SETTINGS_BASE}/integracoes/marketplaces`} className="ls-btn-secondary">
         Ranking por marketplace
+      </Link>
+    </div>
+
+    <div className="ls-hub-panel border-orange-100 bg-orange-50/30">
+      <h3 className="text-sm font-black text-[#404040]">OAuth — Mercado Livre</h3>
+      <p className="mt-1 text-xs text-[#a3a3a3]">
+        Registre no painel ML antes de conectar. DNS <code>api.logstoka.com.br</code> deve estar ativo.
+      </p>
+      <code className="mt-3 block break-all rounded-xl bg-white px-3 py-2 text-xs font-semibold text-orange-800 ring-1 ring-orange-100">
+        {oauthCallbackUrl('mercadolivre')}
+      </code>
+      <p className="mt-2 text-[10px] font-bold text-[#a3a3a3]">
+        ✅ Authorization Code · ✅ Refresh Token · ❌ Client Credentials
+      </p>
+      <p className="mt-2 text-xs text-[#525252]">
+        API: {LOGSTOKA_DOMAINS.api} · App: {LOGSTOKA_DOMAINS.app}
+      </p>
+      <Link to={LOGSTOKA_ROUTES.INTEGRATIONS_CENTRAL} className="mt-3 inline-block text-xs font-bold text-orange-700 hover:underline">
+        Abrir Central de Integrações →
       </Link>
     </div>
 

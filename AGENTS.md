@@ -100,6 +100,8 @@ Para trabalhar no Zaptro completo (UI + envio de e-mail), rode frontend e `apps/
 - Regra Cursor integrações + webhooks (coração do produto): `.cursor/rules/logstoka-integrations-webhooks-hub.mdc`.
 - Regra Cursor cadastro universal PIM: `.cursor/rules/logstoka-universal-product-catalog.mdc`.
 - Regra Cursor publicação por loja/grupo: `.cursor/rules/logstoka-publication-flow.mdc`.
+- **Domínios produção**: `logstoka.com.br` (landing) · `app.logstoka.com.br` (WMS) · `api.logstoka.com.br` (OAuth + webhooks). Ver `LOGSTOKA_API_DOMAINS.md` e `.cursor/rules/logstoka-api-domains-oauth.mdc`.
+- OAuth ML Redirect URI: `https://api.logstoka.com.br/integrations/mercadolivre/callback` (Authorization Code + Refresh Token).
 
 ### Notes that matter when editing
 - Produto isolado é regra: `apps/logta`, `apps/zaptro` e `hub` não devem importar código de domínio uns dos outros; integrações entre produtos devem ocorrer por API/evento, não por import direto de arquivos.

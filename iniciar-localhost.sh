@@ -88,6 +88,8 @@ start_if_down() {
 }
 
 ensure_env "$ROOT/apps/logta-saas"
+ensure_env "$ROOT/apps/logstoka"
+ensure_env "$ROOT/apps/logstoka/server"
 ensure_zaptro_local
 ensure_hub_local
 
@@ -98,6 +100,7 @@ echo ""
 start_if_down "logta-saas" "$ROOT/apps/logta-saas" 5173 "http://localhost:5173/login"
 start_if_down "zaptro" "$ROOT/apps/zaptro" 5174 "http://localhost:5174/"
 start_if_down "hub" "$ROOT/hub" 5175 "http://localhost:5175/"
+start_if_down "logstoka" "$ROOT/apps/logstoka" 5177 "http://localhost:5177/vendas"
 
 echo ""
 echo "Abra no navegador:"
@@ -105,7 +108,8 @@ echo "  Logta (login): http://localhost:5173/login"
 echo "  Zaptro:        http://localhost:5174/"
 echo "  Zaptro QR:     http://localhost:5174/app/configuracoes?tab=config"
 echo "  Hub Master:    http://localhost:5175/"
+echo "  LogStoka:      http://localhost:5177/vendas"
 echo ""
 echo "Logs: $ROOT/.local-dev-logs/"
-echo "Para parar: pkill -f 'vite --host localhost' || feche os processos nas portas 5173–5175"
+echo "Para parar: pkill -f 'vite --host localhost' || feche os processos nas portas 5173–5177"
 echo ""

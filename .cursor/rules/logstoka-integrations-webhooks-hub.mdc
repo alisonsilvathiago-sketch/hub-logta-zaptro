@@ -48,6 +48,8 @@ Disparar em alterações relevantes: produto criado/atualizado, estoque alterado
 
 Referência UI atual: `SettingsApiWebhooksPanel.tsx`, `logstokaApi.ts`, `IntegrationsPage.tsx`, `SettingsAuditPanel.tsx`.
 
+**URLs produção** (não alterar paths): ver `LOGSTOKA_API_DOMAINS.md` e `logstokaApiDomains.ts` — OAuth `/integrations/{marketplace}/callback`, webhooks `/webhooks/{marketplace}`, base `https://api.logstoka.com.br`.
+
 ## Pipeline obrigatório (sem exceção)
 
 ```

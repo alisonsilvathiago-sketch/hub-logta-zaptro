@@ -292,8 +292,8 @@ export const DEMO_REPLENISHMENT = [
 ];
 
 export const DEMO_WEBHOOKS = [
-  { id: 'whk-1', name: 'Pedidos Shopee', url: 'https://api.logstoka.local/webhooks/shopee', events: ['order.paid', 'order.cancelled'], is_active: true },
-  { id: 'whk-2', name: 'Mercado Livre Orders', url: 'https://api.logstoka.local/webhooks/ml', events: ['order.paid', 'stock.changed'], is_active: true },
+  { id: 'whk-1', name: 'Pedidos Shopee', url: 'https://api.logstoka.com.br/webhooks/shopee', events: ['order.paid', 'order.cancelled'], is_active: true },
+  { id: 'whk-2', name: 'Mercado Livre Orders', url: 'https://api.logstoka.com.br/webhooks/mercadolivre', events: ['order.paid', 'stock.changed'], is_active: true },
   { id: 'whk-3', name: 'ERP Logta Sync', url: 'https://erp.logta.com.br/hooks/stock', events: ['stock.changed'], is_active: true },
 ];
 

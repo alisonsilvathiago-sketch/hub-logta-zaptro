@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from '../lib/supabaseAdmin.js';
 import { registerImportRoutes, registerStockMovementRoutes } from './importRoutes.js';
 import { registerOperationsRoutes } from './operationsRoutes.js';
 import { registerAiRoutes } from './aiRoutes.js';
+import { registerIntegrationsV1Routes } from './integrationsV1Routes.js';
 
 export function registerApiV1Routes(app: Express, cfg: LogstokaConfig) {
   const auth = requireAuth(cfg);
@@ -13,6 +14,7 @@ export function registerApiV1Routes(app: Express, cfg: LogstokaConfig) {
   registerImportRoutes(app, cfg);
   registerOperationsRoutes(app, cfg);
   registerAiRoutes(app, cfg);
+  registerIntegrationsV1Routes(app, cfg);
 
   app.get('/v1/products', auth, async (req: AuthedRequest, res) => {
     const admin = getSupabaseAdmin(cfg);

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CheckCircle2, Layers } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
+import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
 import MarketplaceLogo from '@/components/marketplace/MarketplaceLogo';
 import ProductThumb from '@/components/products/ProductThumb';
 import PublishOverlay, { type PublishOverlayPhase } from '@/components/products/PublishOverlay';
@@ -137,7 +138,7 @@ const ProductPublicationPage: React.FC = () => {
 
       <div className="ls-hub-panel flex flex-wrap gap-2 text-sm">
         <span className="font-bold text-[#525252]">1.</span>
-        <Link to="/app/configuracoes/integracoes" className="font-semibold text-orange-700 hover:underline">
+        <Link to={LOGSTOKA_ROUTES.INTEGRATIONS_CENTRAL} className="font-semibold text-orange-700 hover:underline">
           Conectar integrações
         </Link>
         <span className="text-[#a3a3a3]">→</span>

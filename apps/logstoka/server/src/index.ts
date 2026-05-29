@@ -4,6 +4,7 @@ import { loadConfig } from './config.js';
 import { globalRateLimit } from './middleware/rateLimit.js';
 import { registerApiV1Routes } from './routes/apiV1Routes.js';
 import { registerWebhookRoutes } from './routes/webhookRoutes.js';
+import { registerIntegrationRoutes } from './routes/integrationRoutes.js';
 import { registerQueueHandlers } from './queue/handlers.js';
 
 async function main() {
@@ -34,6 +35,7 @@ async function main() {
   });
 
   registerApiV1Routes(app, cfg);
+  registerIntegrationRoutes(app, cfg);
   registerWebhookRoutes(app, cfg);
 
   app.listen(cfg.port, () => {

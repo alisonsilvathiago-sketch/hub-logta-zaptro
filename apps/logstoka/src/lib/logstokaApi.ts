@@ -3,6 +3,21 @@ import { supabase } from './supabase.js';
 const API_BASE =
   import.meta.env.VITE_LOGSTOKA_API_URL?.replace(/\/$/, '') || '/logstoka-api';
 
+export type IntegrationApiConnection = {
+  providerId: string;
+  connected: boolean;
+  connectedAt?: string;
+  lastSyncAt?: string;
+  ordersSynced: number;
+  productsSynced: number;
+  errorCount: number;
+  status: 'connected' | 'syncing' | 'warning' | 'error' | 'disconnected';
+  sellerId?: string;
+  marketplace?: string;
+  stores: Array<{ id: string; name: string; enabled: boolean; sellerId?: string; shopId?: string }>;
+  sync: Record<string, boolean>;
+};
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
@@ -108,4 +123,17 @@ export const logstokaApi = {
       '/v1/ai/validate-import',
       { method: 'POST', body: JSON.stringify(payload) },
     ),
+  getIntegrations: () => apiFetch<{ data: IntegrationApiConnection[] }>('/v1/integrations'),
+  updateIntegration: (provider: string, payload: { stores?: unknown; sync?: unknown }) =>
+    apiFetch<{ data: IntegrationApiConnection }>(`/v1/integrations/${provider}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+  disconnectIntegration: (provider: string) =>
+    apiFetch<{ ok: boolean }>(`/v1/integrations/${provider}`, { method: 'DELETE' }),
+  syncIntegration: (provider: string) =>
+    apiFetch<{ data: IntegrationApiConnection }>(`/v1/integrations/${provider}/sync`, {
+      method: 'POST',
+      body: '{}',
+    }),
 };

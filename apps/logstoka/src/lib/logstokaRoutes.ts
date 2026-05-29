@@ -5,13 +5,14 @@ export const LOGSTOKA_ROUTES = {
   PRODUCT_PUBLICATION: '/app/products/publicacao',
   PRODUCT_SYNC: '/app/products/sincronizacao',
   DASHBOARD: '/app/dashboard',
+  INTEGRATIONS_CENTRAL: '/app/integrations',
   SETTINGS: '/app/configuracoes',
   SETTINGS_PROFILE: '/app/configuracoes/meu-perfil',
   SETTINGS_COMPANY: '/app/configuracoes/empresa',
   SETTINGS_TEAM: '/app/configuracoes/equipe',
   SETTINGS_TEAM_RANKING: '/app/configuracoes/equipe/ranking',
   SETTINGS_API: '/app/configuracoes/api-webhooks',
-  SETTINGS_INTEGRATIONS: '/app/configuracoes/integracoes',
+  SETTINGS_INTEGRATIONS: '/app/integrations',
   marketplaceStore: (marketplace: string, storeSlug?: string) =>
     storeSlug
       ? `/app/configuracoes/integracoes/${marketplace}/${storeSlug}`
@@ -31,8 +32,8 @@ export const LOGSTOKA_ROUTES = {
   RANKING: '/app/configuracoes/equipe/ranking',
   /** @deprecated use SETTINGS_AUDIT */
   INTERACTIONS: '/app/configuracoes/auditoria',
-  /** @deprecated use SETTINGS_INTEGRATIONS */
-  INTEGRATIONS: '/app/configuracoes/integracoes',
+  /** @deprecated use INTEGRATIONS_CENTRAL */
+  INTEGRATIONS: '/app/integrations',
   /** @deprecated use SETTINGS_MARKETPLACES */
   MARKETPLACES: '/app/configuracoes/integracoes/marketplaces',
   ALERTS: '/app/configuracoes/notificacoes?tab=alertas',
