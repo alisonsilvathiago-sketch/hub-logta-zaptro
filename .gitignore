@@ -9,6 +9,10 @@ dist-ssr/
 .env
 .env.*
 !.env.example
+apps/logdock/.env
+
+# Deploy artifacts (podem embutir chaves do build)
+.deploy-hub/
 
 # OS & junk (macOS AppleDouble, Windows)
 .DS_Store
