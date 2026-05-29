@@ -10,6 +10,7 @@ import { LogstokaAiDrawer } from '@/modules/ai';
 import './logstokaAppShell.css';
 import './logstokaTopbar.css';
 import './logstokaBranding.css';
+import './logstokaMobile.css';
 
 const AppShell: React.FC = () => {
   const { signOut } = useAuth();
@@ -49,12 +50,12 @@ const AppShell: React.FC = () => {
         </div>
       </div>
 
-      <MobileNav onOpenAi={openAi} hideAi={isInicio} />
+      <MobileNav />
 
       {!isInicio && (
         <button
           type="button"
-          className="ls-ai-fab lg:hidden"
+          className="ls-ai-fab logstoka-mobile-only"
           onClick={openAi}
           aria-label="IA operacional"
         >

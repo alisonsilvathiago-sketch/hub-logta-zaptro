@@ -126,14 +126,7 @@ const ProductDetailPage: React.FC = () => {
     <LogstokaDetailPageLayout
       backTo={LOGSTOKA_ROUTES.PRODUCTS}
       backLabel="Voltar para produtos"
-      title={product.name}
-      subtitle={`SKU ${product.sku} · ${product.brand ?? 'Sem marca'}`}
-      actions={
-        <Link to={LOGSTOKA_ROUTES.PRODUCT_PUBLICATION} className="ls-btn-primary">
-          <Share2 size={16} />
-          Publicar
-        </Link>
-      }
+      hideTitleRow
     >
       <div className="ls-product-detail space-y-6">
         {/* Hero */}
@@ -168,7 +161,11 @@ const ProductDetailPage: React.FC = () => {
               <p className="mt-3 max-w-2xl text-sm font-medium text-[#525252]">{product.description_short}</p>
             )}
           </div>
-          <div className="text-right">
+          <div className="ls-product-detail-hero__aside">
+            <Link to={LOGSTOKA_ROUTES.PRODUCT_PUBLICATION} className="ls-btn-primary ls-product-detail-hero__publish">
+              <Share2 size={16} />
+              Publicar
+            </Link>
             <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#a3a3a3]">Publicado em</p>
             <p className="mt-1 text-3xl font-black text-orange-600">
               {publishedCount}

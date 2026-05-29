@@ -31,6 +31,9 @@ yarn-error.log*
 **/.vercel/**
 !**/.vercel/project.json
 
+# Scratch folders
+**/scratch/
+
 # Editor (optional — uncomment if you want repo-local settings ignored)
 # .idea
 # .vscode/*

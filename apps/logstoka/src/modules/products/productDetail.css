@@ -67,6 +67,30 @@
   gap: 8px;
 }
 
+.ls-product-detail-hero__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  gap: 0;
+}
+
+.ls-product-detail-hero__publish {
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .ls-product-detail-hero__aside {
+    align-items: stretch;
+    text-align: left;
+  }
+
+  .ls-product-detail-hero__publish {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+}
+
 .ls-product-detail-kpi {
   position: relative;
   overflow: hidden;

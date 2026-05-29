@@ -6,9 +6,11 @@ import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardP
 export type LogstokaDetailPageLayoutProps = {
   backTo: string;
   backLabel?: string;
-  title: string;
+  title?: string;
   subtitle?: string;
   actions?: React.ReactNode;
+  /** Oculta título/subtítulo/ações — conteúdo fica só no corpo (ex: hero do produto) */
+  hideTitleRow?: boolean;
   children: React.ReactNode;
 };
 
@@ -18,8 +20,11 @@ export function LogstokaDetailPageLayout({
   title,
   subtitle,
   actions,
+  hideTitleRow = false,
   children,
 }: LogstokaDetailPageLayoutProps) {
+  const showTitleRow = !hideTitleRow && (title || subtitle || actions);
+
   return (
     <div className="space-y-6">
       <Link
@@ -30,13 +35,15 @@ export function LogstokaDetailPageLayout({
         {backLabel}
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>{title}</h2>
-          {subtitle ? <p className="mt-1 text-sm font-medium text-slate-500">{subtitle}</p> : null}
+      {showTitleRow ? (
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            {title ? <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>{title}</h2> : null}
+            {subtitle ? <p className="mt-1 text-sm font-medium text-slate-500">{subtitle}</p> : null}
+          </div>
+          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
         </div>
-        {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
-      </div>
+      ) : null}
 
       {children}
     </div>
