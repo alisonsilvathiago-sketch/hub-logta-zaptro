@@ -49,7 +49,7 @@ const AlertsPage: React.FC = () => {
               <p className="mt-1 text-xs text-slate-400">{new Date(a.created_at).toLocaleString('pt-BR')}</p>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <span className={`ls-badge ${a.severity === 'critical' ? 'bg-rose-50 text-rose-700' : a.severity === 'warning' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}`}>
+              <span className={`ls-badge ${a.severity === 'critical' ? 'bg-rose-50 text-rose-700' : a.severity === 'warning' ? 'bg-amber-50 text-amber-700' : 'bg-orange-50 text-orange-700'}`}>
                 {a.severity}
               </span>
               {!a.is_read && (

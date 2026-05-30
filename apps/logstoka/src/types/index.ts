@@ -1,3 +1,15 @@
+export interface Profile {
+  id: string;
+  email: string;
+  full_name?: string;
+  role: LogstokaRoleCode | 'admin' | 'master_admin';
+  company_id?: string;
+  avatar_url?: string;
+  phone?: string;
+  bio?: string;
+  updated_at?: string;
+}
+
 export type LogstokaRoleCode = 'master_admin' | 'logistics_manager' | 'operator';
 
 export type ProductPublicationStatus = 'draft' | 'review' | 'ready' | 'published';

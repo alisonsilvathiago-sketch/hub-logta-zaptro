@@ -16,11 +16,10 @@ export function buildLogstokaDemoProfile(userId?: string) {
     id: userId || LOGSTOKA_DEMO_USER_ID,
     email: LOGSTOKA_DEMO_LOGIN_EMAIL,
     full_name: 'Administrador LogStoka',
-    role: 'admin',
+    role: 'admin' as const,
     company_id: LOGSTOKA_DEMO_COMPANY_ID,
     avatar_url: null as string | null,
     permissions: {} as Record<string, unknown>,
-    tem_logstoka: true,
     metadata: { modules: { logstoka: true } },
   };
 }

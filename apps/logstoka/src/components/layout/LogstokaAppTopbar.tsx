@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Bell,
   Building2,
   ChevronRight,
   HelpCircle,
@@ -17,6 +16,8 @@ import { resolveMarketplaceHubSlug } from '@/lib/marketplaceHub';
 import { MARKETPLACE_LABELS } from '@/types';
 import { settingsSectionLabel } from '@/modules/settings/settingsNav';
 import TopbarIntegrationStrip from './TopbarIntegrationStrip';
+import LogstokaTopbarNotify from './LogstokaTopbarNotify';
+import LogstokaIconTooltip from '@/components/ui/LogstokaIconTooltip';
 
 function resolveCrumbs(pathname: string): { strong: string; muted: string } {
   const hubSlug = pathname.replace(/^\/app\/?/, '').split('/')[0] ?? '';
@@ -25,7 +26,7 @@ function resolveCrumbs(pathname: string): { strong: string; muted: string } {
     return { strong: MARKETPLACE_LABELS[hubMp], muted: 'Interação · Dashboard WMS' };
   }
   if (pathname === '/app' || pathname === '/app/') {
-    return { strong: 'LogStoka IA', muted: 'Pergunte sobre o estoque' };
+    return { strong: 'LogStoka IA', muted: 'Motor principal · Llama 3.2' };
   }
   if (pathname.startsWith('/app/integrations')) {
     return { strong: 'Integrações', muted: 'Central multicanal · OAuth & sync' };
@@ -92,26 +93,23 @@ const LogstokaAppTopbar: React.FC<Props> = ({ onOpenAi, onSignOut }) => {
         <TopbarIntegrationStrip />
 
         <div className="lsdash-topbar-actions">
-        <NavLink
-          to={LOGSTOKA_ROUTES.ALERTS}
-          className={({ isActive }) => `lsdash-icon-btn lsdash-icon-btn--notify${isActive ? ' active' : ''}`}
-          title="Alertas"
-        >
-          <Bell size={18} strokeWidth={2} />
-          <span className="lsdash-notify-dot" aria-hidden />
-        </NavLink>
-        <button type="button" className="lsdash-icon-btn" title="Ajuda">
-          <HelpCircle size={18} strokeWidth={2} />
-        </button>
+        <LogstokaTopbarNotify />
+        <LogstokaIconTooltip label="Ajuda">
+          <button type="button" className="lsdash-icon-btn" aria-label="Ajuda">
+            <HelpCircle size={18} strokeWidth={2} />
+          </button>
+        </LogstokaIconTooltip>
         <span className="lsdash-pill lsdash-pill--ok">ATIVO</span>
-        <button
-          type="button"
-          className="lsdash-icon-btn active"
-          title="IA operacional"
-          onClick={() => onOpenAi?.()}
-        >
-          <Sparkles size={18} strokeWidth={2} />
-        </button>
+        <LogstokaIconTooltip label="Assistente IA Global">
+          <button
+            type="button"
+            className="lsdash-icon-btn active"
+            aria-label="Assistente IA Global"
+            onClick={() => onOpenAi?.()}
+          >
+            <Sparkles size={18} strokeWidth={2} />
+          </button>
+        </LogstokaIconTooltip>
 
         <div className="lsdash-profile-wrap" ref={ref}>
           <button

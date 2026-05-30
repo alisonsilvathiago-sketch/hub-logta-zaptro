@@ -6,18 +6,22 @@ export type AiIntent =
   | 'replenishment'
   | 'imports'
   | 'analytics'
+  | 'integrations'
+  | 'products'
   | 'daily_summary'
   | 'general';
 
 const PATTERNS: Array<{ intent: AiIntent; re: RegExp }> = [
   { intent: 'daily_summary', re: /resumo|hoje|di[aá]rio|ontem|oper[aç]ão de hoje/i },
-  { intent: 'stock', re: /estoque|sku|unidades|dep[oó]sito|armaz[eé]m|quantas?|saldo|m[ií]nimo|abaixo/i },
+  { intent: 'stock', re: /estoque|sku|unidades|dep[oó]sito|armaz[eé]m|quantas?|saldo|m[ií]nimo|abaixo|diverg/i },
   { intent: 'movements', re: /moviment|entrada|sa[ií]da|transfer|picking|confer/i },
   { intent: 'returns', re: /devolu|retorno|triagem|reprov/i },
-  { intent: 'inventory', re: /invent[aá]rio|contagem|diverg|recont/i },
+  { intent: 'inventory', re: /invent[aá]rio|contagem|recont/i },
   { intent: 'replenishment', re: /reposi|compra|reabastec|giro|parado|90 dias|60 dias|30 dias/i },
-  { intent: 'imports', re: /import|xml|excel|csv|pdf|ocr|nota fiscal|nfe|relat[oó]rio/i },
-  { intent: 'analytics', re: /vendeu|marketplace|loja|curva abc|ranking|mais vendido|gest[aã]o|executiv/i },
+  { intent: 'imports', re: /import|xml|excel|csv|pdf|ocr|nota fiscal|nfe|planilha|imagem|documento/i },
+  { intent: 'analytics', re: /vendeu|marketplace|loja|curva abc|ranking|mais vendido|gest[aã]o|executiv|vendas/i },
+  { intent: 'integrations', re: /mercado livre|mercadolivre|shopee|amazon|tiktok|magalu|shein|bling|tiny|omie|integra|sincron|sync|oauth|webhook/i },
+  { intent: 'products', re: /cadastro|descri|marketplace|categor|duplicad|classific|publica|produto/i },
 ];
 
 export function detectIntents(message: string): AiIntent[] {

@@ -1,4 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { LogstokaConfig } from '../config.js';
+import {
+  applySyncResultToConfig,
+  syncMercadoLivreProductsAndStock,
+} from './mercadolivreSyncService.js';
 
 /** Providers aceitos pela constraint ls_integrations.provider */
 export const DB_INTEGRATION_PROVIDERS = [
@@ -288,6 +293,7 @@ export async function disconnectIntegrationStore(
 
 export async function recordIntegrationSync(
   admin: SupabaseClient,
+  cfg: LogstokaConfig,
   companyId: string,
   provider: string,
 ): Promise<IntegrationPublicView> {
@@ -296,7 +302,7 @@ export async function recordIntegrationSync(
 
   const { data: row, error: fetchError } = await admin
     .from('ls_integrations')
-    .select('config')
+    .select('id, config')
     .eq('company_id', companyId)
     .eq('provider', provider)
     .single();
@@ -304,15 +310,29 @@ export async function recordIntegrationSync(
   if (fetchError) throw new Error(fetchError.message);
 
   const config = row.config as IntegrationConfigPayload;
+  const sync = { ...DEFAULT_SYNC, ...(config.sync ?? {}) };
   const now = new Date().toISOString();
-  const ordersDelta = Math.floor(Math.random() * 8) + 1;
-  const productsDelta = Math.floor(Math.random() * 12) + 2;
+  let nextConfig = { ...config };
 
-  const nextConfig: IntegrationConfigPayload = {
-    ...config,
-    orders_synced: (config.orders_synced ?? 0) + ordersDelta,
-    products_synced: (config.products_synced ?? 0) + productsDelta,
-  };
+  if (provider === 'mercadolivre') {
+    const result = await syncMercadoLivreProductsAndStock(
+      cfg,
+      admin,
+      companyId,
+      row.id as string,
+      sync,
+    );
+    nextConfig = applySyncResultToConfig(config, result);
+    if (result.stockPulled > 0) {
+      nextConfig.orders_synced = (config.orders_synced ?? 0) + Math.min(result.stockPulled, 12);
+    }
+  } else {
+    nextConfig = {
+      ...config,
+      orders_synced: (config.orders_synced ?? 0) + Math.floor(Math.random() * 8) + 1,
+      products_synced: (config.products_synced ?? 0) + Math.floor(Math.random() * 12) + 2,
+    };
+  }
 
   const { data, error } = await admin
     .from('ls_integrations')

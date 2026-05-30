@@ -11,8 +11,11 @@ import {
   oauthCallbackUrl,
 } from '@/lib/logstokaApiDomains';
 import { SETTINGS_BASE } from '@/modules/settings/settingsNav';
+import { Webhook } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import ClickableTableRow from '@/components/ui/ClickableTableRow';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useTablePagination } from '@/hooks/useTablePagination';
 
 interface WebhookEndpoint {
   id: string;
@@ -49,6 +52,9 @@ const SettingsApiWebhooksPanel: React.FC = () => {
   const [logs, setLogs] = useState<IntegrationLog[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ name: '', url: '', events: 'stock.changed,order.paid' });
+  const keysPagination = useTablePagination(DEMO_API_KEYS, 10, 'keys');
+  const tokensPagination = useTablePagination(DEMO_TOKENS, 10, 'tokens');
+  const logsPagination = useTablePagination(logs, 10, 'logs');
 
   const load = useCallback(async () => {
     if (!companyId) return;
@@ -129,12 +135,13 @@ const SettingsApiWebhooksPanel: React.FC = () => {
             <table className="ls-table">
               <thead><tr><th>Nome</th><th>Prefixo</th><th>Criada em</th></tr></thead>
               <tbody>
-                {DEMO_API_KEYS.map((k) => (
+                {keysPagination.paginatedItems.map((k) => (
                   <tr key={k.id}><td>{k.name}</td><td><code className="text-xs">{k.prefix}</code></td><td>{k.created}</td></tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <LogstokaTableFooter {...keysPagination.footerProps} itemLabel="chaves" />
         </div>
       )}
 
@@ -147,12 +154,13 @@ const SettingsApiWebhooksPanel: React.FC = () => {
             <table className="ls-table">
               <thead><tr><th>Nome</th><th>Escopos</th><th>Expira em</th></tr></thead>
               <tbody>
-                {DEMO_TOKENS.map((t) => (
+                {tokensPagination.paginatedItems.map((t) => (
                   <tr key={t.id}><td>{t.name}</td><td className="text-xs">{t.scope}</td><td>{t.expires}</td></tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <LogstokaTableFooter {...tokensPagination.footerProps} itemLabel="tokens" />
         </div>
       )}
 
@@ -219,24 +227,32 @@ const SettingsApiWebhooksPanel: React.FC = () => {
       )}
 
       {tab === 'logs' && (
-        <div className="ls-table-wrap">
-          <table className="ls-table">
-            <thead><tr><th>Direção</th><th>Endpoint</th><th>Status</th><th>Data</th></tr></thead>
-            <tbody>
-              {logs.map((l) => (
-                <ClickableTableRow key={l.id} to={`${SETTINGS_BASE}/api-webhooks/logs/${l.id}`}>
-                  <td>{l.direction}</td>
-                  <td>{l.endpoint || '—'}</td>
-                  <td>{l.status}</td>
-                  <td>{new Date(l.created_at).toLocaleString('pt-BR')}</td>
-                </ClickableTableRow>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="ls-table-wrap">
+            <table className="ls-table">
+              <thead><tr><th>Direção</th><th>Endpoint</th><th>Status</th><th>Data</th></tr></thead>
+              <tbody>
+                {logsPagination.paginatedItems.map((l) => (
+                  <ClickableTableRow key={l.id} to={`${SETTINGS_BASE}/api-webhooks/logs/${l.id}`}>
+                    <td>{l.direction}</td>
+                    <td>{l.endpoint || '—'}</td>
+                    <td>{l.status}</td>
+                    <td>{new Date(l.created_at).toLocaleString('pt-BR')}</td>
+                  </ClickableTableRow>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <LogstokaTableFooter {...logsPagination.footerProps} hidden={logs.length === 0} itemLabel="logs" />
+        </>
       )}
 
-      <Modal open={modalOpen} title="Novo webhook de saída" onClose={() => setModalOpen(false)}>
+      <Modal
+        open={modalOpen}
+        title="Novo webhook de saída"
+        icon={<Webhook size={20} strokeWidth={2.25} />}
+        onClose={() => setModalOpen(false)}
+      >
         <div className="space-y-3">
           <input className="ls-input" placeholder="Nome" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
           <input className="ls-input" placeholder="URL" value={form.url} onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))} />

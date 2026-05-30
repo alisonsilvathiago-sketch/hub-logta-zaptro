@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './marketplaceHub.css';
+import LogstokaIconTooltip from '@/components/ui/LogstokaIconTooltip';
 
 type IconButtonProps = {
   title: string;
   onClick?: () => void;
   disabled?: boolean;
   variant?: 'neutral' | 'accent';
+  active?: boolean;
   children: React.ReactNode;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
@@ -14,41 +15,53 @@ type IconLinkProps = {
   to: string;
   title: string;
   variant?: 'neutral' | 'accent';
+  active?: boolean;
   children: React.ReactNode;
 };
 
-const variantClass = (variant: 'neutral' | 'accent') =>
-  variant === 'accent' ? 'ls-hub-hero-icon-btn--accent' : 'ls-hub-hero-icon-btn--neutral';
+const itemClass = (variant: 'neutral' | 'accent', active?: boolean) =>
+  [
+    'ls-icon-nav__item',
+    active ? 'ls-icon-nav__item--active' : '',
+    variant === 'accent' ? 'ls-icon-nav__item--accent' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
 export const HubHeroIconButton: React.FC<IconButtonProps> = ({
   title,
   onClick,
   disabled,
   variant = 'neutral',
+  active = false,
   children,
   className = '',
   ...rest
 }) => (
-  <button
-    type="button"
-    className={`ls-hub-hero-icon-btn ${variantClass(variant)} ${className}`.trim()}
-    onClick={onClick}
-    disabled={disabled}
-    title={title}
-    aria-label={title}
-    {...rest}
-  >
-    {children}
-  </button>
+  <LogstokaIconTooltip label={title}>
+    <button
+      type="button"
+      className={`${itemClass(variant, active)}${className ? ` ${className}` : ''}`}
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={title}
+      {...rest}
+    >
+      {children}
+    </button>
+  </LogstokaIconTooltip>
 );
 
-export const HubHeroIconLink: React.FC<IconLinkProps> = ({ to, title, variant = 'neutral', children }) => (
-  <Link
-    to={to}
-    className={`ls-hub-hero-icon-btn ${variantClass(variant)}`}
-    title={title}
-    aria-label={title}
-  >
-    {children}
-  </Link>
+export const HubHeroIconLink: React.FC<IconLinkProps> = ({
+  to,
+  title,
+  variant = 'neutral',
+  active = false,
+  children,
+}) => (
+  <LogstokaIconTooltip label={title}>
+    <Link to={to} className={itemClass(variant, active)} aria-label={title}>
+      {children}
+    </Link>
+  </LogstokaIconTooltip>
 );

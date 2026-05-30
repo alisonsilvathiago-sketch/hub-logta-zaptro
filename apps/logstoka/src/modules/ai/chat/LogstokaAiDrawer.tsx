@@ -3,9 +3,17 @@ import { createPortal } from 'react-dom';
 import { ArrowUp, Loader2, Sparkles, X } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/LogstokaAuthProvider';
-import { logstokaApi } from '@/lib/logstokaApi';
-import { AI_AGENT_LABELS, AI_QUICK_PROMPTS, type AiChatTurn } from '../types';
+import {
+  AI_AGENT_LABELS,
+  AI_QUICK_PROMPTS,
+  LOGSTOKA_AI_MODEL,
+  LOGSTOKA_AI_TAGLINE,
+  aiEngineStatusLabel,
+  buildAiWelcomeMessage,
+  type AiChatTurn,
+} from '../types';
 import { useAiChat } from './useAiChat';
+import { useAiHealth } from './useAiHealth';
 
 type ChatMessage = { id: string; role: 'user' | 'assistant'; content: string; agents?: string[] };
 
@@ -36,18 +44,13 @@ const LogstokaAiDrawer: React.FC<Props> = ({
     userName: profile?.full_name ?? undefined,
   });
 
+  const { online } = useAiHealth(open);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
-  const [ollamaOnline, setOllamaOnline] = useState<boolean | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const seededRef = useRef(false);
   const pendingInitialRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    void logstokaApi.aiHealth().then((r) => setOllamaOnline(r.ollama?.online ?? false)).catch(() => setOllamaOnline(false));
-  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -74,14 +77,14 @@ const LogstokaAiDrawer: React.FC<Props> = ({
         {
           id: newId(),
           role: 'assistant',
-          content: `Olá, ${firstName}! Sou a IA operacional LogStoka (Llama 3.2). Consulto estoque, movimentações, devoluções, inventário e reposição em tempo real. O que precisa?`,
+          content: buildAiWelcomeMessage(firstName, online),
         },
       ]);
     }
     const seed = initialMessage.trim();
     if (seed) pendingInitialRef.current = seed;
     window.setTimeout(() => inputRef.current?.focus(), 120);
-  }, [open, firstName, initialMessage]);
+  }, [open, firstName, initialMessage, online]);
 
   const pushReply = useCallback(async (text: string) => {
     const userMsg: ChatMessage = { id: newId(), role: 'user', content: text };
@@ -110,7 +113,10 @@ const LogstokaAiDrawer: React.FC<Props> = ({
         {
           id: newId(),
           role: 'assistant',
-          content: err instanceof Error ? err.message : 'IA indisponível. Verifique Ollama na VPS.',
+          content:
+            err instanceof Error
+              ? err.message
+              : 'Motor Llama 3.2 temporariamente indisponível. A reconexão é automática — tente novamente em instantes.',
         },
       ]);
     }
@@ -130,8 +136,10 @@ const LogstokaAiDrawer: React.FC<Props> = ({
 
   if (!open) return null;
 
+  const engineStatus = aiEngineStatusLabel(online);
+
   return createPortal(
-    <div className="ls-ai-overlay" role="dialog" aria-label="Assistente IA LogStoka">
+    <div className="ls-ai-overlay" role="dialog" aria-label="Assistente IA Global LogStoka">
       <button type="button" className="ls-ai-backdrop" aria-label="Fechar" onClick={onClose} />
       <aside className="ls-ai-drawer">
         <header className="ls-ai-header">
@@ -140,9 +148,12 @@ const LogstokaAiDrawer: React.FC<Props> = ({
               <Sparkles size={18} />
             </span>
             <div>
-              <p className="text-sm font-black text-slate-900">IA Operacional</p>
+              <p className="text-sm font-black text-slate-900">Assistente IA Global</p>
               <p className="text-xs text-slate-500">
-                Llama 3.2 · {ollamaOnline === null ? '…' : ollamaOnline ? 'online' : 'offline'}
+                {LOGSTOKA_AI_TAGLINE} · {LOGSTOKA_AI_MODEL} ·{' '}
+                <span className={online ? 'font-semibold text-emerald-600' : 'font-semibold text-amber-600'}>
+                  {engineStatus}
+                </span>
               </p>
             </div>
           </div>
@@ -169,7 +180,7 @@ const LogstokaAiDrawer: React.FC<Props> = ({
           {sending && (
             <div className="ls-ai-msg ls-ai-msg-bot flex items-center gap-2 text-sm text-slate-500">
               <Loader2 size={16} className="animate-spin" />
-              Consultando dados…
+              Consultando dados do sistema…
             </div>
           )}
         </div>
@@ -193,7 +204,7 @@ const LogstokaAiDrawer: React.FC<Props> = ({
             ref={inputRef}
             className="ls-ai-input"
             rows={2}
-            placeholder="Pergunte sobre estoque, devoluções, inventário…"
+            placeholder="Pergunte sobre estoque, vendas, reposição, documentos ou integrações…"
             value={draft}
             disabled={sending}
             onChange={(e) => setDraft(e.target.value)}

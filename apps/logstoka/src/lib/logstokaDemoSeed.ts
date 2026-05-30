@@ -200,7 +200,7 @@ export type DemoTransferRow = {
 
 export const DEMO_TRANSFERS: DemoTransferRow[] = [
   { id: 'tr-1', status: 'completed', notes: 'Reposição Full Shopee', created_at: daysAgo(2), origin_warehouse_id: 'wh-1', destination_warehouse_id: 'wh-3', origin_name: 'CD Principal', destination_name: 'Full Shopee', items: [{ sku: 'PLM-FRD-P', name: 'Fralda Pluma P', quantity: 120 }] },
-  { id: 'tr-2', status: 'in_transit', notes: 'TR-8841 automático', created_at: daysAgo(0, 14), origin_warehouse_id: 'wh-1', destination_warehouse_id: 'wh-3', origin_name: 'CD Principal', destination_name: 'Full Shopee', items: [{ sku: 'STK-GAR-500', name: 'Pote Hermético', quantity: 60 }] },
+  { id: 'tr-2', status: 'in_transit', notes: 'TR-8839 · reposição Full Shopee', created_at: daysAgo(0, 14), origin_warehouse_id: 'wh-1', destination_warehouse_id: 'wh-3', origin_name: 'CD Principal', destination_name: 'Full Shopee', items: [{ sku: 'STK-GAR-500', name: 'Pote Hermético', quantity: 60 }] },
   { id: 'tr-3', status: 'pending', notes: 'Aguardando separação', created_at: daysAgo(0, 16), origin_warehouse_id: 'wh-2', destination_warehouse_id: 'wh-4', origin_name: 'CD Secundário', destination_name: 'Full Mercado Livre', items: [{ sku: 'BBR-CHU-A1', name: 'Chupeta Silicone', quantity: 200 }] },
   { id: 'tr-4', status: 'completed', notes: 'Cross-dock Amazon', created_at: daysAgo(3), origin_warehouse_id: 'wh-1', destination_warehouse_id: 'wh-5', origin_name: 'CD Principal', destination_name: 'Full Amazon', items: [{ sku: 'TEC-FNT-20W', name: 'Carregador 20W', quantity: 80 }] },
 ];
@@ -332,6 +332,22 @@ export const DEMO_IMPORTS: DemoImportRow[] = [
   { id: 'imp-5', file_name: 'foto_romaneio.jpg', file_type: 'ocr', status: 'completed', rows_processed: 24, created_at: daysAgo(4) },
 ];
 
+export function findDemoProductByScan(value: string, mode: 'code' | 'barcode') {
+  const q = value.trim().toLowerCase();
+  if (!q) return null;
+  return (
+    DEMO_PRODUCTS.find((p) => {
+      if (mode === 'barcode') return (p.barcode ?? '').toLowerCase() === q;
+      return (
+        p.sku.toLowerCase() === q ||
+        (p.internal_code ?? '').toLowerCase() === q ||
+        p.name.toLowerCase() === q ||
+        p.name.toLowerCase().includes(q)
+      );
+    }) ?? null
+  );
+}
+
 export function filterDemoProducts(search: string, page: number, limit: number) {
   let list = [...DEMO_PRODUCTS];
   const q = search.trim().toLowerCase();
@@ -352,6 +368,11 @@ export function getDemoProductById(id: string) {
   return DEMO_PRODUCTS.find((p) => p.id === id) ?? null;
 }
 
+export function getDemoProductBySku(sku: string | null | undefined) {
+  if (!sku) return null;
+  return DEMO_PRODUCTS.find((p) => p.sku === sku) ?? null;
+}
+
 export function getDemoCategoryName(categoryId: string | null | undefined): string {
   if (!categoryId) return '—';
   return DEMO_CATEGORIES.find((c) => c.id === categoryId)?.name ?? '—';
@@ -370,6 +391,69 @@ export function getDemoProductStockStats(productId: string) {
 
 export function getDemoMovementById(id: string) {
   return DEMO_MOVEMENTS.find((m) => m.id === id) ?? null;
+}
+
+export function getDemoTransferForMovement(m: DemoMovementRow): DemoTransferRow | null {
+  if (m.movement_type !== 'transfer') return null;
+  const byRef = DEMO_TRANSFERS.find((t) => m.reference_code && t.notes?.includes(m.reference_code));
+  if (byRef) return byRef;
+  return (
+    DEMO_TRANSFERS.find(
+      (t) =>
+        t.items.some((i) => i.sku === m.sku && i.quantity === m.total_quantity) &&
+        (t.origin_warehouse_id === m.warehouse_id || t.origin_name === m.warehouse_name),
+    ) ?? null
+  );
+}
+
+export function getDemoRelatedMovements(m: DemoMovementRow, limit = 5): DemoMovementRow[] {
+  if (!m.sku) return [];
+  return DEMO_MOVEMENTS.filter((row) => row.sku === m.sku && row.id !== m.id)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, limit);
+}
+
+export function getDemoMovementStockSnapshot(m: DemoMovementRow) {
+  const product = getDemoProductBySku(m.sku);
+  if (!product) return null;
+  const rows = getDemoStockForProduct(product.id);
+  const atWarehouse = rows.find((r) => r.warehouse_id === m.warehouse_id);
+  const total = rows.reduce((sum, r) => sum + r.quantity, 0);
+  return {
+    product,
+    atWarehouse: atWarehouse?.quantity ?? 0,
+    totalStock: total,
+  };
+}
+
+export function movementSubTypeLabel(type: string, subType: string) {
+  const map: Record<string, Record<string, string>> = {
+    entry: { purchase: 'Compra', factory: 'Fábrica', xml: 'NF-e / XML' },
+    exit: { sale: 'Venda' },
+    transfer: { warehouse: 'Entre depósitos' },
+    damage: { handling: 'Manuseio', transport: 'Transporte', other: 'Outro' },
+    return: { customer: 'Devolução de cliente' },
+  };
+  return map[type]?.[subType] ?? subType;
+}
+
+export function movementStatusLabel(status: string) {
+  const map: Record<string, string> = {
+    completed: 'Concluída',
+    pending: 'Pendente',
+    in_transit: 'Em trânsito',
+    cancelled: 'Cancelada',
+    review: 'Em revisão',
+    triage: 'Triagem',
+  };
+  return map[status] ?? status;
+}
+
+export function movementTabFromType(type: string): 'entry' | 'exit' | 'transfer' | 'damage' {
+  if (type === 'exit') return 'exit';
+  if (type === 'transfer') return 'transfer';
+  if (type === 'damage') return 'damage';
+  return 'entry';
 }
 
 export function getDemoTransferById(id: string) {

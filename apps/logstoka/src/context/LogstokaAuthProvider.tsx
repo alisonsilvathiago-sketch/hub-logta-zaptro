@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Profile } from '@shared/types';
+import type { Profile } from '@/types';
 import {
   buildLogstokaDemoSession,
   clearLogstokaMockSession,
@@ -39,36 +39,21 @@ export const LogstokaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const loadProfile = async (userId: string) => {
     try {
-      const selects = [
-        'id,email,full_name,role,company_id,avatar_url,department,permissions,metadata,tem_logstoka,status_empresa',
-        'id,email,full_name,role,company_id,avatar_url,department,permissions,metadata',
-        'id,email,full_name,role,company_id,avatar_url,department',
-        '*',
-      ];
+      const { data, error } = await supabase
+        .from('ls_profiles')
+        .select('id, email, full_name, role, company_id, avatar_url, phone, bio, updated_at')
+        .eq('id', userId)
+        .maybeSingle();
 
-      let lastError = null;
-      for (const selectCols of selects) {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select(selectCols)
-            .eq('id', userId)
-            .maybeSingle();
-
-          if (!error && data) {
-            setProfile(data as unknown as Profile);
-            setIsLoading(false);
-            return;
-          }
-          if (error) lastError = error;
-        } catch (e) {
-          lastError = e;
-        }
+      if (!error && data) {
+        setProfile(data as unknown as Profile);
+        setIsLoading(false);
+        return;
       }
 
-      console.warn('Profile loading failed, using fallback:', lastError);
+      console.warn('ls_profiles loading failed, using fallback:', error);
       const { data: fallbackData } = await supabase
-        .from('profiles')
+        .from('ls_profiles')
         .select('id, email')
         .eq('id', userId)
         .maybeSingle();
@@ -178,7 +163,7 @@ export const LogstokaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (user?.id) await loadProfile(user.id);
   };
 
-  const isMaster = profile?.role === 'MASTER' || profile?.role === 'MASTER_ADMIN';
+  const isMaster = profile?.role === 'master_admin' || profile?.role === 'admin';
 
   return (
     <AuthContext.Provider

@@ -32,6 +32,8 @@ import {
 } from '@/lib/logstokaApiDomains';
 import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
 import { DEMO_INTEGRATION_LOGS, DEMO_WEBHOOKS } from '@/lib/logstokaDemoSeed';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useTablePagination } from '@/hooks/useTablePagination';
 import IntegrationConfigureModal from '@/modules/integrations/IntegrationConfigureModal';
 import IntegrationProviderCard from '@/modules/integrations/IntegrationProviderCard';
 import './integrationsCentral.css';
@@ -48,6 +50,7 @@ const IntegrationsCentralPage: React.FC = () => {
   const [connectingId, setConnectingId] = useState<IntegrationProviderId | null>(null);
   const [loading, setLoading] = useState(true);
   const [, bump] = useState(0);
+  const { paginatedItems: paginatedLogs, footerProps: logsFooterProps } = useTablePagination(DEMO_INTEGRATION_LOGS);
 
   const reload = useCallback(async () => {
     if (!companyId) return;
@@ -282,7 +285,7 @@ const IntegrationsCentralPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {DEMO_INTEGRATION_LOGS.slice(0, 8).map((l) => (
+                {paginatedLogs.map((l) => (
                   <tr key={l.id}>
                     <td>{l.direction}</td>
                     <td>{l.endpoint}</td>
@@ -293,6 +296,7 @@ const IntegrationsCentralPage: React.FC = () => {
               </tbody>
             </table>
           </div>
+          <LogstokaTableFooter {...logsFooterProps} itemLabel="logs" />
 
           <Link to={LOGSTOKA_ROUTES.SETTINGS_API} className="text-sm font-bold text-orange-700 hover:underline">
             Abrir painel completo de API e Webhooks →

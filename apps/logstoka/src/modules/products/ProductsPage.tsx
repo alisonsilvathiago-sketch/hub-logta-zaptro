@@ -12,8 +12,11 @@ import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import { can } from '@/lib/permissions';
 import { useAuth } from '@/context/LogstokaAuthProvider';
 import Modal from '@/components/ui/Modal';
+import LogstokaAddIconButton from '@/components/ui/LogstokaAddIconButton';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
 import ClickableTableRow, { stopRowNavigate } from '@/components/ui/ClickableTableRow';
 import ProductThumb from '@/components/products/ProductThumb';
+import ProductsImportExportBar from '@/components/products/ProductsImportExportBar';
 import ProductsKpiStrip from '@/components/products/ProductsKpiStrip';
 import { getDemoProductsCatalogKpis, getDemoStockQty } from '@/lib/logstokaDemoSeed';
 import {
@@ -65,8 +68,9 @@ const ProductsPage: React.FC = () => {
   const { profile } = useAuth();
   const { companyId } = useLogstokaTenant();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
-  const { products, total, loading, limit, reload } = useProducts(page, search);
+  const { products, total, loading, limit, reload } = useProducts(page, search, pageSize);
   const { categories } = useCategories();
   const canWrite = can('products.write', profile?.role);
   const [modalOpen, setModalOpen] = useState(false);
@@ -254,9 +258,9 @@ const ProductsPage: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+    <div className="ls-products-page space-y-6">
+      <div className="ls-products-page-inset flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Produtos</h2>
           <p className="text-sm text-[#a3a3a3]">
             Cadastro em rascunho por padrão — publique depois em{' '}
@@ -265,29 +269,33 @@ const ProductsPage: React.FC = () => {
             </Link>
           </p>
         </div>
-        {canWrite && (
-          <button type="button" className="ls-btn-primary" onClick={openCreate}>
-            <Plus size={16} />
-            Novo produto
-          </button>
-        )}
+        {canWrite ? <LogstokaAddIconButton title="Novo produto" onClick={openCreate} /> : null}
       </div>
 
       <ProductsKpiStrip items={productKpis} />
 
-      <div className="relative max-w-md">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input
-          className="ls-input pl-9"
-          placeholder="Buscar SKU, nome ou código de barras"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
+      <div className="ls-products-page-inset flex flex-wrap items-center justify-between gap-3">
+        <div className="relative min-w-[220px] flex-1 max-w-md">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            className="ls-input pl-9"
+            placeholder="Buscar SKU, nome ou código de barras"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+          />
+        </div>
+        <ProductsImportExportBar
+          companyId={companyId}
+          categoryName={categoryName}
+          canWrite={canWrite}
+          onImported={() => reload()}
         />
       </div>
 
+      <section className="ls-page-table ls-products-page-inset">
       <div className="ls-table-wrap">
         <table className="ls-table">
           <thead>
@@ -327,7 +335,9 @@ const ProductsPage: React.FC = () => {
                 <td>{p.name}</td>
                 <td className="ls-hide-mobile">{categoryName(p.category_id)}</td>
                 <td>{isDemo ? getDemoStockQty(p.id) : '—'}</td>
-                <td>{Number(p.sale_price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                <td className="ls-products-price-cell">
+                  {Number(p.sale_price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </td>
                 <td className="ls-hide-mobile">
                   <span className="ls-badge bg-slate-100 text-slate-700">
                     {PUBLICATION_STATUS_LABELS[p.publication_status ?? 'draft']}
@@ -359,23 +369,27 @@ const ProductsPage: React.FC = () => {
         </table>
       </div>
 
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-slate-500">{total} produtos</span>
-        <div className="flex gap-2">
-          <button type="button" className="ls-btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-            Anterior
-          </button>
-          <button type="button" className="ls-btn-secondary" disabled={page * limit >= total} onClick={() => setPage((p) => p + 1)}>
-            Próxima
-          </button>
-        </div>
-      </div>
+      <LogstokaTableFooter
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+        loading={loading}
+        hidden={!loading && total === 0}
+        itemLabel="produtos"
+      />
+      </section>
 
       <Modal
         open={modalOpen}
         size="landscape"
         title={editing ? 'Editar produto' : 'Novo produto'}
         subtitle="Salva em rascunho — nada é enviado aos marketplaces até você publicar"
+        icon={editing ? <Edit3 size={20} strokeWidth={2.25} /> : <Package size={20} strokeWidth={2.25} />}
         onClose={() => setModalOpen(false)}
         footer={modalFooter}
       >

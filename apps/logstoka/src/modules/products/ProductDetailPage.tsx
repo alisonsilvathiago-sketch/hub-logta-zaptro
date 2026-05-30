@@ -72,7 +72,7 @@ const ProductDetailPage: React.FC = () => {
       .eq('id', id)
       .eq('company_id', companyId)
       .single()
-      .then(({ data }) => setProduct(data as LsProduct));
+      .then((res) => setProduct(res.data as LsProduct));
 
     void logstokaApi
       .getProductTimeline(id)

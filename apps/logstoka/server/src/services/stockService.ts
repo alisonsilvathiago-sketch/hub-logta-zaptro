@@ -41,13 +41,21 @@ async function resolveProduct(
   }
 
   if (item.sku) {
-    const { data } = await admin
+    const { data: bySku } = await admin
       .from('ls_products')
       .select('id, sku, cost')
       .eq('company_id', companyId)
       .eq('sku', item.sku)
       .maybeSingle();
-    if (data) return data;
+    if (bySku) return bySku;
+
+    const { data: byInternal } = await admin
+      .from('ls_products')
+      .select('id, sku, cost')
+      .eq('company_id', companyId)
+      .eq('internal_code', item.sku)
+      .maybeSingle();
+    if (byInternal) return byInternal;
   }
 
   if (item.barcode) {

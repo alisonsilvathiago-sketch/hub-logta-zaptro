@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LogOut, Truck } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '@/context/LogstokaAuthProvider';
 import { useLogstokaBranding } from '@/context/LogstokaBrandingContext';
 import { can } from '@/lib/permissions';
@@ -34,7 +34,7 @@ const Sidebar: React.FC<Props> = ({ onSignOut }) => {
             {branding.logoUrl ? (
               <img src={branding.logoUrl} alt="" className="logstoka-app-brand-logo" />
             ) : (
-              <Truck size={22} strokeWidth={2.2} className="logstoka-app-brand-icon" />
+              <img src="/logstoka-mark.svg" alt="LogStoka" className="logstoka-app-brand-mark-img" />
             )}
           </NavLink>
         </SidebarTooltip>

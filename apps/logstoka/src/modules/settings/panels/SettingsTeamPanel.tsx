@@ -7,6 +7,8 @@ import { DEMO_COLLABORATORS, type LogstokaCollaborator } from '@/lib/logstokaDem
 import { SETTINGS_BASE } from '@/modules/settings/settingsNav';
 import Modal from '@/components/ui/Modal';
 import ClickableTableRow from '@/components/ui/ClickableTableRow';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useTablePagination } from '@/hooks/useTablePagination';
 
 const emptyForm = {
   name: '',
@@ -22,6 +24,7 @@ const SettingsTeamPanel: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [tab, setTab] = useState<'equipe' | 'permissoes'>('equipe');
+  const { paginatedItems, footerProps } = useTablePagination(collaborators, 10, tab);
 
   const saveCollaborator = () => {
     if (!form.name || !form.email || !form.role) {
@@ -82,49 +85,52 @@ const SettingsTeamPanel: React.FC = () => {
       </div>
 
       {tab === 'equipe' && (
-        <div className="ls-table-wrap">
-          <table className="ls-table">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Cargo</th>
-                <th>Departamento</th>
-                <th className="ls-hide-mobile">Telefone</th>
-                <th>Status</th>
-                <th>Mov. hoje</th>
-                <th>Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              {collaborators.map((c) => (
-                <ClickableTableRow key={c.id} to={`${SETTINGS_BASE}/equipe/${c.id}`}>
-                  <td>
-                    <p className={LOGSTOKA_ROW_TITLE_CLASS}>{c.name}</p>
-                    <p className="text-xs text-gray-500">{c.email}</p>
-                  </td>
-                  <td>{c.role}</td>
-                  <td>{c.department}</td>
-                  <td className="ls-hide-mobile">{c.phone || '—'}</td>
-                  <td>
-                    <span
-                      className={`ls-badge ${
-                        c.status === 'Ativo'
-                          ? 'bg-orange-50 text-orange-700'
-                          : c.status === 'Ausente'
-                            ? 'bg-amber-50 text-amber-700'
-                            : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {c.status}
-                    </span>
-                  </td>
-                  <td className="font-bold text-orange-700">{c.movementsToday}</td>
-                  <td className="font-black">{c.score}</td>
-                </ClickableTableRow>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="ls-table-wrap">
+            <table className="ls-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Cargo</th>
+                  <th>Departamento</th>
+                  <th className="ls-hide-mobile">Telefone</th>
+                  <th>Status</th>
+                  <th>Mov. hoje</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedItems.map((c) => (
+                  <ClickableTableRow key={c.id} to={`${SETTINGS_BASE}/equipe/${c.id}`}>
+                    <td>
+                      <p className={LOGSTOKA_ROW_TITLE_CLASS}>{c.name}</p>
+                      <p className="text-xs text-gray-500">{c.email}</p>
+                    </td>
+                    <td>{c.role}</td>
+                    <td>{c.department}</td>
+                    <td className="ls-hide-mobile">{c.phone || '—'}</td>
+                    <td>
+                      <span
+                        className={`ls-badge ${
+                          c.status === 'Ativo'
+                            ? 'bg-orange-50 text-orange-700'
+                            : c.status === 'Ausente'
+                              ? 'bg-amber-50 text-amber-700'
+                              : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        {c.status}
+                      </span>
+                    </td>
+                    <td className="font-bold text-orange-700">{c.movementsToday}</td>
+                    <td className="font-black">{c.score}</td>
+                  </ClickableTableRow>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <LogstokaTableFooter {...footerProps} hidden={collaborators.length === 0} itemLabel="colaboradores" />
+        </>
       )}
 
       {tab === 'permissoes' && (
@@ -142,7 +148,13 @@ const SettingsTeamPanel: React.FC = () => {
         </div>
       )}
 
-      <Modal open={modalOpen} title="Cadastro de colaborador" onClose={() => setModalOpen(false)} wide>
+      <Modal
+        open={modalOpen}
+        title="Cadastro de colaborador"
+        icon={<UserPlus size={20} strokeWidth={2.25} />}
+        onClose={() => setModalOpen(false)}
+        wide
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="ls-label">Nome completo</label>

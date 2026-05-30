@@ -4,6 +4,8 @@ import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
 import MarketplaceLogo from '@/components/marketplace/MarketplaceLogo';
 import { getAllConnectedStores } from '@/lib/productPublication';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useTablePagination } from '@/hooks/useTablePagination';
 import { MARKETPLACE_LABELS } from '@/types';
 import type { MarketplaceStoreStats } from '@/lib/marketplaceStores';
 
@@ -22,6 +24,7 @@ function syncStatusBadge(status: MarketplaceStoreStats['status']): { className: 
 
 const ProductSyncPage: React.FC = () => {
   const stores = getAllConnectedStores();
+  const { paginatedItems, footerProps } = useTablePagination(stores);
 
   return (
     <div className="space-y-6">
@@ -68,7 +71,7 @@ const ProductSyncPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {stores.map((s) => {
+            {paginatedItems.map((s) => {
               const badge = syncStatusBadge(s.status);
               return (
               <tr key={s.id}>
@@ -94,6 +97,8 @@ const ProductSyncPage: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      <LogstokaTableFooter {...footerProps} itemLabel="lojas" />
 
       <p className="text-sm text-[#a3a3a3]">
         Logs detalhados em{' '}

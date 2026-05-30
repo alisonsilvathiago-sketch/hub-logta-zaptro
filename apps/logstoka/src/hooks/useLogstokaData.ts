@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { logstokaApi } from '@/lib/logstokaApi';
 import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
@@ -6,6 +7,7 @@ import {
   DEMO_ALERTS,
   DEMO_DASHBOARD,
   DEMO_PRODUCTS,
+  DEMO_REPLENISHMENT,
   DEMO_STOCK,
   filterDemoProducts,
 } from '@/lib/logstokaDemoSeed';
@@ -128,14 +130,14 @@ export function useProducts(page = 1, search = '', customLimit?: number) {
       query = query.or(`sku.ilike.%${search}%,name.ilike.%${search}%,barcode.ilike.%${search}%`);
     }
 
-    void query.then(({ data, count, error }) => {
-      if (!error) {
-        setProducts((data ?? []) as LsProduct[]);
-        setTotal(count ?? 0);
+    void query.then((res) => {
+      if (!res.error) {
+        setProducts((res.data ?? []) as LsProduct[]);
+        setTotal(res.count ?? 0);
       }
       setLoading(false);
     });
-  }, [companyId, page, search, reloadKey]);
+  }, [companyId, page, search, reloadKey, limit]);
 
   const reload = () => setReloadKey((k) => k + 1);
 
@@ -160,8 +162,8 @@ export function useStock() {
       .eq('company_id', companyId)
       .order('updated_at', { ascending: false })
       .limit(200)
-      .then(({ data, error }) => {
-        if (!error) setRows((data ?? []) as LsStockRow[]);
+      .then((res) => {
+        if (!res.error) setRows((res.data ?? []) as LsStockRow[]);
         setLoading(false);
       });
   }, [companyId]);
@@ -185,8 +187,36 @@ export function useAlerts() {
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })
       .limit(50)
-      .then(({ data }) => setAlerts((data ?? []) as LsAlert[]));
+      .then((res) => setAlerts((res.data ?? []) as LsAlert[]));
   }, [companyId]);
 
   return { alerts };
+}
+
+export type ReplenishmentItem = { sku: string; name: string; suggested_purchase: number };
+
+export function useReplenishment() {
+  const { companyId } = useLogstokaTenant();
+  const [items, setItems] = useState<ReplenishmentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!companyId) {
+      setLoading(false);
+      return;
+    }
+    if (isLogstokaDemoCompany(companyId)) {
+      setItems(DEMO_REPLENISHMENT);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    void logstokaApi
+      .getReplenishment()
+      .then((r) => setItems((r.data ?? []) as ReplenishmentItem[]))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [companyId]);
+
+  return { items, loading };
 }

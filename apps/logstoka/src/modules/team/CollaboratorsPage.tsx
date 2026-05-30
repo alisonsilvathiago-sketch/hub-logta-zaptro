@@ -7,6 +7,8 @@ import { DEMO_COLLABORATORS, type LogstokaCollaborator } from '@/lib/logstokaDem
 import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
 import Modal from '@/components/ui/Modal';
 import ClickableTableRow from '@/components/ui/ClickableTableRow';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useTablePagination } from '@/hooks/useTablePagination';
 
 const emptyForm = {
   name: '',
@@ -23,6 +25,7 @@ const CollaboratorsPage: React.FC = () => {
   const [form, setForm] = useState(emptyForm);
 
   const avgScore = Math.round(collaborators.reduce((a, c) => a + c.score, 0) / collaborators.length);
+  const { paginatedItems, footerProps } = useTablePagination(collaborators);
 
   const saveCollaborator = () => {
     if (!form.name || !form.email || !form.role) {
@@ -84,7 +87,7 @@ const CollaboratorsPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {collaborators.map((c) => (
+            {paginatedItems.map((c) => (
               <ClickableTableRow key={c.id} to={`/app/colaboradores/${c.id}`}>
                 <td>
                   <p className={LOGSTOKA_ROW_TITLE_CLASS}>{c.name}</p>
@@ -114,7 +117,15 @@ const CollaboratorsPage: React.FC = () => {
         </table>
       </div>
 
-      <Modal open={modalOpen} title="Cadastro de colaborador" onClose={() => setModalOpen(false)} wide>
+      <LogstokaTableFooter {...footerProps} itemLabel="colaboradores" />
+
+      <Modal
+        open={modalOpen}
+        title="Cadastro de colaborador"
+        icon={<UserPlus size={20} strokeWidth={2.25} />}
+        onClose={() => setModalOpen(false)}
+        wide
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="ls-label">Nome completo</label>

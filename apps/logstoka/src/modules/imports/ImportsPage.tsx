@@ -1,12 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FileUp, ScanText, History } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import { DEMO_IMPORTS } from '@/lib/logstokaDemoSeed';
 import { logstokaApi } from '@/lib/logstokaApi';
 import ClickableTableRow from '@/components/ui/ClickableTableRow';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useTablePagination } from '@/hooks/useTablePagination';
 
 interface ImportRecord {
   id: string;
@@ -51,6 +53,20 @@ const ImportsPage: React.FC = () => {
   useEffect(() => {
     void loadImports();
   }, [companyId]);
+
+  const { paginatedItems, footerProps } = useTablePagination(imports);
+
+  const kpis = useMemo(() => {
+    const success = imports.filter((row) => row.status === 'completed' || row.status === 'success').length;
+    const rows = imports.reduce((sum, row) => sum + (row.rows_processed ?? 0), 0);
+    const last = imports[0]?.created_at;
+    return {
+      total: imports.length,
+      success,
+      rows,
+      last: last ? new Date(last).toLocaleDateString('pt-BR') : '—',
+    };
+  }, [imports]);
 
   const handleFile = async (file: File) => {
     if (isLogstokaDemoCompany(companyId)) {
@@ -122,14 +138,27 @@ const ImportsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Centro de Importação</h2>
-        <p className="text-sm text-slate-500">NF-e XML, relatórios CSV/Excel/PDF e OCR via Llama 3.2</p>
+      <div className="ls-movement-scan__page-header !border-0 !px-0 !pb-0">
+        <h2 className="ls-movement-scan__page-title">
+          <span className="ls-movement-scan__page-title-icon">
+            <FileUp size={20} strokeWidth={2.25} aria-hidden />
+          </span>
+          Centro de Importação
+        </h2>
       </div>
 
+      <LogstokaKpiStrip
+        items={[
+          { label: 'Importações', value: kpis.total },
+          { label: 'Concluídas', value: kpis.success },
+          { label: 'Linhas processadas', value: kpis.rows.toLocaleString('pt-BR') },
+          { label: 'Última importação', value: kpis.last },
+        ]}
+      />
+
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="ls-card">
-          <div className="mb-3 flex items-center gap-2 font-black">
+        <div className="ls-card rounded-[24px] border border-slate-100">
+          <div className="mb-3 flex items-center gap-2 font-black text-[#383838]">
             <FileUp size={18} className="text-orange-600" />
             Upload NF-e / Relatório
           </div>
@@ -144,25 +173,20 @@ const ImportsPage: React.FC = () => {
               e.target.value = '';
             }}
           />
-          <button
-            type="button"
-            className="ls-btn-primary"
-            disabled={loading}
-            onClick={() => inputRef.current?.click()}
-          >
+          <button type="button" className="ls-btn-primary" disabled={loading} onClick={() => inputRef.current?.click()}>
             {loading ? 'Processando…' : 'Selecionar arquivo'}
           </button>
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-[#828282]">
             XML NF-e gera entrada automática. CSV/Excel/PDF com colunas sku, quantidade, marketplace e loja geram saídas.
           </p>
         </div>
 
-        <div className="ls-card">
-          <div className="mb-3 flex items-center gap-2 font-black">
+        <div className="ls-card rounded-[24px] border border-slate-100">
+          <div className="mb-3 flex items-center gap-2 font-black text-[#383838]">
             <ScanText size={18} className="text-orange-600" />
             OCR / imagem
           </div>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-[#525252]">
             Envie foto ou PDF escaneado. A API extrai linhas via Llama 3.2 (Ollama) e registra movimentações.
           </p>
           <input
@@ -176,23 +200,18 @@ const ImportsPage: React.FC = () => {
               e.target.value = '';
             }}
           />
-          <button
-            type="button"
-            className="ls-btn-secondary mt-4"
-            disabled={ocrLoading}
-            onClick={() => ocrInputRef.current?.click()}
-          >
+          <button type="button" className="ls-btn-secondary mt-4" disabled={ocrLoading} onClick={() => ocrInputRef.current?.click()}>
             {ocrLoading ? 'Processando OCR…' : 'Enviar imagem ou PDF'}
           </button>
         </div>
       </div>
 
-      <div className="ls-card">
-        <div className="mb-4 flex items-center gap-2 font-black">
+      <section className="ls-page-table">
+        <div className="mb-4 flex items-center gap-2 px-1 font-black text-[#383838]">
           <History size={18} />
           Histórico de importações
         </div>
-        <div className="ls-table-wrap border-0">
+        <div className="ls-table-wrap">
           <table className="ls-table">
             <thead>
               <tr>
@@ -211,7 +230,7 @@ const ImportsPage: React.FC = () => {
                   </td>
                 </tr>
               )}
-              {imports.map((row) => (
+              {paginatedItems.map((row) => (
                 <ClickableTableRow key={row.id} to={`/app/imports/${row.id}`}>
                   <td>{row.file_name}</td>
                   <td>{row.file_type}</td>
@@ -225,7 +244,8 @@ const ImportsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
+        <LogstokaTableFooter {...footerProps} hidden={imports.length === 0} />
+      </section>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Layers } from 'lucide-react';
+import { BadgeCheck, CheckCircle2, FilePenLine, LayoutGrid, Layers, Rocket } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
 import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
@@ -8,6 +8,9 @@ import MarketplaceLogo from '@/components/marketplace/MarketplaceLogo';
 import ProductThumb from '@/components/products/ProductThumb';
 import PublishOverlay, { type PublishOverlayPhase } from '@/components/products/PublishOverlay';
 import Modal from '@/components/ui/Modal';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import LogstokaIconNav, { type LogstokaIconNavButtonItem } from '@/components/ui/LogstokaIconNav';
+import { useTablePagination } from '@/hooks/useTablePagination';
 import { useProducts } from '@/hooks/useLogstokaData';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { runPublishFlow, type PublishFlowError } from '@/lib/publishProductFlow';
@@ -41,6 +44,8 @@ const ProductPublicationPage: React.FC = () => {
     if (filter === 'all') return products;
     return products.filter((p) => (p.publication_status ?? 'draft') === filter);
   }, [products, filter]);
+
+  const { paginatedItems, footerProps } = useTablePagination(filtered, 10, filter);
 
   const selectedProducts = useMemo(
     () =>
@@ -122,18 +127,41 @@ const ProductPublicationPage: React.FC = () => {
 
   const storeGroups = storesGroupedByMarketplace();
 
+  const statusFilterDefs: Array<{
+    id: 'all' | ProductPublicationStatus;
+    label: string;
+    Icon: typeof LayoutGrid;
+  }> = [
+    { id: 'all', label: 'Todos', Icon: LayoutGrid },
+    { id: 'draft', label: PUBLICATION_STATUS_LABELS.draft, Icon: FilePenLine },
+    { id: 'ready', label: PUBLICATION_STATUS_LABELS.ready, Icon: Rocket },
+    { id: 'published', label: PUBLICATION_STATUS_LABELS.published, Icon: BadgeCheck },
+  ];
+
+  const statusFilterItems: LogstokaIconNavButtonItem[] = statusFilterDefs.map(({ id, label, Icon }) => ({
+    type: 'button',
+    key: id,
+    label,
+    active: filter === id,
+    icon: <Icon size={18} strokeWidth={2.2} aria-hidden />,
+    onClick: () => setFilter(id),
+  }));
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Central de Publicação</h2>
           <p className="text-sm text-[#a3a3a3]">
             Cadastre em rascunho · valide · escolha a loja exata · publique só onde quiser
           </p>
         </div>
-        <button type="button" className="ls-btn-primary" onClick={openPublishModal}>
-          Publicar selecionados
-        </button>
+        <div className="ml-auto flex shrink-0 flex-nowrap items-center justify-end gap-3">
+          <LogstokaIconNav aria-label="Filtrar por status" items={statusFilterItems} variant="inline" />
+          <button type="button" className="ls-btn-primary shrink-0 whitespace-nowrap" onClick={openPublishModal}>
+            Publicar selecionados
+          </button>
+        </div>
       </div>
 
       <div className="ls-hub-panel flex flex-wrap gap-2 text-sm">
@@ -149,21 +177,6 @@ const ProductPublicationPage: React.FC = () => {
         <span className="font-semibold text-[#525252]">Cadastro (rascunho)</span>
         <span className="text-[#a3a3a3]">→</span>
         <span className="font-semibold text-orange-700">Publicação aqui</span>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {(['all', 'draft', 'ready', 'published'] as const).map((f) => (
-          <button
-            key={f}
-            type="button"
-            className={`rounded-xl px-3 py-1.5 text-xs font-bold ${
-              filter === f ? 'bg-orange-600 text-white' : 'bg-gray-50 ring-1 ring-slate-200 text-[#525252]'
-            }`}
-            onClick={() => setFilter(f)}
-          >
-            {f === 'all' ? 'Todos' : PUBLICATION_STATUS_LABELS[f]}
-          </button>
-        ))}
       </div>
 
       <div className="ls-table-wrap">
@@ -185,7 +198,7 @@ const ProductPublicationPage: React.FC = () => {
               </tr>
             )}
             {!loading &&
-              filtered.map((p) => {
+              paginatedItems.map((p) => {
                 const validation = validateProductForPublication(p);
                 const pubCount = companyId ? countPublishedStores(companyId, p.id) : 0;
                 const status = p.publication_status ?? 'draft';
@@ -233,11 +246,14 @@ const ProductPublicationPage: React.FC = () => {
         </table>
       </div>
 
+      <LogstokaTableFooter {...footerProps} loading={loading} hidden={!loading && filtered.length === 0} itemLabel="produtos" />
+
       <Modal
         open={modalOpen}
         size="landscape"
         title="Publicar em lojas"
         subtitle="Escolha as páginas/contas exatas — não envia para todo o marketplace"
+        icon={<Rocket size={20} strokeWidth={2.25} />}
         onClose={() => setModalOpen(false)}
         footer={
           <>

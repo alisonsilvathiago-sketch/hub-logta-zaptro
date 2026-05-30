@@ -6,11 +6,15 @@ import { LogstokaDetailPageLayout } from '@/components/layout/LogstokaDetailPage
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import { getDemoInventoryById } from '@/lib/logstokaDemoSeed';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useTablePagination } from '@/hooks/useTablePagination';
 
 const InventoryDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { companyId } = useLogstokaTenant();
   const inv = id && isLogstokaDemoCompany(companyId) ? getDemoInventoryById(id) : null;
+  const items = inv?.ls_inventory_items ?? [];
+  const { paginatedItems, footerProps } = useTablePagination(items);
 
   if (!inv) {
     return (
@@ -47,7 +51,7 @@ const InventoryDetailPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {inv.ls_inventory_items.map((item) => (
+            {paginatedItems.map((item) => (
               <tr key={item.id}>
                 <td className="font-bold">{item.ls_products?.sku}</td>
                 <td>{item.ls_products?.name}</td>
@@ -61,6 +65,7 @@ const InventoryDetailPage: React.FC = () => {
           </tbody>
         </table>
       </div>
+      <LogstokaTableFooter {...footerProps} />
     </LogstokaDetailPageLayout>
   );
 };

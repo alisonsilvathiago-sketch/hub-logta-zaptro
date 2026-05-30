@@ -1,0 +1,305 @@
+/**
+ * LogStoka — responsivo mobile (operadores no celular)
+ * Breakpoint alinhado ao shell: 980px
+ */
+
+@media (max-width: 980px) {
+  .logstoka-desktop-only {
+    display: none !important;
+  }
+
+  .logstoka-mobile-only {
+    display: block;
+  }
+
+  .logstoka-app-content-gutter {
+    padding: 16px 14px calc(88px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .logstoka-app-content-gutter--products {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .logstoka-app-content-gutter--products .ls-icon-nav--section .ls-icon-nav__group {
+    width: 100%;
+    margin: 0;
+  }
+
+  .ls-products-section .ls-products-page-inset {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .logstoka-app-content-gutter--inicio {
+    padding: 0;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    margin-left: 0;
+  }
+
+  .lsdash-topbar {
+    padding: 10px 14px;
+    min-height: 56px;
+    gap: 8px;
+  }
+
+  .lsdash-crumb-muted {
+    display: none;
+  }
+
+  .lsdash-crumbs svg {
+    display: none;
+  }
+
+  .lsdash-integrations-strip,
+  .lsdash-pill {
+    display: none;
+  }
+
+  .lsdash-topbar-actions .lsdash-icon-btn:nth-child(2),
+  .lsdash-topbar-actions .lsdash-icon-btn.active {
+    display: none;
+  }
+
+  .ls-table th,
+  .ls-table td {
+    padding-left: 12px;
+    padding-right: 12px;
+    height: auto;
+    min-height: 56px;
+    font-size: 12px;
+  }
+
+  .ls-table-wrap {
+    border-radius: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ls-icon-nav--section .ls-icon-nav__group {
+    width: calc(100% - 32px);
+    margin: 0 16px 0;
+  }
+
+  .ls-icon-nav--action .ls-icon-nav__group {
+    margin: 0 16px 16px;
+  }
+
+  .ls-settings-nav {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ls-settings-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ls-settings-nav-item {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  .ls-settings-panel {
+    padding: 16px;
+    border-radius: 20px;
+    min-height: 0;
+  }
+
+  .ls-page-actions {
+    width: 100%;
+  }
+
+  .ls-page-actions .ls-btn-primary,
+  .ls-page-actions .ls-btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ls-modal {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .ls-modal__panel {
+    max-height: 92dvh;
+    border-radius: 24px 24px 0 0;
+    max-width: 100% !important;
+  }
+
+  .ls-modal__footer {
+    flex-direction: column-reverse;
+  }
+
+  .ls-modal__footer .ls-btn-primary,
+  .ls-modal__footer .ls-btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ls-ai-drawer {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .ls-ai-fab {
+    right: 1rem;
+    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .ls-int-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ls-int-tabs__item {
+    flex-shrink: 0;
+  }
+
+  .ls-int-card__actions {
+    flex-direction: column;
+  }
+
+  .ls-int-card__actions .ls-btn-primary,
+  .ls-int-card__actions .ls-btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 981px) {
+  .logstoka-mobile-only {
+    display: none !important;
+  }
+}
+
+.logstoka-mobile-nav {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 50;
+  border-top: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+}
+
+.logstoka-mobile-nav__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.logstoka-mobile-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #737373;
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  min-height: 52px;
+}
+
+.logstoka-mobile-nav__item--active {
+  background: rgba(234, 88, 12, 0.1);
+  color: #c2410c;
+}
+
+.logstoka-mobile-more {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.logstoka-mobile-more__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(56, 56, 56, 0.45);
+  cursor: pointer;
+}
+
+.logstoka-mobile-more__sheet {
+  position: relative;
+  z-index: 1;
+  max-height: min(78dvh, 520px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 24px 24px 0 0;
+  background: #fff;
+  box-shadow: 0 -12px 40px rgba(56, 56, 56, 0.15);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.logstoka-mobile-more__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.logstoka-mobile-more__head h2 {
+  font-size: 15px;
+  font-weight: 800;
+  color: #383838;
+}
+
+.logstoka-mobile-more__close {
+  border: 0;
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #525252;
+}
+
+.logstoka-mobile-more__grid {
+  overflow-y: auto;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.logstoka-mobile-more__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: 16px;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: #525252;
+  text-align: center;
+  border: 1px solid #f3f4f6;
+  background: #fafafa;
+}
+
+.logstoka-mobile-more__link--active {
+  border-color: rgba(234, 88, 12, 0.25);
+  background: rgba(234, 88, 12, 0.08);
+  color: #c2410c;
+}

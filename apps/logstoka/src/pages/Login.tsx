@@ -14,7 +14,7 @@ const LOGIN_HERO_URL = '/login-hero-containers.png';
 
 const LoginBrandWordmark = () => (
   <div className="mb-4 flex flex-wrap items-center justify-center gap-2.5 sm:mb-5" aria-label="LogStoka">
-    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#111827] text-white sm:h-12 sm:w-12">
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#383838] text-white sm:h-12 sm:w-12">
       <Truck size={24} strokeWidth={2.2} />
     </span>
     <div className="flex items-start text-[#383838]">

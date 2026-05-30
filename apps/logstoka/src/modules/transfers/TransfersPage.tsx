@@ -1,15 +1,21 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ArrowLeftRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { supabase } from '@/lib/supabase';
-import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import MovementScanSection from '@/components/movements/MovementScanSection';
+import TransferRegisterModal, { type TransferFormState } from '@/components/transfers/TransferRegisterModal';
+import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
+import LogstokaAddIconButton from '@/components/ui/LogstokaAddIconButton';
+import ClickableTableRow, { stopRowNavigate } from '@/components/ui/ClickableTableRow';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useIntelligentScanState } from '@/hooks/useIntelligentScanState';
+import { useTablePagination } from '@/hooks/useTablePagination';
 import { useWarehouses } from '@/hooks/useCatalog';
 import { logstokaApi } from '@/lib/logstokaApi';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import { DEMO_TRANSFERS, type DemoTransferRow } from '@/lib/logstokaDemoSeed';
-import Modal from '@/components/ui/Modal';
-import ClickableTableRow, { stopRowNavigate } from '@/components/ui/ClickableTableRow';
-import BarcodeScanner from '@/components/ui/BarcodeScanner';
+import type { ProductLookupResult } from '@/lib/productLookup';
+import { supabase } from '@/lib/supabase';
+import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 
 const statusMap: Record<string, string> = {
   pending: 'Pendente',
@@ -18,16 +24,28 @@ const statusMap: Record<string, string> = {
   cancelled: 'Cancelada',
 };
 
+const emptyForm: TransferFormState = {
+  origin: '',
+  destination: '',
+  sku: '',
+  quantity: 1,
+  notes: '',
+};
+
 const TransfersPage: React.FC = () => {
   const { companyId } = useLogstokaTenant();
+  const demo = isLogstokaDemoCompany(companyId);
   const { warehouses } = useWarehouses();
   const [transfers, setTransfers] = useState<DemoTransferRow[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState({ origin: '', destination: '', sku: '', quantity: 1, notes: '' });
+  const [form, setForm] = useState<TransferFormState>(emptyForm);
+  const [registering, setRegistering] = useState(false);
+
+  const scan = useIntelligentScanState(companyId, demo, 'transfer');
 
   const load = useCallback(async () => {
     if (!companyId) return;
-    if (isLogstokaDemoCompany(companyId)) {
+    if (demo) {
       setTransfers(DEMO_TRANSFERS);
       return;
     }
@@ -50,23 +68,65 @@ const TransfersPage: React.FC = () => {
         items: [],
       })),
     );
-  }, [companyId]);
+  }, [companyId, demo]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const { paginatedItems, footerProps } = useTablePagination(transfers);
+
+  const counts = useMemo(
+    () =>
+      transfers.reduce(
+        (acc, t) => {
+          if (t.status in acc) acc[t.status as keyof typeof acc] += 1;
+          return acc;
+        },
+        { pending: 0, in_transit: 0, completed: 0, cancelled: 0 },
+      ),
+    [transfers],
+  );
+
+  const syncFormFromScan = () => {
+    const sku = scan.resolvedProduct?.sku ?? scan.scanValue.trim();
+    if (sku) {
+      setForm((f) => ({ ...f, sku, quantity: scan.quantity }));
+    }
+  };
+
+  const openModal = () => {
+    syncFormFromScan();
+    setModalOpen(true);
+  };
+
+  const handlePageRegister = () => {
+    if (!scan.scanValue.trim()) {
+      toast.error('Leia ou digite um código primeiro');
+      return;
+    }
+    openModal();
+  };
+
+  const handleUseExisting = (product: ProductLookupResult) => {
+    setForm((f) => ({ ...f, sku: product.sku, quantity: scan.quantity }));
+    setModalOpen(true);
+  };
 
   const createTransfer = async () => {
     if (!form.origin || !form.destination || !form.sku) {
       toast.error('Preencha origem, destino e SKU');
       return;
     }
-    if (isLogstokaDemoCompany(companyId)) {
-      toast.success('[Demo] Transferência criada');
-      setModalOpen(false);
-      return;
-    }
+    setRegistering(true);
     try {
+      if (demo) {
+        toast.success('[Demo] Transferência criada');
+        setModalOpen(false);
+        setForm(emptyForm);
+        scan.clearScan();
+        return;
+      }
       await logstokaApi.createTransfer({
         origin_warehouse_id: form.origin,
         destination_warehouse_id: form.destination,
@@ -75,110 +135,123 @@ const TransfersPage: React.FC = () => {
       });
       toast.success('Transferência criada');
       setModalOpen(false);
+      setForm(emptyForm);
+      scan.clearScan();
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro');
+    } finally {
+      setRegistering(false);
     }
+  };
+
+  const scanProps = {
+    companyId,
+    demo,
+    scanMode: scan.scanMode,
+    onScanModeChange: scan.setScanMode,
+    scanValue: scan.scanValue,
+    onScanValueChange: (value: string) => {
+      scan.setScanValue(value);
+      toast.success(`Código lido: ${value}`);
+    },
+    onClearScan: scan.clearScan,
+    quantity: scan.quantity,
+    onQuantityChange: scan.setQuantity,
+    resolvedProduct: scan.resolvedProduct,
+    resolving: scan.resolving,
+    interpreting: scan.interpreting,
+    scanInterpretation: scan.scanInterpretation,
+    onRegister: handlePageRegister,
+    onUseExisting: handleUseExisting,
+    registering,
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Transferências</h2>
-          <p className="text-sm text-slate-500">CD origem → em trânsito → CD destino</p>
-        </div>
-        <button type="button" className="ls-btn-primary" onClick={() => setModalOpen(true)}>
-          Nova transferência
-        </button>
-      </div>
+      <MovementScanSection
+        {...scanProps}
+        movementLabel="Transferências"
+        pageTitleIcon={<ArrowLeftRight size={20} strokeWidth={2.25} aria-hidden />}
+        headerActions={<LogstokaAddIconButton title="Nova transferência" onClick={openModal} />}
+      />
 
-      <div className="ls-table-wrap">
-        <table className="ls-table">
-          <thead>
-            <tr>
-              <th>Status</th>
-              <th>Origem → Destino</th>
-              <th>Itens</th>
-              <th>Observação</th>
-              <th>Data</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transfers.map((t) => (
-              <ClickableTableRow key={t.id} to={`/app/transfers/${t.id}`}>
-                <td>
-                  <span className="ls-badge bg-slate-100">{statusMap[t.status] ?? t.status}</span>
-                </td>
-                <td>
-                  {t.origin_name} → {t.destination_name}
-                </td>
-                <td className="text-sm">
-                  {t.items.map((i) => (
-                    <div key={i.sku}>
-                      {i.sku} · {i.quantity} un.
-                    </div>
-                  ))}
-                </td>
-                <td>{t.notes || '—'}</td>
-                <td>{new Date(t.created_at).toLocaleString('pt-BR')}</td>
-                <td onClick={stopRowNavigate} className="flex gap-1">
-                  {t.status === 'pending' && !isLogstokaDemoCompany(companyId) && (
-                    <button type="button" className="ls-btn-secondary px-2 py-1 text-xs" onClick={() => void logstokaApi.shipTransfer(t.id).then(load)}>
-                      Enviar
-                    </button>
-                  )}
-                  {t.status === 'in_transit' && !isLogstokaDemoCompany(companyId) && (
-                    <button type="button" className="ls-btn-primary px-2 py-1 text-xs" onClick={() => void logstokaApi.receiveTransfer(t.id).then(load)}>
-                      Receber
-                    </button>
-                  )}
-                </td>
-              </ClickableTableRow>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <LogstokaKpiStrip
+        items={[
+          { label: 'Pendentes', value: counts.pending },
+          { label: 'Em trânsito', value: counts.in_transit },
+          { label: 'Concluídas', value: counts.completed },
+          { label: 'Canceladas', value: counts.cancelled },
+        ]}
+      />
 
-      <Modal open={modalOpen} title="Transferência entre CDs" onClose={() => setModalOpen(false)}>
-        <div className="space-y-3">
-          <div>
-            <label className="ls-label">Origem</label>
-            <select className="ls-input" value={form.origin} onChange={(e) => setForm((f) => ({ ...f, origin: e.target.value }))}>
-              <option value="">—</option>
-              {warehouses.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
-                </option>
+      <section className="ls-page-table">
+        <div className="ls-table-wrap">
+          <table className="ls-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Origem → Destino</th>
+                <th>Itens</th>
+                <th>Observação</th>
+                <th>Data</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedItems.map((t) => (
+                <ClickableTableRow key={t.id} to={`/app/transfers/${t.id}`}>
+                  <td>
+                    <span className="ls-badge bg-slate-100">{statusMap[t.status] ?? t.status}</span>
+                  </td>
+                  <td>
+                    {t.origin_name} → {t.destination_name}
+                  </td>
+                  <td className="text-sm">
+                    {t.items.map((i) => (
+                      <div key={i.sku}>
+                        {i.sku} · {i.quantity} un.
+                      </div>
+                    ))}
+                  </td>
+                  <td>{t.notes || '—'}</td>
+                  <td>{new Date(t.created_at).toLocaleString('pt-BR')}</td>
+                  <td onClick={stopRowNavigate} className="flex gap-1">
+                    {t.status === 'pending' && !demo && (
+                      <button type="button" className="ls-btn-secondary px-2 py-1 text-xs" onClick={() => void logstokaApi.shipTransfer(t.id).then(load)}>
+                        Enviar
+                      </button>
+                    )}
+                    {t.status === 'in_transit' && !demo && (
+                      <button type="button" className="ls-btn-primary px-2 py-1 text-xs" onClick={() => void logstokaApi.receiveTransfer(t.id).then(load)}>
+                        Receber
+                      </button>
+                    )}
+                  </td>
+                </ClickableTableRow>
               ))}
-            </select>
-          </div>
-          <div>
-            <label className="ls-label">Destino</label>
-            <select className="ls-input" value={form.destination} onChange={(e) => setForm((f) => ({ ...f, destination: e.target.value }))}>
-              <option value="">—</option>
-              {warehouses.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <BarcodeScanner onScan={(sku) => setForm((f) => ({ ...f, sku }))} />
-          <div>
-            <label className="ls-label">Quantidade</label>
-            <input className="ls-input" type="number" min={1} value={form.quantity} onChange={(e) => setForm((f) => ({ ...f, quantity: Number(e.target.value) }))} />
-          </div>
-          <div>
-            <label className="ls-label">Observação</label>
-            <input className="ls-input" value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
-          </div>
-          <button type="button" className="ls-btn-primary w-full" onClick={() => void createTransfer()}>
-            Criar transferência
-          </button>
+            </tbody>
+          </table>
         </div>
-      </Modal>
+        <LogstokaTableFooter {...footerProps} />
+      </section>
+
+      <TransferRegisterModal
+        open={modalOpen}
+        saving={registering}
+        form={form}
+        warehouses={warehouses}
+        scan={{
+          ...scanProps,
+          onRegister: () => void createTransfer(),
+          onUseExisting: (product) => {
+            setForm((f) => ({ ...f, sku: product.sku, quantity: scan.quantity }));
+          },
+        }}
+        onClose={() => setModalOpen(false)}
+        onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+        onSubmit={() => void createTransfer()}
+      />
     </div>
   );
 };

@@ -6,7 +6,10 @@ import { useCategories, useStores, useSuppliers, useWarehouses } from '@/hooks/u
 import { DEFAULT_STORES, MARKETPLACE_LABELS } from '@/types';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import type { Marketplace } from '@/types';
+import { PlusCircle } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useTablePagination } from '@/hooks/useTablePagination';
 
 type Tab = 'dados' | 'stores' | 'categories' | 'suppliers';
 
@@ -19,6 +22,8 @@ const SettingsCompanyPanel: React.FC = () => {
   const [tab, setTab] = useState<Tab>('dados');
   const [modal, setModal] = useState<'store' | 'category' | 'supplier' | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
+  const storesPagination = useTablePagination(stores, 10, 'stores');
+  const suppliersPagination = useTablePagination(suppliers, 10, 'suppliers');
 
   const seedStores = async () => {
     if (!companyId) return;
@@ -146,7 +151,7 @@ const SettingsCompanyPanel: React.FC = () => {
             <table className="ls-table">
               <thead><tr><th>Marketplace</th><th>Loja</th><th>Status</th></tr></thead>
               <tbody>
-                {stores.map((s) => (
+                {storesPagination.paginatedItems.map((s) => (
                   <tr key={s.id}>
                     <td>{MARKETPLACE_LABELS[s.marketplace]}</td>
                     <td>{s.name}</td>
@@ -156,6 +161,7 @@ const SettingsCompanyPanel: React.FC = () => {
               </tbody>
             </table>
           </div>
+          <LogstokaTableFooter {...storesPagination.footerProps} hidden={stores.length === 0} itemLabel="lojas" />
         </div>
       )}
 
@@ -177,16 +183,22 @@ const SettingsCompanyPanel: React.FC = () => {
             <table className="ls-table">
               <thead><tr><th>Nome</th><th>Documento</th><th>Contato</th></tr></thead>
               <tbody>
-                {suppliers.map((s) => (
+                {suppliersPagination.paginatedItems.map((s) => (
                   <tr key={s.id}><td>{s.name}</td><td>{s.document || '—'}</td><td>{s.email || s.phone || '—'}</td></tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <LogstokaTableFooter {...suppliersPagination.footerProps} hidden={suppliers.length === 0} itemLabel="fornecedores" />
         </div>
       )}
 
-      <Modal open={modal !== null} title="Cadastro" onClose={() => setModal(null)}>
+      <Modal
+        open={modal !== null}
+        title="Cadastro"
+        icon={<PlusCircle size={20} strokeWidth={2.25} />}
+        onClose={() => setModal(null)}
+      >
         {modal === 'store' && (
           <div className="space-y-3">
             <select className="ls-input" value={form.marketplace} onChange={(e) => setForm((f) => ({ ...f, marketplace: e.target.value }))}>

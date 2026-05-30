@@ -21,6 +21,11 @@ export function loadConfig(): LogstokaConfig {
 
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     console.warn('[logstoka-api] Supabase service credentials missing — API will run in degraded mode.');
+  } else if (/rrjnkmgkhbtapumgmhhr|kgktwaziasxgeseucsoy/.test(supabaseUrl)) {
+    console.error(
+      '[logstoka-api] LOGSTOKA_SUPABASE_URL aponta para projeto compartilhado do monorepo. ' +
+        'Use um projeto Supabase dedicado ao LogStoka (ver SUPABASE_SETUP.md).',
+    );
   }
 
   if (!mercadolivreAppId || !mercadolivreAppSecret) {

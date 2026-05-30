@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const LOGSTOKA_PAGE_TITLE_CLASS = 'text-[21px] font-bold leading-snug tracking-normal text-[#383838]';
+export const LOGSTOKA_PAGE_TITLE_CLASS = 'text-[31px] font-bold leading-snug tracking-normal text-[#383838]';
 export const LOGSTOKA_ROW_TITLE_CLASS = 'truncate text-[14px] font-bold text-gray-900';
 
 export type LogstokaKpiStripItem = {
@@ -14,7 +14,7 @@ export type LogstokaKpiStripItem = {
 
 export function LogstokaKpiStrip({ items, className = '' }: { items: LogstokaKpiStripItem[]; className?: string }) {
   return (
-    <div className={`ls-kpi-strip grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 ${className}`.trim()}>
+    <div className={`ls-kpi-strip ${className}`.trim()}>
       {items.map((kpi) => (
         <div key={kpi.label} className="ls-stat-card group relative">
           <p className="ls-stat-card__label ls-stat-card__label--spaced">{kpi.label}</p>
@@ -43,12 +43,17 @@ export function LogstokaKpiStrip({ items, className = '' }: { items: LogstokaKpi
 }
 
 export type LogstokaStandardPageLayoutProps = {
-  title?: string;
+  title?: React.ReactNode;
   subtitle?: string;
   kpis?: LogstokaKpiStripItem[];
   mainContentTitle?: string;
   mainContentAction?: React.ReactNode;
   headerAction?: React.ReactNode;
+  headerClassName?: string;
+  titleClassName?: string;
+  headerBelow?: React.ReactNode;
+  belowGrid?: React.ReactNode;
+  mainGridClassName?: string;
   children: React.ReactNode;
   sidePanel?: React.ReactNode;
 };
@@ -60,26 +65,36 @@ export function LogstokaStandardPageLayout({
   mainContentTitle,
   mainContentAction,
   headerAction,
+  headerClassName = '',
+  titleClassName = '',
+  headerBelow,
+  belowGrid,
+  mainGridClassName = '',
   children,
   sidePanel,
 }: LogstokaStandardPageLayoutProps) {
   return (
     <div className="space-y-6">
-      {(title || headerAction) && (
-        <div className="mb-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            {title ? <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>{title}</h2> : null}
-            {subtitle ? <p className="mt-1 text-sm font-medium text-gray-500">{subtitle}</p> : null}
-          </div>
-          {headerAction ? <div>{headerAction}</div> : null}
+      {(title || headerAction || headerBelow) && (
+        <div className="space-y-2">
+          {(title || headerAction) && (
+            <div className={`mb-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-center ${headerClassName}`.trim()}>
+              <div>
+                {title ? <h2 className={`${LOGSTOKA_PAGE_TITLE_CLASS} ${titleClassName}`.trim()}>{title}</h2> : null}
+                {subtitle ? <p className="mt-1 text-sm font-medium text-gray-500">{subtitle}</p> : null}
+              </div>
+              {headerAction ? <div className="flex w-full justify-end">{headerAction}</div> : null}
+            </div>
+          )}
+          {headerBelow}
         </div>
       )}
 
       {kpis.length > 0 ? <LogstokaKpiStrip items={kpis} /> : null}
 
-      <div className={`grid grid-cols-1 ${sidePanel ? 'lg:grid-cols-3' : ''} gap-8`}>
+      <div className={`ls-page-main-grid grid grid-cols-1 ${sidePanel ? 'lg:grid-cols-3' : ''} gap-8 ${mainGridClassName}`.trim()}>
         <div
-          className={`rounded-[32px] border border-gray-100 bg-white p-6 shadow-sm sm:p-8 ${sidePanel ? 'lg:col-span-2' : ''}`}
+          className={`rounded-[30px] border border-gray-100 bg-white p-6 shadow-sm sm:p-8 ${sidePanel ? 'lg:col-span-2' : ''}`}
         >
           {(mainContentTitle || mainContentAction) && (
             <div className="mb-8 flex items-center justify-between border-b border-gray-50 pb-4">
@@ -93,9 +108,13 @@ export function LogstokaStandardPageLayout({
         </div>
 
         {sidePanel ? (
-          <div className="rounded-[32px] border border-gray-100 bg-white p-6 shadow-sm sm:p-8">{sidePanel}</div>
+          <div className="ls-dashboard-side-panel rounded-[30px] border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+            {sidePanel}
+          </div>
         ) : null}
       </div>
+
+      {belowGrid ? <div className="ls-dashboard-below-grid space-y-6">{belowGrid}</div> : null}
     </div>
   );
 }

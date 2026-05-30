@@ -1,0 +1,320 @@
+.ls-movement-detail {
+  --ls-md-muted: #949494;
+  --ls-md-text: #525252;
+  --ls-md-title: #383838;
+  --ls-md-border: rgba(56, 56, 56, 0.08);
+}
+
+.ls-movement-detail-hero {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 24px;
+  align-items: start;
+  padding: 28px 32px;
+  border-radius: 28px;
+  border: 1px solid var(--ls-md-border);
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 55%, #fff7ed 100%);
+  box-shadow: 0 8px 32px rgba(56, 56, 56, 0.06);
+}
+
+@media (max-width: 900px) {
+  .ls-movement-detail-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ls-movement-detail-hero__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: rgba(234, 88, 12, 0.1);
+  color: #ea580c;
+}
+
+.ls-movement-detail-hero__eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ea580c;
+}
+
+.ls-movement-detail-hero__title {
+  margin-top: 4px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ls-md-title);
+  line-height: 1.2;
+}
+
+.ls-movement-detail-hero__meta {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ls-movement-detail-hero__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.ls-movement-detail-hero__qty {
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #ea580c;
+  line-height: 1;
+}
+
+.ls-movement-detail-hero__qty-label {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ls-md-muted);
+}
+
+.ls-movement-detail-kpi {
+  padding: 18px 20px;
+  border-radius: 20px;
+  border: 1px solid var(--ls-md-border);
+  background: #fff;
+}
+
+.ls-movement-detail-kpi__label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ls-md-muted);
+}
+
+.ls-movement-detail-kpi__value {
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--ls-md-title);
+}
+
+.ls-movement-detail-kpi__hint {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ls-md-muted);
+}
+
+.ls-movement-detail-panel {
+  padding: 24px 28px;
+  border-radius: 24px;
+  border: 1px solid var(--ls-md-border);
+  background: #fff;
+}
+
+.ls-movement-detail-panel__title {
+  margin-bottom: 16px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ls-md-muted);
+}
+
+.ls-movement-detail-fact {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fafafa;
+  border: 1px solid rgba(56, 56, 56, 0.04);
+}
+
+.ls-movement-detail-fact__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ls-md-muted);
+}
+
+.ls-movement-detail-fact__value {
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ls-md-title);
+  word-break: break-word;
+}
+
+.ls-movement-detail-product {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 20px;
+  border-radius: 20px;
+  border: 1px solid var(--ls-md-border);
+  background: #fafafa;
+}
+
+.ls-movement-detail-product__image {
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  object-fit: cover;
+  border: 1px solid var(--ls-md-border);
+  background: #fff;
+}
+
+.ls-movement-detail-product__name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ls-md-title);
+}
+
+.ls-movement-detail-product__sku {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ls-md-muted);
+}
+
+.ls-movement-detail-route {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ls-movement-detail-route__node {
+  flex: 1;
+  min-width: 140px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--ls-md-border);
+  background: #fafafa;
+}
+
+.ls-movement-detail-route__node--dest {
+  background: #fff7ed;
+  border-color: rgba(234, 88, 12, 0.15);
+}
+
+.ls-movement-detail-route__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ls-md-muted);
+}
+
+.ls-movement-detail-route__name {
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ls-md-title);
+}
+
+.ls-movement-detail-route__arrow {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(234, 88, 12, 0.1);
+  color: #ea580c;
+}
+
+.ls-movement-detail-item-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--ls-md-border);
+  background: #fafafa;
+}
+
+@media (max-width: 640px) {
+  .ls-movement-detail-item-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ls-movement-detail-timeline-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--ls-md-border);
+  background: #fafafa;
+}
+
+.ls-movement-detail-timeline-item__type {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ls-md-title);
+}
+
+.ls-movement-detail-timeline-item__meta {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ls-md-muted);
+}
+
+.ls-movement-detail-timeline-item__qty {
+  font-size: 18px;
+  font-weight: 900;
+  color: #383838;
+  white-space: nowrap;
+}
+
+.ls-movement-detail-audit-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(56, 56, 56, 0.06);
+}
+
+.ls-movement-detail-audit-item:last-child {
+  border-bottom: 0;
+}
+
+.ls-movement-detail-audit-item__dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: #ea580c;
+}
+
+.ls-movement-detail-audit-item__text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ls-md-text);
+}
+
+.ls-movement-detail-audit-item__time {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ls-md-muted);
+}
+
+.ls-movement-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}

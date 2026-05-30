@@ -1,4 +1,5 @@
 import React from 'react';
+import { Plug } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import type { IntegrationConnection } from '@/lib/integrationConnections';
 import type { IntegrationProvider } from '@/lib/integrationsCatalog';
@@ -56,6 +57,7 @@ const IntegrationConfigureModal: React.FC<Props> = ({ open, provider, connection
       size="landscape"
       title={`Configurar · ${provider.name}`}
       subtitle="Lojas conectadas e direção da sincronização"
+      icon={<Plug size={20} strokeWidth={2.25} />}
       onClose={onClose}
       footer={
         <>

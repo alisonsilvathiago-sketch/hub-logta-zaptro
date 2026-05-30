@@ -1,45 +1,34 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  Boxes,
   Package,
-  RefreshCw,
-  TrendingDown,
   Undo2,
+  Wallet,
 } from 'lucide-react';
+import LogstokaMovementShortcuts from '@/components/layout/LogstokaMovementShortcuts';
 import { LogstokaStandardPageLayout } from '@/components/layout/LogstokaStandardPageLayout';
+import { useAuth } from '@/context/LogstokaAuthProvider';
 import { useDashboardSummary, useAlerts } from '@/hooks/useLogstokaData';
-import { logstokaApi } from '@/lib/logstokaApi';
 import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
-import { DEMO_AI_BRIEFING, DEMO_DASHBOARD, DEMO_REPLENISHMENT } from '@/lib/logstokaDemoSeed';
+import { DEMO_DASHBOARD } from '@/lib/logstokaDemoSeed';
+import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
+import DashboardAlertCarousel from './DashboardAlertCarousel';
+import DashboardActivityTable from './DashboardActivityTable';
+import DashboardHealthCharts from './DashboardHealthCharts';
+import DashboardMarketplaceSales from './DashboardMarketplaceSales';
+import DashboardStockPanel from './DashboardStockPanel';
 
 const DashboardPage: React.FC = () => {
+  const { profile } = useAuth();
   const { companyId } = useLogstokaTenant();
   const { summary, loading, reload } = useDashboardSummary();
   const { alerts } = useAlerts();
-  const [replenishment, setReplenishment] = useState<Array<{ sku: string; name: string; suggested_purchase: number }>>([]);
   const [stale, setStale] = useState({ days30: 0, days60: 0, days90: 0 });
-  const [aiBriefing, setAiBriefing] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (isLogstokaDemoCompany(companyId)) {
-      setReplenishment(DEMO_REPLENISHMENT);
-      return;
-    }
-    void logstokaApi.getReplenishment().then((r) => setReplenishment((r.data ?? []) as typeof replenishment)).catch(() => undefined);
-  }, [companyId]);
-
-  useEffect(() => {
-    if (isLogstokaDemoCompany(companyId)) {
-      setAiBriefing(DEMO_AI_BRIEFING);
-      return;
-    }
-    void logstokaApi.aiDailyBriefing()
-      .then((r) => setAiBriefing(r.briefing))
-      .catch(() => setAiBriefing(null));
-  }, [companyId]);
 
   useEffect(() => {
     if (!companyId) return;
@@ -57,23 +46,33 @@ const DashboardPage: React.FC = () => {
         .select('product_id, ls_stock_movements!inner(created_at, company_id)')
         .eq('ls_stock_movements.company_id', companyId)
         .gte('ls_stock_movements.created_at', since.toISOString());
-      const movedIds = new Set((moved ?? []).map((m) => m.product_id));
-      return products.filter((p) => !movedIds.has(p.id)).length;
+      const movedIds = new Set(
+        (moved ?? []).map((m: { product_id: string }) => m.product_id),
+      );
+      return products.filter((p: { id: string }) => !movedIds.has(p.id)).length;
     };
     void Promise.all([checkStale(30), checkStale(60), checkStale(90)]).then(([d30, d60, d90]) =>
       setStale({ days30: d30, days60: d60, days90: d90 }),
     );
   }, [companyId]);
 
+  const firstName = profile?.full_name?.split(' ')[0] || profile?.email?.split('@')[0] || 'Operador';
+
   return (
     <LogstokaStandardPageLayout
-      title="Dashboard Operacional"
-      subtitle="Visão em tempo real da operação multicanal"
+      title={
+        <>
+          Olá, {firstName}{' '}
+          <span className="inline-block translate-y-px" aria-hidden>
+            👋
+          </span>
+        </>
+      }
+      titleClassName="ls-dashboard-greeting-title text-[34px] leading-tight"
+      headerClassName="py-5"
+      headerBelow={<DashboardAlertCarousel alerts={alerts} />}
       headerAction={
-        <button type="button" className="ls-btn-secondary" onClick={() => void reload()}>
-          <RefreshCw size={16} />
-          Atualizar
-        </button>
+        <LogstokaMovementShortcuts onRefresh={() => void reload()} refreshing={loading} />
       }
       kpis={[
         { label: 'Entradas hoje', value: loading ? '…' : summary.today.entries, icon: <ArrowDownToLine size={56} /> },
@@ -81,76 +80,54 @@ const DashboardPage: React.FC = () => {
         { label: 'Transferências', value: loading ? '…' : summary.today.transfers, icon: <Package size={56} /> },
         { label: 'Devoluções', value: loading ? '…' : summary.today.returns, icon: <Undo2 size={56} /> },
       ]}
-      mainContentTitle="Estoque e alertas"
-      sidePanel={
-        <div className="space-y-6">
-          <div>
-            <div className="mb-3 flex items-center gap-2">
-              <TrendingDown size={18} className="text-amber-600" />
-              <h3 className="text-[15px] font-black uppercase tracking-widest text-gray-500">Abaixo do mínimo</h3>
-            </div>
-            <p className="text-4xl font-black text-amber-600">{loading ? '…' : summary.lowStockCount}</p>
-          </div>
-
-          {aiBriefing ? (
-            <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-4">
-              <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-orange-700">Resumo IA</p>
-              <p className="text-sm leading-relaxed text-gray-700">{aiBriefing}</p>
-            </div>
-          ) : null}
-
-          <div>
-            <h3 className="mb-3 text-[15px] font-black uppercase tracking-widest text-gray-500">Sem movimentação</h3>
-            <div className="grid grid-cols-3 gap-2">
-              {[30, 60, 90].map((days) => (
-                <div key={days} className="rounded-xl bg-gray-50 p-3 text-center">
-                  <p className="text-[10px] font-bold text-gray-400">{days}d</p>
-                  <p className="text-xl font-black text-gray-900">{stale[`days${days}` as keyof typeof stale]}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+      mainContentTitle="Estoque"
+      belowGrid={
+        <>
+          <DashboardMarketplaceSales />
+          <DashboardHealthCharts summary={summary} loading={loading} stale={stale} />
+          <DashboardActivityTable companyId={companyId} />
+        </>
       }
+      sidePanel={<DashboardStockPanel summary={summary} loading={loading} />}
     >
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl bg-gray-50 p-4">
-          <p className="text-xs font-bold uppercase text-gray-500">Quantidade total</p>
-          <p className="mt-1 text-3xl font-black text-gray-900">
-            {loading ? '…' : summary.stock.totalQuantity.toLocaleString('pt-BR')}
-          </p>
-        </div>
-        <div className="rounded-2xl bg-gray-50 p-4">
-          <p className="text-xs font-bold uppercase text-gray-500">Valor estocado</p>
-          <p className="mt-1 text-3xl font-black text-gray-900">
-            {loading ? '…' : summary.stock.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-          </p>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <h4 className="text-sm font-black text-gray-900">Centro de reposição</h4>
-        {replenishment.length === 0 && <p className="text-sm text-gray-500">Nenhuma reposição sugerida.</p>}
-        {replenishment.slice(0, 5).map((r) => (
-          <div key={r.sku} className="flex justify-between rounded-xl bg-gray-50 px-3 py-2 text-sm">
-            <span>
-              <strong>{r.sku}</strong> — {r.name}
+        <Link
+          to={LOGSTOKA_ROUTES.PRODUCTS}
+          className="group relative block overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 transition-shadow hover:shadow-md"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-emerald-700/80">Quantidade total</p>
+              <p className="ls-dashboard-stat-value">
+                {loading ? '…' : summary.stock.totalQuantity.toLocaleString('pt-BR')}
+              </p>
+              <p className="mt-1 text-xs font-medium text-emerald-800/70">unidades em todos os depósitos</p>
+            </div>
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 transition-colors group-hover:bg-emerald-200">
+              <Boxes size={22} strokeWidth={2.2} />
             </span>
-            <span className="font-bold text-orange-700">+{r.suggested_purchase}</span>
           </div>
-        ))}
-      </div>
-
-      <div className="space-y-3">
-        <h4 className="text-sm font-black text-gray-900">Alertas recentes</h4>
-        {alerts.length === 0 && <p className="text-sm text-gray-500">Nenhum alerta no momento.</p>}
-        {alerts.slice(0, 5).map((alert) => (
-          <div key={alert.id} className="rounded-xl border border-gray-100 px-3 py-2">
-            <p className="text-sm font-bold text-gray-900">{alert.title}</p>
-            <p className="text-xs text-gray-500">{alert.message}</p>
+        </Link>
+        <Link
+          to="/app/reports"
+          className="group relative block overflow-hidden rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-5 transition-shadow hover:shadow-md"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-orange-700/80">Valor estocado</p>
+              <p className="ls-dashboard-stat-value">
+                {loading
+                  ? '…'
+                  : summary.stock.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </p>
+              <p className="mt-1 text-xs font-medium text-orange-800/70">custo médio × saldo atual</p>
+            </div>
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-orange-700 transition-colors group-hover:bg-orange-200">
+              <Wallet size={22} strokeWidth={2.2} />
+            </span>
           </div>
-        ))}
+        </Link>
       </div>
     </LogstokaStandardPageLayout>
   );

@@ -54,6 +54,12 @@ export type MarketplaceSaleOrder = {
   buyer?: string;
 };
 
+export type MarketplaceSaleOrderWithSource = MarketplaceSaleOrder & {
+  marketplace: Marketplace;
+  marketplaceLabel: string;
+  hubPath: string;
+};
+
 export function resolveMarketplaceHubSlug(slug: string): Marketplace | null {
   return MARKETPLACE_HUB_SLUGS[slug.toLowerCase()] ?? null;
 }
@@ -198,6 +204,23 @@ export function getMarketplaceHubData(marketplace: Marketplace): MarketplaceHubD
     saleOrders: buildSaleOrders(marketplace),
     lastSyncAt: new Date().toLocaleString('pt-BR'),
   };
+}
+
+/** Pedidos pagos de todos os marketplaces integrados — ordenados por baixa pendente. */
+export function getAllMarketplaceSaleOrders(): MarketplaceSaleOrderWithSource[] {
+  return INTEGRATED_MARKETPLACES.flatMap((marketplace) => {
+    const hub = getMarketplaceHubData(marketplace);
+    return hub.saleOrders.map((order) => ({
+      ...order,
+      marketplace,
+      marketplaceLabel: hub.label,
+      hubPath: hub.hubPath,
+    }));
+  }).sort((a, b) => {
+    if (a.status === 'pending_baixa' && b.status !== 'pending_baixa') return -1;
+    if (b.status === 'pending_baixa' && a.status !== 'pending_baixa') return 1;
+    return b.soldAt.localeCompare(a.soldAt);
+  });
 }
 
 export function downloadBaixaDocument(

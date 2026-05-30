@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutGrid, Menu, Package, Plug, ScanLine, Sparkles } from 'lucide-react';
+import { LayoutGrid, Package, Plug, ScanLine, Sparkles } from 'lucide-react';
 import MobileMoreMenu from './MobileMoreMenu';
 
 const quickItems = [

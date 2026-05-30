@@ -17,6 +17,16 @@ const AppShell: React.FC = () => {
   const { cssVars } = useLogstokaBranding();
   const location = useLocation();
   const isInicio = location.pathname === '/app' || location.pathname === '/app/';
+  const isProductsSection = location.pathname.startsWith('/app/products');
+  const isMovementsSection =
+    location.pathname.startsWith('/app/movements') ||
+    location.pathname.startsWith('/app/returns') ||
+    location.pathname.startsWith('/app/transfers') ||
+    location.pathname.startsWith('/app/picking') ||
+    location.pathname.startsWith('/app/inventory') ||
+    location.pathname.startsWith('/app/conference') ||
+    location.pathname.startsWith('/app/imports') ||
+    location.pathname.startsWith('/app/reports');
   const [aiOpen, setAiOpen] = useState(false);
   const [aiInitial, setAiInitial] = useState('');
 
@@ -45,7 +55,9 @@ const AppShell: React.FC = () => {
 
       <div className="logstoka-app-main">
         <LogstokaAppTopbar onOpenAi={openAi} onSignOut={() => void handleSignOut()} />
-        <div className={`logstoka-app-content-gutter${isInicio ? ' logstoka-app-content-gutter--inicio' : ''}`}>
+        <div
+          className={`logstoka-app-content-gutter${isInicio ? ' logstoka-app-content-gutter--inicio' : ''}${isProductsSection ? ' logstoka-app-content-gutter--products' : ''}${isMovementsSection ? ' logstoka-app-content-gutter--movements' : ''}`}
+        >
           <Outlet />
         </div>
       </div>

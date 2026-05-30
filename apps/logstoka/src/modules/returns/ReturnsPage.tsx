@@ -1,15 +1,21 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
+import { RotateCcw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { supabase } from '@/lib/supabase';
-import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import MovementScanSection from '@/components/movements/MovementScanSection';
+import ReturnRegisterModal, { type ReturnFormState } from '@/components/returns/ReturnRegisterModal';
+import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
+import LogstokaAddIconButton from '@/components/ui/LogstokaAddIconButton';
+import ClickableTableRow, { stopRowNavigate } from '@/components/ui/ClickableTableRow';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useIntelligentScanState } from '@/hooks/useIntelligentScanState';
+import { useTablePagination } from '@/hooks/useTablePagination';
 import { useWarehouses, useStores } from '@/hooks/useCatalog';
 import { logstokaApi } from '@/lib/logstokaApi';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import { DEMO_RETURNS, type DemoReturnRow } from '@/lib/logstokaDemoSeed';
-import Modal from '@/components/ui/Modal';
-import ClickableTableRow, { stopRowNavigate } from '@/components/ui/ClickableTableRow';
-import BarcodeScanner from '@/components/ui/BarcodeScanner';
+import type { ProductLookupResult } from '@/lib/productLookup';
+import { supabase } from '@/lib/supabase';
+import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 
 const statusLabels: Record<string, string> = {
   received: 'Recebido',
@@ -19,17 +25,30 @@ const statusLabels: Record<string, string> = {
   completed: 'Concluído',
 };
 
+const emptyForm: ReturnFormState = {
+  order_reference: '',
+  reason: '',
+  sku: '',
+  quantity: 1,
+  store_id: '',
+  warehouse_id: '',
+};
+
 const ReturnsPage: React.FC = () => {
   const { companyId } = useLogstokaTenant();
+  const demo = isLogstokaDemoCompany(companyId);
   const { warehouses } = useWarehouses();
   const { stores } = useStores();
   const [returns, setReturns] = useState<DemoReturnRow[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState({ order_reference: '', reason: '', sku: '', quantity: 1, store_id: '', warehouse_id: '' });
+  const [form, setForm] = useState<ReturnFormState>(emptyForm);
+  const [registering, setRegistering] = useState(false);
+
+  const scan = useIntelligentScanState(companyId, demo, 'return');
 
   const load = useCallback(async () => {
     if (!companyId) return;
-    if (isLogstokaDemoCompany(companyId)) {
+    if (demo) {
       setReturns(DEMO_RETURNS);
       return;
     }
@@ -52,23 +71,53 @@ const ReturnsPage: React.FC = () => {
         store_name: '—',
       })),
     );
-  }, [companyId]);
+  }, [companyId, demo]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const { paginatedItems, footerProps } = useTablePagination(returns);
+
+  const syncFormFromScan = () => {
+    const sku = scan.resolvedProduct?.sku ?? scan.scanValue.trim();
+    if (sku) {
+      setForm((f) => ({ ...f, sku, quantity: scan.quantity }));
+    }
+  };
+
+  const openModal = () => {
+    syncFormFromScan();
+    setModalOpen(true);
+  };
+
+  const handlePageRegister = () => {
+    if (!scan.scanValue.trim()) {
+      toast.error('Leia ou digite um código primeiro');
+      return;
+    }
+    openModal();
+  };
+
+  const handleUseExisting = (product: ProductLookupResult) => {
+    setForm((f) => ({ ...f, sku: product.sku, quantity: scan.quantity }));
+    setModalOpen(true);
+  };
 
   const createReturn = async () => {
     if (!form.sku) {
       toast.error('Informe o SKU');
       return;
     }
-    if (isLogstokaDemoCompany(companyId)) {
-      toast.success('[Demo] Devolução registrada');
-      setModalOpen(false);
-      return;
-    }
+    setRegistering(true);
     try {
+      if (demo) {
+        toast.success('[Demo] Devolução registrada');
+        setModalOpen(false);
+        setForm(emptyForm);
+        scan.clearScan();
+        return;
+      }
       await logstokaApi.createReturn({
         order_reference: form.order_reference,
         reason: form.reason,
@@ -78,14 +127,18 @@ const ReturnsPage: React.FC = () => {
       });
       toast.success('Devolução registrada');
       setModalOpen(false);
+      setForm(emptyForm);
+      scan.clearScan();
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro');
+    } finally {
+      setRegistering(false);
     }
   };
 
   const action = async (id: string, type: 'triage' | 'approve' | 'reject') => {
-    if (isLogstokaDemoCompany(companyId)) {
+    if (demo) {
       toast.success('[Demo] Status atualizado');
       return;
     }
@@ -112,27 +165,47 @@ const ReturnsPage: React.FC = () => {
     { received: 0, triage: 0, approved: 0, rejected: 0 } as Record<'received' | 'triage' | 'approved' | 'rejected', number>,
   );
 
+  const scanProps = {
+    companyId,
+    demo,
+    scanMode: scan.scanMode,
+    onScanModeChange: scan.setScanMode,
+    scanValue: scan.scanValue,
+    onScanValueChange: (value: string) => {
+      scan.setScanValue(value);
+      toast.success(`Código lido: ${value}`);
+    },
+    onClearScan: scan.clearScan,
+    quantity: scan.quantity,
+    onQuantityChange: scan.setQuantity,
+    resolvedProduct: scan.resolvedProduct,
+    resolving: scan.resolving,
+    interpreting: scan.interpreting,
+    scanInterpretation: scan.scanInterpretation,
+    onRegister: handlePageRegister,
+    onUseExisting: handleUseExisting,
+    registering,
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Devoluções</h2>
-          <p className="text-sm text-slate-500">Recebido → Triagem → Aprovado/Reprovado</p>
-        </div>
-        <button type="button" className="ls-btn-primary" onClick={() => setModalOpen(true)}>
-          Nova devolução
-        </button>
-      </div>
+      <MovementScanSection
+        {...scanProps}
+        movementLabel="Devoluções"
+        pageTitleIcon={<RotateCcw size={20} strokeWidth={2.25} aria-hidden />}
+        headerActions={<LogstokaAddIconButton title="Nova devolução" onClick={openModal} />}
+      />
 
-      <div className="grid gap-3 md:grid-cols-4">
-        {Object.entries(counts).map(([k, v]) => (
-          <div key={k} className="ls-card text-center">
-            <p className="text-xs font-bold uppercase text-slate-500">{statusLabels[k]}</p>
-            <p className="mt-2 text-3xl font-black">{v}</p>
-          </div>
-        ))}
-      </div>
+      <LogstokaKpiStrip
+        items={[
+          { label: 'Recebido', value: counts.received },
+          { label: 'Triagem', value: counts.triage },
+          { label: 'Aprovado', value: counts.approved },
+          { label: 'Reprovado', value: counts.rejected },
+        ]}
+      />
 
+      <section className="ls-page-table">
       <div className="ls-table-wrap">
         <table className="ls-table">
           <thead>
@@ -148,7 +221,7 @@ const ReturnsPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {returns.map((r) => (
+            {paginatedItems.map((r) => (
               <ClickableTableRow key={r.id} to={`/app/returns/${r.id}`}>
                 <td>{r.order_reference || '—'}</td>
                 <td>
@@ -187,48 +260,26 @@ const ReturnsPage: React.FC = () => {
         </table>
       </div>
 
-      <Modal open={modalOpen} title="Registrar devolução" onClose={() => setModalOpen(false)}>
-        <div className="space-y-3">
-          <div>
-            <label className="ls-label">Referência pedido</label>
-            <input className="ls-input" value={form.order_reference} onChange={(e) => setForm((f) => ({ ...f, order_reference: e.target.value }))} />
-          </div>
-          <div>
-            <label className="ls-label">Motivo</label>
-            <input className="ls-input" value={form.reason} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} />
-          </div>
-          <div>
-            <label className="ls-label">Loja</label>
-            <select className="ls-input" value={form.store_id} onChange={(e) => setForm((f) => ({ ...f, store_id: e.target.value }))}>
-              <option value="">—</option>
-              {stores.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="ls-label">Depósito</label>
-            <select className="ls-input" value={form.warehouse_id} onChange={(e) => setForm((f) => ({ ...f, warehouse_id: e.target.value }))}>
-              <option value="">—</option>
-              {warehouses.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <BarcodeScanner onScan={(sku) => setForm((f) => ({ ...f, sku }))} />
-          <div>
-            <label className="ls-label">Quantidade</label>
-            <input className="ls-input" type="number" min={1} value={form.quantity} onChange={(e) => setForm((f) => ({ ...f, quantity: Number(e.target.value) }))} />
-          </div>
-          <button type="button" className="ls-btn-primary w-full" onClick={() => void createReturn()}>
-            Registrar
-          </button>
-        </div>
-      </Modal>
+      <LogstokaTableFooter {...footerProps} />
+      </section>
+
+      <ReturnRegisterModal
+        open={modalOpen}
+        saving={registering}
+        form={form}
+        stores={stores}
+        warehouses={warehouses}
+        scan={{
+          ...scanProps,
+          onRegister: () => void createReturn(),
+          onUseExisting: (product) => {
+            setForm((f) => ({ ...f, sku: product.sku, quantity: scan.quantity }));
+          },
+        }}
+        onClose={() => setModalOpen(false)}
+        onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+        onSubmit={() => void createReturn()}
+      />
     </div>
   );
 };

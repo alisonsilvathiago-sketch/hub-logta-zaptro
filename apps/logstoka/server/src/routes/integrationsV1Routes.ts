@@ -103,7 +103,7 @@ export function registerIntegrationsV1Routes(app: Express, cfg: LogstokaConfig) 
     }
 
     try {
-      const data = await recordIntegrationSync(admin, req.auth.companyId, provider);
+      const data = await recordIntegrationSync(admin, cfg, req.auth.companyId, provider);
       res.json({ data });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao sincronizar';

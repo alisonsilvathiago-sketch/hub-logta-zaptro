@@ -1,63 +1,80 @@
-# IA OPERACIONAL LOGSTOKA — LLAMA 3.2
+# IA OBRIGATÓRIA — LLAMA 3.2 (LogStoka)
 
-O LogStoka possui uma camada de Inteligência Artificial utilizando **Llama 3.2** (Ollama na VPS).
+A **Llama 3.2** (Ollama) é o **motor principal de inteligência** do LogStoka — componente **obrigatório, nativo e permanentemente activo**. Não é um chatbot opcional.
 
-A IA **não é um chatbot** — é um **copiloto operacional** em todas as telas.
+**Não criar opção para desactivar a IA** em produção.
 
 ## Objetivo
 
-Auxiliar operadores, gestores e administradores em todas as tarefas do WMS.
+Funcionar como colaborador inteligente: auxiliar utilizadores, automatizar tarefas, reduzir erros operacionais e aumentar produtividade em **todos os módulos**.
 
 ## Arquitetura
 
-**Llama 3.2 + RAG (Supabase) + agentes especializados**
-
 ```
-Utilizador → Drawer IA (frontend)
-          → POST /v1/ai/chat (API LogStoka)
-          → intentRouter → dataContext (RAG)
-          → operationalAgent → Ollama /api/chat
-          → resposta com dados reais
+Utilizador → Início / Assistente IA Global (drawer)
+          → POST /v1/ai/chat
+          → intentRouter → dataContext (RAG Supabase)
+          → operationalAgent → Ollama Llama 3.2
+          → resposta com dados reais + sugestões proactivas
 ```
-
-### Módulos
 
 | Caminho | Função |
 |---------|--------|
 | `server/src/modules/ai/ollamaService.ts` | Chat e JSON via Ollama |
-| `server/src/modules/ai/dataContext.ts` | RAG — consultas Supabase |
+| `server/src/modules/ai/dataContext.ts` | RAG — dados reais |
 | `server/src/modules/ai/intentRouter.ts` | Detecção de intenção |
-| `server/src/modules/ai/agents/operationalAgent.ts` | Orquestrador principal |
-| `server/src/modules/ai/documentReader.ts` | Validação de importações |
+| `server/src/modules/ai/systemPrompt.ts` | Prompt do motor principal |
+| `server/src/modules/ai/agents/operationalAgent.ts` | Orquestrador |
+| `server/src/modules/ai/documentReader.ts` | PDF/planilha/OCR |
 | `server/src/routes/aiRoutes.ts` | `/v1/ai/*` |
-| `src/modules/ai/` | Drawer global + chat |
+| `src/modules/ai/` | Drawer global, hooks, constantes |
+| `src/modules/inicio/InicioPage.tsx` | Home do motor IA |
 
-### Agentes (intents)
+## Funções da IA
 
-- **stock** — estoque, SKUs, depósitos, mínimo
-- **movements** — entradas, saídas, transferências
-- **returns** — devoluções e motivos
-- **inventory** — divergências e recontagem
-- **replenishment** — reposição, giro, produtos parados
-- **imports** — validação Excel/CSV/PDF/OCR
-- **analytics** — lojas, marketplaces, ranking
-- **daily_summary** — resumo operacional do dia
+- Cadastro e correção de produtos, descrições para marketplaces, categorias
+- Organização de estoque, classificação, conferência de inventários
+- Análise de movimentações, relatórios, vendas, produtos parados
+- Sugestões de reposição e transferência, logística
+- Documentos: PDF, planilhas, imagens, OCR, NF-e
+- Integrações: Mercado Livre, Shopee, Amazon, TikTok Shop, Magalu, Shein, Bling, Tiny, Omie
 
-## Assistente global
+## Assistente IA Global
 
-Botão **IA Operacional** no header (todas as telas `/app/*`).
+Disponível em **todas as telas** `/app/*`:
 
-Evento global:
+- Botão ✨ no header
+- Drawer lateral `LogstokaAiDrawer`
+- Evento: `window.dispatchEvent(new CustomEvent('logstoka:open-ai-drawer', { detail: { message: '…' } }))`
 
-```js
-window.dispatchEvent(new CustomEvent('logstoka:open-ai-drawer', { detail: { message: '…' } }));
-```
+## Automação proactiva
+
+A IA sugere automaticamente (quando detectado no contexto RAG):
+
+- Cadastro incompleto · produtos duplicados
+- Divergências de estoque · erros de integração/sync
+- Melhorias operacionais
+
+## Agentes (intents)
+
+| Intent | Domínio |
+|--------|---------|
+| `stock` | Estoque, SKUs, mínimos |
+| `movements` | Entradas, saídas, transferências |
+| `returns` | Devoluções |
+| `inventory` | Inventário, divergências |
+| `replenishment` | Reposição, produtos parados |
+| `imports` | Documentos, OCR, NF-e |
+| `analytics` | Vendas, lojas, ranking |
+| `integrations` | Marketplaces, ERPs, sync |
+| `products` | Cadastro, descrições, categorias |
+| `daily_summary` | Resumo operacional |
 
 ## API
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| GET | `/v1/ai/health` | Status Ollama |
+| GET | `/v1/ai/health` | Status Ollama (poll automático no client) |
 | POST | `/v1/ai/chat` | Chat com RAG |
 | GET | `/v1/ai/daily-briefing` | Resumo automático |
 | POST | `/v1/ai/validate-import` | Validação pré-importação |
@@ -69,21 +86,10 @@ LOGSTOKA_OLLAMA_URL=http://108.174.151.98:11434
 LOGSTOKA_OLLAMA_MODEL=llama3.2
 ```
 
-## Futuro
+## Regra de implementação
 
-Toda nova funcionalidade do LogStoka deve ser acessível pela IA.
+Toda nova funcionalidade do LogStoka deve ser **acessível pela IA**: adicionar intent, contexto RAG e acções sugeridas quando aplicável.
 
-Novos agentes: adicionar intent em `intentRouter.ts`, contexto em `dataContext.ts`, e expor via `/v1/ai/chat`.
+A IA responde **apenas** com dados do contexto RAG — nunca inventar números.
 
-## Exemplos de perguntas
-
-- Quantas unidades do SKU 123 temos?
-- Quais produtos estão abaixo do estoque mínimo?
-- Quantas devoluções tivemos hoje?
-- Quais produtos estão parados há mais de 90 dias?
-- Existe divergência no inventário?
-- Qual marketplace gerou mais saídas?
-
----
-
-**Regra:** a IA responde com dados do contexto RAG; nunca inventar números.
+Cursor rule: `.cursor/rules/logstoka-llama-ai-core.mdc`

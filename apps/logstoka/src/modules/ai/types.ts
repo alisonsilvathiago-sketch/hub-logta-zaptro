@@ -7,23 +7,14 @@ export type AiChatResponse = {
   model?: string;
 };
 
-export const AI_QUICK_PROMPTS = [
-  'Quantas saídas tivemos hoje?',
-  'Quais produtos estão abaixo do estoque mínimo?',
-  'Resumo operacional de hoje',
-  'Quais produtos estão parados há 90 dias?',
-  'Existe divergência no inventário?',
-  'Sugestões de reposição',
-] as const;
-
-export const AI_AGENT_LABELS: Record<string, string> = {
-  stock: 'Estoque',
-  movements: 'Movimentações',
-  returns: 'Devoluções',
-  inventory: 'Inventário',
-  replenishment: 'Reposição',
-  imports: 'Importação',
-  analytics: 'Gestão',
-  daily_summary: 'Resumo diário',
-  general: 'Operacional',
-};
+export {
+  AI_AGENT_LABELS,
+  AI_INICIO_EXAMPLES,
+  AI_QUICK_PROMPTS,
+  LOGSTOKA_AI_BRAND,
+  LOGSTOKA_AI_MODEL,
+  LOGSTOKA_AI_TAGLINE,
+  aiEngineStatusLabel,
+  buildAiWelcomeMessage,
+  buildInicioHeroSubtitle,
+} from './constants';

@@ -6,8 +6,11 @@ import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { MARKETPLACE_LABELS } from '@/types';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import { DEMO_INTEGRATION_LOGS, DEMO_WEBHOOKS } from '@/lib/logstokaDemoSeed';
+import { Webhook } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import ClickableTableRow from '@/components/ui/ClickableTableRow';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useTablePagination } from '@/hooks/useTablePagination';
 
 interface WebhookEndpoint {
   id: string;
@@ -50,6 +53,8 @@ const IntegrationsPage: React.FC = () => {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const { paginatedItems, footerProps } = useTablePagination(logs);
 
   const saveWebhook = async () => {
     if (!companyId || !form.name || !form.url) return;
@@ -112,7 +117,7 @@ const IntegrationsPage: React.FC = () => {
           <table className="ls-table">
             <thead><tr><th>Direção</th><th>Endpoint</th><th>Status</th><th>Data</th></tr></thead>
             <tbody>
-              {logs.map((l) => (
+              {paginatedItems.map((l) => (
                 <ClickableTableRow key={l.id} to={`/app/integrations/logs/${l.id}`}>
                   <td>{l.direction}</td>
                   <td>{l.endpoint || '—'}</td>
@@ -123,6 +128,7 @@ const IntegrationsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+        <LogstokaTableFooter {...footerProps} hidden={logs.length === 0} />
       </div>
 
       <div className="ls-card">
@@ -132,7 +138,12 @@ const IntegrationsPage: React.FC = () => {
         </code>
       </div>
 
-      <Modal open={modalOpen} title="Novo webhook" onClose={() => setModalOpen(false)}>
+      <Modal
+        open={modalOpen}
+        title="Novo webhook"
+        icon={<Webhook size={20} strokeWidth={2.25} />}
+        onClose={() => setModalOpen(false)}
+      >
         <div className="space-y-3">
           <input className="ls-input" placeholder="Nome" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
           <input className="ls-input" placeholder="URL" value={form.url} onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))} />

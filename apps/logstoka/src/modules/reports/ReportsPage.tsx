@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BarChart3, TrendingUp } from 'lucide-react';
+import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
 import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import { getDemoReports } from '@/lib/logstokaDemoSeed';
 import { MARKETPLACE_LABELS } from '@/types';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useTablePagination } from '@/hooks/useTablePagination';
 
 const ReportsPage: React.FC = () => {
   const { companyId } = useLogstokaTenant();
@@ -12,6 +15,7 @@ const ReportsPage: React.FC = () => {
   const [exitsByMp, setExitsByMp] = useState<Record<string, number>>({});
   const [entries, setEntries] = useState(0);
   const [topProducts, setTopProducts] = useState<Array<{ sku: string; name: string; qty: number }>>([]);
+  const { paginatedItems, footerProps } = useTablePagination(topProducts, 10, period);
 
   useEffect(() => {
     if (!companyId) return;
@@ -32,10 +36,10 @@ const ReportsPage: React.FC = () => {
       .select('movement_type, marketplace, total_quantity')
       .eq('company_id', companyId)
       .gte('created_at', since.toISOString())
-      .then(({ data }) => {
+      .then((res) => {
         const mp: Record<string, number> = {};
         let ent = 0;
-        for (const row of data ?? []) {
+        for (const row of res.data ?? []) {
           if (row.movement_type === 'entry') ent += Number(row.total_quantity ?? 0);
           if (row.movement_type === 'exit' && row.marketplace) {
             mp[row.marketplace] = (mp[row.marketplace] ?? 0) + Number(row.total_quantity ?? 0);
@@ -51,9 +55,9 @@ const ReportsPage: React.FC = () => {
       .eq('ls_stock_movements.company_id', companyId)
       .eq('ls_stock_movements.movement_type', 'exit')
       .gte('ls_stock_movements.created_at', since.toISOString())
-      .then(({ data }) => {
+      .then((res) => {
         const map = new Map<string, { sku: string; name: string; qty: number }>();
-        for (const row of data ?? []) {
+        for (const row of res.data ?? []) {
           const sku = row.sku as string;
           const name =
             (row as { ls_products?: { name?: string } | { name?: string }[] | null }).ls_products &&
@@ -68,51 +72,87 @@ const ReportsPage: React.FC = () => {
       });
   }, [companyId, period]);
 
+  const totalExits = useMemo(() => Object.values(exitsByMp).reduce((sum, qty) => sum + qty, 0), [exitsByMp]);
+  const activeChannels = Object.keys(exitsByMp).length;
+  const topChannel = useMemo(() => {
+    const entries = Object.entries(exitsByMp);
+    if (!entries.length) return '—';
+    const [mp] = entries.sort((a, b) => b[1] - a[1])[0]!;
+    return MARKETPLACE_LABELS[mp as keyof typeof MARKETPLACE_LABELS] ?? mp;
+  }, [exitsByMp]);
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Relatórios</h2>
-          <p className="text-sm text-slate-500">Saídas por canal, entradas e curva ABC simplificada</p>
+      <div className="ls-movement-scan__page-header !border-0 !px-0 !pb-0">
+        <h2 className="ls-movement-scan__page-title">
+          <span className="ls-movement-scan__page-title-icon">
+            <BarChart3 size={20} strokeWidth={2.25} aria-hidden />
+          </span>
+          Relatórios
+        </h2>
+        <div className="ls-movement-scan__page-actions">
+          <select className="ls-input w-auto min-w-[140px]" value={period} onChange={(e) => setPeriod(Number(e.target.value))}>
+            <option value={7}>7 dias</option>
+            <option value={30}>30 dias</option>
+            <option value={90}>90 dias</option>
+          </select>
         </div>
-        <select className="ls-input w-auto" value={period} onChange={(e) => setPeriod(Number(e.target.value))}>
-          <option value={7}>7 dias</option>
-          <option value={30}>30 dias</option>
-          <option value={90}>90 dias</option>
-        </select>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="ls-stat">
-          <p className="text-xs font-bold uppercase text-slate-500">Entradas (un.)</p>
-          <p className="text-3xl font-black">{entries}</p>
-        </div>
-        {Object.entries(exitsByMp).map(([mp, qty]) => (
-          <div key={mp} className="ls-stat">
-            <p className="text-xs font-bold uppercase text-slate-500">Saídas {MARKETPLACE_LABELS[mp as keyof typeof MARKETPLACE_LABELS] ?? mp}</p>
-            <p className="text-3xl font-black">{qty as number}</p>
+      <LogstokaKpiStrip
+        items={[
+          { label: 'Entradas (un.)', value: entries.toLocaleString('pt-BR'), icon: <TrendingUp size={56} /> },
+          { label: 'Saídas (un.)', value: totalExits.toLocaleString('pt-BR'), icon: <BarChart3 size={56} /> },
+          { label: 'Canais ativos', value: activeChannels, icon: <BarChart3 size={56} /> },
+          { label: 'Top canal', value: topChannel, hint: `Período ${period} dias` },
+        ]}
+      />
+
+      <section className="ls-page-table">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 px-1">
+          <div>
+            <h3 className="text-[15px] font-black uppercase tracking-widest text-[#828282]">Curva ABC — top produtos</h3>
+            <p className="mt-1 text-sm text-[#a3a3a3]">Saídas por canal, entradas e ranking simplificado</p>
           </div>
-        ))}
-      </div>
+        </div>
 
-      <div className="ls-card">
-        <h3 className="mb-4 font-black">Top produtos vendidos (Curva ABC)</h3>
-        <div className="ls-table-wrap border-0">
+        {Object.keys(exitsByMp).length > 0 ? (
+          <div className="mb-4 flex flex-wrap gap-3 px-1">
+            {Object.entries(exitsByMp).map(([mp, qty]) => (
+              <div key={mp} className="rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-[#828282]">
+                  Saídas {MARKETPLACE_LABELS[mp as keyof typeof MARKETPLACE_LABELS] ?? mp}
+                </p>
+                <p className="mt-1 text-xl font-black text-[#383838]">{Number(qty).toLocaleString('pt-BR')}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="ls-table-wrap">
           <table className="ls-table">
-            <thead><tr><th>#</th><th>SKU</th><th>Produto</th><th>Quantidade</th></tr></thead>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>SKU</th>
+                <th>Produto</th>
+                <th>Quantidade</th>
+              </tr>
+            </thead>
             <tbody>
-              {topProducts.map((p, i) => (
+              {paginatedItems.map((p, i) => (
                 <tr key={p.sku}>
-                  <td>{i + 1}</td>
+                  <td>{(footerProps.page - 1) * footerProps.pageSize + i + 1}</td>
                   <td className="font-bold">{p.sku}</td>
                   <td>{p.name}</td>
-                  <td>{p.qty}</td>
+                  <td className="font-black text-orange-700">{p.qty.toLocaleString('pt-BR')}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+        <LogstokaTableFooter {...footerProps} hidden={topProducts.length === 0} itemLabel="produtos" />
+      </section>
     </div>
   );
 };

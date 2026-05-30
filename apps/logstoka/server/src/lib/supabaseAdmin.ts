@@ -26,7 +26,7 @@ export async function verifySupabaseJwt(
   if (error || !data.user) return null;
 
   const { data: profile } = await admin
-    .from('profiles')
+    .from('ls_profiles')
     .select('company_id')
     .eq('id', data.user.id)
     .maybeSingle();

@@ -123,6 +123,53 @@ export const logstokaApi = {
       '/v1/ai/validate-import',
       { method: 'POST', body: JSON.stringify(payload) },
     ),
+  aiProductSuggest: (query: string, imageVariant = 0) =>
+    apiFetch<{
+      local_matches: Array<{
+        id: string;
+        sku: string;
+        name: string;
+        barcode?: string | null;
+        internal_code?: string | null;
+        brand?: string | null;
+        main_image_url?: string | null;
+      }>;
+      ai_suggestion: {
+        name: string;
+        brand?: string;
+        category_hint?: string;
+        image_url?: string | null;
+        source: string;
+      } | null;
+    }>('/v1/ai/product-suggest', {
+      method: 'POST',
+      body: JSON.stringify({ query, image_variant: imageVariant }),
+    }),
+  aiScanInterpret: (payload: {
+    raw: string;
+    format?: string;
+    extracted?: Record<string, unknown>;
+    movement_type?: string;
+  }) =>
+    apiFetch<{
+      local_format: string;
+      ai: {
+        name?: string;
+        brand?: string;
+        category_hint?: string;
+        barcode?: string;
+        internal_code?: string;
+        sku?: string;
+        weight?: string;
+        description?: string;
+        image_url?: string | null;
+        confidence: 'high' | 'medium' | 'low';
+        summary: string;
+        suggested_action: string;
+        url_fetch_recommended?: boolean;
+      } | null;
+      product_suggestion: unknown;
+    }>('/v1/ai/scan-interpret', { method: 'POST', body: JSON.stringify(payload) }),
   getIntegrations: () => apiFetch<{ data: IntegrationApiConnection[] }>('/v1/integrations'),
   updateIntegration: (provider: string, payload: { stores?: unknown; sync?: unknown }) =>
     apiFetch<{ data: IntegrationApiConnection }>(`/v1/integrations/${provider}`, {

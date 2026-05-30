@@ -290,6 +290,41 @@ export async function fetchImportsContext(admin: SupabaseClient, companyId: stri
   return { recent_imports: data ?? [] };
 }
 
+export async function fetchIntegrationsContext(admin: SupabaseClient, companyId: string) {
+  const { data: integrations } = await admin
+    .from('ls_integrations')
+    .select('provider, status, last_sync_at, config')
+    .eq('company_id', companyId)
+    .limit(20);
+
+  const { data: logs } = await admin
+    .from('ls_integration_logs')
+    .select('status, error_message, endpoint, created_at')
+    .eq('company_id', companyId)
+    .neq('status', 'success')
+    .order('created_at', { ascending: false })
+    .limit(15);
+
+  return {
+    integrations: integrations ?? [],
+    recent_errors: logs ?? [],
+  };
+}
+
+export async function fetchProductsContext(admin: SupabaseClient, companyId: string) {
+  const { data: incomplete } = await admin
+    .from('ls_products')
+    .select('sku, name, status, description, category_id, barcode')
+    .eq('company_id', companyId)
+    .eq('status', 'active')
+    .or('description.is.null,description.eq.,category_id.is.null,barcode.is.null')
+    .limit(15);
+
+  return {
+    incomplete_cadastro: incomplete ?? [],
+  };
+}
+
 export async function buildRagContext(
   admin: SupabaseClient,
   companyId: string,
@@ -324,6 +359,12 @@ export async function buildRagContext(
   }
   if (intents.includes('imports')) {
     blocks.imports = await fetchImportsContext(admin, companyId);
+  }
+  if (intents.includes('integrations')) {
+    blocks.integrations = await fetchIntegrationsContext(admin, companyId);
+  }
+  if (intents.includes('products')) {
+    blocks.products = await fetchProductsContext(admin, companyId);
   }
 
   return JSON.stringify(blocks, null, 2);

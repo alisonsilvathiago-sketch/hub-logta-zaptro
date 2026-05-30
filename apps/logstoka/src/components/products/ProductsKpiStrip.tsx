@@ -11,10 +11,11 @@ export type ProductsKpiItem = {
 
 type Props = {
   items: ProductsKpiItem[];
+  className?: string;
 };
 
-const ProductsKpiStrip: React.FC<Props> = ({ items }) => (
-  <div className="ls-products-kpi">
+const ProductsKpiStrip: React.FC<Props> = ({ items, className }) => (
+  <div className={`ls-products-kpi${className ? ` ${className}` : ''}`}>
     {items.map(({ label, value, hint, accent, icon: Icon }) => (
       <div key={label} className="ls-products-kpi__card">
         <div className="ls-products-kpi__card-top">

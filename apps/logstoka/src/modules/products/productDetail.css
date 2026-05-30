@@ -124,7 +124,7 @@
   font-size: 2rem;
   font-weight: 900;
   line-height: 1;
-  color: #111827;
+  color: #383838;
 }
 
 .ls-product-detail-kpi__value--primary {
@@ -162,7 +162,7 @@
   margin-top: 8px;
   font-size: 1.75rem;
   font-weight: 900;
-  color: #111827;
+  color: #383838;
   line-height: 1;
 }
 
@@ -171,7 +171,7 @@
 }
 
 .ls-product-detail-price__value--cost {
-  color: #64748b;
+  color: #383838;
 }
 
 .ls-product-detail-price__sub {
@@ -274,8 +274,8 @@
 }
 
 .ls-product-detail-pub-card__status--off {
-  background: #f1f5f9;
-  color: #94a3b8;
+  background: #f5f5f5;
+  color: #949494;
 }
 
 .ls-product-detail-wh-row {
@@ -329,7 +329,7 @@
 .ls-product-detail-timeline-item__qty {
   font-size: 20px;
   font-weight: 900;
-  color: #111827;
+  color: #383838;
   white-space: nowrap;
 }
 

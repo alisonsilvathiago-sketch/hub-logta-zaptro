@@ -1,0 +1,44 @@
+---
+description: Llama 3.2 — motor principal de inteligência nativo e obrigatório do LogStoka
+globs: apps/logstoka/**
+alwaysApply: false
+---
+
+# IA OBRIGATÓRIA — LLAMA 3.2 (LogStoka)
+
+A **Llama 3.2** (Ollama) é componente **obrigatório e nativo** do LogStoka — o **motor principal de inteligência** da plataforma, não um chatbot opcional.
+
+## Regras de arquitetura
+
+- **Sempre ativa** — sem toggle, flag ou setting para desactivar a IA em produção.
+- **Integrada em todos os módulos** — produtos, estoque, movimentações, inventário, importações, integrações, relatórios.
+- **Assistente IA Global** — drawer disponível em todas as telas `/app/*` (header + evento `logstoka:open-ai-drawer`).
+- **RAG obrigatório** — respostas operacionais usam dados reais do Supabase via `dataContext.ts`; nunca inventar números.
+- **Disponibilidade** — retry, health check e reconexão; nunca desligar Ollama como fallback silencioso. Ver também regra global de disponibilidade Llama 3.2.
+
+## Funções da IA
+
+Cadastro/correção de produtos, descrições para marketplaces, organização de estoque, categorias, inventário, movimentações, relatórios, vendas, produtos parados, reposição, transferências, logística, documentos (PDF/planilha/imagem/OCR/NF-e), suporte operacional e integrações (ML, Shopee, Amazon, TikTok Shop, Magalu, Shein, Bling, Tiny, Omie).
+
+## Automação proactiva
+
+Sugerir: cadastros incompletos, duplicados, divergências de estoque, erros de integração/sync, melhorias operacionais.
+
+## Implementação
+
+| Camada | Caminho |
+|--------|---------|
+| Chat global | `src/modules/ai/chat/LogstokaAiDrawer.tsx` |
+| Home IA | `src/modules/inicio/InicioPage.tsx` |
+| API | `server/src/routes/aiRoutes.ts` |
+| Orquestrador | `server/src/modules/ai/agents/operationalAgent.ts` |
+| RAG | `server/src/modules/ai/dataContext.ts` |
+| Intents | `server/src/modules/ai/intentRouter.ts` |
+| Prompt | `server/src/modules/ai/systemPrompt.ts` |
+| Ollama | `server/src/modules/ai/ollamaService.ts` |
+| Constantes UI | `src/modules/ai/constants.ts` |
+| Doc | `apps/logstoka/LOGSTOKA_AI.md` |
+
+## Ao implementar novas features
+
+Toda funcionalidade nova do LogStoka deve ser **acessível e assistível pela IA**: expor contexto RAG, intent e acções sugeridas quando aplicável.

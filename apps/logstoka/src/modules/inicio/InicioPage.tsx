@@ -1,31 +1,27 @@
 import React, { useCallback, useState } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  ArrowUp,
-  BarChart3,
-  Boxes,
-  LayoutDashboard,
-  Mic,
-  Package,
-  Plus,
-  Sparkles,
-  Truck,
-  Undo2,
-} from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowUp, Mic, Plus, Sparkles } from 'lucide-react';
 import { useAuth } from '@/context/LogstokaAuthProvider';
 import { useAiChat } from '@/modules/ai/chat/useAiChat';
-import { AI_QUICK_PROMPTS } from '@/modules/ai/types';
-import type { AiChatTurn } from '@/modules/ai/types';
+import { useAiHealth } from '@/modules/ai/chat/useAiHealth';
+import {
+  AI_INICIO_EXAMPLES,
+  LOGSTOKA_AI_MODEL,
+  LOGSTOKA_AI_TAGLINE,
+  aiEngineStatusLabel,
+  buildInicioHeroSubtitle,
+  type AiChatTurn,
+} from '@/modules/ai/types';
 
 const HERO_GRADIENT =
   'linear-gradient(180deg, rgb(0,0,0) 0%, rgb(0,0,0) 22%, rgb(67,20,7) 38%, rgb(194,65,12) 55%, rgb(234,88,12) 68%, rgb(251,146,60) 78%, rgb(254,215,170) 88%, rgb(255,255,255) 96%)';
-
-const SUGGESTION_ICONS = [Package, Boxes, BarChart3, Undo2, Truck, LayoutDashboard] as const;
 
 const InicioPage: React.FC = () => {
   const { profile } = useAuth();
   const displayName = profile?.full_name?.split(' ')[0] || 'LogStoka';
   const companyName = profile?.full_name?.includes('LogStoka') ? 'LogStoka' : 'sua operação';
+  const { online } = useAiHealth(true);
+  const navigate = useNavigate();
 
   const { send, sending } = useAiChat({
     screen: 'inicio',
@@ -47,7 +43,7 @@ const InicioPage: React.FC = () => {
         const res = await send(q, history);
         const answer =
           res.reply?.trim() ||
-          'Não consegui gerar uma resposta agora. Verifique se a API LogStoka está rodando e tente novamente.';
+          'Não consegui gerar uma resposta agora. O motor Llama 3.2 está a reconectar — tente novamente em instantes.';
         setLastExchange({ query: q, answer });
         setHistory((prev) => [
           ...prev,
@@ -58,7 +54,7 @@ const InicioPage: React.FC = () => {
         setLastExchange({
           query: q,
           answer:
-            'Copiloto operacional indisponível no momento. Você ainda pode acessar o dashboard e os módulos de estoque pelo menu lateral.',
+            'Motor Llama 3.2 temporariamente indisponível. A reconexão é automática — pode continuar a usar o dashboard e os módulos pelo menu lateral.',
         });
       }
     },
@@ -73,10 +69,11 @@ const InicioPage: React.FC = () => {
   };
 
   const showWelcome = !lastExchange && !sending;
+  const engineStatus = aiEngineStatusLabel(online);
 
   return (
     <div
-      className="ls-inicio-page scrollbar-hide flex min-h-full w-full min-w-0 flex-1 flex-col items-center justify-center overflow-x-hidden overflow-y-auto px-4 py-6 sm:px-6 sm:py-8"
+      className="ls-inicio-page scrollbar-hide flex min-h-full min-w-0 flex-1 flex-col items-center justify-center overflow-x-hidden overflow-y-auto"
       style={{ backgroundImage: HERO_GRADIENT }}
     >
       <div className="w-full max-w-3xl space-y-8 pb-16 sm:space-y-10 sm:pb-20">
@@ -88,19 +85,21 @@ const InicioPage: React.FC = () => {
                   LogStoka IA
                 </span>
                 <span className="text-gray-500">•</span>
-                <span className="font-bold text-gray-500">Copiloto operacional · Llama 3.2</span>
+                <span className="font-bold text-gray-500">
+                  {LOGSTOKA_AI_TAGLINE} · {LOGSTOKA_AI_MODEL}
+                </span>
+                <span className="text-gray-500">•</span>
+                <span className={online ? 'font-bold text-emerald-400' : 'font-bold text-amber-300'}>{engineStatus}</span>
               </span>
             </div>
             <h1 className="text-4xl font-black leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl">
               Bem-vindo à LogStoka
             </h1>
-            <p className="mx-auto max-w-xl pt-2 text-sm font-medium text-white/75">
-              Olá, <strong className="text-white">{displayName}</strong>. Seu painel de estoque multicanal está pronto.
-              Pergunte sobre movimentações, reposição, inventário e alertas — ou acesse o{' '}
+            <p className="mx-auto max-w-xl pt-2 text-xs font-medium text-white/75">
+              {buildInicioHeroSubtitle(displayName)}{' '}
               <Link to="/app/dashboard" className="font-bold text-orange-200 underline-offset-2 hover:underline">
-                dashboard operacional
+                Dashboard operacional
               </Link>
-              .
             </p>
           </div>
         )}
@@ -127,7 +126,7 @@ const InicioPage: React.FC = () => {
                     <div className="h-2 w-2 animate-bounce rounded-full bg-orange-600 [animation-delay:-0.15s]" />
                     <div className="h-2 w-2 animate-bounce rounded-full bg-orange-600" />
                     <span className="ml-2 text-sm font-extrabold uppercase tracking-normal text-gray-400">
-                      Analisando estoque…
+                      Motor Llama 3.2 a analisar…
                     </span>
                   </div>
                 ) : (
@@ -164,7 +163,7 @@ const InicioPage: React.FC = () => {
           <div className="absolute -inset-1 rounded-[24px] bg-gradient-to-r from-orange-600 to-orange-400 opacity-[0.07] blur transition duration-1000 group-focus-within:opacity-[0.12] group-hover:duration-200" />
           <div className="relative rounded-[20px] border border-gray-100 bg-white px-5 py-3.5 shadow-md shadow-gray-50 transition-all focus-within:border-orange-200">
             <textarea
-              placeholder="O que você deseja saber sobre o estoque?"
+              placeholder="Ex.: Qual produto mais vendeu este mês? Quais precisam de reposição?"
               className="scrollbar-hide min-h-[64px] w-full resize-none border-none bg-transparent pr-12 text-base text-gray-800 outline-none placeholder:text-gray-400"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -180,7 +179,9 @@ const InicioPage: React.FC = () => {
               <button
                 type="button"
                 className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-50 hover:text-orange-600"
-                aria-label="Anexar"
+                aria-label="Anexar documento"
+                title="Importar PDF, planilha ou imagem (Importações)"
+                onClick={() => navigate('/app/imports')}
               >
                 <Plus size={18} />
               </button>
@@ -209,51 +210,22 @@ const InicioPage: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
 
-        {showWelcome && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 flex flex-wrap items-center justify-center gap-3 duration-1000">
-            {AI_QUICK_PROMPTS.map((label, i) => {
-              const Icon = SUGGESTION_ICONS[i % SUGGESTION_ICONS.length];
-              return (
+          {showWelcome && (
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              {AI_INICIO_EXAMPLES.map((example) => (
                 <button
-                  key={label}
+                  key={example}
                   type="button"
-                  onClick={() => void runQuery(label)}
-                  className="group flex items-center gap-1.5 rounded-full border border-gray-100 bg-white px-4 py-2 text-xs font-semibold text-gray-500 transition-all hover:border-orange-200 hover:bg-gray-50 hover:shadow-sm"
+                  onClick={() => void runQuery(example)}
+                  className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white/90 backdrop-blur transition hover:bg-white/20"
                 >
-                  <Icon size={14} className="text-orange-500 transition-transform group-hover:scale-105" />
-                  {label}
+                  {example}
                 </button>
-              );
-            })}
-          </div>
-        )}
-
-        {showWelcome && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-700">
-            <p className="mb-3 text-center text-[10px] font-black uppercase tracking-widest text-white/50">
-              Atalhos rápidos
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {[
-                { to: '/app/dashboard', label: 'Dashboard' },
-                { to: '/app/products', label: 'Produtos' },
-                { to: '/app/movements', label: 'Movimentações' },
-                { to: '/app/inventory', label: 'Inventário' },
-                { to: '/app/reports', label: 'Relatórios' },
-              ].map(({ to, label }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold text-white backdrop-blur transition hover:bg-white/20"
-                >
-                  {label}
-                </Link>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

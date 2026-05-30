@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import './lsModal.css';
 
@@ -6,6 +7,7 @@ interface ModalProps {
   open: boolean;
   title: string;
   subtitle?: string;
+  icon?: React.ReactNode;
   onClose: () => void;
   children: React.ReactNode;
   /** @deprecated use size="wide" */
@@ -18,6 +20,7 @@ const Modal: React.FC<ModalProps> = ({
   open,
   title,
   subtitle,
+  icon,
   onClose,
   children,
   wide,
@@ -34,16 +37,23 @@ const Modal: React.FC<ModalProps> = ({
         ? 'ls-modal__panel--wide'
         : 'ls-modal__panel--default';
 
-  return (
+  return createPortal(
     <div className="ls-modal" role="dialog" aria-modal="true" aria-labelledby="ls-modal-title">
       <button type="button" className="ls-modal__backdrop" aria-label="Fechar" onClick={onClose} />
       <div className={`ls-modal__panel ${sizeClass}`}>
         <div className={`ls-modal__header${resolvedSize === 'landscape' ? ' ls-modal__header--landscape' : ''}`}>
-          <div>
-            <h3 id="ls-modal-title" className="ls-modal__title">
-              {title}
-            </h3>
-            {subtitle ? <p className="ls-modal__subtitle">{subtitle}</p> : null}
+          <div className="ls-modal__header-brand">
+            {icon ? (
+              <span className="ls-modal__header-icon" aria-hidden>
+                {icon}
+              </span>
+            ) : null}
+            <div className="min-w-0">
+              <h3 id="ls-modal-title" className="ls-modal__title">
+                {title}
+              </h3>
+              {subtitle ? <p className="ls-modal__subtitle">{subtitle}</p> : null}
+            </div>
           </div>
           <button type="button" onClick={onClose} className="ls-modal__close" aria-label="Fechar">
             <X size={20} />
@@ -58,7 +68,8 @@ const Modal: React.FC<ModalProps> = ({
 
         {footer ? <div className="ls-modal__footer">{footer}</div> : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

@@ -1,5 +1,6 @@
 /* Marketplace Hub — layout premium (claro, sem preto pesado) */
-.ls-hub-page {
+.ls-hub-page,
+.ls-marketplace-sales-wrap {
   --ls-hub-muted: #a3a3a3;
   --ls-hub-text: #525252;
   --ls-hub-title: #404040;
@@ -73,63 +74,16 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
 }
 
-.ls-hub-hero__actions .ls-hub-hero-icon-btn {
+.ls-hub-hero__actions .ls-icon-nav__group {
   flex-shrink: 0;
-  box-sizing: border-box;
-}
-
-.ls-hub-hero__actions a.ls-hub-hero-icon-btn {
-  display: inline-flex;
 }
 
 .ls-hub-notify-wrap {
   position: relative;
-}
-
-.ls-hub-hero-icon-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: none;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-}
-
-.ls-hub-hero-icon-btn--neutral {
-  border: 1px solid var(--ls-hub-border);
-  background: #fff;
-  color: #525252;
-}
-
-.ls-hub-hero-icon-btn--neutral:hover:not(:disabled) {
-  background: var(--ls-hub-soft);
-  border-color: rgba(56, 56, 56, 0.1);
-  transform: translateY(-1px);
-}
-
-.ls-hub-hero-icon-btn--neutral:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.ls-hub-hero-icon-btn--accent {
-  border: 1px solid rgba(234, 88, 12, 0.18);
-  background: rgba(234, 88, 12, 0.08);
-  color: #ea580c;
-}
-
-.ls-hub-hero-icon-btn--accent:hover {
-  background: rgba(234, 88, 12, 0.14);
-  border-color: rgba(234, 88, 12, 0.28);
-  transform: translateY(-1px);
 }
 
 .ls-hub-notify-badge {
@@ -432,7 +386,7 @@
 
 .ls-hub-activity__icon--info {
   background: rgba(148, 163, 184, 0.12);
-  color: #64748b;
+  color: #383838;
 }
 
 .ls-hub-activity__icon--done {
@@ -551,6 +505,18 @@
   padding-left: 30px;
   padding-right: 20px;
   padding-bottom: 10px;
+}
+
+.ls-dashboard-panel .ls-hub-vendas {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .ls-dashboard-panel .ls-hub-vendas {
+    padding-left: 1.75rem;
+    padding-right: 1.75rem;
+  }
 }
 
 .ls-hub-sales-grid {

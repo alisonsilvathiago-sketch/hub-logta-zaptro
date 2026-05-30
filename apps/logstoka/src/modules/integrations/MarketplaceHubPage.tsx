@@ -4,8 +4,6 @@ import {
   ArrowLeftRight,
   Bell,
   Box,
-  CheckCircle2,
-  Download,
   Package,
   RefreshCw,
   Settings,
@@ -14,6 +12,8 @@ import {
 import { toast } from 'react-hot-toast';
 import MarketplaceLogo from '@/components/marketplace/MarketplaceLogo';
 import ClickableTableRow from '@/components/ui/ClickableTableRow';
+import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
+import { useTablePagination } from '@/hooks/useTablePagination';
 import {
   downloadBaixaDocument,
   getMarketplaceHubData,
@@ -24,6 +24,7 @@ import { marketplaceStorePath } from '@/lib/marketplaceStores';
 import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
 import { DEMO_PRODUCTS } from '@/lib/logstokaDemoSeed';
 import MarketplaceHubNotifications from './MarketplaceHubNotifications';
+import MarketplaceSalesSection from './MarketplaceSalesSection';
 import { HubHeroIconButton, HubHeroIconLink } from './HubHeroIconAction';
 import './marketplaceHub.css';
 
@@ -46,6 +47,9 @@ const MarketplaceHubPage: React.FC = () => {
     if (hub) setOrders(hub.saleOrders);
   }, [hub]);
 
+  const listings = hub?.listings ?? [];
+  const { paginatedItems: paginatedListings, footerProps: listingsFooterProps } = useTablePagination(listings);
+
   if (!marketplace || !hub) {
     return (
       <div className="ls-hub-panel text-sm text-[#a3a3a3]">
@@ -54,7 +58,7 @@ const MarketplaceHubPage: React.FC = () => {
     );
   }
 
-  const { aggregate, listings, syncIssues } = hub;
+  const { aggregate, syncIssues } = hub;
   const pendingBaixa = orders.filter((o) => o.status === 'pending_baixa').length;
   const hasSalesHighlight = pendingBaixa > 0 || aggregate.ordersToday > 0;
 
@@ -106,22 +110,24 @@ const MarketplaceHubPage: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="ls-hub-hero__actions">
-          <MarketplaceHubNotifications
-            saleOrders={orders}
-            syncIssues={syncIssues}
-            listings={listings}
-          />
-          <HubHeroIconButton
-            title={syncing ? 'Sincronizando…' : 'Sync agora'}
-            disabled={syncing}
-            onClick={runSync}
-          >
-            <RefreshCw size={18} strokeWidth={2.2} className={syncing ? 'animate-spin' : ''} />
-          </HubHeroIconButton>
-          <HubHeroIconLink to={LOGSTOKA_ROUTES.SETTINGS_INTEGRATIONS} title="Configurar integração">
-            <Settings size={18} strokeWidth={2.2} />
-          </HubHeroIconLink>
+        <div className="ls-icon-nav ls-icon-nav--inline">
+          <div className="ls-icon-nav__group">
+            <MarketplaceHubNotifications
+              saleOrders={orders}
+              syncIssues={syncIssues}
+              listings={listings}
+            />
+            <HubHeroIconButton
+              title={syncing ? 'Sincronizando…' : 'Sync agora'}
+              disabled={syncing}
+              onClick={runSync}
+            >
+              <RefreshCw size={18} strokeWidth={2.2} className={syncing ? 'animate-spin' : ''} />
+            </HubHeroIconButton>
+            <HubHeroIconLink to={LOGSTOKA_ROUTES.SETTINGS_INTEGRATIONS} title="Configurar integração">
+              <Settings size={18} strokeWidth={2.2} />
+            </HubHeroIconLink>
+          </div>
         </div>
       </section>
 
@@ -194,51 +200,18 @@ const MarketplaceHubPage: React.FC = () => {
         </div>
       </div>
 
-      <div id="hub-vendas" className="ls-hub-vendas">
-        <h3 className="ls-hub-section-title">Vendas · Baixa de estoque</h3>
-        <p className="ls-hub-section-desc">
-          Pedidos pagos no {hub.label}. Vendas pendentes aparecem em destaque com notificação.
-        </p>
-        <div className="ls-hub-sales-grid">
-          {orders.map((order) => (
-            <div
-              key={order.id}
-              className={`ls-hub-sale-card${order.status === 'pending_baixa' ? ' ls-hub-sale-card--pending' : ''}`}
-            >
-              <div className="ls-hub-sale-card__body">
-                <p className="ls-hub-sale-card__ref">
-                  {order.status === 'pending_baixa' ? (
-                    <span className="ls-hub-sale-card__notify" aria-hidden>
-                      <Bell size={16} strokeWidth={2.2} />
-                    </span>
-                  ) : null}
-                  {order.orderRef}
-                </p>
-                <p className="ls-hub-sale-card__detail">
-                  {order.productName} · {order.quantity} un · {order.sku}
-                </p>
-                <p className="ls-hub-sale-card__meta">{order.soldAt}</p>
-              </div>
-              <div className="ls-hub-sale-card__actions">
-                {order.status === 'baixa_done' ? (
-                  <span className="ls-badge bg-orange-50 text-orange-700">
-                    <CheckCircle2 size={14} className="mr-1 inline" />
-                    Baixa registrada
-                  </span>
-                ) : (
-                  <>
-                    <span className="ls-badge bg-orange-50 text-orange-700">Aguardando baixa</span>
-                    <button type="button" className="ls-btn-primary w-full" onClick={() => handleBaixa(order)}>
-                      <Download size={16} />
-                      Baixar documento
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <MarketplaceSalesSection
+        id="hub-vendas"
+        orders={orders.map((order) => ({
+          ...order,
+          marketplace,
+          marketplaceLabel: hub.label,
+          hubPath: hub.hubPath,
+        }))}
+        onBaixa={handleBaixa}
+        description={`Pedidos pagos no ${hub.label}. Vendas pendentes aparecem em destaque com notificação.`}
+        showMarketplaceBadge={false}
+      />
 
       <div id="hub-produtos">
         <h3 className="ls-hub-section-title">Produtos no {hub.label}</h3>
@@ -257,7 +230,7 @@ const MarketplaceHubPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {listings.map((l) => (
+              {paginatedListings.map((l) => (
                 <ClickableTableRow key={l.productId} to={`/app/products/${l.productId}`}>
                   <td className="font-bold">{l.sku}</td>
                   <td>{l.name}</td>
@@ -283,6 +256,7 @@ const MarketplaceHubPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+        <LogstokaTableFooter {...listingsFooterProps} itemLabel="anúncios" />
       </div>
     </div>
   );
