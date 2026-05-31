@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Share2, Calendar, Lock, Copy, Check, Trash2, Clock, Eye, AlertCircle, RefreshCw, ShieldCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Modal from '@/components/ui/Modal';
-import { secureSharing, type LsShareLink } from '@/lib/secureSharing';
+import { IntegrationBrandLogo } from '@/components/integrations/IntegrationBrandLogo';
+import { useAuth } from '@/context/LogstokaAuthProvider';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import { useLogstokaPermissions } from '@/hooks/useLogstokaPermissions';
+import { ensureDemoShareLinks, secureSharing, type LsShareLink } from '@/lib/secureSharing';
 
 interface Props {
   open: boolean;
@@ -23,6 +26,8 @@ export const LogstokaShareModal: React.FC<Props> = ({
   snapshotData
 }) => {
   const { companyId } = useLogstokaTenant();
+  const { profile } = useAuth();
+  const { canCreateShareLink } = useLogstokaPermissions();
   const [shareName, setShareName] = useState('');
   const [note, setNote] = useState('');
   const [expiryPreset, setExpiryPreset] = useState<string>('24'); // Default 24 horas
@@ -38,11 +43,12 @@ export const LogstokaShareModal: React.FC<Props> = ({
 
   useEffect(() => {
     if (open) {
+      if (companyId) ensureDemoShareLinks(companyId);
       setShareName(`Compartilhamento - ${resourceName}`);
       setGeneratedLink(null);
       loadActiveShares();
     }
-  }, [open, resourceId, resourceName]);
+  }, [open, resourceId, resourceName, companyId]);
 
   const loadActiveShares = () => {
     if (companyId) {
@@ -54,6 +60,14 @@ export const LogstokaShareModal: React.FC<Props> = ({
   const handleGenerate = () => {
     if (!companyId) {
       toast.error('Empresa não selecionada');
+      return;
+    }
+    if (!canCreateShareLink()) {
+      toast.error('Seu perfil não pode criar links públicos');
+      return;
+    }
+    if (!useSnapshot || !snapshotData) {
+      toast.error('Ative o snapshot congelado — dados ao vivo não vão para a internet');
       return;
     }
 
@@ -75,18 +89,24 @@ export const LogstokaShareModal: React.FC<Props> = ({
       durationHours = Number(expiryPreset);
     }
 
-    const share = secureSharing.createShareLink({
-      companyId,
-      creatorName: 'Thiago Mestre (Supervisor WMS)', // Nome simulado do usuário logado
-      resourceType,
-      resourceId,
-      name: shareName.trim() || `Link Seguro: ${resourceName}`,
-      note: note.trim() || undefined,
-      durationHours,
-      customExpiryDate: customDateObj,
-      permissions: permission,
-      snapshotData: useSnapshot ? snapshotData : undefined
-    });
+    let share: LsShareLink;
+    try {
+      share = secureSharing.createShareLink({
+        companyId,
+        creatorName: profile?.full_name?.trim() || profile?.email || 'Colaborador LogStoka',
+        resourceType,
+        resourceId,
+        name: shareName.trim() || `Link Seguro: ${resourceName}`,
+        note: note.trim() || undefined,
+        durationHours,
+        customExpiryDate: customDateObj,
+        permissions: permission,
+        snapshotData,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Não foi possível gerar o link');
+      return;
+    }
 
     const fullUrl = `${window.location.origin}/shared/${share.token}`;
     setGeneratedLink(fullUrl);
@@ -140,6 +160,12 @@ export const LogstokaShareModal: React.FC<Props> = ({
       size="wide"
     >
       <div className="space-y-6">
+        {!canCreateShareLink() ? (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+            Seu perfil de colaborador não pode publicar links externos. Apenas gestores e administradores podem
+            compartilhar snapshots com prazo e revogação.
+          </p>
+        ) : null}
         {!generatedLink ? (
           /* Formulário de Configuração */
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -321,7 +347,7 @@ export const LogstokaShareModal: React.FC<Props> = ({
               
               <button
                 type="button"
-                className="ls-btn-secondary shrink-0 px-4 border-emerald-200 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-50 transition"
+                className="ls-btn-secondary inline-flex shrink-0 items-center gap-2 px-4 border-emerald-200 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-50 transition"
                 onClick={() => {
                   const expiresText = expiryPreset === 'custom' 
                     ? `${customExpiryDate} às ${customExpiryTime}` 
@@ -333,7 +359,8 @@ export const LogstokaShareModal: React.FC<Props> = ({
                   });
                 }}
               >
-                💬 WhatsApp
+                <IntegrationBrandLogo brandKey="whatsapp" size={20} />
+                WhatsApp
               </button>
             </div>
 

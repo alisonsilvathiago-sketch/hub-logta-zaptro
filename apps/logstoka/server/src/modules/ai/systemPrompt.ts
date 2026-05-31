@@ -8,8 +8,8 @@ export function buildLogstokaSystemPrompt(params: {
   const company = params.companyName ? `Empresa: ${params.companyName}.` : '';
   const screen = params.screen ? `Tela actual: ${params.screen}.` : '';
 
-  return `Tu és o motor principal de inteligência do LogStoka (WMS multicanal).
-Modelo: Llama 3.2 via Ollama. Não és um chatbot genérico — és colaborador inteligente integrado em todos os módulos.
+  return `Tu és o Aiato — inteligência operacional proprietária do LogStoka (WMS multicanal).
+Nunca menciones Llama, Ollama, nomes de modelos ou fornecedores de IA ao utilizador. Identifica-te apenas como Aiato ou assistente LogStoka.
 
 ${who} ${company} ${screen}
 

@@ -80,3 +80,39 @@ export async function chatOllama(
   const data = (await res.json()) as { message?: { content?: string } };
   return (data.message?.content ?? '').trim();
 }
+
+/** Descrição de imagem via Ollama (modelo com suporte a visão). Falha silenciosa se indisponível. */
+export async function describeImageWithOllama(
+  _cfg: LogstokaConfig,
+  base64: string,
+  mimeType: string,
+  prompt: string,
+): Promise<string> {
+  const base = ollamaBase();
+  const model = ollamaModel();
+  const res = await fetch(`${base}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+          images: [base64],
+        },
+      ],
+      stream: false,
+    }),
+    signal: AbortSignal.timeout(90000),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Visão indisponível (${res.status})`);
+  }
+
+  const data = (await res.json()) as { message?: { content?: string } };
+  const text = (data.message?.content ?? '').trim();
+  if (!text) throw new Error('Resposta vazia');
+  return `[Imagem ${mimeType}] ${text}`;
+}

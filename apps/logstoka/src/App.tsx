@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import LogstokaGuard from '@/app/LogstokaGuard';
 import AppShell from '@/components/layout/AppShell';
 import MarketplaceModuleGuard from '@/components/layout/MarketplaceModuleGuard';
@@ -15,6 +15,7 @@ const ProductsSectionLayout = lazy(() => import('@/modules/products/ProductsSect
 const WarehousesPage = lazy(() => import('@/modules/warehouses/WarehousesPage'));
 const MovementsPage = lazy(() => import('@/modules/movements/MovementsPage'));
 const PickingPage = lazy(() => import('@/modules/picking/PickingPage'));
+const ConferenceHistoryPage = lazy(() => import('@/modules/picking/ConferenceHistoryPage'));
 const ConferencePage = lazy(() => import('@/modules/conference/ConferencePage'));
 const InventoryPage = lazy(() => import('@/modules/inventory/InventoryPage'));
 const ReturnsPage = lazy(() => import('@/modules/returns/ReturnsPage'));
@@ -51,6 +52,7 @@ const SettingsIntegrationsPanel = lazy(() => import('@/modules/settings/panels/S
 const SettingsNotificationsPanel = lazy(() => import('@/modules/settings/panels/SettingsNotificationsPanel'));
 const SettingsAuditPanel = lazy(() => import('@/modules/settings/panels/SettingsAuditPanel'));
 const SettingsSecurityPanel = lazy(() => import('@/modules/settings/panels/SettingsSecurityPanel'));
+const SettingsDevicesPanel = lazy(() => import('@/modules/settings/panels/SettingsDevicesPanel'));
 const SettingsWhiteLabelPanel = lazy(() => import('@/modules/settings/panels/SettingsWhiteLabelPanel'));
 const TeamRankingPage = lazy(() => import('@/modules/team/TeamRankingPage'));
 const ActivityCenterPage = lazy(() => import('@/modules/activities/ActivityCenterPage'));
@@ -86,6 +88,11 @@ const GuardedMarketplace: React.FC<{ children: React.ReactNode }> = ({ children 
   <MarketplaceModuleGuard>{children}</MarketplaceModuleGuard>
 );
 
+const LegacyPrintConferenceRedirect: React.FC = () => {
+  const location = useLocation();
+  return <Navigate to={`/impressao/documento${location.search}`} replace />;
+};
+
 const App: React.FC = () => (
   <LogstokaXRayProvider>
     <Suspense fallback={<Loading />}>
@@ -94,9 +101,10 @@ const App: React.FC = () => (
       <Route path="/vendas" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/shared/:token" element={<SharedPublicPage />} />
+      <Route path="/impressao/documento" element={<PrintConferenceDocumentPage />} />
       <Route path="/produto/add" element={<Navigate to="/app/produto/add" replace />} />
       <Route element={<LogstokaGuard />}>
-        <Route path="/app/impressao/conferencia" element={<PrintConferenceDocumentPage />} />
+        <Route path="/app/impressao/conferencia" element={<LegacyPrintConferenceRedirect />} />
         <Route path="/app" element={<AppShell />}>
           <Route index element={<InicioHomePage />} />
           <Route path="atividades" element={<ActivityCenterPage />} />
@@ -139,6 +147,7 @@ const App: React.FC = () => (
           <Route path="returns/:id" element={<ReturnDetailPage />} />
           <Route path="imports/:id" element={<ImportDetailPage />} />
           <Route path="inventory/:id" element={<InventoryDetailPage />} />
+          <Route path="picking/historico" element={<ConferenceHistoryPage />} />
           <Route path="picking/:key" element={<PickingDetailPage />} />
           <Route path="warehouses" element={<WarehousesPage />} />
           <Route path="movements" element={<MovementsPage />} />
@@ -289,6 +298,7 @@ const App: React.FC = () => (
             <Route path="notificacoes/:id" element={<AlertDetailPage embedded />} />
             <Route path="auditoria" element={<SettingsAuditPanel />} />
             <Route path="seguranca" element={<SettingsSecurityPanel />} />
+            <Route path="dispositivos" element={<SettingsDevicesPanel />} />
             <Route path="white-label" element={<SettingsWhiteLabelPanel />} />
           </Route>
 

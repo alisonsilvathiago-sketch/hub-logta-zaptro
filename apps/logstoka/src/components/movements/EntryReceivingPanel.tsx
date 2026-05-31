@@ -9,8 +9,9 @@ import Modal from '@/components/ui/Modal';
 import { useIntelligentScanState } from '@/hooks/useIntelligentScanState';
 import { findTodayEntryBySku } from '@/lib/demoMovementStore';
 import { getProductStockQty, registerEntryMovement, registerExitMovement } from '@/lib/entryMovements';
-import type { DemoMovementRow } from '@/lib/logstokaDemoSeed';
+import { createQuickProduct } from '@/lib/quickProductCreate';
 import type { ProductLookupResult } from '@/lib/productLookup';
+import type { DemoMovementRow } from '@/lib/logstokaDemoSeed';
 
 export type EntryReceivingPanelHandle = {
   openScanner: () => void;
@@ -140,12 +141,57 @@ const EntryReceivingPanel = forwardRef<EntryReceivingPanelHandle, Props>(functio
     if (!companyId) return;
     setSaving(true);
     try {
-      toast.success(`[${demo ? 'Demo' : 'OK'}] Produto cadastrado · ${movementLabel.toLowerCase()} de ${scan.quantity} un.`);
+      let product: ProductLookupResult;
+      if (demo) {
+        product = {
+          id: `prod-quick-${Date.now()}`,
+          sku: payload.internal_code?.trim() || `QUICK-${Date.now()}`,
+          name: payload.name.trim(),
+          barcode: payload.barcode?.trim() || null,
+          internal_code: payload.internal_code?.trim() || null,
+          brand: payload.brand?.trim() || null,
+          main_image_url: payload.main_image_url ?? null,
+        };
+      } else {
+        const created = await createQuickProduct(companyId, payload);
+        product = {
+          id: created.id,
+          sku: created.sku,
+          name: created.name,
+          barcode: payload.barcode?.trim() || null,
+          internal_code: payload.internal_code?.trim() || null,
+          brand: payload.brand?.trim() || null,
+          main_image_url: payload.main_image_url ?? null,
+        };
+      }
+
+      if (isExit) {
+        await registerExitMovement({
+          companyId,
+          demo,
+          product,
+          quantity: scan.quantity,
+          existingExits: entryMovements,
+          actorName,
+          warehouseName: 'CD Principal',
+        });
+      } else {
+        await registerEntryMovement({
+          companyId,
+          demo,
+          product,
+          quantity: scan.quantity,
+          existingEntries: entryMovements,
+          actorName,
+          warehouseName: 'CD Principal',
+        });
+      }
+
+      toast.success(`Produto cadastrado · ${movementLabel.toLowerCase()} de ${scan.quantity} un.`);
       setQuickOpen(false);
       setScanOpen(false);
       resetScan();
       onRefresh();
-      void payload;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao cadastrar');
     } finally {

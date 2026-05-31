@@ -8,6 +8,10 @@ export type XRayPageContext =
   | 'marketplace'
   | 'conference'
   | 'picking'
+  | 'operational'
+  | 'activities'
+  | 'settings'
+  | 'dashboard'
   | 'reports'
   | 'global';
 

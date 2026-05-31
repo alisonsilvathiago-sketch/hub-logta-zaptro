@@ -6,9 +6,12 @@ import { useAiChat } from '@/modules/ai/chat/useAiChat';
 import { useAiHealth } from '@/modules/ai/chat/useAiHealth';
 import {
   AI_INICIO_EXAMPLES,
-  LOGSTOKA_AI_MODEL,
+  LOGSTOKA_AI_BRAND,
   LOGSTOKA_AI_TAGLINE,
+  aiAnalyzingLabel,
+  aiEmptyReplyMessage,
   aiEngineStatusLabel,
+  aiUnavailableWithDashboardHint,
   buildInicioHeroSubtitle,
   type AiChatTurn,
 } from '@/modules/ai/types';
@@ -43,7 +46,7 @@ const InicioPage: React.FC = () => {
         const res = await send(q, history);
         const answer =
           res.reply?.trim() ||
-          'Não consegui gerar uma resposta agora. O motor Llama 3.2 está a reconectar — tente novamente em instantes.';
+          aiEmptyReplyMessage();
         setLastExchange({ query: q, answer });
         setHistory((prev) => [
           ...prev,
@@ -53,8 +56,7 @@ const InicioPage: React.FC = () => {
       } catch {
         setLastExchange({
           query: q,
-          answer:
-            'Motor Llama 3.2 temporariamente indisponível. A reconexão é automática — pode continuar a usar o dashboard e os módulos pelo menu lateral.',
+          answer: aiUnavailableWithDashboardHint(),
         });
       }
     },
@@ -82,11 +84,11 @@ const InicioPage: React.FC = () => {
             <div className="inline-flex flex-col items-center gap-2 text-[11px] font-bold text-gray-400 sm:flex-row">
               <span className="inline-flex items-center gap-2">
                 <span className="rounded-full bg-orange-600 px-[22px] py-[6px] text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
-                  LogStoka IA
+                  {LOGSTOKA_AI_BRAND}
                 </span>
                 <span className="text-gray-500">•</span>
                 <span className="font-bold text-gray-500">
-                  {LOGSTOKA_AI_TAGLINE} · {LOGSTOKA_AI_MODEL}
+                  {LOGSTOKA_AI_TAGLINE} · {LOGSTOKA_AI_BRAND}
                 </span>
                 <span className="text-gray-500">•</span>
                 <span className={online ? 'font-bold text-emerald-400' : 'font-bold text-amber-300'}>{engineStatus}</span>
@@ -126,7 +128,7 @@ const InicioPage: React.FC = () => {
                     <div className="h-2 w-2 animate-bounce rounded-full bg-orange-600 [animation-delay:-0.15s]" />
                     <div className="h-2 w-2 animate-bounce rounded-full bg-orange-600" />
                     <span className="ml-2 text-sm font-extrabold uppercase tracking-normal text-gray-400">
-                      Motor Llama 3.2 a analisar…
+                      {aiAnalyzingLabel()}
                     </span>
                   </div>
                 ) : (

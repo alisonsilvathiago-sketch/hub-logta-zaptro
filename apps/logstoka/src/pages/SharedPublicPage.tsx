@@ -11,7 +11,9 @@ export const SharedPublicPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const [loading, setLoading] = useState(true);
   const [share, setShare] = useState<LsShareLink | null>(null);
-  const [errorState, setErrorState] = useState<'expired' | 'revoked' | 'not_found' | null>(null);
+  const [errorState, setErrorState] = useState<
+    'expired' | 'revoked' | 'not_found' | 'no_snapshot' | 'max_visits' | null
+  >(null);
   
   // States para interação
   const [visitorName, setVisitorName] = useState('');
@@ -123,18 +125,26 @@ export const SharedPublicPage: React.FC = () => {
 
           <div className="space-y-2">
             <h2 className="text-xl font-black text-slate-800">
-              {errorState === 'expired' 
-                ? 'Este compartilhamento expirou' 
-                : errorState === 'revoked' 
-                  ? 'Acesso Revogado pelo Proprietário' 
-                  : 'Conteúdo Não Disponível'}
+              {errorState === 'expired'
+                ? 'Este compartilhamento expirou'
+                : errorState === 'revoked'
+                  ? 'Acesso revogado pelo proprietário'
+                  : errorState === 'max_visits'
+                    ? 'Limite de acessos atingido'
+                    : errorState === 'no_snapshot'
+                      ? 'Link sem conteúdo seguro'
+                      : 'Conteúdo não disponível'}
             </h2>
             <p className="text-sm font-semibold text-slate-500 leading-relaxed">
-              {errorState === 'expired' 
-                ? 'O tempo de validade deste link se esgotou e o conteúdo não está mais acessível.' 
-                : errorState === 'revoked' 
-                  ? 'O supervisor de WMS cancelou as permissões de acesso deste link manual ou automaticamente.' 
-                  : 'O token fornecido é inválido ou a empresa de origem não existe.'}
+              {errorState === 'expired'
+                ? 'O tempo de validade deste link se esgotou. Nenhum dado de estoque permanece público.'
+                : errorState === 'revoked'
+                  ? 'O link foi cancelado manualmente. Acesso bloqueado.'
+                  : errorState === 'max_visits'
+                    ? 'Este link atingiu o número máximo de visualizações permitidas.'
+                    : errorState === 'no_snapshot'
+                      ? 'Links antigos sem snapshot congelado não podem ser exibidos por política de segurança.'
+                      : 'O token é inválido ou não existe.'}
             </p>
           </div>
 
@@ -153,8 +163,11 @@ export const SharedPublicPage: React.FC = () => {
     );
   }
 
-  const isPresetSnapshot = share.snapshotData != null;
+  const snap = share.snapshotData;
   const isViewOnly = share.permissions === 'view_only';
+  const showQuantities =
+    !isViewOnly &&
+    (snap?.stockTotal != null || snap?.stockAvailable != null || snap?.stockReserved != null);
   const allowComments = share.permissions === 'view_comment';
   const allowApproval = share.permissions === 'view_approve';
   const allowReprove = share.permissions === 'view_reprove';
@@ -202,15 +215,9 @@ export const SharedPublicPage: React.FC = () => {
               <span className="text-[10px] font-black uppercase tracking-wider bg-slate-100 px-3 py-1.5 text-slate-500 rounded-full border border-slate-200/20">
                 {share.resourceType === 'product' ? '📦 Produto' : share.resourceType === 'inventory' ? '📋 Inventário' : '📊 Tabela'}
               </span>
-              {isPresetSnapshot ? (
-                <span className="text-[10px] font-black uppercase tracking-wider bg-orange-50 border border-orange-200/40 px-3 py-1.5 text-orange-700 rounded-full flex items-center gap-1.5 shadow-sm">
-                  🔒 Cópia Snapshot Congelada (Estático)
-                </span>
-              ) : (
-                <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-50 border border-emerald-100/30 px-3 py-1.5 text-emerald-600 rounded-full flex items-center gap-1">
-                  ⚡ Sincronização Dinâmica (Tempo Real)
-                </span>
-              )}
+              <span className="text-[10px] font-black uppercase tracking-wider bg-orange-50 border border-orange-200/40 px-3 py-1.5 text-orange-700 rounded-full flex items-center gap-1.5 shadow-sm">
+                🔒 Snapshot congelado · sem acesso ao WMS ao vivo
+              </span>
             </div>
 
             <div className="space-y-2">
@@ -269,7 +276,7 @@ export const SharedPublicPage: React.FC = () => {
                       Catálogo WMS Mestre
                     </span>
                     <h3 className="text-xl font-black text-slate-900 tracking-tight leading-tight mt-2">
-                      {share.snapshotData?.name || 'Fralda Pluma Premium P 60un'}
+                      {snap?.title ?? snap?.name ?? share.name}
                     </h3>
                     <div className="flex flex-wrap justify-center sm:justify-start gap-2 pt-1">
                       <span className="text-[10px] font-bold px-3 py-1 bg-slate-50 rounded-xl text-slate-600 border border-slate-200/20">
@@ -282,13 +289,13 @@ export const SharedPublicPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Futurisic glowing WMS total stock card */}
+                {showQuantities ? (
                 <div className="bg-slate-900 text-white p-8 rounded-[24px] shadow-xl relative overflow-hidden border border-slate-800">
                   <div className="relative z-10 space-y-4">
                     <div className="space-y-1">
                       <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Quantidade Geral Mestre Em Estoque</p>
                       <p className="text-5xl font-black tracking-tight text-white flex items-baseline gap-2">
-                        {share.snapshotData?.stockTotal?.toLocaleString('pt-BR') || '840'}{' '}
+                        {snap?.stockTotal?.toLocaleString('pt-BR') ?? '—'}{' '}
                         <span className="text-base font-bold text-orange-500 uppercase tracking-widest bg-orange-500/10 px-2 py-0.5 rounded-lg border border-orange-500/20">unidades totais</span>
                       </p>
                     </div>
@@ -299,7 +306,7 @@ export const SharedPublicPage: React.FC = () => {
                       </div>
                       <p className="text-xs font-semibold text-slate-300 leading-relaxed">
                         Varredura inteligente por IA consolidou dados de 4 planilhas operacionais, WMS local e todos os canais de marketplace integrados. 
-                        {share.snapshotData?.divergencesFound ? (
+                        {snap?.divergencesFound ? (
                           <span className="text-orange-400 block font-bold mt-1">⚠️ Ajustes pendentes de conciliação detectados abaixo.</span>
                         ) : (
                           <span className="text-emerald-400 block font-bold mt-1">✓ Todos os registros estão 100% conciliados e sem divergências.</span>
@@ -311,14 +318,19 @@ export const SharedPublicPage: React.FC = () => {
                   <div className="absolute right-0 bottom-0 h-40 w-40 bg-orange-600/10 rounded-full translate-x-12 translate-y-12 blur-2xl pointer-events-none" />
                   <div className="absolute left-1/3 top-0 h-28 w-28 bg-orange-500/5 rounded-full -translate-y-8 blur-xl pointer-events-none" />
                 </div>
+                ) : (
+                  <p className="text-sm font-semibold text-slate-500 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    Quantidades de estoque ocultas neste link (somente visualização de cadastro).
+                  </p>
+                )}
 
-                {/* KPIs de Estoque Adicionais - Premium cards with icons */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {showQuantities ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-5 bg-white border border-slate-200/50 rounded-2xl flex items-center justify-between shadow-[0_2px_8px_rgba(15,23,42,0.01)] hover:border-slate-200 transition">
                     <div className="space-y-1 text-left">
                       <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Disponível WMS</p>
                       <p className="text-2xl font-black text-slate-800">
-                        {share.snapshotData?.stockAvailable?.toLocaleString('pt-BR') || '800'}
+                        {snap?.stockAvailable?.toLocaleString('pt-BR') ?? '—'}
                       </p>
                     </div>
                     <div className="h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-200/10">
@@ -330,7 +342,7 @@ export const SharedPublicPage: React.FC = () => {
                     <div className="space-y-1 text-left">
                       <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Reservado Pedidos</p>
                       <p className="text-2xl font-black text-slate-800">
-                        {share.snapshotData?.stockReserved?.toLocaleString('pt-BR') || '40'}
+                        {snap?.stockReserved?.toLocaleString('pt-BR') ?? '—'}
                       </p>
                     </div>
                     <div className="h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-200/10">
@@ -338,18 +350,8 @@ export const SharedPublicPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="p-5 bg-white border border-slate-200/50 rounded-2xl flex items-center justify-between shadow-[0_2px_8px_rgba(15,23,42,0.01)] hover:border-slate-200 transition col-span-1">
-                    <div className="space-y-1 text-left">
-                      <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Limite Mínimo</p>
-                      <p className="text-2xl font-black text-slate-800">
-                        {share.snapshotData?.min_stock?.toLocaleString('pt-BR') || '300'}
-                      </p>
-                    </div>
-                    <div className="h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-200/10">
-                      <AlertTriangle size={18} />
-                    </div>
-                  </div>
                 </div>
+                ) : null}
 
                 {/* Table of WMS / Marketplace API integrations - More spacious row cards */}
                 <div className="space-y-4">

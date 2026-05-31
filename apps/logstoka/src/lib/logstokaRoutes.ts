@@ -11,7 +11,7 @@ export const LOGSTOKA_ROUTES = {
   MARKETPLACE_HUB: '/app/marketplace',
   OPERATIONAL_FLOW: '/app/operacao/fluxo',
   CONFERENCE_PENDING: '/app/operacao/pendencias-conferencia',
-  PRINT_CONFERENCE: '/app/impressao/conferencia',
+  PRINT_CONFERENCE: '/impressao/documento',
   SALES: '/app/vendas',
   INTEGRATIONS_CENTRAL: '/app/integrations',
   SETTINGS: '/app/configuracoes',
@@ -27,6 +27,7 @@ export const LOGSTOKA_ROUTES = {
   SETTINGS_NOTIFICATIONS: '/app/configuracoes/notificacoes',
   SETTINGS_AUDIT: '/app/configuracoes/auditoria',
   SETTINGS_SECURITY: '/app/configuracoes/seguranca',
+  SETTINGS_DEVICES: '/app/configuracoes/dispositivos',
   SETTINGS_WHITE_LABEL: '/app/configuracoes/white-label',
   /** @deprecated use SETTINGS_PROFILE */
   PROFILE: '/app/configuracoes/meu-perfil',
@@ -48,5 +49,7 @@ export const LOGSTOKA_ROUTES = {
   AMAZON: '/app/amazon',
   TIKTOK: '/app/tiktok',
   MAGALU: '/app/magalu',
+  PICKING: '/app/picking',
+  PICKING_HISTORY: '/app/picking/historico',
   marketplaceHub: (marketplace: string) => `/app/${marketplace}`,
 } as const;

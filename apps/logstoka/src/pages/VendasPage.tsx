@@ -1,3 +1,4 @@
+import { LOGSTOKA_AI_BRAND } from '@/modules/ai/constants';
 import React, { useState, useEffect } from 'react';
 import {
   Truck,
@@ -153,7 +154,7 @@ const VendasPage = () => {
     },
     {
       q: 'Como funciona a IA operacional?',
-      a: 'Llama 3.2 consulta estoque, devoluções e reposição em tempo real — copiloto em todas as telas.',
+      a: `${LOGSTOKA_AI_BRAND} consulta estoque, devoluções e reposição em tempo real — copiloto em todas as telas.`,
     },
     {
       q: 'Como ficam segurança e dados?',
@@ -163,7 +164,7 @@ const VendasPage = () => {
 
   const planFeatures = {
     starter: ['1 depósito', 'Importação CSV/XML', 'Dashboard operacional', 'Relatórios essenciais', 'Suporte por e-mail'],
-    pro: ['Multi depósitos', 'OCR + IA Llama 3.2', 'Webhooks marketplaces', 'Inventário inteligente', 'API REST', 'Suporte prioritário'],
+    pro: ['Multi depósitos', `OCR + ${LOGSTOKA_AI_BRAND}`, 'Webhooks marketplaces', 'Inventário inteligente', 'API REST', 'Suporte prioritário'],
     enterprise: ['Multi empresas', 'SLA dedicado', 'Ambiente dedicado (sob consulta)', 'Customizações', 'Success manager'],
   };
 
@@ -250,7 +251,7 @@ const VendasPage = () => {
             <em className="italic font-black">sem planilhas</em>.
           </h1>
           <p className="mt-4 text-base sm:text-lg md:text-xl text-white/75 font-medium max-w-2xl mx-auto leading-relaxed px-4 sm:px-8 md:px-10">
-            Entradas, saídas, inventários, devoluções e marketplaces num WMS com IA operacional Llama 3.2.
+            Entradas, saídas, inventários, devoluções e marketplaces num WMS com {LOGSTOKA_AI_BRAND}.
           </p>
           <div className="mt-8 md:mt-10 flex flex-wrap items-center justify-center gap-3 md:gap-4">
             <button

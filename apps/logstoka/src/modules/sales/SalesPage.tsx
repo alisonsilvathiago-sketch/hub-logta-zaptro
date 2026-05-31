@@ -4,6 +4,9 @@ import { CalendarDays, ShoppingCart } from 'lucide-react';
 import BrazilSalesMap from '@/components/sales/BrazilSalesMap';
 import MarketplaceLogo from '@/components/marketplace/MarketplaceLogo';
 import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
+import LogstokaMoneyPrivacyToggle from '@/components/privacy/LogstokaMoneyPrivacyToggle';
+import LogstokaMoneyValue from '@/components/privacy/LogstokaMoneyValue';
+import { looksLikeMoney } from '@/lib/moneyPrivacy';
 import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
 import { useTablePagination } from '@/hooks/useTablePagination';
 import { useSalesDashboard } from '@/hooks/useSalesDashboard';
@@ -183,6 +186,7 @@ const SalesPage: React.FC = () => {
         icon={<ShoppingCart size={20} strokeWidth={2.25} />}
         title="Pedidos de venda"
         subtitle="Vendas sincronizadas dos marketplaces — canal, estado e local via integração/API."
+        showMoneyPrivacy
       />
 
       <div className="ls-sales-page__toolbar">
@@ -262,12 +266,25 @@ const SalesPage: React.FC = () => {
           { label: 'Valor', value: fmtBrl(data?.summary.value ?? 0), accent: true },
           { label: 'Frete', value: fmtBrl(data?.summary.freight ?? 0) },
           { label: 'Ticket médio', value: fmtBrl(data?.summary.avgTicket ?? 0) },
-        ].map(({ label, value, accent }) => (
-          <div key={label} className="ls-sales-kpi">
-            <p className="ls-sales-kpi__label">{label}</p>
-            <p className={`ls-sales-kpi__value${accent ? ' ls-sales-kpi__value--accent' : ''}`}>{value}</p>
-          </div>
-        ))}
+        ].map(({ label, value, accent }) => {
+          const monetary = looksLikeMoney(value);
+          const valueClass = `ls-sales-kpi__value${accent ? ' ls-sales-kpi__value--accent' : ''}${monetary ? ' ls-sales-kpi__value--money' : ''}`;
+          return (
+            <div key={label} className="ls-sales-kpi">
+              <p className="ls-sales-kpi__label">{label}</p>
+              {monetary ? (
+                <div className="ls-products-kpi__value-row">
+                  <LogstokaMoneyPrivacyToggle size="sm" />
+                  <LogstokaMoneyValue className={valueClass} isMoney>
+                    {value}
+                  </LogstokaMoneyValue>
+                </div>
+              ) : (
+                <p className={valueClass}>{value}</p>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="ls-sales-grid-2 ls-sales-grid-2--situation-map">

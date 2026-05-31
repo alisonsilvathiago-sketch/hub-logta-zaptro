@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { findDemoProductByScan, DEMO_PRODUCTS } from '@/lib/logstokaDemoSeed';
+import { parseScanPayload } from '@/lib/productIdentifiers';
 import type { LsProduct } from '@/types';
 
 export type ProductScanMode = 'universal' | 'code' | 'barcode';
@@ -28,8 +29,29 @@ function mapDemoProduct(p: (typeof DEMO_PRODUCTS)[number]): ProductLookupResult 
 const PRODUCT_SELECT =
   'id, sku, name, barcode, internal_code, brand, main_image_url';
 
-/** Busca por SKU, código da empresa, EAN ou nome — evita duplicar cadastro */
+/** Busca por LS, SKU, EAN/GTIN, QR (URL) ou nome */
 export async function findProductByAnyIdentifier(
+  companyId: string | null,
+  value: string,
+  demo: boolean,
+): Promise<ProductLookupResult | null> {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const parsed = parseScanPayload(trimmed);
+  const candidates = Array.from(
+    new Set([trimmed, parsed, trimmed.replace(/\D/g, '')].filter((v) => v.length > 0)),
+  );
+
+  for (const candidate of candidates) {
+    const hit = await findProductBySingleIdentifier(companyId, candidate, demo);
+    if (hit) return hit;
+  }
+
+  return null;
+}
+
+async function findProductBySingleIdentifier(
   companyId: string | null,
   value: string,
   demo: boolean,
@@ -39,11 +61,14 @@ export async function findProductByAnyIdentifier(
 
   if (demo) {
     const lower = trimmed.toLowerCase();
+    const digits = trimmed.replace(/\D/g, '');
+
     const exact = DEMO_PRODUCTS.find(
       (p) =>
         p.sku.toLowerCase() === lower ||
         (p.internal_code ?? '').toLowerCase() === lower ||
-        (p.barcode ?? '') === trimmed,
+        (p.barcode ?? '') === trimmed ||
+        (p.barcode ?? '').replace(/\D/g, '') === digits,
     );
     if (exact) return mapDemoProduct(exact);
 
@@ -54,11 +79,17 @@ export async function findProductByAnyIdentifier(
   if (!companyId) return null;
 
   const escaped = escapeFilter(trimmed);
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  const orParts = [`sku.eq.${escaped}`, `internal_code.eq.${escaped}`, `barcode.eq.${escaped}`];
+  if (digitsOnly.length >= 8 && digitsOnly !== trimmed) {
+    orParts.push(`barcode.eq.${escapeFilter(digitsOnly)}`);
+  }
+
   const { data: exact, error: exactError } = await supabase
     .from('ls_products')
     .select(PRODUCT_SELECT)
     .eq('company_id', companyId)
-    .or(`sku.eq.${escaped},internal_code.eq.${escaped},barcode.eq.${escaped}`)
+    .or(orParts.join(','))
     .limit(1)
     .maybeSingle();
 

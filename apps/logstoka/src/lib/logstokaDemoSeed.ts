@@ -11,6 +11,8 @@ import type {
 } from '@/types';
 import { DEFAULT_STORES, DEFAULT_WAREHOUSES, MARKETPLACE_LABELS } from '@/types';
 import { LOGSTOKA_DEMO_COMPANY_ID } from '@/lib/logstokaDemoAuth';
+import { formatInternalSku } from '@/lib/formatInternalSku';
+import { generateLogstokaInternalEan13 } from '@/lib/productIdentifiers';
 import type { LsCategory, LsSupplier } from '@/hooks/useCatalog';
 
 const CID = LOGSTOKA_DEMO_COMPANY_ID;
@@ -93,8 +95,8 @@ export const DEMO_PRODUCTS: LsProduct[] = productDefs.map((p, i) => ({
   id: `prod-${i + 1}`,
   company_id: CID,
   sku: p.sku,
-  internal_code: `INT-${1000 + i}`,
-  barcode: `7891000${String(i + 1).padStart(6, '0')}`,
+  internal_code: formatInternalSku(i + 1),
+  barcode: generateLogstokaInternalEan13(i + 1),
   name: p.name,
   short_name: p.name.split(' ').slice(0, 4).join(' '),
   manufacturer_code: `MFR-${p.brand.slice(0, 3).toUpperCase()}${i + 1}`,
@@ -184,6 +186,8 @@ export const DEMO_MOVEMENTS: DemoMovementRow[] = [
   { id: 'mov-8', company_id: CID, movement_type: 'damage', sub_type: 'handling', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'AV-102', total_quantity: 3, created_at: daysAgo(1), sku: 'MOD-CAM-M', product_name: 'Camiseta Básica M', warehouse_name: 'CD Principal' },
   { id: 'mov-9', company_id: CID, movement_type: 'exit', sub_type: 'sale', status: 'completed', warehouse_id: 'wh-5', marketplace: 'amazon', reference_code: 'Amazon Oficial', total_quantity: 6, created_at: daysAgo(0, 14), sku: 'PET-RAC-10', product_name: 'Ração Premium 10kg', warehouse_name: 'Full Amazon' },
   { id: 'mov-10', company_id: CID, movement_type: 'entry', sub_type: 'xml', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'NF-e 99281', total_quantity: 500, created_at: daysAgo(1, 16), sku: 'PLM-LEN-80', product_name: 'Lenço Umedecido', warehouse_name: 'CD Principal' },
+  { id: 'mov-11', company_id: CID, movement_type: 'entry', sub_type: 'factory', status: 'completed', warehouse_id: 'wh-2', marketplace: null, reference_code: 'NF-44100', total_quantity: 120, created_at: daysAgo(4, 10), sku: 'BBR-CHU-A1', product_name: 'Chupeta Silicone', warehouse_name: 'CD Secundário' },
+  { id: 'mov-12', company_id: CID, movement_type: 'entry', sub_type: 'purchase', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'NF-44002', total_quantity: 90, created_at: daysAgo(7, 9), sku: 'MOD-CAM-M', product_name: 'Camiseta Básica M', warehouse_name: 'CD Principal' },
 ];
 
 export type DemoTransferRow = {
@@ -333,14 +337,25 @@ export const DEMO_IMPORTS: DemoImportRow[] = [
 ];
 
 export function findDemoProductByScan(value: string, mode: 'code' | 'barcode') {
-  const q = value.trim().toLowerCase();
-  if (!q) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const q = trimmed.toLowerCase();
+  const digits = trimmed.replace(/\D/g, '');
+
   return (
     DEMO_PRODUCTS.find((p) => {
-      if (mode === 'barcode') return (p.barcode ?? '').toLowerCase() === q;
+      if (mode === 'barcode') {
+        return (
+          (p.barcode ?? '').toLowerCase() === q ||
+          (p.barcode ?? '').replace(/\D/g, '') === digits
+        );
+      }
+      const internal = (p.internal_code ?? '').toLowerCase();
       return (
         p.sku.toLowerCase() === q ||
-        (p.internal_code ?? '').toLowerCase() === q ||
+        internal === q ||
+        internal === trimmed.toUpperCase() ||
+        (p.barcode ?? '').replace(/\D/g, '') === digits ||
         p.name.toLowerCase() === q ||
         p.name.toLowerCase().includes(q)
       );
@@ -356,7 +371,8 @@ export function filterDemoProducts(search: string, page: number, limit: number) 
       (p) =>
         p.sku.toLowerCase().includes(q) ||
         p.name.toLowerCase().includes(q) ||
-        (p.barcode ?? '').includes(q),
+        (p.barcode ?? '').includes(q) ||
+        (p.internal_code ?? '').toLowerCase().includes(q),
     );
   }
   const total = list.length;
@@ -369,8 +385,20 @@ export function getDemoProductById(id: string) {
 }
 
 export function getDemoProductBySku(sku: string | null | undefined) {
-  if (!sku) return null;
+  if (!sku || !DEMO_PRODUCTS?.length) return null;
   return DEMO_PRODUCTS.find((p) => p.sku === sku) ?? null;
+}
+
+export function patchDemoProductIdentifiers(
+  productId: string,
+  payload: { internal_code: string; barcode: string; sku?: string },
+): void {
+  const product = DEMO_PRODUCTS.find((p) => p.id === productId);
+  if (!product) return;
+  product.internal_code = payload.internal_code;
+  product.barcode = payload.barcode;
+  if (payload.sku) product.sku = payload.sku;
+  product.updated_at = new Date().toISOString();
 }
 
 export function getDemoCategoryName(categoryId: string | null | undefined): string {

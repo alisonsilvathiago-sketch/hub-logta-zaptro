@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
+import LogstokaXRayTrigger from '@/modules/ai/auditor/LogstokaXRayTrigger';
 
 export type LogstokaDetailPageLayoutProps = {
   backTo: string;
@@ -37,7 +38,11 @@ export function LogstokaDetailPageLayout({
           <ArrowLeft size={14} />
           {backLabel}
         </Link>
-        {topRightActions ? <div className="flex items-center gap-2">{topRightActions}</div> : null}
+        {topRightActions ? (
+          <div className="flex items-center gap-2">{topRightActions}</div>
+        ) : (
+          <LogstokaXRayTrigger />
+        )}
       </div>
 
       {showTitleRow ? (

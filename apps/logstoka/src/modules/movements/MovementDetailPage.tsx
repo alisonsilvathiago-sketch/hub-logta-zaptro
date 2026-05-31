@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -14,17 +14,25 @@ import {
   Printer,
   RotateCcw,
   Store,
+  Tag,
   Warehouse,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import MovementEditModal, { type MovementEditPayload } from '@/components/movements/MovementEditModal';
+import StockLabelPreviewModal from '@/components/labels/StockLabelPreviewModal';
 import { LogstokaDetailPageLayout } from '@/components/layout/LogstokaDetailPageLayout';
+import LogstokaMoneyPrivacyToggle from '@/components/privacy/LogstokaMoneyPrivacyToggle';
+import LogstokaMoneyValue from '@/components/privacy/LogstokaMoneyValue';
+import LogstokaXRayTrigger from '@/modules/ai/auditor/LogstokaXRayTrigger';
 import MarketplaceLogo from '@/components/marketplace/MarketplaceLogo';
 import ProductThumb from '@/components/products/ProductThumb';
 import { useAuth } from '@/context/LogstokaAuthProvider';
+import { useLogstokaBranding } from '@/context/LogstokaBrandingContext';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import { findCompanyMovement } from '@/lib/movementLoader';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import { printMovementDocument } from '@/lib/printMovementDocument';
+import { stockLabelFromMovement } from '@/lib/stockLabelData';
 import {
   getDemoCategoryName,
   getDemoMovementById,
@@ -106,22 +114,49 @@ const MovementDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { profile } = useAuth();
   const { companyId } = useLogstokaTenant();
+  const { branding } = useLogstokaBranding();
+  const companyName = branding.companyName ?? 'LogStoka WMS';
   const demo = isLogstokaDemoCompany(companyId);
-  const [movement, setMovement] = useState<DemoMovementRow | null>(() =>
-    id && demo ? getDemoMovementById(id) : null,
-  );
+  const [movement, setMovement] = useState<DemoMovementRow | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id || !companyId) {
+      setMovement(null);
+      setLoading(false);
+      return;
+    }
+    if (demo) {
+      setMovement(getDemoMovementById(id));
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    void findCompanyMovement(companyId, id)
+      .then(setMovement)
+      .finally(() => setLoading(false));
+  }, [id, companyId, demo]);
   const [editOpen, setEditOpen] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
+  const [labelOpen, setLabelOpen] = useState(false);
 
   const stockSnapshot = useMemo(() => (movement ? getDemoMovementStockSnapshot(movement) : null), [movement]);
   const linkedTransfer = useMemo(() => (movement ? getDemoTransferForMovement(movement) : null), [movement]);
   const relatedMovements = useMemo(() => (movement ? getDemoRelatedMovements(movement) : []), [movement]);
   const auditTrail = useMemo(() => (movement ? buildAuditTrail(movement) : []), [movement]);
 
+  if (loading) {
+    return (
+      <LogstokaDetailPageLayout backTo="/app/movements" title="Movimentação" subtitle="Carregando…">
+        <div className="ls-card text-sm text-[#949494]">Carregando movimentação…</div>
+      </LogstokaDetailPageLayout>
+    );
+  }
+
   if (!movement) {
     return (
       <LogstokaDetailPageLayout backTo="/app/movements" title="Movimentação" subtitle="Registro não encontrado">
-        <div className="ls-card text-sm text-[#949494]">Movimentação não encontrada ou indisponível fora do modo demo.</div>
+        <div className="ls-card text-sm text-[#949494]">Movimentação não encontrada.</div>
       </LogstokaDetailPageLayout>
     );
   }
@@ -133,12 +168,12 @@ const MovementDetailPage: React.FC = () => {
   const isExit = movement.movement_type === 'exit';
   const isEntry = movement.movement_type === 'entry';
 
-  const demoAction = (label: string) => toast.success(`[Demo] ${label}`);
+  const notifyAction = (label: string) => toast.success(label);
 
   const handlePrint = () => {
     try {
       printMovementDocument(movement, {
-        companyName: 'LogStoka Demo · Pluma Baby',
+        companyName,
         operatorName: profile?.full_name ?? profile?.email ?? 'Operador',
       });
     } catch (err) {
@@ -157,8 +192,13 @@ const MovementDetailPage: React.FC = () => {
   };
 
   const handleDuplicate = () => {
-    demoAction('Movimentação duplicada — volte à lista para ver a cópia');
+    toast.success('Duplicar movimentação — use a lista em Movimentações');
   };
+
+  const labelData = useMemo(
+    () => stockLabelFromMovement(movement, product ?? undefined),
+    [movement, product],
+  );
 
   const facts: Array<[string, React.ReactNode]> = [
     ['ID interno', movement.id],
@@ -184,7 +224,17 @@ const MovementDetailPage: React.FC = () => {
   }
 
   return (
-    <LogstokaDetailPageLayout backTo={backTo} backLabel="Voltar para movimentações" hideTitleRow>
+    <LogstokaDetailPageLayout
+      backTo={backTo}
+      backLabel="Voltar para movimentações"
+      hideTitleRow
+      topRightActions={
+        <>
+          <LogstokaMoneyPrivacyToggle size="sm" />
+          <LogstokaXRayTrigger />
+        </>
+      }
+    >
       <div className="ls-movement-detail space-y-6">
         <section className="ls-movement-detail-hero">
           <div className="ls-movement-detail-hero__icon" aria-hidden>
@@ -225,9 +275,13 @@ const MovementDetailPage: React.FC = () => {
                 <Copy size={16} />
                 Duplicar
               </button>
-              <button type="button" className="ls-btn-secondary" onClick={() => demoAction('PDF baixado')}>
+              <button type="button" className="ls-btn-secondary" onClick={() => notifyAction('PDF baixado')}>
                 <Download size={16} />
                 PDF
+              </button>
+              <button type="button" className="ls-btn-secondary" onClick={() => setLabelOpen(true)}>
+                <Tag size={16} />
+                Etiqueta
               </button>
               <button type="button" className="ls-btn-secondary" onClick={handlePrint}>
                 <Printer size={16} />
@@ -261,7 +315,11 @@ const MovementDetailPage: React.FC = () => {
           <div className="ls-movement-detail-kpi">
             <p className="ls-movement-detail-kpi__label">Valor estimado</p>
             <p className="ls-movement-detail-kpi__value">
-              {product ? fmtBrl(product.cost * movement.total_quantity) : '—'}
+              {product ? (
+                <LogstokaMoneyValue isMoney>{fmtBrl(product.cost * movement.total_quantity)}</LogstokaMoneyValue>
+              ) : (
+                '—'
+              )}
             </p>
             <p className="ls-movement-detail-kpi__hint">custo × quantidade</p>
           </div>
@@ -284,9 +342,13 @@ const MovementDetailPage: React.FC = () => {
                       SKU {product.sku} · {product.brand} · {getDemoCategoryName(product.category_id)}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-[#949494]">
-                      <span>Custo {fmtBrl(product.cost)}</span>
+                      <span>
+                        Custo <LogstokaMoneyValue isMoney>{fmtBrl(product.cost)}</LogstokaMoneyValue>
+                      </span>
                       <span>·</span>
-                      <span>Venda {fmtBrl(product.sale_price)}</span>
+                      <span>
+                        Venda <LogstokaMoneyValue isMoney>{fmtBrl(product.sale_price)}</LogstokaMoneyValue>
+                      </span>
                       <span>·</span>
                       <span>EAN {product.barcode}</span>
                     </div>
@@ -446,13 +508,13 @@ const MovementDetailPage: React.FC = () => {
                   Comprovante da movimentação
                 </button>
                 {(isEntry || movement.sub_type === 'xml') && (
-                  <button type="button" className="ls-btn-secondary w-full" onClick={() => demoAction('NF-e / XML aberto')}>
+                  <button type="button" className="ls-btn-secondary w-full" onClick={() => notifyAction('NF-e / XML aberto')}>
                     <FileText size={16} />
                     NF-e / XML vinculado
                   </button>
                 )}
                 {isExit && movement.marketplace ? (
-                  <button type="button" className="ls-btn-secondary w-full" onClick={() => demoAction('Pedido marketplace aberto')}>
+                  <button type="button" className="ls-btn-secondary w-full" onClick={() => notifyAction('Pedido marketplace aberto')}>
                     <Store size={16} />
                     Pedido {marketplaceLabel(movement.marketplace)}
                   </button>
@@ -464,11 +526,11 @@ const MovementDetailPage: React.FC = () => {
               <section className="ls-movement-detail-panel">
                 <h3 className="ls-movement-detail-panel__title">Ação operacional</h3>
                 {isExit ? (
-                  <button type="button" className="ls-btn-primary w-full" onClick={() => demoAction('Baixa confirmada')}>
+                  <button type="button" className="ls-btn-primary w-full" onClick={() => notifyAction('Baixa confirmada')}>
                     Confirmar baixa / retirada
                   </button>
                 ) : (
-                  <button type="button" className="ls-btn-primary w-full" onClick={() => demoAction('Entrada conferida')}>
+                  <button type="button" className="ls-btn-primary w-full" onClick={() => notifyAction('Entrada conferida')}>
                     Confirmar entrada no estoque
                   </button>
                 )}
@@ -485,6 +547,8 @@ const MovementDetailPage: React.FC = () => {
         onClose={() => setEditOpen(false)}
         onSave={handleSave}
       />
+
+      <StockLabelPreviewModal open={labelOpen} onClose={() => setLabelOpen(false)} data={labelData} />
     </LogstokaDetailPageLayout>
   );
 };

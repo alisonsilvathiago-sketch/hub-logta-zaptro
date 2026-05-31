@@ -1,0 +1,36 @@
+---
+description: Segurança bancária LogStoka — RBAC, dados sensíveis e links públicos
+globs:
+  - apps/logstoka/**
+alwaysApply: false
+---
+
+# Segurança LogStoka — nível bancário
+
+## Regras obrigatórias
+
+1. **Nunca** expor custo, `sale_price`, faturamento ou totais financeiros sem `can('financial.read', role)`.
+2. **Nunca** buscar Supabase/API em `/shared/:token` — apenas `snapshotData` sanitizado via `buildPublicShareSnapshot`.
+3. **Nunca** criar link público sem snapshot congelado (`secureSharing.createShareLink` exige snapshot).
+4. **Nunca** usar tokens previsíveis (`demo-share-*`) em produção — usar `generateSecureShareToken`.
+5. Toda rota `/app/*` nova deve ter regra em `canAccessRoute` + `perm` no menu se aplicável.
+6. Ações de escrita: verificar `can('*.write')` ou `PermissionGate` — não confiar só em esconder botão.
+
+## Perfis (resumo)
+
+- `operator`: operação WMS — **sem** financial, settings, sales, sharing.
+- `logistics_manager`: logística + relatórios — sem `products.write`, `settings.write`.
+- `master_admin`: acesso total do tenant.
+
+## Compartilhamento
+
+- Público = snapshot + expiração + revogação + limite de visitas.
+- `view_only`: sem quantidades de estoque no snapshot público.
+- Revogar ao desligar colaborador ou suspeita de vazamento.
+
+## Referências
+
+- `apps/logstoka/src/lib/permissions.ts`
+- `apps/logstoka/src/lib/secureSharing.ts`
+- `apps/logstoka/src/lib/security/shareSnapshot.ts`
+- `apps/logstoka/SECURITY.md`

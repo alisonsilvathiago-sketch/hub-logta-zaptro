@@ -90,103 +90,62 @@ const InicioMegaMenu: React.FC<Props> = ({ onOpenAi }) => {
     </Link>
   );
 
+  const renderSection = (section: (typeof menuSections)[number]) => {
+    const isOpen = openId === section.id;
+    const columnCount = section.columns.length;
+
+    return (
+      <div key={section.id} className={`ls-mega-nav__item${isOpen ? ' ls-mega-nav__item--open' : ''}`}>
+        <button
+          type="button"
+          className={`ls-mega-nav__trigger${activeSectionId === section.id ? ' ls-mega-nav__trigger--active' : ''}`}
+          aria-expanded={isOpen}
+          onClick={() => setOpenId((current) => (current === section.id ? null : section.id))}
+        >
+          {section.label}
+          <ChevronDown size={14} strokeWidth={2.25} className="ls-mega-nav__chevron" />
+        </button>
+
+        {isOpen ? (
+          <div
+            className={`ls-mega-nav__panel ls-mega-nav__panel--cols-${Math.min(columnCount, 3)}`}
+            role="menu"
+          >
+            <div className="ls-mega-nav__columns">
+              {section.columns.map((column, columnIndex) => (
+                <div key={column.title} className="ls-mega-nav__column">
+                  <h3 className="ls-mega-nav__column-title">{column.title}</h3>
+                  <ul className="ls-mega-nav__list">
+                    {column.links.map((link) => (
+                      <li key={link.label + (link.to ?? link.action ?? '')}>
+                        <MegaLinkItem link={link} onActivate={handleLink} />
+                      </li>
+                    ))}
+                    {columnIndex === 0 && section.footerLink ? (
+                      <li className="ls-mega-nav__list-footer">
+                        <Link to={section.footerLink.to} className="ls-mega-nav__footer" onClick={close}>
+                          {section.footerLink.label}
+                        </Link>
+                      </li>
+                    ) : null}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
+  const primarySections = menuSections.filter((section) => section.id !== 'config');
+  const accountSection = menuSections.find((section) => section.id === 'config');
+
   return (
     <nav className="ls-mega-nav" aria-label="Menu principal" ref={wrapRef}>
-      {menuSections.map((section) => {
-        const isOpen = openId === section.id;
-        const columnCount = section.columns.length;
-
-        if (section.id === 'config') {
-          return (
-            <React.Fragment key={section.id}>
-              {marketplaceLink}
-              <div className={`ls-mega-nav__item${isOpen ? ' ls-mega-nav__item--open' : ''}`}>
-                <button
-                  type="button"
-                  className={`ls-mega-nav__trigger${activeSectionId === section.id ? ' ls-mega-nav__trigger--active' : ''}`}
-                  aria-expanded={isOpen}
-                  onClick={() => setOpenId((current) => (current === section.id ? null : section.id))}
-                >
-                  {section.label}
-                  <ChevronDown size={14} strokeWidth={2.25} className="ls-mega-nav__chevron" />
-                </button>
-
-                {isOpen ? (
-                  <div
-                    className={`ls-mega-nav__panel ls-mega-nav__panel--cols-${Math.min(columnCount, 3)}`}
-                    role="menu"
-                  >
-                    <div className="ls-mega-nav__columns">
-                      {section.columns.map((column, columnIndex) => (
-                        <div key={column.title} className="ls-mega-nav__column">
-                          <h3 className="ls-mega-nav__column-title">{column.title}</h3>
-                          <ul className="ls-mega-nav__list">
-                            {column.links.map((link) => (
-                              <li key={link.label + (link.to ?? link.action ?? '')}>
-                                <MegaLinkItem link={link} onActivate={handleLink} />
-                              </li>
-                            ))}
-                            {columnIndex === 0 && section.footerLink ? (
-                              <li className="ls-mega-nav__list-footer">
-                                <Link to={section.footerLink.to} className="ls-mega-nav__footer" onClick={close}>
-                                  {section.footerLink.label}
-                                </Link>
-                              </li>
-                            ) : null}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </React.Fragment>
-          );
-        }
-
-        return (
-          <div key={section.id} className={`ls-mega-nav__item${isOpen ? ' ls-mega-nav__item--open' : ''}`}>
-            <button
-              type="button"
-              className={`ls-mega-nav__trigger${activeSectionId === section.id ? ' ls-mega-nav__trigger--active' : ''}`}
-              aria-expanded={isOpen}
-              onClick={() => setOpenId((current) => (current === section.id ? null : section.id))}
-            >
-              {section.label}
-              <ChevronDown size={14} strokeWidth={2.25} className="ls-mega-nav__chevron" />
-            </button>
-
-            {isOpen ? (
-              <div
-                className={`ls-mega-nav__panel ls-mega-nav__panel--cols-${Math.min(columnCount, 3)}`}
-                role="menu"
-              >
-                <div className="ls-mega-nav__columns">
-                  {section.columns.map((column, columnIndex) => (
-                    <div key={column.title} className="ls-mega-nav__column">
-                      <h3 className="ls-mega-nav__column-title">{column.title}</h3>
-                      <ul className="ls-mega-nav__list">
-                        {column.links.map((link) => (
-                          <li key={link.label + (link.to ?? link.action ?? '')}>
-                            <MegaLinkItem link={link} onActivate={handleLink} />
-                          </li>
-                        ))}
-                        {columnIndex === 0 && section.footerLink ? (
-                          <li className="ls-mega-nav__list-footer">
-                            <Link to={section.footerLink.to} className="ls-mega-nav__footer" onClick={close}>
-                              {section.footerLink.label}
-                            </Link>
-                          </li>
-                        ) : null}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        );
-      })}
+      {primarySections.map(renderSection)}
+      {marketplaceLink}
+      {accountSection ? renderSection(accountSection) : null}
     </nav>
   );
 };

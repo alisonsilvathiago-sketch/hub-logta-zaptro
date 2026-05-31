@@ -1,3 +1,4 @@
+import { LOGSTOKA_AI_BRAND } from '@/modules/ai/constants';
 import { openPrintDocument, resolvePrintLogoUrl } from '@/lib/openPrintDocument';
 
 export type PrintGuidedGuideOptions = {
@@ -79,7 +80,7 @@ function buildHtml(opts: PrintGuidedGuideOptions): string {
     </div>
     <div class="box">
       <p><strong>Um produto por vez:</strong> nome, quantidade, localização (corredor · prateleira · nível).</p>
-      <p>Instrução em texto + dica da Llama 3.2 em background (sem expor “IA” na tela).</p>
+      <p>Instrução em texto + dica do ${LOGSTOKA_AI_BRAND} em background (sem expor “IA” na tela).</p>
       <p><strong>Enter</strong> = Conferido · só avança após interação.</p>
     </div>
 

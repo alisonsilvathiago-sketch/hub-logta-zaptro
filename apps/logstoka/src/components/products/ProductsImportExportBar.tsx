@@ -18,6 +18,7 @@ import type { LsProduct } from '@/types';
 import ProductsPrintReportModal, { type ProductPrintScope } from '@/components/products/ProductsPrintReportModal';
 import ProductsProcessingBanner from '@/components/products/ProductsProcessingBanner';
 import ProductsTipNotification from '@/components/products/ProductsTipNotification';
+import LogstokaXRayTrigger from '@/modules/ai/auditor/LogstokaXRayTrigger';
 
 type Props = {
   companyId: string | null;
@@ -32,6 +33,8 @@ type Props = {
   onRefresh?: () => void;
   loading?: boolean;
   leftElement?: React.ReactNode;
+  /** Ações rápidas (scanner, novo produto) — exibidas à esquerda da barra de ícones */
+  headerActions?: React.ReactNode;
 };
 
 type ExportFormat = 'xlsx' | 'csv' | 'pdf';
@@ -131,6 +134,7 @@ const ProductsImportExportBar: React.FC<Props> = ({
   onRefresh,
   loading = false,
   leftElement,
+  headerActions,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -323,7 +327,16 @@ const ProductsImportExportBar: React.FC<Props> = ({
         ) : null}
         <div className="shrink-0 ml-auto">
           <div className="ls-products-toolbar">
+            {headerActions ? (
+              <div className="ls-products-toolbar__header-actions flex items-center gap-2">{headerActions}</div>
+            ) : null}
             <div className="ls-products-icon-toolbar" aria-label="Ações do catálogo">
+              <div className="ls-products-xray-trigger">
+                <LogstokaXRayTrigger onResolve={onRefresh} />
+              </div>
+
+              <span className="ls-products-icon-toolbar__sep" aria-hidden />
+
               <IconAction label="Atualizar catálogo" onClick={onRefresh} disabled={loading || !onRefresh}>
                 <RefreshCw size={18} strokeWidth={2} className={loading ? 'animate-spin' : undefined} />
               </IconAction>

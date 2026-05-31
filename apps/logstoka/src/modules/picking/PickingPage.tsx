@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   CalendarDays,
   ClipboardCheck,
+  History,
   ListPlus,
   Package,
   PackageCheck,
@@ -13,7 +14,10 @@ import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
 import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
 import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
 import LogstokaIconTooltip from '@/components/ui/LogstokaIconTooltip';
+import { useAuth } from '@/context/LogstokaAuthProvider';
 import { useLogstokaBranding } from '@/context/LogstokaBrandingContext';
+import { recordPickingSeparatedToQueue } from '@/lib/conferenceHistory';
+import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
 import { useTablePagination } from '@/hooks/useTablePagination';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
@@ -42,8 +46,10 @@ import './pickingPage.css';
 
 const PickingPage: React.FC = () => {
   const { companyId } = useLogstokaTenant();
+  const { profile } = useAuth();
   const { branding } = useLogstokaBranding();
   const demo = isLogstokaDemoCompany(companyId);
+  const actorName = profile?.full_name?.trim() || 'Operador';
   const [baseRows, setBaseRows] = useState<PickRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
@@ -148,6 +154,16 @@ const PickingPage: React.FC = () => {
   const addToQueue = (line: PickingLine) => {
     if (!companyId) return;
     markPickingSeparated(companyId, line);
+    recordPickingSeparatedToQueue({
+      companyId,
+      actorName,
+      actorId: profile?.id,
+      sku: line.sku,
+      productName: line.name,
+      quantity: line.quantity,
+      marketplace: line.marketplace,
+      store: line.store,
+    });
     toast.success('Adicionado à fila de hoje');
     refreshSession();
   };
@@ -166,7 +182,19 @@ const PickingPage: React.FC = () => {
 
   const addAllPending = () => {
     if (!companyId || pendingLines.length === 0) return;
-    pendingLines.forEach((line) => markPickingSeparated(companyId, line));
+    pendingLines.forEach((line) => {
+      markPickingSeparated(companyId, line);
+      recordPickingSeparatedToQueue({
+        companyId,
+        actorName,
+        actorId: profile?.id,
+        sku: line.sku,
+        productName: line.name,
+        quantity: line.quantity,
+        marketplace: line.marketplace,
+        store: line.store,
+      });
+    });
     toast.success(`${pendingLines.length} item(ns) na fila de hoje`);
     refreshSession();
   };
@@ -234,15 +262,21 @@ const PickingPage: React.FC = () => {
         }
         subtitle="Fila dos pedidos separados hoje. Selecione, confira e dê baixa — ao concluir, os itens somem da lista e o estoque é atualizado automaticamente."
         actions={
-          <button
-            type="button"
-            className="ls-btn-primary inline-flex items-center gap-2 text-sm"
-            disabled={queueLines.length === 0}
-            onClick={() => openConference(queueLines)}
-          >
-            <ClipboardCheck size={16} />
-            Dar baixa na fila
-          </button>
+          <>
+            <Link to={LOGSTOKA_ROUTES.PICKING_HISTORY} className="ls-btn-secondary inline-flex items-center gap-2 text-sm">
+              <History size={16} />
+              Histórico
+            </Link>
+            <button
+              type="button"
+              className="ls-btn-primary inline-flex items-center gap-2 text-sm"
+              disabled={queueLines.length === 0}
+              onClick={() => openConference(queueLines)}
+            >
+              <ClipboardCheck size={16} />
+              Dar baixa na fila
+            </button>
+          </>
         }
       />
 

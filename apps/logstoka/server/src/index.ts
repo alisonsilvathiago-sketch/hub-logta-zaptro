@@ -41,8 +41,9 @@ async function main() {
   registerIntegrationRoutes(app, cfg);
   registerWebhookRoutes(app, cfg);
 
-  app.listen(cfg.port, () => {
-    console.log(`[logstoka-api] listening on http://localhost:${cfg.port}`);
+  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+  app.listen(cfg.port, host, () => {
+    console.log(`[logstoka-api] listening on http://${host}:${cfg.port}`);
   });
 }
 

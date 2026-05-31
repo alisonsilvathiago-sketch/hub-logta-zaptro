@@ -16,7 +16,7 @@ export function isDemoCompany(companyId?: string | null): boolean {
 export const DEMO_RAG_CONTEXT = JSON.stringify(
   {
     mode: 'demo',
-    note: 'Sessão demo LogStoka — dados simulados. Motor Llama 3.2 activo.',
+    note: 'Sessão demo LogStoka — dados simulados. Aiato activo.',
     operational_hint: {
       focus: 'separação, conferência, expedição, atrasados',
       flow: 'sexta+sábado→segunda, domingo+segunda→terça',

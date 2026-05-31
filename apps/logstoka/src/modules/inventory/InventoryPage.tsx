@@ -440,15 +440,9 @@ const InventoryPage: React.FC = () => {
         currentValue={kpiModal?.value ?? 0}
         subtitle="Informe a quantidade contada e marque se confere com o sistema"
         onClose={() => setKpiModal(null)}
-        onSave={(value, status) => {
+        onSave={(value) => {
           const item = activeItems.find((i) => i.ls_products?.sku === kpiModal?.label);
           if (item && demo) updateDemoItemCount(item.id, value);
-          toast.success(
-            status === 'correct'
-              ? `${kpiModal?.label} conferido · ${value} un.`
-              : `${kpiModal?.label} divergente · ${value} un.`,
-          );
-          setKpiModal(null);
         }}
       />
 

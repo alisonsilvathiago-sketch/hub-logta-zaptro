@@ -1,3 +1,4 @@
+import { LOGSTOKA_AI_BRAND } from '@/modules/ai/constants';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
@@ -22,7 +23,7 @@ const FALLBACK_PLANS: HubPlan[] = [
     name: 'Pro',
     price_monthly: 597,
     description: 'Multicanal com IA e integrações.',
-    features: ['Multi depósitos', 'OCR + Llama 3.2', 'Webhooks marketplaces', 'Inventário inteligente'],
+    features: ['Multi depósitos', `OCR + ${LOGSTOKA_AI_BRAND}`, 'Webhooks marketplaces', 'Inventário inteligente'],
   },
   {
     id: 'enterprise',

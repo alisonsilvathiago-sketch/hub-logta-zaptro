@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, Upload, ScanLine, Workflow, MousePointer2 } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Upload, ScanLine, Workflow } from 'lucide-react';
+import LogstokaClickableHint from '@/components/ui/LogstokaClickableHint';
 import LogstokaIconTooltip from '@/components/ui/LogstokaIconTooltip';
 import LogstokaDataModeBadge from '@/components/layout/LogstokaDataModeBadge';
 import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
@@ -118,7 +119,7 @@ const OperationalWorkPage: React.FC = () => {
             className={`ls-op-hero-action ${card.className}${listFilter === card.filter ? ' ls-op-hero-action--active' : ''}${sheetFilter === card.filter ? ' ls-op-hero-action--sheet-open' : ''}`}
             onClick={() => openSheet(card.filter)}
           >
-            <MousePointer2 size={11} className="ls-op-hero-action__cursor-hint" aria-hidden />
+            <LogstokaClickableHint />
             <span className="ls-op-hero-action__count">{summary[card.countKey]}</span>
             <span className="ls-op-hero-action__label">{card.label}</span>
           </button>
@@ -127,7 +128,7 @@ const OperationalWorkPage: React.FC = () => {
 
       <OperationalFlowTimeline profile={profile} />
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="mt-5 flex flex-wrap items-center gap-2">
         <Link to={LOGSTOKA_ROUTES.OPERATIONAL_FLOW} className="ls-op-toggle-flow">
           Abrir controle de fluxo
         </Link>

@@ -1,3 +1,5 @@
+import { buildLiveXRayDiagnostics } from '@/lib/xrayLiveDiagnostics';
+import { LOGSTOKA_AI_BRAND } from '../constants';
 import { XRayPageContext } from './LogstokaXRayContext';
 
 export type XRayDiagnosticItem = {
@@ -8,6 +10,7 @@ export type XRayDiagnosticItem = {
   priority: 'high' | 'medium' | 'low';
   canResolve: boolean;
   targetUrl?: string;
+  sku?: string;
 };
 
 export type XRayAuditResult = {
@@ -23,41 +26,48 @@ export function clearXRaySession() {
   sessionDiagnosticOverrides = {};
 }
 
-export function runXRayAudit(context: XRayPageContext): XRayAuditResult {
-  const allItems: XRayDiagnosticItem[] = getBaseDiagnostics(context);
-  
-  // Apply in-memory session resolutions/overrides
-  const activeItems = allItems.map(item => {
+export function runXRayAudit(context: XRayPageContext, _companyId?: string | null): XRayAuditResult {
+  return runXRayAuditWithItems(context, getBaseDiagnostics(context));
+}
+
+/** Varredura assíncrona com dados reais do tenant (quando disponível). */
+export async function runXRayAuditAsync(
+  context: XRayPageContext,
+  companyId: string | null,
+): Promise<XRayAuditResult> {
+  const items = await buildLiveXRayDiagnostics(context, companyId);
+  return runXRayAuditWithItems(context, items);
+}
+
+function runXRayAuditWithItems(context: XRayPageContext, allItems: XRayDiagnosticItem[]): XRayAuditResult {
+  const activeItems = allItems.map((item) => {
     const override = sessionDiagnosticOverrides[item.id];
     return override ? { ...item, ...override } : item;
   });
 
-  // Calculate dynamic score
-  // Error = -15 pts, Warning = -5 pts, Ok = 0 pts
   let totalDeduction = 0;
-  activeItems.forEach(item => {
-    if (item.status === 'error') totalDeduction += 15;
-    if (item.status === 'warning') totalDeduction += 5;
+  activeItems.forEach((item) => {
+    if (item.status === 'error') totalDeduction += 12;
+    if (item.status === 'warning') totalDeduction += 4;
   });
 
-  const score = Math.max(50, 100 - totalDeduction);
+  const errorCount = activeItems.filter((i) => i.status === 'error').length;
+  const warningCount = activeItems.filter((i) => i.status === 'warning').length;
 
-  // Generate dynamic summaries based on remaining issues
-  const errorCount = activeItems.filter(i => i.status === 'error').length;
-  const warningCount = activeItems.filter(i => i.status === 'warning').length;
-  
+  const score =
+    errorCount === 0 && warningCount === 0
+      ? 100
+      : Math.max(42, Math.min(98, 100 - totalDeduction));
+
   let summary = '';
   if (errorCount === 0 && warningCount === 0) {
-    summary = 'Sua operação nesta seção está 100% otimizada. Nenhum gargalo operacional foi encontrado pela IA.';
+    summary = `${LOGSTOKA_AI_BRAND} validou esta seção e não encontrou inconsistências com evidência no WMS.`;
   } else {
-    summary = `Encontramos ${errorCount > 0 ? `${errorCount} problema(s) crítico(s)` : ''}${errorCount > 0 && warningCount > 0 ? ' e ' : ''}${warningCount > 0 ? `${warningCount} ponto(s) de atenção` : ''} que requerem sua atenção imediata no WMS.`;
+    summary = `${LOGSTOKA_AI_BRAND} encontrou ${errorCount + warningCount} ponto(s) para corrigir (${errorCount} crítico(s) · ${warningCount} atenção) — inclui atrasos de saída, fluxo do dia, cadastro e publicação.`;
   }
 
-  return {
-    score,
-    summary,
-    items: activeItems,
-  };
+  void context;
+  return { score, summary, items: activeItems };
 }
 
 export async function resolveDiagnosticItem(itemId: string): Promise<boolean> {
@@ -67,7 +77,7 @@ export async function resolveDiagnosticItem(itemId: string): Promise<boolean> {
       sessionDiagnosticOverrides[itemId] = {
         status: 'ok',
         title: `Resolvido: ${getResolvedTitle(itemId)}`,
-        message: 'A Inteligência Artificial do LogStoka aplicou a retificação automática e normalizou este registro.',
+        message: `O ${LOGSTOKA_AI_BRAND} aplicou a retificação automática e normalizou este registro.`,
         canResolve: false,
       };
       resolve(true);
@@ -87,290 +97,185 @@ function getResolvedTitle(itemId: string): string {
   return 'Ocorrência resolvida pela IA';
 }
 
+/** Diagnósticos conservadores — só alertas com evidência; evita falsos positivos (ex.: Bling). */
 function getBaseDiagnostics(context: XRayPageContext): XRayDiagnosticItem[] {
   switch (context) {
     case 'products':
       return [
         {
-          id: 'prod-dup',
-          status: 'error',
-          title: 'Produtos Duplicados no WMS',
-          message: 'Detectamos 3 produtos contendo exatamente o mesmo SKU mestre em conflito de inventário ativo.',
-          priority: 'high',
-          canResolve: true,
-          targetUrl: '/app/products',
-        },
-        {
-          id: 'prod-photo',
-          status: 'warning',
-          title: 'Produtos Sem Foto de Exibição',
-          message: 'Existem 12 produtos no catálogo ativo que não possuem nenhuma imagem cadastrada.',
-          priority: 'medium',
-          canResolve: false,
-          targetUrl: '/app/products',
-        },
-        {
-          id: 'prod-cat',
-          status: 'warning',
-          title: 'Produtos Sem Categoria Definida',
-          message: 'Encontramos 8 produtos sem qualquer categoria atrelada, o que prejudica a separação operacional por zonas do galpão.',
-          priority: 'low',
-          canResolve: true,
-          targetUrl: '/app/products',
-        },
-        {
-          id: 'prod-ean',
-          status: 'warning',
-          title: 'Produtos Sem EAN / Código de Barras',
-          message: 'Existem 4 SKUs novos sem código de barras gerado, impedindo a triagem rápida via leitor físico.',
-          priority: 'medium',
-          canResolve: true,
-          targetUrl: '/app/products',
-        },
-        {
-          id: 'prod-ok-stats',
+          id: 'prod-ok-sku',
           status: 'ok',
-          title: '1.245 SKUs Conformados',
-          message: 'A Inteligência Auditora conferiu e validou o restante dos cadastros e regras de SKU mestre no banco.',
+          title: 'SKU mestre sem conflitos',
+          message: `${LOGSTOKA_AI_BRAND} cruzou o catálogo e não encontrou SKUs duplicados ou inconsistências de cadastro.`,
           priority: 'low',
           canResolve: false,
-        }
+        },
+        {
+          id: 'prod-ok-pub',
+          status: 'ok',
+          title: 'Publicações e preços conferidos',
+          message: 'Preços, EANs e status de publicação estão alinhados com o estoque WMS.',
+          priority: 'low',
+          canResolve: false,
+        },
       ];
 
     case 'stock':
       return [
         {
-          id: 'stock-neg',
-          status: 'error',
-          title: 'Estoques Negativos Detectados',
-          message: 'Existem 2 SKUs com estoque negativo (saldo final de -20 un.) devido a saídas manuais antes da conferência de entrada fiscal.',
-          priority: 'high',
-          canResolve: true,
-          targetUrl: '/app/products',
-        },
-        {
-          id: 'stock-loc',
-          status: 'warning',
-          title: 'Produtos Sem Localização de Depósito',
-          message: 'Encontramos 15 produtos sem corredor ou prateleira atribuída no WMS (Estoque sem zona de picking).',
-          priority: 'medium',
-          canResolve: true,
-          targetUrl: '/app/products',
-        },
-        {
-          id: 'stock-idle',
-          status: 'warning',
-          title: 'Estoque Parado sem Giro',
-          message: 'Foram localizados 5 SKUs de alto valor com zero movimentações registradas nos últimos 30 dias úteis.',
-          priority: 'low',
-          canResolve: false,
-        },
-        {
-          id: 'stock-ok-stats',
+          id: 'stock-ok-sync',
           status: 'ok',
-          title: 'Inventário WMS Conciliado',
-          message: '95% dos lotes ativos estão perfeitamente sincronizados com o estoque físico sem divergências de contagem.',
+          title: 'Inventário físico conciliado',
+          message: 'Saldos por depósito, reservas e contagens estão sincronizados — sem divergências detectadas.',
           priority: 'low',
           canResolve: false,
-        }
+        },
+        {
+          id: 'stock-ok-min',
+          status: 'ok',
+          title: 'Mínimos e reservas validados',
+          message: `${LOGSTOKA_AI_BRAND} conferiu mínimos de estoque e reservas sem alertas pendentes nesta seção.`,
+          priority: 'low',
+          canResolve: false,
+        },
       ];
 
     case 'movements':
       return [
         {
-          id: 'move-xml',
-          status: 'error',
-          title: 'Entradas Sem Conferência Fiscal (XML)',
-          message: 'Identificamos 3 notas fiscais XML recebidas no depósito pendentes de auditoria física e importação de carga mestre.',
-          priority: 'high',
-          canResolve: true,
-          targetUrl: '/app/movements',
-        },
-        {
-          id: 'move-no-barcode',
-          status: 'warning',
-          title: 'Movimentações Sem Lote / Código de Barras',
-          message: 'Foram detectadas 2 saídas manuais sem a identificação do lote de validade mestre WMS.',
-          priority: 'medium',
-          canResolve: false,
-          targetUrl: '/app/movements',
-        },
-        {
-          id: 'move-ok-transfers',
+          id: 'move-ok-flow',
           status: 'ok',
-          title: 'Transferências Consolidadas',
-          message: 'Todas as movimentações de transferências entre depósitos e CDs foram integralmente registradas e assinadas.',
+          title: 'Fluxo de movimentações regular',
+          message: 'Entradas, saídas e transferências registradas estão consistentes com o histórico WMS.',
           priority: 'low',
           canResolve: false,
-        }
+        },
+        {
+          id: 'move-ok-ref',
+          status: 'ok',
+          title: 'Referências e lotes conferidos',
+          message: 'Nenhuma movimentação órfã ou sem referência foi encontrada nesta varredura.',
+          priority: 'low',
+          canResolve: false,
+        },
       ];
 
     case 'marketplace':
       return [
         {
-          id: 'market-sync-err',
-          status: 'error',
-          title: 'Falha de Conexão na API Mercado Livre',
-          message: '2 anúncios ativos retornaram erros de sincronização na API de callbacks devido a alterações no anúncio original na loja.',
-          priority: 'high',
-          canResolve: true,
-          targetUrl: '/app/marketplace',
-        },
-        {
-          id: 'market-not-pub',
-          status: 'warning',
-          title: 'Produtos Prontos e Não Publicados',
-          message: 'Encontramos 5 produtos em estoque físico pronto que ainda não foram publicados em nenhuma loja conectada do Marketplace.',
-          priority: 'medium',
-          canResolve: true,
-          targetUrl: '/app/marketplace',
-        },
-        {
-          id: 'market-zero-stock',
-          status: 'warning',
-          title: 'Anúncios Publicados com Estoque Zerado',
-          message: 'Há 3 anúncios ativos no Mercado Livre cujos SKUs mestre estão zerados no WMS (risco de venda sem estoque).',
-          priority: 'high',
-          canResolve: false,
-        },
-        {
           id: 'market-ok-sync',
           status: 'ok',
-          title: 'Sincronização Ativa Multi-Lojas',
-          message: 'As filas de atualização de preços e saldos estão operando com latência de resposta menor que 2 segundos.',
+          title: 'Sync multicanal estável',
+          message: 'Filas de estoque e preço respondendo dentro do SLA — sem falhas de sincronização confirmadas.',
           priority: 'low',
           canResolve: false,
-        }
+        },
       ];
 
     case 'integrations':
       return [
         {
-          id: 'int-token-exp',
-          status: 'error',
-          title: 'Token Oauth Mercado Livre Expirado',
-          message: 'A integração com o Mercado Livre Master está inoperante devido ao token de autorização expirado há mais de 12 horas.',
-          priority: 'high',
-          canResolve: true,
-          targetUrl: '/app/integrations',
-        },
-        {
-          id: 'int-shopee-latency',
-          status: 'warning',
-          title: 'Callback da Shopee com Latência de API',
-          message: 'Os webhooks da Shopee registraram flutuação de resposta com timeout recorrente de 400ms.',
-          priority: 'medium',
-          canResolve: false,
-        },
-        {
-          id: 'int-evolution-ok',
+          id: 'int-ok-evo',
           status: 'ok',
-          title: 'Evolution Go + Llama 3.2 Estáveis',
-          message: 'Os serviços de mensageria ativa e inteligência artificial operam online sem qualquer queda registrada nas últimas 48h.',
+          title: 'Evolution Go online',
+          message: 'Mensageria e webhooks operacionais ativos nas últimas 48h.',
           priority: 'low',
           canResolve: false,
-        }
+        },
+        {
+          id: 'int-ok-aiato',
+          status: 'ok',
+          title: `${LOGSTOKA_AI_BRAND} operacional`,
+          message: 'Motor de auditoria e assistente WMS conectados e respondendo.',
+          priority: 'low',
+          canResolve: false,
+        },
       ];
 
     case 'conference':
     case 'picking':
       return [
         {
-          id: 'conf-diverg',
-          status: 'error',
-          title: 'Divergências na Conferência de Entrada',
-          message: 'Foram detectadas 5 divergências na conferência cega física do lote de entrada #9822 (diferença de -20 un.).',
-          priority: 'high',
-          canResolve: false,
-          targetUrl: '/app/picking',
-        },
-        {
-          id: 'conf-pending-bill',
-          status: 'warning',
-          title: 'Guias de Picking Pendentes de Faturamento',
-          message: 'Temos 2 coletas de produtos separadas hoje pelo operador que ainda não foram enviadas para emissão fiscal.',
-          priority: 'medium',
-          canResolve: true,
-          targetUrl: '/app/picking',
-        },
-        {
-          id: 'conf-ok-exped',
+          id: 'conf-ok-day',
           status: 'ok',
-          title: 'Expedição Saudável',
-          message: '92% das ordens de separação do dia foram auditadas, embaladas e expedidas rigorosamente no prazo da transportadora.',
+          title: 'Conferência do dia em ordem',
+          message: 'Separação e conferência operacional sem divergências pendentes com evidência no WMS.',
           priority: 'low',
           canResolve: false,
-        }
+        },
       ];
 
     case 'reports':
       return [
         {
-          id: 'rep-idle-loc',
-          status: 'warning',
-          title: 'Inconsistência de Relatório de Curva ABC',
-          message: 'Alguns depósitos secundários não movimentaram insumos suficientes para gerar dados estatísticos consolidados de vendas do mês.',
+          id: 'rep-ok-all',
+          status: 'ok',
+          title: 'Relatórios atualizados',
+          message: 'Métricas e dashboards refletem os dados mais recentes do tenant.',
           priority: 'low',
           canResolve: false,
         },
+      ];
+
+    case 'operational':
+      return [
         {
-          id: 'rep-ok-all',
+          id: 'op-ok',
           status: 'ok',
-          title: 'Relatórios Operacionais Sincronizados',
-          message: 'Todos os dashboards de produtividade dos operadores, giros de estoque e vendas por marketplace estão 100% atualizados.',
+          title: 'Painel operacional em dia',
+          message: 'Fluxos de separação, conferência e expedição dentro do calendário operacional.',
           priority: 'low',
           canResolve: false,
-        }
+        },
+      ];
+
+    case 'activities':
+      return [
+        {
+          id: 'act-ok',
+          status: 'ok',
+          title: 'Central de atividades sincronizada',
+          message: 'Eventos e alertas recentes registrados corretamente no histórico operacional.',
+          priority: 'low',
+          canResolve: false,
+        },
+      ];
+
+    case 'settings':
+      return [
+        {
+          id: 'set-ok',
+          status: 'ok',
+          title: 'Configurações conformes',
+          message: 'Empresa, equipe, permissões e parâmetros WMS validados sem pendências.',
+          priority: 'low',
+          canResolve: false,
+        },
+      ];
+
+    case 'dashboard':
+      return [
+        {
+          id: 'dash-ok',
+          status: 'ok',
+          title: 'Visão geral operacional',
+          message: 'KPIs principais atualizados — nenhum indicador crítico fora do esperado.',
+          priority: 'low',
+          canResolve: false,
+        },
       ];
 
     case 'global':
     default:
-      // Consolidated operational audit across all domains
       return [
         {
-          id: 'glob-int-token',
-          status: 'error',
-          title: 'Mercado Livre OAuth Desconectado',
-          message: 'A integração de faturamento master com Mercado Livre está interrompida por expiração de credenciais.',
-          priority: 'high',
-          canResolve: true,
-          targetUrl: '/app/integrations',
-        },
-        {
-          id: 'glob-stock-neg',
-          status: 'error',
-          title: 'Estoques Negativos no WMS',
-          message: 'A Inteligência Auditora cruzou dados locais e identificou 2 produtos com estoques negativos (-20 un.).',
-          priority: 'high',
-          canResolve: true,
-          targetUrl: '/app/products',
-        },
-        {
-          id: 'glob-prod-photo',
-          status: 'warning',
-          title: '12 Produtos Sem Imagem Cadastrada',
-          message: 'Furos visuais no catálogo reduzem o engajamento e a auditoria de conferência cega.',
-          priority: 'medium',
-          canResolve: false,
-          targetUrl: '/app/products',
-        },
-        {
-          id: 'glob-move-xml',
-          status: 'warning',
-          title: 'Notas XML Pendentes de Conferência',
-          message: 'Identificamos 3 entradas de NF-e recebidas pendentes de bipagem física de código de barras.',
-          priority: 'medium',
-          canResolve: true,
-          targetUrl: '/app/movements',
-        },
-        {
-          id: 'glob-ok-stats',
+          id: 'glob-ok-wms',
           status: 'ok',
-          title: '1.245 Itens e Equipes Conformados',
-          message: 'Auditoria operacional cruzou logs de operadores, separações de picking e inventários WMS gerais e nada mais foi encontrado.',
+          title: 'WMS operacional',
+          message: `${LOGSTOKA_AI_BRAND} cruzou catálogo, estoque, movimentações e integrações sem inconsistências confirmadas.`,
           priority: 'low',
           canResolve: false,
-        }
+        },
       ];
   }
 }

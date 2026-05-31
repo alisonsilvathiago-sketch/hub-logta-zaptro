@@ -1,11 +1,10 @@
 import { supabase } from '@/lib/supabase';
+import { formatInternalSku } from '@/lib/formatInternalSku';
 import { DEMO_PRODUCTS } from '@/lib/logstokaDemoSeed';
 
-const DEMO_LS_COUNTER_KEY = 'logstoka-demo-next-ls';
+export { formatInternalSku };
 
-export function formatInternalSku(sequence: number): string {
-  return `LS${String(Math.max(1, sequence)).padStart(6, '0')}`;
-}
+const DEMO_LS_COUNTER_KEY = 'logstoka-demo-next-ls';
 
 async function skuExists(companyId: string, sku: string): Promise<boolean> {
   const { data, error } = await supabase
@@ -21,18 +20,18 @@ async function skuExists(companyId: string, sku: string): Promise<boolean> {
 async function maxLsSequence(companyId: string): Promise<number> {
   const { data, error } = await supabase
     .from('ls_products')
-    .select('sku')
-    .eq('company_id', companyId)
-    .like('sku', 'LS%')
-    .order('sku', { ascending: false })
-    .limit(50);
+    .select('sku, internal_code')
+    .eq('company_id', companyId);
 
   if (error) throw new Error(error.message);
 
   let max = 0;
   for (const row of data ?? []) {
-    const num = Number.parseInt(String(row.sku).replace(/^LS0*/, ''), 10);
-    if (Number.isFinite(num) && num > max) max = num;
+    for (const code of [row.sku, row.internal_code]) {
+      if (!code || !String(code).toUpperCase().startsWith('LS')) continue;
+      const num = Number.parseInt(String(code).replace(/^LS0*/i, ''), 10);
+      if (Number.isFinite(num) && num > max) max = num;
+    }
   }
   return max;
 }
@@ -40,11 +39,20 @@ async function maxLsSequence(companyId: string): Promise<number> {
 function maxDemoLsSequence(): number {
   let max = Number(sessionStorage.getItem(DEMO_LS_COUNTER_KEY) ?? '0');
   for (const p of DEMO_PRODUCTS) {
-    if (!p.sku.startsWith('LS')) continue;
-    const num = Number.parseInt(p.sku.replace(/^LS0*/, ''), 10);
-    if (Number.isFinite(num) && num > max) max = num;
+    for (const code of [p.sku, p.internal_code]) {
+      if (!code || !String(code).toUpperCase().startsWith('LS')) continue;
+      const num = Number.parseInt(String(code).replace(/^LS0*/i, ''), 10);
+      if (Number.isFinite(num) && num > max) max = num;
+    }
   }
   return max;
+}
+
+function isSkuTaken(sku: string): boolean {
+  const upper = sku.toUpperCase();
+  return DEMO_PRODUCTS.some(
+    (p) => p.sku.toUpperCase() === upper || (p.internal_code ?? '').toUpperCase() === upper,
+  );
 }
 
 /** Pré-visualiza o próximo código interno único (sem reservar) */
@@ -63,11 +71,23 @@ export function bumpDemoInternalSkuCounter(): void {
   sessionStorage.setItem(DEMO_LS_COUNTER_KEY, String(next));
 }
 
+/** Próximo LS único no demo (reserva contador) */
+export function reserveNextDemoInternalSku(): string {
+  let next = maxDemoLsSequence() + 1;
+  let sku = formatInternalSku(next);
+  while (isSkuTaken(sku)) {
+    next += 1;
+    sku = formatInternalSku(next);
+  }
+  sessionStorage.setItem(DEMO_LS_COUNTER_KEY, String(next));
+  return sku;
+}
+
 /** Gera o próximo código interno automático garantindo unicidade */
 export async function generateNextInternalSku(companyId: string): Promise<string> {
-  let base = await maxLsSequence(companyId);
+  const base = await maxLsSequence(companyId);
 
-  for (let i = 1; i <= 20; i += 1) {
+  for (let i = 1; i <= 50; i += 1) {
     const candidate = formatInternalSku(base + i);
     const exists = await skuExists(companyId, candidate);
     if (!exists) return candidate;

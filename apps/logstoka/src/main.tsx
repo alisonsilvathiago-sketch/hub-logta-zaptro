@@ -6,8 +6,11 @@ import { LogstokaAuthProvider } from '@/context/LogstokaAuthProvider';
 import { LogstokaTenantProvider } from '@/context/LogstokaTenantContext';
 import { LogstokaBrandingProvider } from '@/context/LogstokaBrandingContext';
 import { LogstokaThemeProvider } from '@/context/LogstokaThemeContext';
+import { LogstokaMoneyPrivacyProvider } from '@/context/LogstokaMoneyPrivacyContext';
+import { LogstokaSecurityProvider } from '@/context/LogstokaSecurityProvider';
 import App from './App';
 import './index.css';
+import '@/components/privacy/moneyPrivacy.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -16,8 +19,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <LogstokaAuthProvider>
           <LogstokaTenantProvider>
             <LogstokaBrandingProvider>
-              <Toaster position="bottom-right" />
-              <App />
+              <LogstokaMoneyPrivacyProvider>
+                <LogstokaSecurityProvider>
+                  <Toaster position="bottom-right" />
+                  <App />
+                </LogstokaSecurityProvider>
+              </LogstokaMoneyPrivacyProvider>
             </LogstokaBrandingProvider>
           </LogstokaTenantProvider>
         </LogstokaAuthProvider>

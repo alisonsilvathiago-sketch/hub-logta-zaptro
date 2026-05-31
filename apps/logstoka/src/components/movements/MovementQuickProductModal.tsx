@@ -1,3 +1,4 @@
+import { LOGSTOKA_AI_BRAND } from '@/modules/ai/constants';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Check,
@@ -301,7 +302,7 @@ const MovementQuickProductModal: React.FC<Props> = ({
       open={open}
       size="landscape"
       title="Produto não encontrado"
-      subtitle="Llama 3.2 · código interno automático (LS000001) · busca com IA"
+      subtitle={`${LOGSTOKA_AI_BRAND} · código interno automático (LS000001) · busca com IA`}
       icon={<PackagePlus size={20} strokeWidth={2.25} />}
       onClose={onClose}
       footer={footer}
@@ -320,7 +321,7 @@ const MovementQuickProductModal: React.FC<Props> = ({
             {generatingImage ? (
               <div className="ls-quick-product-modal__preview-loading">
                 <Loader2 size={28} className="animate-spin text-orange-500" aria-hidden />
-                <p>Llama 3.2 buscando foto…</p>
+                <p>{LOGSTOKA_AI_BRAND} buscando foto…</p>
                 <span>Fundo branco · embalagem do produto</span>
               </div>
             ) : previewImage ? (
@@ -408,7 +409,7 @@ const MovementQuickProductModal: React.FC<Props> = ({
             <div className="ls-quick-product-modal__ai">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-orange-700">
                 <Sparkles size={14} aria-hidden />
-                Sugestão Llama 3.2
+                Sugestão {LOGSTOKA_AI_BRAND}
               </div>
               <p className="mt-2 text-sm font-bold text-slate-900">{aiSuggestion.name}</p>
               {aiSuggestion.brand ? <p className="text-xs text-slate-500">Marca: {aiSuggestion.brand}</p> : null}
@@ -431,7 +432,7 @@ const MovementQuickProductModal: React.FC<Props> = ({
               </button>
             </div>
           ) : searching ? (
-            <p className="text-xs text-slate-500">Llama 3.2 pesquisando produto e imagem…</p>
+            <p className="text-xs text-slate-500">{LOGSTOKA_AI_BRAND} pesquisando produto e imagem…</p>
           ) : null}
 
           <div className="ls-quick-product-modal__matches">
@@ -516,7 +517,7 @@ const MovementQuickProductModal: React.FC<Props> = ({
               className="ls-input"
               value={brand}
               onChange={(e) => setBrand(e.target.value)}
-              placeholder="Preenchida pela Llama 3.2 quando disponível"
+              placeholder={`Preenchida pelo ${LOGSTOKA_AI_BRAND} quando disponível`}
             />
           </div>
 

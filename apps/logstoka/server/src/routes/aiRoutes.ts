@@ -2,6 +2,7 @@ import type { Express } from 'express';
 import type { LogstokaConfig } from '../config.js';
 import { requireAuth, type AuthedRequest } from '../middleware/auth.js';
 import { getSupabaseAdmin } from '../lib/supabaseAdmin.js';
+import { analyzeAttachment } from '../modules/ai/attachmentAnalysisService.js';
 import { runOperationalChat, generateDailyBriefing } from '../modules/ai/agents/operationalAgent.js';
 import { validateImportRows } from '../modules/ai/documentReader.js';
 import { suggestProduct } from '../modules/ai/productSuggestService.js';
@@ -16,7 +17,12 @@ export function registerAiRoutes(app: Express, cfg: LogstokaConfig) {
 
   app.get('/v1/ai/health', async (_req, res) => {
     const status = await pingOllama();
-    res.json({ ollama: status });
+    res.json({
+      ollama: {
+        online: status.online,
+        model: 'Aiato',
+      },
+    });
   });
 
   app.get('/v1/ai/daily-briefing', auth, async (req: AuthedRequest, res) => {
@@ -54,6 +60,37 @@ export function registerAiRoutes(app: Express, cfg: LogstokaConfig) {
       res.json(result);
     } catch (err) {
       res.status(503).json({ error: err instanceof Error ? err.message : 'IA indisponível' });
+    }
+  });
+
+  app.post('/v1/ai/analyze-attachment', auth, async (req: AuthedRequest, res) => {
+    if (!req.auth?.companyId) return res.status(503).json({ error: 'Service unavailable' });
+
+    const { file_name, mime_type, base64, message, screen, user_name, company_name } = req.body ?? {};
+    if (!base64 || typeof base64 !== 'string') {
+      return res.status(400).json({ error: 'base64 is required' });
+    }
+    if (base64.length > 8_000_000) {
+      return res.status(400).json({ error: 'Arquivo muito grande (máx. ~6 MB)' });
+    }
+
+    const admin = getSupabaseAdmin(cfg);
+    const demo = isDemoCompany(req.auth.companyId);
+    if (!admin && !demo) return res.status(503).json({ error: 'Service unavailable' });
+
+    try {
+      const result = await analyzeAttachment(cfg, admin, req.auth.companyId, {
+        file_name: typeof file_name === 'string' ? file_name : 'anexo',
+        mime_type: typeof mime_type === 'string' ? mime_type : 'application/octet-stream',
+        base64,
+        message: typeof message === 'string' ? message : undefined,
+        screen: typeof screen === 'string' ? screen : undefined,
+        userName: typeof user_name === 'string' ? user_name : undefined,
+        companyName: typeof company_name === 'string' ? company_name : undefined,
+      });
+      res.json(result);
+    } catch (err) {
+      res.status(503).json({ error: err instanceof Error ? err.message : 'Análise indisponível' });
     }
   });
 

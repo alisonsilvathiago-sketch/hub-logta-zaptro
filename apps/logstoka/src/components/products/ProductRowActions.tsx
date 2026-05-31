@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeftRight,
@@ -6,9 +6,11 @@ import {
   Eye,
   MoreVertical,
   Pencil,
+  Tag,
   Trash2,
 } from 'lucide-react';
 import { stopRowNavigate } from '@/components/ui/ClickableTableRow';
+import RowActionsMenuPortal from '@/components/ui/RowActionsMenuPortal';
 
 type Props = {
   productId: string;
@@ -16,6 +18,7 @@ type Props = {
   name: string;
   onEdit: () => void;
   onDuplicate: () => void;
+  onPrintLabel: () => void;
   onDelete: () => void;
   canWrite: boolean;
 };
@@ -26,23 +29,13 @@ const ProductRowActions: React.FC<Props> = ({
   name,
   onEdit,
   onDuplicate,
+  onPrintLabel,
   onDelete,
   canWrite,
 }) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
-  }, [open]);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const run = (action: () => void) => {
     setOpen(false);
@@ -50,8 +43,9 @@ const ProductRowActions: React.FC<Props> = ({
   };
 
   return (
-    <div ref={wrapRef} className="ls-row-actions" onClick={stopRowNavigate} onKeyDown={(e) => e.stopPropagation()}>
+    <div className="ls-row-actions" onClick={stopRowNavigate} onKeyDown={(e) => e.stopPropagation()}>
       <button
+        ref={triggerRef}
         type="button"
         className="ls-row-actions__trigger"
         aria-label={`Ações do produto ${name}`}
@@ -62,55 +56,58 @@ const ProductRowActions: React.FC<Props> = ({
         <MoreVertical size={18} strokeWidth={2.25} aria-hidden />
       </button>
 
-      {open ? (
-        <div className="ls-row-actions__menu" role="menu">
+      <RowActionsMenuPortal open={open} onClose={() => setOpen(false)} triggerRef={triggerRef}>
+        <button
+          type="button"
+          role="menuitem"
+          className="ls-row-actions__item"
+          onClick={() => run(() => navigate(`/app/products/${productId}`))}
+        >
+          <Eye size={15} aria-hidden />
+          Visualizar
+        </button>
+
+        {canWrite ? (
+          <button type="button" role="menuitem" className="ls-row-actions__item" onClick={() => run(onEdit)}>
+            <Pencil size={15} aria-hidden />
+            Editar
+          </button>
+        ) : null}
+
+        {canWrite ? (
+          <button type="button" role="menuitem" className="ls-row-actions__item" onClick={() => run(onDuplicate)}>
+            <Copy size={15} aria-hidden />
+            Duplicar
+          </button>
+        ) : null}
+
+        <button
+          type="button"
+          role="menuitem"
+          className="ls-row-actions__item"
+          onClick={() => run(() => navigate(`/app/transfers?sku=${encodeURIComponent(sku)}`))}
+        >
+          <ArrowLeftRight size={15} aria-hidden />
+          Movimentar
+        </button>
+
+        <button type="button" role="menuitem" className="ls-row-actions__item" onClick={() => run(onPrintLabel)}>
+          <Tag size={15} aria-hidden />
+          Imprimir etiqueta
+        </button>
+
+        {canWrite ? (
           <button
             type="button"
             role="menuitem"
-            className="ls-row-actions__item"
-            onClick={() => run(() => navigate(`/app/products/${productId}`))}
+            className="ls-row-actions__item ls-row-actions__item--danger"
+            onClick={() => run(onDelete)}
           >
-            <Eye size={15} aria-hidden />
-            Visualizar
+            <Trash2 size={15} aria-hidden />
+            Excluir
           </button>
-          
-          {canWrite ? (
-            <button type="button" role="menuitem" className="ls-row-actions__item" onClick={() => run(onEdit)}>
-              <Pencil size={15} aria-hidden />
-              Editar
-            </button>
-          ) : null}
-
-          {canWrite ? (
-            <button type="button" role="menuitem" className="ls-row-actions__item" onClick={() => run(onDuplicate)}>
-              <Copy size={15} aria-hidden />
-              Duplicar
-            </button>
-          ) : null}
-
-          <button
-            type="button"
-            role="menuitem"
-            className="ls-row-actions__item"
-            onClick={() => run(() => navigate(`/app/transfers?sku=${encodeURIComponent(sku)}`))}
-          >
-            <ArrowLeftRight size={15} aria-hidden />
-            Movimentar
-          </button>
-
-          {canWrite ? (
-            <button
-              type="button"
-              role="menuitem"
-              className="ls-row-actions__item ls-row-actions__item--danger"
-              onClick={() => run(onDelete)}
-            >
-              <Trash2 size={15} aria-hidden />
-              Excluir
-            </button>
-          ) : null}
-        </div>
-      ) : null}
+        ) : null}
+      </RowActionsMenuPortal>
     </div>
   );
 };

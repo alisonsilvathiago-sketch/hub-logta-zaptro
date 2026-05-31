@@ -1,3 +1,4 @@
+import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import type { DemoMovementRow } from '@/lib/logstokaDemoSeed';
 import { DEMO_MOVEMENTS } from '@/lib/logstokaDemoSeed';
 
@@ -27,7 +28,8 @@ function writeExtra(companyId: string, rows: DemoMovementRow[]): void {
 }
 
 export function loadMergedDemoMovements(companyId: string | null): DemoMovementRow[] {
-  const base = [...DEMO_MOVEMENTS];
+  const base =
+    companyId && isLogstokaDemoCompany(companyId) ? [...(DEMO_MOVEMENTS ?? [])] : [];
   if (!companyId || typeof window === 'undefined') return base;
   const extra = readExtra(companyId);
   return [...extra, ...base].sort(

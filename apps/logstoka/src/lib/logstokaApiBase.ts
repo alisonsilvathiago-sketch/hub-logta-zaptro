@@ -1,3 +1,5 @@
+import { aiUnavailableShort } from '@/modules/ai/constants';
+
 /** Base URL da API LogStoka no browser. */
 export function resolveLogstokaApiBase(): string {
   if (import.meta.env.DEV) {
@@ -28,7 +30,7 @@ export function formatLogstokaApiError(err: unknown): string {
   }
 
   if (lower.includes('indisponível') || lower.includes('503')) {
-    return 'Motor Llama 3.2 temporariamente indisponível. Aguarde alguns segundos e tente novamente.';
+    return aiUnavailableShort();
   }
 
   return raw || 'Erro ao contactar a API LogStoka.';

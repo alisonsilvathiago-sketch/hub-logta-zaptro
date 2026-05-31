@@ -7,7 +7,6 @@ import {
   HelpCircle,
   LogOut,
   RefreshCw,
-  Search,
   Settings,
   Sparkles,
   Users,
@@ -147,13 +146,6 @@ const LogstokaAppTopbar: React.FC<Props> = ({ onOpenAi, onSignOut }) => {
           </div>
         )}
       </div>
-
-      {showMegaNav ? (
-        <div className="lsdash-topbar-inicio-search" aria-hidden>
-          <Search size={16} strokeWidth={2} />
-          Pesquisar
-        </div>
-      ) : null}
 
       <div className="lsdash-topbar-right">
         <div className="lsdash-topbar-actions">

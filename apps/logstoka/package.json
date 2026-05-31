@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host localhost --port 5177 --strictPort",
     "dev:server": "npm run dev --prefix server",
-    "dev:all": "npm run dev:server & npm run dev",
+    "dev:all": "concurrently -n api,app -c blue,green \"npm run dev:server\" \"npm run dev\"",
     "dev:logstoka": "npm run dev",
     "dev:logstoka:all": "npm run dev:all",
     "build": "tsc --noEmit && vite build",
@@ -19,7 +19,9 @@
     "@svg-maps/brazil": "^2.0.0",
     "@tailwindcss/vite": "^4.0.0",
     "html5-qrcode": "^2.3.8",
+    "jsbarcode": "^3.12.3",
     "lucide-react": "^0.474.0",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.6.0",
@@ -30,9 +32,11 @@
   },
   "devDependencies": {
     "@types/node": "^22.19.19",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.2.1",
     "typescript": "^5.7.3",
     "vite": "^6.0.11"
   }

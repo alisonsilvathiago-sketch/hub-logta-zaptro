@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, DollarSign, Package, Share2, Edit3, Eye, ImagePlus, Plus } from 'lucide-react';
-import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
 import { toast } from 'react-hot-toast';
 import { useProducts } from '@/hooks/useLogstokaData';
 import { useCategories } from '@/hooks/useCatalog';
@@ -22,9 +21,17 @@ import ProductRowActions from '@/components/products/ProductRowActions';
 import LogstokaTableFilterBar from '@/components/ui/LogstokaTableFilterBar';
 import { showLogstokaBanner } from '@/lib/logstokaBanner';
 import LogstokaShareModal from '@/components/sharing/LogstokaShareModal';
+import StockLabelPreviewModal from '@/components/labels/StockLabelPreviewModal';
 import ProductsScanModal from '@/modules/products/ProductsScanModal';
 import ProductsKpiStrip from '@/components/products/ProductsKpiStrip';
+import LogstokaMoneyValue from '@/components/privacy/LogstokaMoneyValue';
 import { getDemoProductsCatalogKpis, getDemoStockQty } from '@/lib/logstokaDemoSeed';
+import { formatOverdueLabel, getMaxOverdueDaysBySku } from '@/lib/movementOverdue';
+import { loadCompanyMovements } from '@/lib/movementLoader';
+import type { DemoMovementRow } from '@/lib/logstokaDemoSeed';
+import LogstokaIconTooltip from '@/components/ui/LogstokaIconTooltip';
+import { EMPTY_STOCK_LABEL, stockLabelFromProduct } from '@/lib/stockLabelData';
+import type { StockLabelData } from '@/lib/printStockLabel';
 import {
   emptyUniversalProductForm,
   PRODUCT_ORIGIN_CODES,
@@ -38,6 +45,7 @@ import {
   countPublishedStores,
   validateProductForPublication,
 } from '@/lib/productPublication';
+import { duplicateProduct } from '@/lib/duplicateProduct';
 import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
 import '@/modules/products/productAddWizard.css';
 import { useMarketplaceModule } from '@/hooks/useMarketplaceModule';
@@ -86,6 +94,7 @@ const ProductsPage: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [labelModal, setLabelModal] = useState<{ data: StockLabelData; productId: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<LsProduct | null>(null);
   const [form, setForm] = useState<UniversalProductFields>(emptyUniversalProductForm());
@@ -94,11 +103,33 @@ const ProductsPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isDemo = isLogstokaDemoCompany(companyId);
+  const [movementTick, setMovementTick] = useState(0);
+  const [movementsForOverdue, setMovementsForOverdue] = useState<DemoMovementRow[]>([]);
 
   useEffect(() => {
     const timer = window.setInterval(() => reload(), 60_000);
     return () => window.clearInterval(timer);
   }, [reload]);
+
+  useEffect(() => {
+    const onMovements = () => setMovementTick((t) => t + 1);
+    window.addEventListener('logstoka:demo-movements-updated', onMovements);
+    window.addEventListener('logstoka:system-pulse', onMovements);
+    return () => {
+      window.removeEventListener('logstoka:demo-movements-updated', onMovements);
+      window.removeEventListener('logstoka:system-pulse', onMovements);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!companyId) {
+      setMovementsForOverdue([]);
+      return;
+    }
+    void loadCompanyMovements(companyId).then(setMovementsForOverdue);
+  }, [companyId, movementTick]);
+
+  const overdueBySku = useMemo(() => getMaxOverdueDaysBySku(movementsForOverdue), [movementsForOverdue]);
 
   const fmtQty = (n: number) => n.toLocaleString('pt-BR');
   const fmtBrl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
@@ -132,6 +163,7 @@ const ProductsPage: React.FC = () => {
           value: fmtBrl(demo.revenueFromExits),
           hint: 'receita estimada das saídas',
           icon: DollarSign,
+          isMoney: true,
         },
       ];
     }
@@ -231,27 +263,12 @@ const ProductsPage: React.FC = () => {
   };
 
   const handleDuplicateProduct = async (p: LsProduct) => {
-    if (isDemo) {
-      toast.success(`[Demo] Produto "${p.sku}" duplicado como rascunho`);
-      return;
-    }
+    if (!companyId) return;
     try {
-      const { data: current } = await supabase.from('ls_products').select('*').eq('id', p.id).single();
-      if (!current) throw new Error('Produto original não encontrado');
-      
-      const copy = {
-        ...current,
-        id: undefined,
-        sku: `${current.sku}-CÓPIA`,
-        name: `${current.name} (Cópia)`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      
-      const { error } = await supabase.from('ls_products').insert(copy);
-      if (error) throw error;
-      toast.success('Produto duplicado');
+      const copy = await duplicateProduct(companyId, p, { demo: isDemo });
+      toast.success(`Produto duplicado · ${copy.sku} · ${copy.name}`);
       reload();
+      navigate(`/app/products/${copy.id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao duplicar');
     }
@@ -371,19 +388,7 @@ const ProductsPage: React.FC = () => {
 
   return (
     <div className="ls-products-page space-y-6">
-      <LogstokaPageHeader
-        className="ls-products-page-inset"
-        icon={<Package size={20} strokeWidth={2.25} />}
-        title="Estoques"
-        actions={
-          <div className="flex items-center gap-2">
-            <LogstokaScanIconButton title="Buscar produto por scanner" onClick={() => setScanOpen(true)} />
-            {canWrite ? <LogstokaAddIconButton title="Novo produto" onClick={openCreate} /> : null}
-          </div>
-        }
-      />
-
-      <ProductsKpiStrip items={productKpis} />
+      <ProductsKpiStrip items={productKpis} className="ls-products-page-inset" />
 
       <div className="ls-products-page-inset">
         <ProductsImportExportBar
@@ -398,6 +403,12 @@ const ProductsPage: React.FC = () => {
           onShareSelected={() => setShareModalOpen(true)}
           onImported={() => reload()}
           onRefresh={() => reload()}
+          headerActions={
+            <>
+              <LogstokaScanIconButton title="Buscar produto por scanner" onClick={() => setScanOpen(true)} />
+              {canWrite ? <LogstokaAddIconButton title="Novo produto" onClick={openCreate} /> : null}
+            </>
+          }
           leftElement={
             <LogstokaTableFilterBar
               placeholder="Pesquisar catálogo por código, SKU ou GTIN..."
@@ -446,8 +457,16 @@ const ProductsPage: React.FC = () => {
                 <td colSpan={11} className="py-8 text-center text-slate-500">Nenhum produto cadastrado.</td>
               </tr>
             )}
-            {products.map((p) => (
-              <ClickableTableRow key={p.id} to={`/app/products/${p.id}`}>
+            {products.map((p) => {
+              const overdueDays =
+                overdueBySku.get(p.sku) ??
+                (p.internal_code ? overdueBySku.get(p.internal_code) : undefined);
+              return (
+              <ClickableTableRow
+                key={p.id}
+                to={`/app/products/${p.id}`}
+                className={overdueDays ? 'ls-table-row--overdue' : undefined}
+              >
                 <td className="ls-table-select-cell" onClick={stopRowNavigate}>
                   <input
                     type="checkbox"
@@ -463,11 +482,24 @@ const ProductsPage: React.FC = () => {
                   </span>
                 </td>
                 <td className="ls-hide-mobile text-[#a3a3a3]">{p.barcode ?? '—'}</td>
-                <td>{p.name}</td>
+                <td>
+                  <LogstokaIconTooltip
+                    label={overdueDays ? formatOverdueLabel(overdueDays) : p.name}
+                  >
+                    <span className={overdueDays ? 'font-bold text-red-700' : undefined}>
+                      {p.name}
+                      {overdueDays ? (
+                        <span className="ls-entry-overdue-inline"> · {formatOverdueLabel(overdueDays)}</span>
+                      ) : null}
+                    </span>
+                  </LogstokaIconTooltip>
+                </td>
                 <td className="ls-hide-mobile">{categoryName(p.category_id)}</td>
                 <td>{isDemo ? getDemoStockQty(p.id) : '—'}</td>
                 <td className="ls-products-price-cell">
-                  {Number(p.sale_price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  <LogstokaMoneyValue isMoney>
+                    {Number(p.sale_price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </LogstokaMoneyValue>
                 </td>
                 <td className="ls-hide-mobile">
                   <span className="ls-badge bg-slate-100 text-slate-700">
@@ -489,12 +521,19 @@ const ProductsPage: React.FC = () => {
                     name={p.name}
                     onEdit={() => openEdit(p)}
                     onDuplicate={() => void handleDuplicateProduct(p)}
+                    onPrintLabel={() =>
+                      setLabelModal({
+                        productId: p.id,
+                        data: stockLabelFromProduct(p, isDemo ? Math.max(1, getDemoStockQty(p.id)) : 1),
+                      })
+                    }
                     onDelete={() => void handleSingleDelete(p)}
                     canWrite={canWrite}
                   />
                 </td>
               </ClickableTableRow>
-            ))}
+            );
+            })}
           </tbody>
         </table>
       </div>
@@ -773,6 +812,23 @@ const ProductsPage: React.FC = () => {
           publication_status: p.publication_status,
           stockTotal: isDemo ? getDemoStockQty(p.id) : 840
         }))}
+      />
+
+      <StockLabelPreviewModal
+        open={Boolean(labelModal)}
+        onClose={() => setLabelModal(null)}
+        data={labelModal?.data ?? EMPTY_STOCK_LABEL}
+        persistContext={
+          labelModal
+            ? {
+                productId: labelModal.productId,
+                companyId,
+                demo: isDemo,
+                sku: labelModal.data.sku,
+              }
+            : undefined
+        }
+        onIdentifiersPersisted={() => reload()}
       />
     </div>
   );

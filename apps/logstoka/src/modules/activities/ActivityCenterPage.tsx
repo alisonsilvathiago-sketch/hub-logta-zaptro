@@ -1,11 +1,21 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  Bell,
+  Bot,
+  Boxes,
   ChevronLeft,
   ChevronRight,
+  ClipboardCheck,
+  GitBranch,
   List,
+  Plug,
+  ScanLine,
   Search,
+  ShoppingCart,
   Sparkles,
+  User,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/LogstokaAuthProvider';
@@ -45,6 +55,20 @@ function monthTitle(year: number, month: number): string {
   });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
+
+const ACTIVITY_DOMAIN_ICONS: Record<ActivityDomain, React.ReactNode> = {
+  operation: <ScanLine size={11} strokeWidth={2.25} aria-hidden />,
+  conference: <ClipboardCheck size={11} strokeWidth={2.25} aria-hidden />,
+  inventory: <Boxes size={11} strokeWidth={2.25} aria-hidden />,
+  transfer: <ArrowLeftRight size={11} strokeWidth={2.25} aria-hidden />,
+  sales: <ShoppingCart size={11} strokeWidth={2.25} aria-hidden />,
+  integrations: <Plug size={11} strokeWidth={2.25} aria-hidden />,
+  flow: <GitBranch size={11} strokeWidth={2.25} aria-hidden />,
+  ai: <Bot size={11} strokeWidth={2.25} aria-hidden />,
+  user: <User size={11} strokeWidth={2.25} aria-hidden />,
+  alerts: <Bell size={11} strokeWidth={2.25} aria-hidden />,
+  production: <Boxes size={11} strokeWidth={2.25} aria-hidden />,
+};
 
 const ActivityCenterPage: React.FC = () => {
   const { companyId } = useLogstokaTenant();
@@ -178,7 +202,6 @@ const ActivityCenterPage: React.FC = () => {
       <aside className="ls-act-shell__sidebar" aria-label="Filtros do calendário">
         <div className="ls-act-shell__sidebar-head">
           <h1>Central de Atividades</h1>
-          <p>Memória operacional · todas as ações do sistema</p>
         </div>
 
         <div className="ls-act-shell__mini-nav">
@@ -226,10 +249,13 @@ const ActivityCenterPage: React.FC = () => {
                 <label className="ls-act-shell__check">
                   <input
                     type="checkbox"
+                    className="ls-act-shell__checkbox"
                     checked={isDomainVisible(opt.id)}
                     onChange={() => toggleDomain(opt.id)}
                   />
-                  <span className={`ls-act-shell__dot ls-act-shell__dot--${opt.id}`} aria-hidden />
+                  <span className={`ls-act-shell__type-icon ls-act-shell__type-icon--${opt.id}`}>
+                    {ACTIVITY_DOMAIN_ICONS[opt.id]}
+                  </span>
                   {opt.label}
                 </label>
               </li>

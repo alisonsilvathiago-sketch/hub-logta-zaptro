@@ -122,6 +122,24 @@ export const logstokaApi = {
   receiveTransfer: (id: string) =>
     apiFetch(`/v1/transfers/${id}/receive`, { method: 'PATCH', body: '{}' }),
   aiHealth: () => apiFetch<{ ollama: { online: boolean; model: string } }>('/v1/ai/health'),
+  aiAnalyzeAttachment: (payload: {
+    file_name: string;
+    mime_type: string;
+    base64: string;
+    message?: string;
+    screen?: string;
+    user_name?: string;
+    company_name?: string;
+  }) =>
+    apiFetch<{
+      reply: string;
+      links: Array<{ label: string; path: string }>;
+      agents?: string[];
+      file_kind?: string;
+    }>('/v1/ai/analyze-attachment', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
   aiChat: (payload: {
     message: string;
     history?: Array<{ role: string; content: string }>;

@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createConferenceSessionId } from '@/lib/conferenceHistory';
 import { ClipboardCheck, Maximize2, Minimize2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Modal from '@/components/ui/Modal';
@@ -25,9 +26,11 @@ const PickingDailyConferenceModal: React.FC<Props> = ({ open, lines, onClose, on
   const conferenceLines = lines;
   const orders = useMemo(() => pickingLinesToOperationalOrders(conferenceLines), [conferenceLines]);
   const totalUnits = conferenceLines.reduce((sum, line) => sum + line.quantity, 0);
+  const sessionIdRef = useRef(createConferenceSessionId());
 
   useEffect(() => {
     if (!open) setOperatorMode(false);
+    else sessionIdRef.current = createConferenceSessionId();
   }, [open]);
 
   const handleClose = () => {
@@ -52,6 +55,8 @@ const PickingDailyConferenceModal: React.FC<Props> = ({ open, lines, onClose, on
       operatorFocus={operatorMode}
       autoRegisterExitsOnComplete
       navigateAfterExit={false}
+      conferenceSource="picking_daily"
+      conferenceSessionId={sessionIdRef.current}
       onQuickExitComplete={handleExitsRegistered}
       onComplete={() => {
         if (conferenceLines.length === 0) return;

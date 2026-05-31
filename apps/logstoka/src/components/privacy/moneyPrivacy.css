@@ -1,0 +1,61 @@
+.ls-money-value {
+  display: inline-block;
+  transition: filter 0.25s ease, opacity 0.25s ease;
+}
+
+.ls-money-value--hidden {
+  filter: blur(7px);
+  opacity: 0.55;
+  user-select: none;
+  pointer-events: none;
+}
+
+.ls-money-value-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+}
+
+.ls-money-privacy-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: #737373;
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 8px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.ls-money-privacy-toggle:hover {
+  color: #ea580c;
+  background: rgba(234, 88, 12, 0.08);
+}
+
+.ls-money-privacy-toggle--sm {
+  padding: 0.1rem;
+}
+
+.ls-money-privacy-toggle--active {
+  color: #ea580c;
+}
+
+.ls-products-kpi__value-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+}
+
+html.logstoka-money-hidden .ls-sales-table__money,
+html.logstoka-money-hidden .ls-sales-kpi__value--money,
+html.logstoka-money-hidden .ls-dashboard-stat-value,
+html.logstoka-money-hidden .ls-products-price-cell {
+  filter: blur(7px);
+  opacity: 0.55;
+  user-select: none;
+}

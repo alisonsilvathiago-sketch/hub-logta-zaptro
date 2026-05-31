@@ -1,0 +1,39 @@
+---
+description: Identificação de produtos (LS, EAN, QR) e etiquetas padrão LogStoka
+globs: apps/logstoka/**/*
+alwaysApply: false
+---
+
+# Identificação de produtos e etiquetas — LogStoka
+
+## Chave mestre
+
+- Todo produto recebe **código interno imutável** `LS000001`, `LS000002`, … (`formatInternalSku` / `internalProductCode.ts`).
+- O LS é a referência principal para estoque, sincronização e WMS.
+- SKUs e IDs de marketplace (Shopee, ML, Amazon, TikTok, Magalu) são **vínculos externos**, nunca substituem o LS.
+
+## Identificadores por produto
+
+1. **Código interno (LS)** — gerado automaticamente no cadastro; não alterar após criação.
+2. **EAN-13 / GTIN** — padrão GS1; usar o cadastrado pelo fornecedor quando válido (`isValidEan13`).
+3. **QR Code** — URL `https://logstoka.com.br/p/{LS}` (`buildLogstokaQrPayload`).
+
+Se não houver EAN válido: gerar faixa interna LogStoka `7896004XXXXX` + dígito verificador (`generateLogstokaInternalEan13` em `productIdentifiers.ts`).
+
+## Etiqueta padrão (100×50 mm)
+
+- Módulos: `printStockLabel.ts`, `stockLabelRender.ts` (JsBarcode EAN-13 + QR), `stockLabelData.ts`, `StockLabelPreviewModal.tsx`.
+- Conteúdo obrigatório: nome, **LS em destaque**, EAN com barras reais, QR, quantidade/ref WMS.
+- Não usar barras simuladas em produção — sempre `renderStockLabelAssets`.
+
+## Scanner / lookup
+
+- `parseScanPayload` normaliza LS, EAN e URL do QR antes da busca.
+- `findProductByAnyIdentifier` / `findProductByScan` devem resolver qualquer um dos três.
+- Resultado da leitura: produto único → estoque, localização, ações WMS (entrada, saída, conferência).
+
+## Implementação
+
+- Resolver IDs: `resolveProductIdentifiers(product)`.
+- Classificar teste de bipagem: `classifyScanAgainstProduct`.
+- Persistir `internal_code` + `barcode` no cadastro ao criar produto sem GTIN (não apenas na etiqueta).

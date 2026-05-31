@@ -10,6 +10,7 @@ import {
   Truck,
   Upload,
 } from 'lucide-react';
+import LogstokaClickableHint from '@/components/ui/LogstokaClickableHint';
 import { useAuth } from '@/context/LogstokaAuthProvider';
 import { useLogstokaBranding } from '@/context/LogstokaBrandingContext';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
@@ -97,7 +98,6 @@ const InicioHomePage: React.FC = () => {
       <section className="ls-inicio-minimal">
         <header className="ls-inicio-minimal__top">
           <div>
-            <p className="ls-inicio-minimal__eyebrow">Centro operacional</p>
             <div className="ls-inicio-minimal__greet">
               <div className="ls-inicio-minimal__avatar" aria-hidden>
                 {profile?.avatar_url ? (
@@ -137,6 +137,7 @@ const InicioHomePage: React.FC = () => {
             onClick={() => setSheetFilter('now')}
             aria-label={`Ver ${summary.todayFocus} pedidos em foco hoje`}
           >
+            <LogstokaClickableHint />
             <strong>{summary.todayFocus}</strong>
             <span>Foco hoje</span>
           </button>
@@ -146,6 +147,7 @@ const InicioHomePage: React.FC = () => {
             onClick={() => setSheetFilter('late')}
             aria-label={`Ver ${summary.late} pedidos atrasados`}
           >
+            <LogstokaClickableHint />
             <strong>{summary.late}</strong>
             <span>Atrasados</span>
           </button>
@@ -155,6 +157,7 @@ const InicioHomePage: React.FC = () => {
             onClick={() => setSheetFilter('all')}
             aria-label={`Ver ${summary.notSent} pedidos não enviados`}
           >
+            <LogstokaClickableHint />
             <strong>{summary.notSent}</strong>
             <span>Não enviados</span>
           </button>

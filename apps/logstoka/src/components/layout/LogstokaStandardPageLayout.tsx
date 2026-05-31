@@ -1,4 +1,9 @@
 import React from 'react';
+import LogstokaMoneyPrivacyToggle from '@/components/privacy/LogstokaMoneyPrivacyToggle';
+import LogstokaMoneyValue from '@/components/privacy/LogstokaMoneyValue';
+import LogstokaClickableHint from '@/components/ui/LogstokaClickableHint';
+import { looksLikeMoney } from '@/lib/moneyPrivacy';
+import '@/components/privacy/moneyPrivacy.css';
 
 export const LOGSTOKA_PAGE_TITLE_CLASS = 'text-[31px] font-bold leading-snug tracking-normal text-[#383838]';
 export const LOGSTOKA_ROW_TITLE_CLASS = 'truncate text-[14px] font-bold text-gray-900';
@@ -15,14 +20,34 @@ export type LogstokaKpiStripItem = {
 
 export function LogstokaKpiStrip({ items, className = '' }: { items: LogstokaKpiStripItem[]; className?: string }) {
   return (
-    <div className={`ls-kpi-strip ${className}`.trim()}>
+    <div className={`ls-kpi-strip !mt-0 !mb-0 ${className}`.trim()}>
       {items.map((kpi) => {
+        const monetary = looksLikeMoney(String(kpi.value)) || looksLikeMoney(kpi.trendValue ?? '');
         const body = (
           <>
             <p className="ls-stat-card__label ls-stat-card__label--spaced">{kpi.label}</p>
             <div className="flex items-end justify-between gap-2">
-              <p className="ls-stat-card__value ls-stat-card__value--primary">{kpi.value}</p>
-              {kpi.trend && kpi.trend !== 'neutral' && kpi.trendValue ? (
+              {monetary ? (
+                <div className="ls-money-value-row min-w-0 flex-1">
+                  <LogstokaMoneyPrivacyToggle size="sm" />
+                  <LogstokaMoneyValue className="ls-stat-card__value ls-stat-card__value--primary" isMoney>
+                    {kpi.value}
+                  </LogstokaMoneyValue>
+                </div>
+              ) : (
+                <LogstokaMoneyValue className="ls-stat-card__value ls-stat-card__value--primary">
+                  {kpi.value}
+                </LogstokaMoneyValue>
+              )}
+              {kpi.trend && kpi.trend !== 'neutral' && kpi.trendValue && looksLikeMoney(kpi.trendValue) ? (
+                <LogstokaMoneyValue
+                  className={`mb-1 shrink-0 text-xs font-bold ${
+                    kpi.trend === 'up' ? 'text-orange-600' : 'text-red-500'
+                  }`}
+                >
+                  {kpi.trendValue}
+                </LogstokaMoneyValue>
+              ) : kpi.trend && kpi.trend !== 'neutral' && kpi.trendValue ? (
                 <span
                   className={`mb-1 shrink-0 text-xs font-bold ${
                     kpi.trend === 'up' ? 'text-orange-600' : 'text-red-500'
@@ -50,6 +75,7 @@ export function LogstokaKpiStrip({ items, className = '' }: { items: LogstokaKpi
               onClick={kpi.onClick}
               aria-label={`${kpi.label}: ${kpi.value}`}
             >
+              <LogstokaClickableHint />
               {body}
             </button>
           );

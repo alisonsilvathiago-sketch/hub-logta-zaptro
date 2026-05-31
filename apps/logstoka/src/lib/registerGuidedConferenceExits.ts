@@ -6,7 +6,7 @@ import { logstokaApi } from '@/lib/logstokaApi';
 import { recordOperationalExit } from '@/lib/activityRecording';
 import type { Marketplace } from '@/types';
 
-export { loadMergedDemoMovements };
+export { loadCompanyMovements, loadMergedDemoMovements } from '@/lib/movementLoader';
 
 function resolveSku(item: GuidedOperationItem): string {
   if (item.sku) return item.sku;

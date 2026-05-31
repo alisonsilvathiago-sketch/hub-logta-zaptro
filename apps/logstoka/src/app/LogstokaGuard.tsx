@@ -1,7 +1,8 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/LogstokaAuthProvider';
-import { canAccessRoute } from '@/lib/permissions';
+import AccessDeniedPanel from '@/components/security/AccessDeniedPanel';
+import { canAccessRoute, roleLabel, resolveRole } from '@/lib/permissions';
 import { profileHasLogstokaEntitlement } from '@/lib/authProductGate';
 
 const LogstokaGuard: React.FC = () => {
@@ -37,7 +38,15 @@ const LogstokaGuard: React.FC = () => {
   }
 
   if (profile && !canAccessRoute(location.pathname, profile.role)) {
-    return <Navigate to="/app" replace />;
+    const role = resolveRole(profile.role);
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f4f4f4] p-6">
+        <AccessDeniedPanel
+          title="Área restrita"
+          message={`Seu perfil (${roleLabel(role)}) não tem permissão para acessar esta seção. Nenhum dado sensível foi carregado.`}
+        />
+      </div>
+    );
   }
 
   return <Outlet />;

@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowDownToLine,
   ArrowLeftRight,
   ArrowUpFromLine,
+  Clock,
   FileUp,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -17,6 +18,7 @@ import ProductThumb from '@/components/products/ProductThumb';
 import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
 import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
 import LogstokaKpiAdjustModal from '@/components/layout/LogstokaKpiAdjustModal';
+import StockLabelPreviewModal from '@/components/labels/StockLabelPreviewModal';
 import ClickableTableRow from '@/components/ui/ClickableTableRow';
 import LogstokaTableCheckbox from '@/components/ui/LogstokaTableCheckbox';
 import LogstokaIconNav, { type LogstokaIconNavButtonItem, LogstokaIconNavButton } from '@/components/ui/LogstokaIconNav';
@@ -24,13 +26,25 @@ import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
 import { useRowSelection } from '@/hooks/useRowSelection';
 import { useTablePagination } from '@/hooks/useTablePagination';
 import { useAuth } from '@/context/LogstokaAuthProvider';
+import { useLogstokaBranding } from '@/context/LogstokaBrandingContext';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { removeDemoMovement, updateDemoMovement } from '@/lib/demoMovementStore';
 import { logstokaApi } from '@/lib/logstokaApi';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
-import { loadMergedDemoMovements } from '@/lib/registerGuidedConferenceExits';
+import { loadCompanyMovements } from '@/lib/movementLoader';
 import { getDemoProductBySku, movementTypeLabel, marketplaceLabel, type DemoMovementRow } from '@/lib/logstokaDemoSeed';
+import {
+  computeMovementOverdue,
+  formatOverdueLabel,
+  getMaxOverdueDaysBySku,
+  isSameLocalDay,
+  type MovementOverdueItem,
+} from '@/lib/movementOverdue';
 import { printMovementDocument } from '@/lib/printMovementDocument';
+import { printMovementListDocument } from '@/lib/printMovementListDocument';
+import LogstokaIconTooltip from '@/components/ui/LogstokaIconTooltip';
+import { EMPTY_STOCK_LABEL, stockLabelFromMovement } from '@/lib/stockLabelData';
+import type { StockLabelData } from '@/lib/printStockLabel';
 import LogstokaTableSearchBar from '@/components/ui/LogstokaTableSearchBar';
 import LogstokaTableBulkBar from '@/components/ui/LogstokaTableBulkBar';
 import { MARKETPLACE_LABELS } from '@/types';
@@ -47,6 +61,7 @@ function matchesMovementSearch(row: DemoMovementRow, query: string): boolean {
 const tabs = [
   { id: 'entry', label: 'Entrada', Icon: ArrowDownToLine },
   { id: 'exit', label: 'Saída', Icon: ArrowUpFromLine },
+  { id: 'overdue', label: 'Atrasos', Icon: Clock },
   { id: 'transfer', label: 'Transferência', Icon: ArrowLeftRight },
   { id: 'damage', label: 'Avaria', Icon: AlertTriangle },
 ] as const;
@@ -54,43 +69,68 @@ const tabs = [
 type MovementTab = (typeof tabs)[number]['id'];
 
 const TAB_PAGE_TITLES: Record<MovementTab, string> = {
-  entry: 'Entrada inteligente',
-  exit: 'Saídas',
+  entry: 'Entrada inteligente do dia',
+  exit: 'Saídas do dia',
+  overdue: 'Atrasos inteligentes',
   transfer: 'Transferências',
   damage: 'Avarias',
 };
 
 const TAB_LIST_TITLES: Record<MovementTab, string> = {
-  entry: 'Produtos recebidos',
-  exit: 'Saídas registradas',
+  entry: 'Produtos recebidos hoje',
+  exit: 'Saídas registradas hoje',
+  overdue: 'Entradas sem saída — pendências por dia',
   transfer: 'Transferências registradas',
   damage: 'Avarias registradas',
 };
 
 function filterMovementsByTab(items: DemoMovementRow[], tab: MovementTab) {
+  if (tab === 'overdue') return [];
   if (tab === 'entry') return items.filter((m) => m.movement_type === 'entry');
   if (tab === 'exit') return items.filter((m) => m.movement_type === 'exit');
   if (tab === 'transfer') return items.filter((m) => m.movement_type === 'transfer');
   return items.filter((m) => m.movement_type === 'damage');
 }
 
+function matchesOverdueSearch(row: MovementOverdueItem, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return [row.sku, row.productName, row.referenceCode, row.warehouseName]
+    .filter(Boolean)
+    .some((part) => String(part).toLowerCase().includes(q));
+}
+
 const MovementsPage: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { companyId } = useLogstokaTenant();
+  const { branding } = useLogstokaBranding();
+  const companyName = branding.companyName ?? 'LogStoka WMS';
   const demo = isLogstokaDemoCompany(companyId);
   const actorName = profile?.full_name?.trim() || 'Operador';
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const initialTab = tabs.some((t) => t.id === tabParam) ? (tabParam as MovementTab) : 'entry';
   const [tab, setTab] = useState<MovementTab>(initialTab);
-  const [movements, setMovements] = useState<DemoMovementRow[]>(() => loadMergedDemoMovements(companyId));
+  const [movements, setMovements] = useState<DemoMovementRow[]>([]);
+  const [movementsLoading, setMovementsLoading] = useState(true);
 
-  const reloadMovements = () => setMovements(loadMergedDemoMovements(companyId));
+  const reloadMovements = useCallback(() => {
+    if (!companyId) {
+      setMovements([]);
+      setMovementsLoading(false);
+      return;
+    }
+    setMovementsLoading(true);
+    void loadCompanyMovements(companyId)
+      .then(setMovements)
+      .catch(() => setMovements([]))
+      .finally(() => setMovementsLoading(false));
+  }, [companyId]);
 
   useEffect(() => {
     reloadMovements();
-  }, [companyId]);
+  }, [reloadMovements]);
 
   useEffect(() => {
     const refresh = () => reloadMovements();
@@ -100,7 +140,7 @@ const MovementsPage: React.FC = () => {
       window.removeEventListener('logstoka:demo-movements-updated', refresh);
       window.removeEventListener('logstoka:system-pulse', refresh);
     };
-  }, [companyId]);
+  }, [reloadMovements]);
 
   const [editingMovement, setEditingMovement] = useState<DemoMovementRow | null>(null);
   const [deletingMovement, setDeletingMovement] = useState<DemoMovementRow | null>(null);
@@ -110,6 +150,7 @@ const MovementsPage: React.FC = () => {
   const entryPanelRef = useRef<EntryReceivingPanelHandle>(null);
   const exitPanelRef = useRef<EntryReceivingPanelHandle>(null);
   const [kpiModal, setKpiModal] = useState<{ label: string; value: string | number } | null>(null);
+  const [labelModal, setLabelModal] = useState<StockLabelData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState('');
   const [marketplaceFilter, setMarketplaceFilter] = useState('');
@@ -118,6 +159,7 @@ const MovementsPage: React.FC = () => {
   const activeTab = tabs.find((t) => t.id === tab) ?? tabs[0];
   const isEntryTab = tab === 'entry';
   const isExitTab = tab === 'exit';
+  const isOverdueTab = tab === 'overdue';
   const isScanTab = isEntryTab || isExitTab;
   const ActiveTabIcon = activeTab.Icon;
 
@@ -138,12 +180,37 @@ const MovementsPage: React.FC = () => {
     setMarketplaceFilter('');
   }, [tab]);
 
-  const filteredMovements = useMemo(() => filterMovementsByTab(movements, tab), [movements, tab]);
+  const overdueItems = useMemo(() => computeMovementOverdue(movements), [movements]);
+  const overdueBySku = useMemo(() => getMaxOverdueDaysBySku(movements), [movements]);
+
+  const filteredMovements = useMemo(() => {
+    const byTab = filterMovementsByTab(movements, tab);
+    if (tab === 'entry' || tab === 'exit') {
+      return byTab.filter((m) => isSameLocalDay(m.created_at));
+    }
+    return byTab;
+  }, [movements, tab]);
+
+  const searchedOverdue = useMemo(() => {
+    return overdueItems.filter((item) => {
+      if (warehouseFilter && item.warehouseName !== warehouseFilter) return false;
+      return matchesOverdueSearch(item, searchQuery);
+    });
+  }, [overdueItems, searchQuery, warehouseFilter]);
 
   const warehouseOptions = useMemo(() => {
-    const names = new Set(filteredMovements.map((m) => m.warehouse_name).filter(Boolean) as string[]);
+    const names = new Set<string>();
+    if (isOverdueTab) {
+      for (const item of overdueItems) {
+        if (item.warehouseName) names.add(item.warehouseName);
+      }
+    } else {
+      for (const m of filteredMovements) {
+        if (m.warehouse_name) names.add(m.warehouse_name);
+      }
+    }
     return [...names].sort();
-  }, [filteredMovements]);
+  }, [filteredMovements, isOverdueTab, overdueItems]);
 
   const marketplaceOptions = useMemo(() => {
     const keys = new Set(filteredMovements.map((m) => m.marketplace).filter(Boolean) as string[]);
@@ -160,31 +227,48 @@ const MovementsPage: React.FC = () => {
 
   const entryMovements = useMemo(() => filterMovementsByTab(movements, 'entry'), [movements]);
   const exitMovements = useMemo(() => filterMovementsByTab(movements, 'exit'), [movements]);
-  const { paginatedItems, footerProps } = useTablePagination(searchedMovements, 10, `${tab}-${searchQuery}-${warehouseFilter}-${marketplaceFilter}`);
-  const { selectedKeys, toggleSelect, toggleSelectAll, isAllSelected, selectedCount, clearSelection } = useRowSelection(
+  const movementPagination = useTablePagination(
     searchedMovements,
+    10,
+    `${tab}-${searchQuery}-${warehouseFilter}-${marketplaceFilter}`,
+  );
+  const overduePagination = useTablePagination(
+    searchedOverdue,
+    10,
+    `overdue-${searchQuery}-${warehouseFilter}`,
+  );
+  const paginatedMovements = movementPagination.paginatedItems;
+  const paginatedOverdue = overduePagination.paginatedItems;
+  const footerProps = isOverdueTab ? overduePagination.footerProps : movementPagination.footerProps;
+  const { selectedKeys, toggleSelect, toggleSelectAll, isAllSelected, selectedCount, clearSelection } = useRowSelection(
+    isOverdueTab ? [] : searchedMovements,
     (m) => m.id,
   );
 
   const todayLabel = useMemo(() => new Date().toLocaleDateString('pt-BR'), []);
 
   const movementTotals = useMemo(() => {
+    if (isOverdueTab) {
+      const units = searchedOverdue.reduce((sum, item) => sum + item.pendingQuantity, 0);
+      const products = new Set(searchedOverdue.map((item) => item.sku)).size;
+      return { movements: searchedOverdue.length, products, units };
+    }
     const units = searchedMovements.reduce((sum, m) => sum + m.total_quantity, 0);
     const products = new Set(searchedMovements.map((m) => m.sku).filter(Boolean)).size;
     return { movements: searchedMovements.length, products, units };
-  }, [searchedMovements]);
+  }, [isOverdueTab, searchedMovements, searchedOverdue]);
 
   const tabNavItems: LogstokaIconNavButtonItem[] = useMemo(
     () =>
       tabs.map(({ id, label, Icon }) => ({
         type: 'button',
         key: id,
-        label,
+        label: id === 'overdue' && overdueItems.length > 0 ? `Atrasos (${overdueItems.length})` : label,
         active: tab === id,
         icon: <Icon size={18} strokeWidth={2.2} aria-hidden />,
         onClick: () => selectTab(id),
       })),
-    [tab],
+    [tab, overdueItems.length],
   );
 
   const handleXml = async (file: File) => {
@@ -228,10 +312,64 @@ const MovementsPage: React.FC = () => {
     }
   };
 
+  const handlePrintList = () => {
+    try {
+      if (isOverdueTab) {
+        const pseudoRows: DemoMovementRow[] = searchedOverdue.map((item, index) => ({
+          id: item.entryMovementIds[0] ?? `overdue-${index}`,
+          company_id: companyId ?? '',
+          movement_type: 'entry',
+          sub_type: 'pending_exit',
+          status: 'pending',
+          warehouse_id: null,
+          marketplace: null,
+          reference_code: item.referenceCode ?? `Atraso ${item.daysOverdue}d`,
+          total_quantity: item.pendingQuantity,
+          created_at: `${item.entryDate}T12:00:00.000Z`,
+          sku: item.sku,
+          product_name: item.productName,
+          warehouse_name: item.warehouseName,
+        }));
+        printMovementListDocument({
+          title: TAB_PAGE_TITLES.overdue,
+          subtitle: 'Entradas sem saída registrada',
+          dateLabel: todayLabel,
+          movements: pseudoRows,
+          totals: movementTotals,
+          operatorName: actorName,
+          scopeNote: 'Pendências acumuladas por dia de entrada',
+        });
+        return;
+      }
+
+      const todayRows = searchedMovements.filter((m) => isSameLocalDay(m.created_at));
+      const printRows = todayRows.length > 0 ? todayRows : searchedMovements;
+      printMovementListDocument({
+        title: TAB_PAGE_TITLES[tab],
+        subtitle: isEntryTab
+          ? 'Recebimentos do dia — bipagem, NF-e e conferência'
+          : isExitTab
+            ? 'Saídas do dia — expedição e estoque'
+            : undefined,
+        dateLabel: todayLabel,
+        movements: printRows,
+        totals: {
+          movements: printRows.length,
+          products: new Set(printRows.map((m) => m.sku).filter(Boolean)).size,
+          units: printRows.reduce((sum, m) => sum + m.total_quantity, 0),
+        },
+        operatorName: actorName,
+        scopeNote: `Lista do dia ${todayLabel}`,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Não foi possível imprimir a lista');
+    }
+  };
+
   const handlePrintMovement = (movement: DemoMovementRow) => {
     try {
       printMovementDocument(movement, {
-        companyName: 'LogStoka Demo · Pluma Baby',
+        companyName,
         operatorName: actorName,
       });
     } catch (err) {
@@ -301,17 +439,26 @@ const MovementsPage: React.FC = () => {
     }
   };
 
-  const useRichTableLayout = isEntryTab || isExitTab;
+  const useRichTableLayout = isEntryTab || isExitTab || isOverdueTab;
 
   const toolbarProps = {
     onRefresh: reloadMovements,
     onNewEntry: focusScanner,
     onImportXml: () => xmlRef.current?.click(),
-    onImportCsv: () => toast('Importação CSV — use /app/imports ou arraste planilha'),
-    onImportExcel: () => toast('Importação Excel — use /app/imports'),
-    onImportPdf: () => toast('Importação PDF — em breve na central de importações'),
-    onPrint: () => toast(`Imprimir lista de ${activeTab.label.toLowerCase()} do dia`),
-    onShare: () => toast('Lista copiada para compartilhar'),
+    onImportCsv: () => navigate('/app/imports'),
+    onImportExcel: () => navigate('/app/imports'),
+    onImportPdf: () => navigate('/app/imports'),
+    onPrint: handlePrintList,
+    onShare: () => {
+      const rows = isOverdueTab
+        ? searchedOverdue.map((o) => `${o.sku} · ${o.productName} · ${o.entryQuantity} un.`)
+        : searchedMovements.map((m) => `${m.sku} · ${m.product_name} · ${m.total_quantity} un.`);
+      const text = `${TAB_PAGE_TITLES[tab]} · ${todayLabel}\n\n${rows.join('\n')}`;
+      void navigator.clipboard.writeText(text).then(
+        () => toast.success('Lista copiada para a área de transferência'),
+        () => toast.error('Não foi possível copiar a lista'),
+      );
+    },
     scanLabel: isExitTab ? 'Scanner — nova saída' : 'Scanner inteligente — nova entrada',
   };
 
@@ -345,7 +492,7 @@ const MovementsPage: React.FC = () => {
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Buscar SKU, produto, referência, depósito…"
-            resultCount={searchedMovements.length}
+            resultCount={isOverdueTab ? searchedOverdue.length : searchedMovements.length}
             filters={
               <>
                 <select
@@ -361,19 +508,21 @@ const MovementsPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
-                <select
-                  className="ls-input"
-                  value={marketplaceFilter}
-                  aria-label="Filtrar canal"
-                  onChange={(e) => setMarketplaceFilter(e.target.value)}
-                >
-                  <option value="">Todos canais</option>
-                  {marketplaceOptions.map((key) => (
-                    <option key={key} value={key}>
-                      {MARKETPLACE_LABELS[key as keyof typeof MARKETPLACE_LABELS] ?? key}
-                    </option>
-                  ))}
-                </select>
+                {!isOverdueTab ? (
+                  <select
+                    className="ls-input"
+                    value={marketplaceFilter}
+                    aria-label="Filtrar canal"
+                    onChange={(e) => setMarketplaceFilter(e.target.value)}
+                  >
+                    <option value="">Todos canais</option>
+                    {marketplaceOptions.map((key) => (
+                      <option key={key} value={key}>
+                        {MARKETPLACE_LABELS[key as keyof typeof MARKETPLACE_LABELS] ?? key}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
               </>
             }
           />
@@ -383,26 +532,30 @@ const MovementsPage: React.FC = () => {
         </div>
       </div>
 
-      <LogstokaTableBulkBar
-        selectedCount={selectedCount}
-        onEdit={handleBulkEdit}
-        onTransfer={handleBulkTransfer}
-        onDelete={bulkDeleting ? undefined : () => void handleBulkDelete()}
-        onClear={clearSelection}
-      />
+      {!isOverdueTab ? (
+        <LogstokaTableBulkBar
+          selectedCount={selectedCount}
+          onEdit={handleBulkEdit}
+          onTransfer={handleBulkTransfer}
+          onDelete={bulkDeleting ? undefined : () => void handleBulkDelete()}
+          onClear={clearSelection}
+        />
+      ) : null}
 
       <div className="ls-table-wrap">
         <table className="ls-table">
           <thead>
             <tr>
-              <th className="w-10">
-                <LogstokaTableCheckbox
-                  checked={isAllSelected}
-                  indeterminate={selectedCount > 0 && !isAllSelected}
-                  onChange={toggleSelectAll}
-                  ariaLabel="Selecionar todos"
-                />
-              </th>
+              {!isOverdueTab ? (
+                <th className="w-10">
+                  <LogstokaTableCheckbox
+                    checked={isAllSelected}
+                    indeterminate={selectedCount > 0 && !isAllSelected}
+                    onChange={toggleSelectAll}
+                    ariaLabel="Selecionar todos"
+                  />
+                </th>
+              ) : null}
               {!richLayout ? <th>Tipo</th> : null}
               <th>
                 {richLayout ? (
@@ -416,7 +569,15 @@ const MovementsPage: React.FC = () => {
                   </>
                 )}
               </th>
-              {richLayout ? (
+              {isOverdueTab ? (
+                <>
+                  <th>Qtd. pendente</th>
+                  <th>Entrada em</th>
+                  <th>Atraso</th>
+                  <th>Depósito</th>
+                  <th>Referência</th>
+                </>
+              ) : richLayout ? (
                 <>
                   <th>Qtd.</th>
                   <th>Depósito</th>
@@ -441,14 +602,67 @@ const MovementsPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {paginatedItems.map((m) => {
+            {isOverdueTab
+              ? paginatedOverdue.map((item) => {
+                  const linked = getDemoProductBySku(item.sku);
+                  const movementId = item.entryMovementIds[0];
+                  return (
+                    <ClickableTableRow
+                      key={`${item.sku}-${item.entryDate}`}
+                      to={movementId ? `/app/movements/${movementId}` : '/app/movements?tab=overdue'}
+                      className="ls-table-row--overdue"
+                    >
+                      <td>
+                        <LogstokaIconTooltip label={formatOverdueLabel(item.daysOverdue)}>
+                          <div className="ls-entry-table-thumb">
+                            <ProductThumb src={linked?.main_image_url} name={item.productName} size={36} />
+                            <div>
+                              <p className="font-bold text-red-700">{item.sku}</p>
+                              <p className="text-xs text-red-600/90">{item.productName}</p>
+                            </div>
+                          </div>
+                        </LogstokaIconTooltip>
+                      </td>
+                      <td className="font-black text-red-700">{item.pendingQuantity}</td>
+                      <td className="text-xs">
+                        {new Date(`${item.entryDate}T12:00:00`).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td>
+                        <span className="ls-badge ls-badge--overdue">{formatOverdueLabel(item.daysOverdue)}</span>
+                      </td>
+                      <td>{item.warehouseName ?? '—'}</td>
+                      <td>{item.referenceCode ?? '—'}</td>
+                      <td className="ls-table-actions-cell">
+                        <button
+                          type="button"
+                          className="ls-btn-secondary text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            selectTab('exit');
+                            focusScanner();
+                          }}
+                        >
+                          Registrar saída
+                        </button>
+                      </td>
+                    </ClickableTableRow>
+                  );
+                })
+              : paginatedMovements.map((m) => {
               const linked = getDemoProductBySku(m.sku);
               const selected = selectedKeys.has(m.id);
+              const overdueDays = m.sku ? overdueBySku.get(m.sku) : undefined;
+              const rowClass = [
+                selected ? 'ls-table-row--selected' : '',
+                overdueDays ? 'ls-table-row--overdue' : '',
+              ]
+                .filter(Boolean)
+                .join(' ');
               return (
                 <ClickableTableRow
                   key={m.id}
                   to={`/app/movements/${m.id}`}
-                  className={selected ? 'ls-table-row--selected' : undefined}
+                  className={rowClass || undefined}
                 >
                   <td onClick={(e) => e.stopPropagation()}>
                     <LogstokaTableCheckbox
@@ -464,13 +678,22 @@ const MovementsPage: React.FC = () => {
                   ) : null}
                   <td>
                     {richLayout ? (
-                      <div className="ls-entry-table-thumb">
-                        <ProductThumb src={linked?.main_image_url} name={m.product_name ?? m.sku ?? ''} size={36} />
-                        <div>
-                          <p className="font-bold">{m.sku}</p>
-                          <p className="text-xs text-slate-500">{m.product_name}</p>
+                      <LogstokaIconTooltip
+                        label={overdueDays ? formatOverdueLabel(overdueDays) : m.product_name ?? m.sku ?? ''}
+                      >
+                        <div className="ls-entry-table-thumb">
+                          <ProductThumb src={linked?.main_image_url} name={m.product_name ?? m.sku ?? ''} size={36} />
+                          <div>
+                            <p className={`font-bold ${overdueDays ? 'text-red-700' : ''}`}>{m.sku}</p>
+                            <p className={`text-xs ${overdueDays ? 'text-red-600/90' : 'text-slate-500'}`}>
+                              {m.product_name}
+                              {overdueDays ? (
+                                <span className="ls-entry-overdue-inline"> · {formatOverdueLabel(overdueDays)}</span>
+                              ) : null}
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      </LogstokaIconTooltip>
                     ) : (
                       <>
                         <p className="font-bold">{m.sku}</p>
@@ -505,7 +728,7 @@ const MovementsPage: React.FC = () => {
                       onEdit={() => setEditingMovement(m)}
                       onDuplicate={() => handleDuplicateMovement(m)}
                       onPrint={() => handlePrintMovement(m)}
-                      onPrintLabel={() => toast.success(`Etiqueta ${m.sku}`)}
+                      onPrintLabel={() => setLabelModal(stockLabelFromMovement(m, linked))}
                       onDelete={() => setDeletingMovement(m)}
                     />
                   </td>
@@ -526,10 +749,12 @@ const MovementsPage: React.FC = () => {
         title={TAB_PAGE_TITLES[tab]}
         subtitle={
           isEntryTab
-            ? 'Recebimento inteligente — escaneie, some quantidades duplicadas e registre no estoque em tempo real.'
+            ? `Recebimento do dia ${todayLabel} — escaneie, some quantidades e registre no estoque. Itens sem saída vão para Atrasos.`
             : isExitTab
-              ? 'Central de saídas da empresa — receba expedições automáticas ou registre saída manual pelo scanner.'
-              : `${activeTab.label} · NF-e e registro em tempo real.`
+              ? `Saídas do dia ${todayLabel} — expedição automática ou registro manual pelo scanner.`
+              : isOverdueTab
+                ? 'Entradas sem saída correspondente — acumula por dia até você registrar a expedição.'
+                : `${activeTab.label} · NF-e e registro em tempo real.`
         }
         actions={
           <>
@@ -602,14 +827,16 @@ const MovementsPage: React.FC = () => {
         subtitle="Ajuste o valor conferido ou marque como divergente"
         onClose={() => setKpiModal(null)}
         onSave={(value, status) => {
-          toast.success(
-            status === 'correct'
-              ? `${kpiModal?.label} confirmado · ${value}`
-              : `${kpiModal?.label} marcado como divergente · ${value}`,
-          );
-          setKpiModal(null);
+          void value;
+          void status;
           if (isScanTab) focusScanner();
         }}
+      />
+
+      <StockLabelPreviewModal
+        open={Boolean(labelModal)}
+        onClose={() => setLabelModal(null)}
+        data={labelModal ?? EMPTY_STOCK_LABEL}
       />
 
       <MovementEditModal

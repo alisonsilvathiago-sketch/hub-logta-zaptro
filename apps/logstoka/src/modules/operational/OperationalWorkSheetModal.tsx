@@ -73,7 +73,7 @@ const OperationalWorkSheetModal: React.FC<Props> = ({ open, filter, orders, toda
         sheetOrders.length,
         totalUnits,
       );
-      toast.success('Lista aberta em nova aba — clique em Imprimir documento');
+      toast.success('Lista aberta para visualização — use Imprimir documento na nova aba');
     } catch {
       toast.error('Permita pop-ups para abrir a lista de conferência');
     }

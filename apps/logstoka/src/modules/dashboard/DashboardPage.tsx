@@ -9,6 +9,8 @@ import {
   Wallet,
 } from 'lucide-react';
 import LogstokaMovementShortcuts from '@/components/layout/LogstokaMovementShortcuts';
+import LogstokaMoneyPrivacyToggle from '@/components/privacy/LogstokaMoneyPrivacyToggle';
+import LogstokaMoneyValue from '@/components/privacy/LogstokaMoneyValue';
 import { LogstokaStandardPageLayout } from '@/components/layout/LogstokaStandardPageLayout';
 import { useAuth } from '@/context/LogstokaAuthProvider';
 import { useDashboardSummary, useAlerts } from '@/hooks/useLogstokaData';
@@ -110,11 +112,14 @@ const DashboardPage: React.FC = () => {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-black uppercase tracking-widest text-orange-700/80">Valor estocado</p>
-              <p className="ls-dashboard-stat-value">
-                {loading
-                  ? '…'
-                  : summary.stock.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </p>
+              <div className="ls-money-value-row">
+                <LogstokaMoneyPrivacyToggle size="sm" />
+                <LogstokaMoneyValue className="ls-dashboard-stat-value" isMoney>
+                  {loading
+                    ? '…'
+                    : summary.stock.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </LogstokaMoneyValue>
+              </div>
               <p className="mt-1 text-xs font-medium text-orange-800/70">custo médio × saldo atual</p>
             </div>
             <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-orange-700 transition-colors group-hover:bg-orange-200">

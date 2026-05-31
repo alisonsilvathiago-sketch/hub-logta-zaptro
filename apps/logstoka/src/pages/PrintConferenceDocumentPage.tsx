@@ -40,7 +40,7 @@ const PrintConferenceDocumentPage: React.FC = () => {
 
   return (
     <div className="ls-print-doc-loading">
-      <p>Abrindo lista para conferência…</p>
+      <p>Carregando pré-visualização do documento…</p>
     </div>
   );
 };

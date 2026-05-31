@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Bell,
   Building2,
+  Cpu,
   Palette,
   ScrollText,
   Shield,
@@ -25,6 +26,7 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
   { to: `${SETTINGS_BASE}/empresa`, label: 'Perfil da Empresa', icon: Building2 },
   { to: `${SETTINGS_BASE}/equipe`, label: 'Equipe e Permissões', icon: Users },
   { to: `${SETTINGS_BASE}/api-webhooks`, label: 'API e Webhooks', icon: Webhook },
+  { to: `${SETTINGS_BASE}/dispositivos`, label: 'Dispositivos', icon: Cpu },
   { to: '/app/integrations', label: 'Integrações', icon: Zap },
   { to: `${SETTINGS_BASE}/notificacoes`, label: 'Notificações', icon: Bell },
   { to: `${SETTINGS_BASE}/auditoria`, label: 'Auditoria e Logs', icon: ScrollText },

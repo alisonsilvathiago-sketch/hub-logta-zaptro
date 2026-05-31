@@ -1,3 +1,4 @@
+import { LOGSTOKA_AI_BRAND } from '@/modules/ai/constants';
 import type { SystemActivityRow } from '@/lib/systemActivityFeed';
 import { loadSystemActivities } from '@/lib/systemActivityFeed';
 
@@ -307,7 +308,7 @@ function seedDemoActivities(companyId: string): OperationalActivityEvent[] {
     { daysAgo: 2, hour: 11, actorIdx: 0, kind: 'inventory', domain: 'inventory', title: 'Inventário', description: 'Inventário rotativo · CD Principal · 48 SKUs', reference: 'INV-2026-03', status: 'Em revisão', href: '/app/inventory' },
     { daysAgo: 7, hour: 16, actorIdx: 2, kind: 'order_shipped', domain: 'sales', title: 'Pedido enviado', description: 'Pedido #123 enviado para transportadora', reference: '#123', status: 'Enviado', href: '/app/vendas' },
     { daysAgo: 30, hour: 10, actorIdx: 0, kind: 'flow_update', domain: 'flow', title: 'Fluxo operacional', description: 'Fluxo de saída atualizado · sábado processa sábado', reference: 'Fluxo semanal', status: 'Salvo', href: '/app/operacao/fluxo' },
-    { daysAgo: 120, hour: 9, actorIdx: 1, kind: 'ai_action', domain: 'ai', title: 'IA operacional', description: 'Llama 3.2 sugeriu ajuste no corte de sexta-feira', reference: 'Assistente IA', status: 'Sugestão', result: 'warning' },
+    { daysAgo: 120, hour: 9, actorIdx: 1, kind: 'ai_action', domain: 'ai', title: 'IA operacional', description: `${LOGSTOKA_AI_BRAND} sugeriu ajuste no corte de sexta-feira`, reference: 'Assistente IA', status: 'Sugestão', result: 'warning' },
     { daysAgo: 365, hour: 15, actorIdx: 0, kind: 'import_report', domain: 'operation', title: 'Importação', description: 'Relatório Excel importado · 240 linhas', reference: 'XLS', status: 'Concluído', href: '/app/imports' },
   ];
 

@@ -1,15 +1,9 @@
-export const LOGSTOKA_AI_BRAND = 'LogStoka IA';
-export const LOGSTOKA_AI_MODEL = 'Llama 3.2';
-export const LOGSTOKA_AI_TAGLINE = 'Motor principal de inteligência';
+/** Marca pública da inteligência LogStoka — nunca expor Llama/Ollama ao cliente. */
+export const LOGSTOKA_AI_BRAND = 'Aiato';
+export const LOGSTOKA_AI_TAGLINE = 'Inteligência operacional LogStoka';
 
-export const AI_QUICK_PROMPTS = [
-  'Qual produto mais vendeu este mês?',
-  'Quais produtos estão parados há mais de 90 dias?',
-  'Qual loja vendeu mais?',
-  'Quais produtos precisam de reposição?',
-  'Existe divergência de estoque?',
-  'Resumo operacional de hoje',
-] as const;
+/** Alias de UI — mesma marca; não referencia modelo interno. */
+export const LOGSTOKA_AI_MODEL = LOGSTOKA_AI_BRAND;
 
 export const AI_INICIO_EXAMPLES = [
   'Quantas saídas tivemos hoje?',
@@ -37,17 +31,33 @@ export function aiEngineStatusLabel(online: boolean | null): string {
   return 'reconectando…';
 }
 
+export function aiAnalyzingLabel(): string {
+  return `${LOGSTOKA_AI_BRAND} a analisar…`;
+}
+
+export function aiEmptyReplyMessage(): string {
+  return `Não consegui gerar uma resposta agora. O ${LOGSTOKA_AI_BRAND} está a reconectar — tente novamente em instantes.`;
+}
+
+export function aiUnavailableWithDashboardHint(): string {
+  return `${LOGSTOKA_AI_BRAND} temporariamente indisponível. A reconexão é automática — pode continuar a usar o dashboard e os módulos pelo menu lateral.`;
+}
+
+export function aiUnavailableShort(): string {
+  return `${LOGSTOKA_AI_BRAND} temporariamente indisponível. Aguarde alguns segundos e tente novamente.`;
+}
+
 export function buildAiWelcomeMessage(firstName: string, online: boolean | null): string {
   const status =
     online === false
-      ? ' Estou a reconectar ao motor Llama 3.2 — já pode perguntar; consulto os dados do sistema assim que a ligação estabilizar.'
+      ? ` Estou a reconectar ao ${LOGSTOKA_AI_BRAND} — já pode perguntar; consulto os dados do sistema assim que a ligação estabilizar.`
       : '';
 
-  return `Olá, ${firstName}! Sou o assistente global LogStoka — motor principal de inteligência (Llama 3.2).${status}
+  return `Olá, ${firstName}! Sou o assistente global LogStoka — powered by ${LOGSTOKA_AI_BRAND}.${status}
 
-Consulto dados reais de estoque, movimentações, inventário, reposição, vendas, documentos e integrações multicanal. O que precisa?`;
+Consulto dados reais de estoque, movimentações, inventário, reposição, vendas, documentos e integrações multicanal. Envie fotos ou arquivos (📎) para resumo e localização de produtos no WMS. O que precisa?`;
 }
 
 export function buildInicioHeroSubtitle(displayName: string): string {
-  return `Olá, ${displayName}. A Llama 3.2 é o motor principal de inteligência do LogStoka — pergunte sobre operações, cadastros, reposição, inventário, documentos ou integrações.`;
+  return `Olá, ${displayName}. O ${LOGSTOKA_AI_BRAND} é a inteligência operacional do LogStoka — pergunte sobre operações, cadastros, reposição, inventário, documentos ou integrações.`;
 }

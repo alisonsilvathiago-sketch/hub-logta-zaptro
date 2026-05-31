@@ -1,3 +1,4 @@
+import { LOGSTOKA_AI_BRAND } from '@/modules/ai/constants';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, FileUp, History, Printer, RefreshCw, ScanText, Share2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -186,7 +187,7 @@ const ImportsPage: React.FC = () => {
             OCR / imagem
           </div>
           <p className="text-sm text-[#525252]">
-            Envie foto ou PDF escaneado. A API extrai linhas via Llama 3.2 (Ollama) e registra movimentações.
+            Envie foto ou PDF escaneado. O {LOGSTOKA_AI_BRAND} extrai linhas automaticamente e registra movimentações.
           </p>
           <input
             ref={ocrInputRef}

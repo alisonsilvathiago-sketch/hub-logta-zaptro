@@ -328,14 +328,20 @@
 }
 
 .lsdash-icon-btn.active.xray-btn {
-  background: #000000 !important;
+  background: #ea580c !important;
   border-color: #000000 !important;
-  color: #ea580c !important;
+  color: #000000 !important;
 }
 
 .lsdash-icon-btn.active.xray-btn:hover {
-  background: #18181b !important;
-  border-color: #18181b !important;
+  background: #c2410c !important;
+  border-color: #000000 !important;
+  color: #000000 !important;
+}
+
+.lsdash-icon-btn.active.xray-btn svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
 }
 
 .lsdash-icon-btn--notify {

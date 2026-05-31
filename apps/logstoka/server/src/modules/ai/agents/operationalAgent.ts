@@ -44,7 +44,7 @@ export async function runOperationalChat(
     reply,
     intents,
     agents: intents,
-    model: process.env.LOGSTOKA_OLLAMA_MODEL?.trim() || 'llama3.2',
+    model: 'Aiato',
   };
 }
 

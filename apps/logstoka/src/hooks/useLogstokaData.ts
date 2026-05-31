@@ -139,6 +139,13 @@ export function useProducts(page = 1, search = '', customLimit?: number) {
     });
   }, [companyId, page, search, reloadKey, limit]);
 
+  useEffect(() => {
+    if (!companyId || !isLogstokaDemoCompany(companyId)) return undefined;
+    const refresh = () => setReloadKey((k) => k + 1);
+    window.addEventListener('logstoka:demo-products-updated', refresh);
+    return () => window.removeEventListener('logstoka:demo-products-updated', refresh);
+  }, [companyId]);
+
   const reload = () => setReloadKey((k) => k + 1);
 
   return { products, total, loading, limit, reload };

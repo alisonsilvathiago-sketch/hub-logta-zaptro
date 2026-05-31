@@ -5,6 +5,7 @@ import {
   findTodayEntryBySku,
   updateDemoMovement,
 } from '@/lib/demoMovementStore';
+import { cacheMovementRow } from '@/lib/movementLoader';
 import type { ProductLookupResult } from '@/lib/productLookup';
 import { logstokaApi } from '@/lib/logstokaApi';
 import type { Marketplace } from '@/types';
@@ -84,18 +85,20 @@ export async function registerEntryMovement(opts: RegisterEntryOpts): Promise<{
     return { movement: row, merged: false };
   }
 
-  await logstokaApi.createEntry({
+  const res = (await logstokaApi.createEntry({
     sub_type: 'purchase',
     items: [{ sku: product.sku, quantity }],
     reference_code: referenceCode,
     notes: warehouseName ? `Depósito: ${warehouseName}` : undefined,
-  });
+  })) as { id?: string; movement_id?: string };
 
   const row = buildDemoEntryRow(companyId, product, quantity, {
     referenceCode,
     marketplace,
     warehouseName,
   });
+  row.id = res?.id ?? res?.movement_id ?? row.id;
+  cacheMovementRow(companyId, row);
   return { movement: row, merged: false };
 }
 
@@ -155,6 +158,15 @@ export async function registerExitMovement(opts: RegisterExitOpts): Promise<{
     return { movement: row, merged: false };
   }
 
+  const res = (await logstokaApi.createOutput({
+    sub_type: 'sale',
+    items: [{ sku: product.sku, quantity }],
+    reference_code: referenceCode,
+    notes: warehouseName ? `Depósito: ${warehouseName}` : undefined,
+  })) as { id?: string; movement_id?: string };
+
   const row = buildDemoExitRow(companyId, product, quantity, { referenceCode, marketplace, warehouseName });
+  row.id = res?.id ?? res?.movement_id ?? row.id;
+  cacheMovementRow(companyId, row);
   return { movement: row, merged: false };
 }

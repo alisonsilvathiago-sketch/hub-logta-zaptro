@@ -58,6 +58,17 @@
   color: var(--ls-brand-dark) !important;
 }
 
+.logstoka-app-shell .lsdash-icon-btn.active.xray-btn {
+  background: #ea580c !important;
+  border-color: #000000 !important;
+  color: #000000 !important;
+}
+
+.logstoka-app-shell .lsdash-icon-btn.active.xray-btn svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
 .logstoka-app-shell .ls-ai-msg-user,
 .logstoka-app-shell .ls-ai-send,
 .logstoka-app-shell .ls-ai-fab {

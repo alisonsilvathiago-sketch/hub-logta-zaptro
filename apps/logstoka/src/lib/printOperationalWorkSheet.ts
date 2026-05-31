@@ -1,11 +1,12 @@
-import type { DayFlowPlan } from '@/lib/operationalProfile';
-import { getOperationalProductLocation } from '@/lib/operationalProductLocation';
-import { openPrintDocument, resolvePrintLogoUrl } from '@/lib/openPrintDocument';
 import {
   OPERATIONAL_LIST_META,
+  operationalStageLabel,
   type OperationalOrder,
   type OrderListFilter,
 } from '@/lib/operationalFlow';
+import type { DayFlowPlan } from '@/lib/operationalProfile';
+import { getIntegrationBrand, getIntegrationBrandLabel } from '@/lib/integrationBrandAssets';
+import { openPrintDocument, resolvePrintBrandAssetUrl, resolvePrintLogoUrl } from '@/lib/openPrintDocument';
 
 export type PrintOperationalWorkSheetOptions = {
   companyName?: string;
@@ -33,24 +34,34 @@ function escapeHtml(value: string) {
     .replace(/"/g, '&quot;');
 }
 
+function marketplaceCellHtml(marketplace: string): string {
+  const brand = getIntegrationBrand(marketplace);
+  const label = getIntegrationBrandLabel(marketplace);
+  if (brand) {
+    const src = resolvePrintBrandAssetUrl(brand.svg);
+    return `<span class="channel-cell"><img src="${escapeHtml(src)}" alt="${escapeHtml(label)}" class="mp-logo" /><span class="mp-label">${escapeHtml(label)}</span></span>`;
+  }
+  return `<span class="channel-cell"><span class="mp-label">${escapeHtml(label)}</span></span>`;
+}
+
 function buildRows(orders: OperationalOrder[]): string {
   if (!orders.length) {
-    return `<tr><td colspan="8" class="empty">Nenhum pedido nesta fila.</td></tr>`;
+    return `<tr><td colspan="6" class="empty">Nenhum pedido nesta fila.</td></tr>`;
   }
 
   return orders
     .map((order, index) => {
-      const location = getOperationalProductLocation(order);
       return `
     <tr class="${order.isLate ? 'late' : ''}">
       <td class="num">${index + 1}</td>
-      <td class="check"><span class="box" aria-hidden="true"></span></td>
-      <td class="check"><span class="box" aria-hidden="true"></span></td>
-      <td class="order">${escapeHtml(order.orderRef)}</td>
-      <td class="product">${escapeHtml(order.productName)}</td>
+      <td class="order-product">
+        <strong>${escapeHtml(order.orderRef)}</strong>
+        <span>${escapeHtml(order.productName)}</span>
+      </td>
       <td class="qty">${order.quantity.toLocaleString('pt-BR')}</td>
-      <td class="loc">${escapeHtml(location.label)}</td>
-      <td class="channel">${escapeHtml(order.marketplaceLabel)}</td>
+      <td class="channel">${marketplaceCellHtml(order.marketplace)}</td>
+      <td class="due${order.isLate ? ' due--late' : ''}">${escapeHtml(order.dueDayLabel)}</td>
+      <td class="stage">${escapeHtml(operationalStageLabel(order.stage))}</td>
     </tr>`;
     })
     .join('');
@@ -75,7 +86,7 @@ function buildPrintHtml(
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>Lista de conferência · ${escapeHtml(meta.docTitle)} · ${escapeHtml(companyName)}</title>
+  <title>${escapeHtml(meta.docTitle)} · ${escapeHtml(companyName)}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     @page { size: A4 portrait; margin: 12mm; }
@@ -162,17 +173,6 @@ function buildPrintHtml(
       color: #444;
       line-height: 1.55;
     }
-    .instructions {
-      margin-bottom: 10px;
-      padding: 10px 12px;
-      border: 1px solid #999;
-      border-radius: 8px;
-      background: #fafafa;
-      font-size: 9px;
-      line-height: 1.5;
-      color: #333;
-    }
-    .instructions strong { display: block; margin-bottom: 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
     .doc-bar {
       display: flex;
       flex-wrap: wrap;
@@ -207,7 +207,7 @@ function buildPrintHtml(
       font-size: 9px;
     }
     th, td {
-      padding: 7px 6px;
+      padding: 8px 6px;
       border: 1px solid #bbb;
       vertical-align: middle;
       text-align: left;
@@ -220,40 +220,47 @@ function buildPrintHtml(
       text-transform: uppercase;
       color: #222;
     }
-    th:nth-child(1), td.num { width: 22px; text-align: center; }
-    th:nth-child(2), th:nth-child(3), td.check { width: 28px; text-align: center; }
-    th:nth-child(4), td.order { width: 72px; font-weight: 800; }
-    th:nth-child(6), td.qty { width: 36px; text-align: center; font-weight: 900; font-size: 11px; }
-    th:nth-child(7), td.loc { width: 88px; font-size: 8px; line-height: 1.3; }
-    th:nth-child(8), td.channel { width: 58px; font-size: 8px; text-align: center; }
-    td.product { font-size: 9px; line-height: 1.35; word-wrap: break-word; }
-    tr.late { background: #eee; }
-    tr.late td.order { text-decoration: underline; }
-    .box {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 1.5px solid #111;
-      border-radius: 2px;
-      vertical-align: middle;
+    th:nth-child(1), td.num { width: 24px; text-align: center; }
+    th:nth-child(3), td.qty { width: 40px; text-align: center; font-weight: 900; font-size: 11px; }
+    th:nth-child(4), td.channel { width: 72px; text-align: center; }
+    th:nth-child(5), td.due { width: 64px; text-align: center; font-size: 8px; }
+    th:nth-child(6), td.stage { width: 72px; text-align: center; font-size: 8px; }
+    td.order-product strong {
+      display: block;
+      font-size: 9px;
+      font-weight: 900;
+      color: #111;
     }
-    td.empty { padding: 20px; text-align: center; color: #666; }
-    .signatures {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-top: 16px;
-      padding-top: 12px;
-      border-top: 1px solid #999;
-    }
-    .signatures div {
-      border-top: 1px solid #111;
-      padding-top: 6px;
+    td.order-product span {
+      display: block;
+      margin-top: 2px;
       font-size: 8px;
-      font-weight: 700;
-      text-align: center;
+      line-height: 1.35;
       color: #444;
+      word-wrap: break-word;
     }
+    .channel-cell {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .mp-logo {
+      display: block;
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+    }
+    .mp-label {
+      font-size: 7px;
+      font-weight: 700;
+      color: #555;
+      line-height: 1.2;
+    }
+    tr.late { background: #fff7ed; }
+    td.due--late { font-weight: 900; color: #c2410c; text-decoration: underline; }
+    td.stage { font-weight: 700; color: #333; }
+    td.empty { padding: 20px; text-align: center; color: #666; }
     .doc-footer {
       display: flex;
       align-items: flex-end;
@@ -299,7 +306,7 @@ function buildPrintHtml(
     @media print {
       thead { display: table-header-group; }
       tr { break-inside: avoid; }
-      .doc-bar, .instructions, .doc-footer { break-inside: avoid; }
+      .doc-bar, .doc-footer { break-inside: avoid; }
     }
   </style>
 </head>
@@ -307,7 +314,7 @@ function buildPrintHtml(
   <div class="doc">
     <div class="toolbar">
       <div>
-        <p>Lista para conferência de estoque · A4</p>
+        <p>Pré-visualização · lista operacional · A4</p>
         <span>${escapeHtml(meta.title)} · ${orders.length} pedido(s) · ${totalUnits.toLocaleString('pt-BR')} un.</span>
       </div>
       <button type="button" onclick="window.print()">Imprimir documento</button>
@@ -318,22 +325,15 @@ function buildPrintHtml(
         <img src="${escapeHtml(logoSrc)}" alt="" />
         <div>
           <div class="brand__name">${escapeHtml(companyName)}</div>
-          <div class="brand__title">Lista para conferência de estoque</div>
+          <div class="brand__title">${escapeHtml(meta.docTitle)}</div>
         </div>
       </div>
       <div class="brand__meta">
-        ${escapeHtml(meta.docTitle)}<br/>
         ${escapeHtml(todayPlan.weekdayLabel)} · saída ${escapeHtml(todayPlan.dailyCutoff)}<br/>
         Impresso em ${printedAt}<br/>
         Operador: ${escapeHtml(operatorName)}
       </div>
     </header>
-
-    <div class="instructions">
-      <strong>Como usar esta lista</strong>
-      Vá ao endereço indicado, separe e conte as unidades. Marque <strong>Sep.</strong> ao separar e <strong>Conf.</strong> após conferir.
-      Use a conferência guiada no sistema quando possível; esta folha A4 serve para conferência manual no chão de fábrica.
-    </div>
 
     <div class="doc-bar">
       <div>
@@ -350,25 +350,17 @@ function buildPrintHtml(
       <thead>
         <tr>
           <th>#</th>
-          <th>Sep.</th>
-          <th>Conf.</th>
-          <th>Pedido</th>
-          <th>Produto</th>
+          <th>Pedido / Produto</th>
           <th>Qtd</th>
-          <th>Localização</th>
           <th>Canal</th>
+          <th>Expedir</th>
+          <th>Etapa</th>
         </tr>
       </thead>
       <tbody>
         ${buildRows(orders)}
       </tbody>
     </table>
-
-    <div class="signatures">
-      <div>Separado por</div>
-      <div>Conferido por</div>
-      <div>Expedido por</div>
-    </div>
 
     <footer class="doc-footer">
       <div class="doc-footer__brand">
@@ -380,7 +372,7 @@ function buildPrintHtml(
         </div>
       </div>
       <p class="doc-footer__note">
-        Documento interno de conferência · não fiscal<br/>
+        Documento interno operacional · não fiscal<br/>
         LogStoka WMS · ${escapeHtml(meta.docKind)}
       </p>
     </footer>

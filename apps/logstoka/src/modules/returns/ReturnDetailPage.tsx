@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   CheckCircle2,
@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { LogstokaDetailPageLayout } from '@/components/layout/LogstokaDetailPageLayout';
+import LogstokaIconTooltip from '@/components/ui/LogstokaIconTooltip';
+import StockLabelPreviewModal from '@/components/labels/StockLabelPreviewModal';
+import { EMPTY_STOCK_LABEL, stockLabelFromReturn } from '@/lib/stockLabelData';
 import ProductThumb from '@/components/products/ProductThumb';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
@@ -63,6 +66,7 @@ function buildReturnTimeline(item: NonNullable<ReturnType<typeof getDemoReturnBy
 const ReturnDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { companyId } = useLogstokaTenant();
+  const [labelOpen, setLabelOpen] = useState(false);
   const item = id && isLogstokaDemoCompany(companyId) ? getDemoReturnById(id) : null;
 
   const product = useMemo(
@@ -83,6 +87,11 @@ const ReturnDetailPage: React.FC = () => {
   const stepIndex = statusSteps.indexOf(item.status as (typeof statusSteps)[number]);
   const isRejected = item.status === 'rejected';
   const demo = (msg: string) => toast.success(`[Demo] ${msg}`);
+
+  const labelData = useMemo(
+    () => (item ? stockLabelFromReturn(item, product) : EMPTY_STOCK_LABEL),
+    [item, product],
+  );
 
   return (
     <LogstokaDetailPageLayout backTo="/app/returns" backLabel="Voltar para devoluções" hideTitleRow>
@@ -111,18 +120,36 @@ const ReturnDetailPage: React.FC = () => {
 
           <div className="ls-return-detail-hero__aside">
             <div className="ls-return-detail-actions mb-4">
-              <button type="button" className="ls-btn-secondary" onClick={() => demo('Romaneio PDF baixado')}>
-                <Download size={16} />
-                PDF
-              </button>
-              <button type="button" className="ls-btn-secondary" onClick={() => demo('Etiqueta enviada para impressão')}>
-                <Printer size={16} />
-                Etiqueta
-              </button>
-              <button type="button" className="ls-btn-primary" onClick={() => demo('Baixa registrada — item retornado ao estoque')}>
-                <PackageCheck size={16} />
-                Dar baixa
-              </button>
+              <LogstokaIconTooltip label="Baixar romaneio PDF">
+                <button
+                  type="button"
+                  className="ls-return-detail-actions__icon"
+                  aria-label="Baixar romaneio PDF"
+                  onClick={() => demo('Romaneio PDF baixado')}
+                >
+                  <Download size={18} strokeWidth={2.25} />
+                </button>
+              </LogstokaIconTooltip>
+              <LogstokaIconTooltip label="Etiqueta de estoque WMS">
+                <button
+                  type="button"
+                  className="ls-return-detail-actions__icon"
+                  aria-label="Etiqueta de estoque WMS"
+                  onClick={() => setLabelOpen(true)}
+                >
+                  <Printer size={18} strokeWidth={2.25} />
+                </button>
+              </LogstokaIconTooltip>
+              <LogstokaIconTooltip label="Dar baixa no estoque">
+                <button
+                  type="button"
+                  className="ls-return-detail-actions__icon ls-return-detail-actions__icon--primary"
+                  aria-label="Dar baixa no estoque"
+                  onClick={() => demo('Baixa registrada — item retornado ao estoque')}
+                >
+                  <PackageCheck size={18} strokeWidth={2.25} />
+                </button>
+              </LogstokaIconTooltip>
             </div>
             <p className="ls-return-detail-hero__qty">{item.quantity}</p>
             <p className="ls-return-detail-hero__qty-label">unidades devolvidas</p>
@@ -264,6 +291,8 @@ const ReturnDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <StockLabelPreviewModal open={labelOpen} onClose={() => setLabelOpen(false)} data={labelData} />
     </LogstokaDetailPageLayout>
   );
 };

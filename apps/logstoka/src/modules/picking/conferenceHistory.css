@@ -1,0 +1,116 @@
+.ls-conf-history__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ls-conf-history__filter-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (max-width: 960px) {
+  .ls-conf-history__filter-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ls-conf-history__label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a3a3a3;
+}
+
+.ls-conf-history__label--search {
+  grid-column: span 2;
+}
+
+.ls-conf-history__view-tabs {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.ls-conf-history__view-tabs button {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #525252;
+  cursor: pointer;
+}
+
+.ls-conf-history__view-tabs button.is-active {
+  border-color: #ea580c;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.ls-conf-history__workers {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.ls-conf-history__session {
+  padding: 1rem 1.15rem;
+}
+
+.ls-conf-history__session-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ls-conf-history__session-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: #383838;
+}
+
+.ls-conf-history__session-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #525252;
+}
+
+.ls-conf-history__session-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #525252;
+  line-height: 1.55;
+}
+
+.ls-conf-history__session-list li {
+  margin-bottom: 0.35rem;
+}
+
+.ls-conf-history__session-list strong {
+  color: #383838;
+}

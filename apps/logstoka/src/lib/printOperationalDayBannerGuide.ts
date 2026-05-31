@@ -1,3 +1,4 @@
+import { LOGSTOKA_AI_BRAND } from '@/modules/ai/constants';
 import type { DayFlowPlan } from '@/lib/operationalProfile';
 import { openPrintDocument, resolvePrintLogoUrl } from '@/lib/openPrintDocument';
 
@@ -92,7 +93,7 @@ function buildHtml(opts: PrintDayBannerGuideOptions): string {
       <li>Padding equilibrado (esquerda = direita).</li>
       <li>Lista com <strong>scroll interno</strong>; cabeçalho e rodapé do modal ficam fixos.</li>
       <li><strong>Modo operador</strong>: tela cheia só com produto, local, quantidade e botões.</li>
-      <li>Llama 3.2 auxilia com dicas curtas (sem expor “IA” na interface).</li>
+      <li>${LOGSTOKA_AI_BRAND} auxilia com dicas curtas (sem expor “IA” na interface).</li>
     </ul>
 
     <h2>Inventário</h2>

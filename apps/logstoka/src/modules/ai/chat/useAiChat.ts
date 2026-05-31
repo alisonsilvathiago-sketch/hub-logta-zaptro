@@ -24,5 +24,27 @@ export function useAiChat(params?: { screen?: string; userName?: string; company
     [params?.screen, params?.userName, params?.companyName],
   );
 
-  return { send, sending };
+  const analyzeAttachment = useCallback(
+    async (payload: {
+      file_name: string;
+      mime_type: string;
+      base64: string;
+      message?: string;
+    }) => {
+      setSending(true);
+      try {
+        return await logstokaApi.aiAnalyzeAttachment({
+          ...payload,
+          screen: params?.screen,
+          user_name: params?.userName,
+          company_name: params?.companyName,
+        });
+      } finally {
+        setSending(false);
+      }
+    },
+    [params?.screen, params?.userName, params?.companyName],
+  );
+
+  return { send, analyzeAttachment, sending };
 }

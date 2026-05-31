@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { LOGSTOKA_AI_BRAND } from '@/modules/ai/constants';
 import {
   AlertCircle,
   Barcode,
@@ -300,7 +301,7 @@ const MovementScanSection: React.FC<Props> = ({
           ) : null}
 
           {interpreting ? (
-            <p className="ls-movement-scan__checking">Llama 3.2 interpretando conteúdo…</p>
+            <p className="ls-movement-scan__checking">{LOGSTOKA_AI_BRAND} interpretando conteúdo…</p>
           ) : null}
 
           {checkingInput ? (

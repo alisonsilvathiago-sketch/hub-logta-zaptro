@@ -10,6 +10,7 @@ import LogstokaGlobalNotificationBanner from './LogstokaGlobalNotificationBanner
 import { LogstokaAiDrawer } from '@/modules/ai';
 import IntelligentScanFab from '@/components/scanner/IntelligentScanFab';
 import IntelligentScanGlobalModal from '@/modules/scanner/IntelligentScanGlobalModal';
+import LogstokaRouteErrorBoundary from '@/components/ui/LogstokaRouteErrorBoundary';
 import '@/modules/scanner/intelligentScanGlobal.css';
 import './logstokaAppShell.css';
 import './logstokaTopbar.css';
@@ -80,7 +81,9 @@ const AppShell: React.FC = () => {
             className={`logstoka-app-content-gutter${isInicio ? ' logstoka-app-content-gutter--inicio' : ''}${isProductsSection ? ' logstoka-app-content-gutter--products' : ''}${isMovementsSection ? ' logstoka-app-content-gutter--movements' : ''}${isActivities ? ' logstoka-app-content-gutter--activities' : ''}`}
           >
             <LogstokaGlobalNotificationBanner />
-            <Outlet key={systemPulseKey} />
+            <LogstokaRouteErrorBoundary>
+              <Outlet key={systemPulseKey} />
+            </LogstokaRouteErrorBoundary>
           </div>
         </div>
       </div>
