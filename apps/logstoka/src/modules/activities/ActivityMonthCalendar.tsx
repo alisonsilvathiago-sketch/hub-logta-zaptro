@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import {
   formatActivityClock,
   type ActivityDomain,
@@ -172,24 +171,6 @@ function EventPill({
 }) {
   const className = `ls-act-cal__event ls-act-cal__event--${event.domain as ActivityDomain} ls-act-cal__event--${event.result}`;
 
-  const content = eventLabel(event);
-
-  if (event.href) {
-    return (
-      <Link
-        to={event.href}
-        className={className}
-        title={event.description}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect(event);
-        }}
-      >
-        {content}
-      </Link>
-    );
-  }
-
   return (
     <button
       type="button"
@@ -200,7 +181,7 @@ function EventPill({
         onSelect(event);
       }}
     >
-      {content}
+      {eventLabel(event)}
     </button>
   );
 }

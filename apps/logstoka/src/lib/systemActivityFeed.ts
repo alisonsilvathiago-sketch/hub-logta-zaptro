@@ -1,3 +1,4 @@
+import type { ActivityEventPreviewMeta } from '@/lib/activityEventPreview';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import {
   DEMO_ALERTS,
@@ -5,6 +6,7 @@ import {
   DEMO_INTEGRATION_LOGS,
   DEMO_INVENTORIES,
   DEMO_MOVEMENTS,
+  DEMO_PRODUCTS,
   DEMO_RETURNS,
   DEMO_TRANSFERS,
   movementTypeLabel,
@@ -25,6 +27,7 @@ export type SystemActivityRow = {
   reference: string;
   status: string;
   href?: string;
+  preview?: ActivityEventPreviewMeta;
 };
 
 export type ActivityFilter = 'all' | ActivityCategory;
@@ -57,6 +60,13 @@ function salesStatusLabel(status: string): string {
   return status;
 }
 
+function movementPreviewValue(sku: string | undefined, quantity: number): number | undefined {
+  if (!sku) return undefined;
+  const prod = DEMO_PRODUCTS.find((p) => p.sku === sku);
+  const unit = prod?.sale_price ?? prod?.cost ?? 0;
+  return quantity * unit;
+}
+
 function buildDemoActivities(): SystemActivityRow[] {
   const fromMovements: SystemActivityRow[] = DEMO_MOVEMENTS.map((m) => ({
     id: m.id,
@@ -75,6 +85,14 @@ function buildDemoActivities(): SystemActivityRow[] {
     reference: m.reference_code ?? '—',
     status: m.status === 'completed' ? 'Concluído' : m.status,
     href: `/app/movements/${m.id}`,
+    preview: {
+      productName: m.product_name ?? undefined,
+      sku: m.sku,
+      quantity: m.total_quantity,
+      warehouseName: m.warehouse_name,
+      referenceCode: m.reference_code ?? undefined,
+      valueBrl: movementPreviewValue(m.sku, m.total_quantity),
+    },
   }));
 
   const fromAlerts: SystemActivityRow[] = DEMO_ALERTS.map((a) => ({
@@ -120,6 +138,12 @@ function buildDemoActivities(): SystemActivityRow[] {
               ? 'Recebido'
               : 'Triagem',
     href: `/app/returns/${r.id}`,
+    preview: {
+      productName: r.product_name,
+      sku: r.sku,
+      quantity: r.quantity,
+      valueBrl: movementPreviewValue(r.sku, r.quantity),
+    },
   }));
 
   const fromInventories: SystemActivityRow[] = DEMO_INVENTORIES.map((inv) => {
@@ -172,6 +196,11 @@ function buildDemoActivities(): SystemActivityRow[] {
     reference: order.orderRef,
     status: salesStatusLabel(order.status),
     href: LOGSTOKA_ROUTES.SALES,
+    preview: {
+      productName: order.productName,
+      quantity: order.quantity,
+      valueBrl: order.value,
+    },
   }));
 
   return [

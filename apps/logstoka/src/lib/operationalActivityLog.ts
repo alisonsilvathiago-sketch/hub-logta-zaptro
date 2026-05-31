@@ -8,6 +8,7 @@ export type ActivityEventKind =
   | 'product_removed'
   | 'entry'
   | 'exit'
+  | 'return'
   | 'transfer'
   | 'inventory'
   | 'conference'
@@ -111,6 +112,7 @@ const DOMAIN_LABELS: Record<ActivityDomain, string> = {
 const KIND_LABELS: Partial<Record<ActivityEventKind, string>> = {
   entry: 'Entrada',
   exit: 'Saída',
+  return: 'Devolução',
   transfer: 'Transferência',
   inventory: 'Inventário',
   conference: 'Conferência',
@@ -340,6 +342,24 @@ export function ensureActivitySeed(companyId: string | null): void {
   saveStoredActivities(companyId, seedDemoActivities(companyId));
 }
 
+function mapSystemRowKind(
+  type: string,
+  category: 'operation' | 'sales' | 'integrations' | 'alerts',
+): ActivityEventKind {
+  const t = type.toLowerCase();
+  if (t.includes('entrada')) return 'entry';
+  if (t.includes('saída') || t.includes('saida')) return 'exit';
+  if (t.includes('transfer')) return 'transfer';
+  if (t.includes('devolu')) return 'return';
+  if (t.includes('invent')) return 'inventory';
+  if (t.includes('import')) return 'import_report';
+  if (t.includes('integr')) return 'integration_sync';
+  if (t.includes('alerta')) return 'user_change';
+  if (t.includes('pedido')) return category === 'sales' ? 'order_shipped' : 'user_change';
+  if (t.includes('avaria') || t.includes('damage')) return 'exit';
+  return 'user_change';
+}
+
 export async function loadCentralActivities(companyId: string | null): Promise<OperationalActivityEvent[]> {
   if (!companyId) return [];
   ensureActivitySeed(companyId);
@@ -349,7 +369,7 @@ export async function loadCentralActivities(companyId: string | null): Promise<O
     id: `sys-${row.id}`,
     companyId,
     time: row.time,
-    kind: 'user_change',
+    kind: mapSystemRowKind(row.type, row.category),
     domain:
       row.category === 'sales'
         ? 'sales'
@@ -357,7 +377,13 @@ export async function loadCentralActivities(companyId: string | null): Promise<O
           ? 'integrations'
           : row.category === 'alerts'
             ? 'alerts'
-            : 'operation',
+            : row.type === 'Transferência'
+              ? 'transfer'
+              : row.type === 'Devolução'
+                ? 'operation'
+                : row.type === 'Inventário'
+                  ? 'inventory'
+                  : 'operation',
     actorName: 'Sistema',
     title: row.type,
     description: row.description,
@@ -365,6 +391,9 @@ export async function loadCentralActivities(companyId: string | null): Promise<O
     status: row.status,
     result: row.tone.includes('danger') ? 'error' : row.tone.includes('warn') ? 'warning' : 'success',
     href: row.href,
+    entityId: row.id,
+    productSku: row.preview?.sku,
+    meta: row.preview,
   }));
 
   const merged = [...stored, ...fromSystem];

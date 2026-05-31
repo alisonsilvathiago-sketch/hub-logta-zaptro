@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Bell,
   Bot,
@@ -34,6 +33,7 @@ import {
   type OperationalActivityEvent,
 } from '@/lib/operationalActivityLog';
 import ActivityMonthCalendar, { buildCalendarMonthCells } from './ActivityMonthCalendar';
+import ActivityEventPreviewModal from './ActivityEventPreviewModal';
 import './activityCenter.css';
 
 const DEFAULT_FILTERS: ActivityCenterFilters = {
@@ -84,6 +84,7 @@ const ActivityCenterPage: React.FC = () => {
   const [showList, setShowList] = useState(false);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [previewEvent, setPreviewEvent] = useState<OperationalActivityEvent | null>(null);
 
   const reload = useCallback(async () => {
     if (!companyId) {
@@ -328,9 +329,11 @@ const ActivityCenterPage: React.FC = () => {
             eventsByDay={monthEventsByDay}
             selectedDay={selectedDay}
             onSelectDay={setSelectedDay}
-            onSelectEvent={() => undefined}
+            onSelectEvent={setPreviewEvent}
           />
         ) : null}
+
+        <ActivityEventPreviewModal event={previewEvent} onClose={() => setPreviewEvent(null)} />
 
         {!loading && selectedDay && selectedDayEvents.length > 0 ? (
           <section className="ls-act-shell__day-panel" aria-label={`Atividades de ${formatActivityDayLabel(selectedDayEvents[0]!.time)}`}>
@@ -354,13 +357,13 @@ const ActivityCenterPage: React.FC = () => {
                       <span className={resultClass(event.result)}>{event.status}</span>
                     </div>
                     <p className="ls-act-center__item-title">{event.title}</p>
-                    {event.href ? (
-                      <Link to={event.href} className="ls-act-center__item-desc">
-                        {event.description}
-                      </Link>
-                    ) : (
-                      <p className="ls-act-center__item-desc">{event.description}</p>
-                    )}
+                    <button
+                      type="button"
+                      className="ls-act-center__item-desc ls-act-center__item-desc--btn"
+                      onClick={() => setPreviewEvent(event)}
+                    >
+                      {event.description}
+                    </button>
                   </div>
                 </li>
               ))}
@@ -390,13 +393,13 @@ const ActivityCenterPage: React.FC = () => {
                         <span className={resultClass(event.result)}>{event.status}</span>
                       </div>
                       <p className="ls-act-center__item-title">{event.title}</p>
-                      {event.href ? (
-                        <Link to={event.href} className="ls-act-center__item-desc">
-                          {event.description}
-                        </Link>
-                      ) : (
-                        <p className="ls-act-center__item-desc">{event.description}</p>
-                      )}
+                      <button
+                        type="button"
+                        className="ls-act-center__item-desc ls-act-center__item-desc--btn"
+                        onClick={() => setPreviewEvent(event)}
+                      >
+                        {event.description}
+                      </button>
                       <span className="ls-act-center__item-ref">{event.reference}</span>
                     </div>
                   </li>
