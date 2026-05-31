@@ -4,7 +4,15 @@ export const LOGSTOKA_ROUTES = {
   PRODUCT_GROUPS: '/app/products/grupos',
   PRODUCT_PUBLICATION: '/app/products/publicacao',
   PRODUCT_SYNC: '/app/products/sincronizacao',
+  PRODUCT_ADD: '/app/produto/add',
   DASHBOARD: '/app/dashboard',
+  OPERATIONAL_WORK: '/app/operacao',
+  ACTIVITY_CENTER: '/app/atividades',
+  MARKETPLACE_HUB: '/app/marketplace',
+  OPERATIONAL_FLOW: '/app/operacao/fluxo',
+  CONFERENCE_PENDING: '/app/operacao/pendencias-conferencia',
+  PRINT_CONFERENCE: '/app/impressao/conferencia',
+  SALES: '/app/vendas',
   INTEGRATIONS_CENTRAL: '/app/integrations',
   SETTINGS: '/app/configuracoes',
   SETTINGS_PROFILE: '/app/configuracoes/meu-perfil',
@@ -14,9 +22,7 @@ export const LOGSTOKA_ROUTES = {
   SETTINGS_API: '/app/configuracoes/api-webhooks',
   SETTINGS_INTEGRATIONS: '/app/integrations',
   marketplaceStore: (marketplace: string, storeSlug?: string) =>
-    storeSlug
-      ? `/app/configuracoes/integracoes/${marketplace}/${storeSlug}`
-      : `/app/configuracoes/integracoes/${marketplace}`,
+    storeSlug ? `/app/${marketplace}/${storeSlug}` : `/app/${marketplace}`,
   SETTINGS_MARKETPLACES: '/app/configuracoes/integracoes/marketplaces',
   SETTINGS_NOTIFICATIONS: '/app/configuracoes/notificacoes',
   SETTINGS_AUDIT: '/app/configuracoes/auditoria',

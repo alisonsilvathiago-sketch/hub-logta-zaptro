@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import MovementScanSection from '@/components/movements/MovementScanSection';
 import ReturnRegisterModal, { type ReturnFormState } from '@/components/returns/ReturnRegisterModal';
+import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
 import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
 import LogstokaAddIconButton from '@/components/ui/LogstokaAddIconButton';
 import ClickableTableRow, { stopRowNavigate } from '@/components/ui/ClickableTableRow';
@@ -79,24 +79,8 @@ const ReturnsPage: React.FC = () => {
 
   const { paginatedItems, footerProps } = useTablePagination(returns);
 
-  const syncFormFromScan = () => {
-    const sku = scan.resolvedProduct?.sku ?? scan.scanValue.trim();
-    if (sku) {
-      setForm((f) => ({ ...f, sku, quantity: scan.quantity }));
-    }
-  };
-
   const openModal = () => {
-    syncFormFromScan();
     setModalOpen(true);
-  };
-
-  const handlePageRegister = () => {
-    if (!scan.scanValue.trim()) {
-      toast.error('Leia ou digite um código primeiro');
-      return;
-    }
-    openModal();
   };
 
   const handleUseExisting = (product: ProductLookupResult) => {
@@ -182,18 +166,19 @@ const ReturnsPage: React.FC = () => {
     resolving: scan.resolving,
     interpreting: scan.interpreting,
     scanInterpretation: scan.scanInterpretation,
-    onRegister: handlePageRegister,
+    onRegister: () => void createReturn(),
     onUseExisting: handleUseExisting,
     registering,
   };
 
   return (
     <div className="space-y-6">
-      <MovementScanSection
-        {...scanProps}
-        movementLabel="Devoluções"
-        pageTitleIcon={<RotateCcw size={20} strokeWidth={2.25} aria-hidden />}
-        headerActions={<LogstokaAddIconButton title="Nova devolução" onClick={openModal} />}
+      <LogstokaPageHeader
+        eyebrow="Operação WMS"
+        icon={<RotateCcw size={20} strokeWidth={2.25} />}
+        title="Devoluções"
+        subtitle="Triagem e registro de devoluções. Use o scanner global ou cadastre manualmente."
+        actions={<LogstokaAddIconButton title="Nova devolução" onClick={openModal} />}
       />
 
       <LogstokaKpiStrip

@@ -2,6 +2,7 @@ export const LOGSTOKA_DEMO_LOGIN_EMAIL = 'logstoka@teste.com';
 export const LOGSTOKA_DEMO_LOGIN_PASSWORD = '123456';
 export const LOGSTOKA_DEMO_COMPANY_ID = 'logstoka-demo-company';
 export const LOGSTOKA_DEMO_USER_ID = 'logstoka-demo-user';
+export const LOGSTOKA_DEMO_BEARER = 'logstoka-demo';
 
 export function isLogstokaDemoEmail(email: string | null | undefined): boolean {
   return (email ?? '').trim().toLowerCase() === LOGSTOKA_DEMO_LOGIN_EMAIL;

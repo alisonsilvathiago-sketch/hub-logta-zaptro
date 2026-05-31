@@ -1,0 +1,718 @@
+/* ── Shell estilo agenda (Google Calendar + LogStoka) ── */
+
+.ls-act-shell {
+  display: flex;
+  min-height: calc(100dvh - 72px);
+  background: #fff;
+}
+
+.ls-act-shell__sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 18px 20px 32px;
+  border-right: 1px solid #e5e7eb;
+  background: #fafafa;
+  overflow-y: auto;
+  box-sizing: content-box;
+}
+
+.ls-act-shell__sidebar-head {
+  margin-bottom: 20px;
+}
+
+.ls-act-shell__sidebar-head h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #383838;
+}
+
+.ls-act-shell__sidebar-head p {
+  margin: 8px 0 0;
+  max-width: 100%;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #737373;
+}
+
+.ls-act-shell__today {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #374151;
+  cursor: pointer;
+}
+
+.ls-act-shell__today:hover {
+  background: #f9fafb;
+  border-color: #fdba74;
+}
+
+.ls-act-shell__today--compact {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.75rem;
+}
+
+.ls-act-shell__mini-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ls-act-shell__mini-month {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #374151;
+  text-transform: capitalize;
+}
+
+.ls-act-shell__mini-month button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.ls-act-shell__mini-month button:hover {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.ls-act-shell__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #9ca3af;
+}
+
+.ls-act-shell__search input {
+  border: 0;
+  box-shadow: none;
+  padding-left: 0;
+  font-size: 0.8125rem;
+}
+
+.ls-act-shell__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ls-act-shell__stats div {
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #f3f4f6;
+  background: #fff;
+  text-align: center;
+}
+
+.ls-act-shell__stats strong {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #111827;
+}
+
+.ls-act-shell__stats span {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #9ca3af;
+}
+
+.ls-act-shell__calendars h2 {
+  margin: 0 0 8px;
+  font-size: 0.6875rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.ls-act-shell__calendars ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ls-act-shell__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #374151;
+  cursor: pointer;
+}
+
+.ls-act-shell__check input {
+  accent-color: #ea580c;
+}
+
+.ls-act-shell__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.ls-act-shell__dot--operation { background: #ea580c; }
+.ls-act-shell__dot--conference { background: #d97706; }
+.ls-act-shell__dot--inventory { background: #7c3aed; }
+.ls-act-shell__dot--transfer { background: #0891b2; }
+.ls-act-shell__dot--sales { background: #2563eb; }
+.ls-act-shell__dot--integrations { background: #16a34a; }
+.ls-act-shell__dot--flow { background: #0d9488; }
+.ls-act-shell__dot--ai { background: #9333ea; }
+.ls-act-shell__dot--alerts { background: #dc2626; }
+.ls-act-shell__dot--production { background: #ca8a04; }
+.ls-act-shell__dot--user { background: #6b7280; }
+
+.ls-act-shell__clear {
+  margin-top: 8px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #ea580c;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.ls-act-shell__ai {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.ls-act-shell__ai-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: #c2410c;
+}
+
+.ls-act-shell__ai-text {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #78350f;
+}
+
+.ls-act-shell__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ls-act-shell__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.ls-act-shell__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ls-act-shell__month-nav {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.ls-act-shell__month-nav button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+}
+
+.ls-act-shell__month-nav button:hover {
+  background: #f3f4f6;
+}
+
+.ls-act-shell__month-title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 500;
+  color: #111827;
+  text-transform: capitalize;
+}
+
+.ls-act-shell__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ls-act-shell__actor {
+  max-width: 180px;
+  font-size: 0.8125rem;
+}
+
+.ls-act-shell__list-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #374151;
+  cursor: pointer;
+}
+
+.ls-act-shell__list-toggle--active {
+  background: #111827;
+  border-color: #111827;
+  color: #fff;
+}
+
+/* ── Grade mensal (modelo Google Calendar) ── */
+
+.ls-act-cal__grid-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.ls-act-cal__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.ls-act-cal__weekday {
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
+
+.ls-act-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  flex: 1;
+  min-height: 0;
+}
+
+.ls-act-cal__cell {
+  min-height: 118px;
+  padding: 6px 8px 8px;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  outline: none;
+}
+
+.ls-act-cal__cell:nth-child(7n) {
+  border-right: 0;
+}
+
+.ls-act-cal__cell:hover {
+  background: #fafafa;
+}
+
+.ls-act-cal__cell--outside {
+  background: #f9fafb;
+}
+
+.ls-act-cal__cell--outside .ls-act-cal__day-btn {
+  color: #9ca3af;
+}
+
+.ls-act-cal__cell--selected {
+  background: #fffbf5;
+  box-shadow: inset 0 0 0 2px rgba(234, 88, 12, 0.35);
+}
+
+.ls-act-cal__day-btn {
+  align-self: flex-end;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.ls-act-cal__day-btn--today {
+  background: #ea580c;
+  color: #fff;
+  font-weight: 800;
+}
+
+.ls-act-cal__events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ls-act-cal__event {
+  display: block;
+  width: 100%;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.ls-act-cal__more {
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 0.625rem;
+  font-weight: 800;
+  color: #6b7280;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ls-act-cal__more:hover {
+  background: #f3f4f6;
+}
+
+/* Cores por domínio — barras estilo Google, paleta LogStoka */
+.ls-act-cal__event--operation {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.ls-act-cal__event--conference {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.ls-act-cal__event--inventory {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.ls-act-cal__event--transfer {
+  background: #cffafe;
+  color: #155e75;
+}
+
+.ls-act-cal__event--sales {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.ls-act-cal__event--integrations {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.ls-act-cal__event--flow {
+  background: #ccfbf1;
+  color: #115e59;
+}
+
+.ls-act-cal__event--ai {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.ls-act-cal__event--alerts {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.ls-act-cal__event--production {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.ls-act-cal__event--user {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.ls-act-cal__event--error {
+  box-shadow: inset 3px 0 0 #dc2626;
+}
+
+.ls-act-cal__event--warning {
+  box-shadow: inset 3px 0 0 #d97706;
+}
+
+/* ── Painéis inferiores ── */
+
+.ls-act-shell__day-panel,
+.ls-act-shell__list-panel {
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  max-height: 38vh;
+  overflow: auto;
+}
+
+.ls-act-shell__day-panel header,
+.ls-act-shell__list-panel header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+
+.ls-act-shell__day-panel h3,
+.ls-act-shell__list-panel h3 {
+  margin: 0;
+  flex: 1;
+  font-size: 0.9375rem;
+  font-weight: 900;
+  color: #111827;
+  text-transform: capitalize;
+}
+
+.ls-act-shell__day-panel header span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #9ca3af;
+}
+
+.ls-act-shell__day-close {
+  padding: 0.3rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.ls-act-center__empty {
+  padding: 32px;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #9ca3af;
+}
+
+.ls-act-center__timeline {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #fff;
+}
+
+.ls-act-center__timeline--compact .ls-act-center__item {
+  grid-template-columns: 72px minmax(0, 1fr);
+  padding: 12px 20px;
+}
+
+.ls-act-center__item {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ls-act-center__item:last-child {
+  border-bottom: 0;
+}
+
+.ls-act-center__item-time time {
+  display: block;
+  font-size: 1rem;
+  font-weight: 900;
+  color: #111827;
+}
+
+.ls-act-center__item-time span {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #9ca3af;
+  line-height: 1.35;
+  text-transform: capitalize;
+}
+
+.ls-act-center__item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.ls-act-center__item-head strong {
+  font-size: 0.8125rem;
+  font-weight: 900;
+  color: #111827;
+}
+
+.ls-act-center__item-head span {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+}
+
+.ls-act-center__result {
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151 !important;
+}
+
+.ls-act-center__result--ok {
+  background: #fff7ed;
+  color: #c2410c !important;
+}
+
+.ls-act-center__result--warn {
+  background: #fef3c7;
+  color: #92400e !important;
+}
+
+.ls-act-center__result--err {
+  background: #fee2e2;
+  color: #b91c1c !important;
+}
+
+.ls-act-center__item-title {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #374151;
+}
+
+.ls-act-center__item-desc {
+  margin-top: 4px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #111827;
+  text-decoration: none;
+}
+
+a.ls-act-center__item-desc:hover {
+  color: #ea580c;
+}
+
+.ls-act-center__item-ref {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #9ca3af;
+}
+
+@media (max-width: 960px) {
+  .ls-act-shell {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .ls-act-shell__sidebar {
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid #e5e7eb;
+    max-height: none;
+  }
+
+  .ls-act-cal__cell {
+    min-height: 88px;
+  }
+
+  .ls-act-center__item {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .ls-act-cal__weekday {
+    font-size: 0.5625rem;
+    padding: 8px 2px;
+  }
+
+  .ls-act-cal__event {
+    font-size: 0.5625rem;
+    padding: 1px 4px;
+  }
+
+  .ls-act-shell__month-title {
+    font-size: 1.05rem;
+  }
+}

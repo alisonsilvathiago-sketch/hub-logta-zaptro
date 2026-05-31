@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",
+    "@svg-maps/brazil": "^2.0.0",
     "@tailwindcss/vite": "^4.0.0",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.474.0",

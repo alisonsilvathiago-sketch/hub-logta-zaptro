@@ -4,12 +4,16 @@ export type LogstokaBrandingConfig = {
   primaryColor: string;
   logoUrl: string | null;
   companyName: string | null;
+  companyAddress: string | null;
+  companyContact: string | null;
 };
 
 export const DEFAULT_BRANDING: LogstokaBrandingConfig = {
   primaryColor: DEFAULT_BRAND_PRIMARY,
   logoUrl: null,
   companyName: null,
+  companyAddress: null,
+  companyContact: null,
 };
 
 function storageKey(companyId: string | null): string {
@@ -25,6 +29,8 @@ export function loadBranding(companyId: string | null): LogstokaBrandingConfig {
       primaryColor: parsed.primaryColor ?? DEFAULT_BRAND_PRIMARY,
       logoUrl: parsed.logoUrl ?? null,
       companyName: parsed.companyName ?? null,
+      companyAddress: parsed.companyAddress ?? null,
+      companyContact: parsed.companyContact ?? null,
     };
   } catch {
     return { ...DEFAULT_BRANDING };

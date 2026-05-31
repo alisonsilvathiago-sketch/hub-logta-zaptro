@@ -10,34 +10,57 @@ export type LogstokaKpiStripItem = {
   hint?: string;
   trend?: 'up' | 'down' | 'neutral';
   trendValue?: string;
+  onClick?: () => void;
 };
 
 export function LogstokaKpiStrip({ items, className = '' }: { items: LogstokaKpiStripItem[]; className?: string }) {
   return (
     <div className={`ls-kpi-strip ${className}`.trim()}>
-      {items.map((kpi) => (
-        <div key={kpi.label} className="ls-stat-card group relative">
-          <p className="ls-stat-card__label ls-stat-card__label--spaced">{kpi.label}</p>
-          <div className="flex items-end justify-between gap-2">
-            <p className="ls-stat-card__value ls-stat-card__value--primary">{kpi.value}</p>
-            {kpi.trend && kpi.trend !== 'neutral' && kpi.trendValue ? (
-              <span
-                className={`mb-1 shrink-0 text-xs font-bold ${
-                  kpi.trend === 'up' ? 'text-orange-600' : 'text-red-500'
-                }`}
-              >
-                {kpi.trendValue}
-              </span>
-            ) : null}
-          </div>
-          {kpi.hint ? <p className="mt-1 text-[10px] font-semibold text-gray-400">{kpi.hint}</p> : null}
-          {kpi.icon ? (
-            <div className="pointer-events-none absolute bottom-8 right-7 text-gray-900 opacity-[0.03] transition-all group-hover:opacity-[0.06]">
-              {kpi.icon}
+      {items.map((kpi) => {
+        const body = (
+          <>
+            <p className="ls-stat-card__label ls-stat-card__label--spaced">{kpi.label}</p>
+            <div className="flex items-end justify-between gap-2">
+              <p className="ls-stat-card__value ls-stat-card__value--primary">{kpi.value}</p>
+              {kpi.trend && kpi.trend !== 'neutral' && kpi.trendValue ? (
+                <span
+                  className={`mb-1 shrink-0 text-xs font-bold ${
+                    kpi.trend === 'up' ? 'text-orange-600' : 'text-red-500'
+                  }`}
+                >
+                  {kpi.trendValue}
+                </span>
+              ) : null}
             </div>
-          ) : null}
-        </div>
-      ))}
+            {kpi.hint ? <p className="mt-1 text-[10px] font-semibold text-gray-400">{kpi.hint}</p> : null}
+            {kpi.icon ? (
+              <div className="pointer-events-none absolute bottom-8 right-7 text-gray-900 opacity-[0.03] transition-all group-hover:opacity-[0.06]">
+                {kpi.icon}
+              </div>
+            ) : null}
+          </>
+        );
+
+        if (kpi.onClick) {
+          return (
+            <button
+              key={kpi.label}
+              type="button"
+              className="ls-stat-card ls-stat-card--clickable group relative text-left"
+              onClick={kpi.onClick}
+              aria-label={`${kpi.label}: ${kpi.value}`}
+            >
+              {body}
+            </button>
+          );
+        }
+
+        return (
+          <div key={kpi.label} className="ls-stat-card group relative">
+            {body}
+          </div>
+        );
+      })}
     </div>
   );
 }

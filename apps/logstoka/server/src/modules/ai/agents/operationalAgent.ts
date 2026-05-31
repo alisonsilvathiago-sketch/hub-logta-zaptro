@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { LogstokaConfig } from '../../../config.js';
+import { DEMO_RAG_CONTEXT, isDemoCompany } from '../../../lib/demoAuth.js';
 import { buildRagContext } from '../dataContext.js';
 import { detectIntents, extractSkuHint } from '../intentRouter.js';
 import { chatOllama, type OllamaChatTurn } from '../ollamaService.js';
@@ -15,13 +16,16 @@ export type OperationalChatParams = {
 
 export async function runOperationalChat(
   cfg: LogstokaConfig,
-  admin: SupabaseClient,
+  admin: SupabaseClient | null,
   companyId: string,
   params: OperationalChatParams,
 ) {
   const intents = detectIntents(params.message);
   const skuHint = extractSkuHint(params.message);
-  const ragContext = await buildRagContext(admin, companyId, intents, skuHint);
+  const ragContext =
+    admin && !isDemoCompany(companyId)
+      ? await buildRagContext(admin, companyId, intents, skuHint)
+      : DEMO_RAG_CONTEXT;
 
   const systemPrompt = buildLogstokaSystemPrompt({
     companyName: params.companyName,

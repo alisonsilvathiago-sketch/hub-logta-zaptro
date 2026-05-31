@@ -4,7 +4,8 @@ import { LogOut } from 'lucide-react';
 import { useAuth } from '@/context/LogstokaAuthProvider';
 import { useLogstokaBranding } from '@/context/LogstokaBrandingContext';
 import { can } from '@/lib/permissions';
-import { LOGSTOKA_NAV } from './logstokaNavItems';
+import { LOGSTOKA_HUB_NAV, LOGSTOKA_NAV } from './logstokaNavItems';
+import SidebarNavGroup from './SidebarNavGroup';
 import SidebarTooltip from './SidebarTooltip';
 
 type Props = {
@@ -41,18 +42,35 @@ const Sidebar: React.FC<Props> = ({ onSignOut }) => {
 
         <span className="logstoka-app-nav-divider" aria-hidden />
 
-        <nav className="logstoka-app-nav">
+        <nav className="logstoka-app-nav" aria-label="Hub comercial">
+          {LOGSTOKA_HUB_NAV.map((item) => {
+            if (item.perm && !can(item.perm, profile?.role)) return null;
+
+            if (item.type === 'group') {
+              return <SidebarNavGroup key={item.label} item={item} />;
+            }
+
+            const Icon = item.icon;
+            return (
+              <SidebarTooltip key={`hub-${item.label}-${item.to}`} label={item.label}>
+                <NavLink to={item.to} end={item.end} className={navClass}>
+                  <Icon size={18} strokeWidth={1.65} />
+                </NavLink>
+              </SidebarTooltip>
+            );
+          })}
+        </nav>
+
+        <span className="logstoka-app-nav-divider logstoka-app-nav-divider--section" aria-hidden />
+
+        <nav className="logstoka-app-nav" aria-label="Operação WMS">
           {LOGSTOKA_NAV.map((item) => {
             if (item.perm && !can(item.perm, profile?.role)) return null;
             const Icon = item.icon;
 
             return (
               <SidebarTooltip key={`${item.label}-${item.to}`} label={item.label}>
-                <NavLink
-                  to={item.to!}
-                  end={item.end}
-                  className={navClass}
-                >
+                <NavLink to={item.to!} end={item.end} className={navClass}>
                   <Icon size={18} strokeWidth={1.65} />
                 </NavLink>
               </SidebarTooltip>
@@ -63,9 +81,7 @@ const Sidebar: React.FC<Props> = ({ onSignOut }) => {
         <div className="logstoka-app-sidebar-foot">
           <span className="logstoka-app-nav-divider" aria-hidden />
           <SidebarTooltip label={profile?.full_name || profile?.email || 'Perfil'}>
-            <div className="logstoka-app-nav-profile">
-              {initials}
-            </div>
+            <div className="logstoka-app-nav-profile">{initials}</div>
           </SidebarTooltip>
           <SidebarTooltip label="Sair">
             <button

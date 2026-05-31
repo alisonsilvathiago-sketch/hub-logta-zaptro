@@ -2,11 +2,15 @@ import React, { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import LogstokaGuard from '@/app/LogstokaGuard';
 import AppShell from '@/components/layout/AppShell';
+import MarketplaceModuleGuard from '@/components/layout/MarketplaceModuleGuard';
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/Login';
 
 const DashboardPage = lazy(() => import('@/modules/dashboard/DashboardPage'));
-const InicioPage = lazy(() => import('@/modules/inicio/InicioPage'));
+const OperationalWorkPage = lazy(() => import('@/modules/operational/OperationalWorkPage'));
+const OperationalFlowControlPage = lazy(() => import('@/modules/operational/OperationalFlowControlPage'));
+const ConferencePendingPage = lazy(() => import('@/modules/operational/ConferencePendingPage'));
+const InicioHomePage = lazy(() => import('@/modules/inicio/InicioHomePage'));
 const ProductsSectionLayout = lazy(() => import('@/modules/products/ProductsSectionLayout'));
 const WarehousesPage = lazy(() => import('@/modules/warehouses/WarehousesPage'));
 const MovementsPage = lazy(() => import('@/modules/movements/MovementsPage'));
@@ -19,6 +23,7 @@ const ProductsPage = lazy(() => import('@/modules/products/ProductsPage'));
 const ProductStoreGroupsPage = lazy(() => import('@/modules/products/ProductStoreGroupsPage'));
 const ProductPublicationPage = lazy(() => import('@/modules/products/ProductPublicationPage'));
 const ProductSyncPage = lazy(() => import('@/modules/products/ProductSyncPage'));
+const ProductAddWizardPage = lazy(() => import('@/modules/products/ProductAddWizardPage'));
 const ProductDetailPage = lazy(() => import('@/modules/products/ProductDetailPage'));
 const MovementDetailPage = lazy(() => import('@/modules/movements/MovementDetailPage'));
 const TransferDetailPage = lazy(() => import('@/modules/transfers/TransferDetailPage'));
@@ -32,8 +37,10 @@ const IntegrationLogDetailPage = lazy(() => import('@/modules/integrations/Integ
 const IntegrationsCentralPage = lazy(() => import('@/modules/integrations/IntegrationsCentralPage'));
 const ImportsPage = lazy(() => import('@/modules/imports/ImportsPage'));
 const ReportsPage = lazy(() => import('@/modules/reports/ReportsPage'));
+const SalesPage = lazy(() => import('@/modules/sales/SalesPage'));
 const MarketplaceRankingPage = lazy(() => import('@/modules/integrations/MarketplaceRankingPage'));
 const MarketplaceStorePage = lazy(() => import('@/modules/integrations/MarketplaceStorePage'));
+const MarketplaceModuleHubPage = lazy(() => import('@/modules/marketplace/MarketplaceModuleHubPage'));
 const MarketplaceHubPage = lazy(() => import('@/modules/integrations/MarketplaceHubPage'));
 const SettingsLayout = lazy(() => import('@/modules/settings/SettingsLayout'));
 const SettingsProfilePanel = lazy(() => import('@/modules/settings/panels/SettingsProfilePanel'));
@@ -46,6 +53,12 @@ const SettingsAuditPanel = lazy(() => import('@/modules/settings/panels/Settings
 const SettingsSecurityPanel = lazy(() => import('@/modules/settings/panels/SettingsSecurityPanel'));
 const SettingsWhiteLabelPanel = lazy(() => import('@/modules/settings/panels/SettingsWhiteLabelPanel'));
 const TeamRankingPage = lazy(() => import('@/modules/team/TeamRankingPage'));
+const ActivityCenterPage = lazy(() => import('@/modules/activities/ActivityCenterPage'));
+const PrintConferenceDocumentPage = lazy(() => import('@/pages/PrintConferenceDocumentPage'));
+const SharedPublicPage = lazy(() => import('@/pages/SharedPublicPage'));
+
+import { LogstokaXRayProvider } from '@/modules/ai/auditor/LogstokaXRayContext';
+import LogstokaXRayDrawer from '@/modules/ai/auditor/LogstokaXRayDrawer';
 
 const LegacyCollaboratorRedirect: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -69,21 +82,56 @@ const Loading: React.FC = () => (
   </div>
 );
 
+const GuardedMarketplace: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <MarketplaceModuleGuard>{children}</MarketplaceModuleGuard>
+);
+
 const App: React.FC = () => (
-  <Suspense fallback={<Loading />}>
-    <Routes>
+  <LogstokaXRayProvider>
+    <Suspense fallback={<Loading />}>
+      <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/vendas" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/shared/:token" element={<SharedPublicPage />} />
+      <Route path="/produto/add" element={<Navigate to="/app/produto/add" replace />} />
       <Route element={<LogstokaGuard />}>
+        <Route path="/app/impressao/conferencia" element={<PrintConferenceDocumentPage />} />
         <Route path="/app" element={<AppShell />}>
-          <Route index element={<InicioPage />} />
+          <Route index element={<InicioHomePage />} />
+          <Route path="atividades" element={<ActivityCenterPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="operacao/fluxo" element={<OperationalFlowControlPage />} />
+          <Route path="operacao/pendencias-conferencia" element={<ConferencePendingPage />} />
+          <Route path="operacao" element={<OperationalWorkPage />} />
+          <Route path="marketplace" element={<MarketplaceModuleHubPage />} />
+          <Route path="produto/add" element={<ProductAddWizardPage />} />
           <Route path="products" element={<ProductsSectionLayout />}>
             <Route index element={<ProductsPage />} />
-            <Route path="grupos" element={<ProductStoreGroupsPage />} />
-            <Route path="publicacao" element={<ProductPublicationPage />} />
-            <Route path="sincronizacao" element={<ProductSyncPage />} />
+            <Route
+              path="grupos"
+              element={
+                <GuardedMarketplace>
+                  <ProductStoreGroupsPage />
+                </GuardedMarketplace>
+              }
+            />
+            <Route
+              path="publicacao"
+              element={
+                <GuardedMarketplace>
+                  <ProductPublicationPage />
+                </GuardedMarketplace>
+              }
+            />
+            <Route
+              path="sincronizacao"
+              element={
+                <GuardedMarketplace>
+                  <ProductSyncPage />
+                </GuardedMarketplace>
+              }
+            />
             <Route path=":id" element={<ProductDetailPage />} />
           </Route>
           <Route path="movements/:id" element={<MovementDetailPage />} />
@@ -101,16 +149,107 @@ const App: React.FC = () => (
           <Route path="returns" element={<ReturnsPage />} />
           <Route path="imports" element={<ImportsPage />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="vendas" element={<SalesPage />} />
 
           <Route path="integrations/marketplaces" element={<Navigate to="/app/configuracoes/integracoes/marketplaces" replace />} />
           <Route path="integrations/logs/:id" element={<LegacyIntegrationLogRedirect />} />
-          <Route path="integrations" element={<IntegrationsCentralPage />} />
-          <Route path="mercadolivre" element={<MarketplaceHubPage />} />
+          <Route
+            path="integrations"
+            element={
+              <GuardedMarketplace>
+                <IntegrationsCentralPage />
+              </GuardedMarketplace>
+            }
+          />
+          <Route
+            path="mercadolivre/:storeSlug"
+            element={
+              <GuardedMarketplace>
+                <MarketplaceStorePage />
+              </GuardedMarketplace>
+            }
+          />
+          <Route
+            path="mercadolivre"
+            element={
+              <GuardedMarketplace>
+                <MarketplaceHubPage />
+              </GuardedMarketplace>
+            }
+          />
+          <Route
+            path="marcadolivre/:storeSlug"
+            element={
+              <GuardedMarketplace>
+                <MarketplaceStorePage />
+              </GuardedMarketplace>
+            }
+          />
           <Route path="marcadolivre" element={<Navigate to="/app/mercadolivre" replace />} />
-          <Route path="shopee" element={<MarketplaceHubPage />} />
-          <Route path="amazon" element={<MarketplaceHubPage />} />
-          <Route path="tiktok" element={<MarketplaceHubPage />} />
-          <Route path="magalu" element={<MarketplaceHubPage />} />
+          <Route
+            path="shopee/:storeSlug"
+            element={
+              <GuardedMarketplace>
+                <MarketplaceStorePage />
+              </GuardedMarketplace>
+            }
+          />
+          <Route
+            path="shopee"
+            element={
+              <GuardedMarketplace>
+                <MarketplaceHubPage />
+              </GuardedMarketplace>
+            }
+          />
+          <Route
+            path="amazon/:storeSlug"
+            element={
+              <GuardedMarketplace>
+                <MarketplaceStorePage />
+              </GuardedMarketplace>
+            }
+          />
+          <Route
+            path="amazon"
+            element={
+              <GuardedMarketplace>
+                <MarketplaceHubPage />
+              </GuardedMarketplace>
+            }
+          />
+          <Route
+            path="tiktok/:storeSlug"
+            element={
+              <GuardedMarketplace>
+                <MarketplaceStorePage />
+              </GuardedMarketplace>
+            }
+          />
+          <Route
+            path="tiktok"
+            element={
+              <GuardedMarketplace>
+                <MarketplaceHubPage />
+              </GuardedMarketplace>
+            }
+          />
+          <Route
+            path="magalu/:storeSlug"
+            element={
+              <GuardedMarketplace>
+                <MarketplaceStorePage />
+              </GuardedMarketplace>
+            }
+          />
+          <Route
+            path="magalu"
+            element={
+              <GuardedMarketplace>
+                <MarketplaceHubPage />
+              </GuardedMarketplace>
+            }
+          />
 
           <Route path="configuracoes" element={<SettingsLayout />}>
             <Route index element={<Navigate to="meu-perfil" replace />} />
@@ -121,9 +260,30 @@ const App: React.FC = () => (
             <Route path="equipe/:id" element={<CollaboratorDetailPage />} />
             <Route path="api-webhooks" element={<SettingsApiWebhooksPanel />} />
             <Route path="api-webhooks/logs/:id" element={<IntegrationLogDetailPage />} />
-            <Route path="integracoes/marketplaces" element={<MarketplaceRankingPage embedded />} />
-            <Route path="integracoes/:marketplace/:storeSlug" element={<MarketplaceStorePage embedded />} />
-            <Route path="integracoes/:marketplace" element={<MarketplaceStorePage embedded />} />
+            <Route
+              path="integracoes/marketplaces"
+              element={
+                <GuardedMarketplace>
+                  <MarketplaceRankingPage embedded />
+                </GuardedMarketplace>
+              }
+            />
+            <Route
+              path="integracoes/:marketplace/:storeSlug"
+              element={
+                <GuardedMarketplace>
+                  <MarketplaceStorePage embedded />
+                </GuardedMarketplace>
+              }
+            />
+            <Route
+              path="integracoes/:marketplace"
+              element={
+                <GuardedMarketplace>
+                  <MarketplaceStorePage embedded />
+                </GuardedMarketplace>
+              }
+            />
             <Route path="integracoes" element={<Navigate to="/app/integrations" replace />} />
             <Route path="notificacoes" element={<SettingsNotificationsPanel />} />
             <Route path="notificacoes/:id" element={<AlertDetailPage embedded />} />
@@ -147,7 +307,9 @@ const App: React.FC = () => (
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  </Suspense>
+    </Suspense>
+    <LogstokaXRayDrawer />
+  </LogstokaXRayProvider>
 );
 
 export default App;

@@ -289,7 +289,7 @@ export function downloadProductImportTemplate(): void {
   XLSX.writeFile(wb, 'logstoka-produtos-modelo.xlsx');
 }
 
-export function downloadProductsExport(products: LsProduct[], categoryName: (id?: string | null) => string): void {
+function productRowsForExport(products: LsProduct[], categoryName: (id?: string | null) => string) {
   const headers = PRODUCT_SPREADSHEET_COLUMNS.map((c) => c.header);
   const rows = products.map((p) =>
     PRODUCT_SPREADSHEET_COLUMNS.map((col) => {
@@ -346,7 +346,26 @@ export function downloadProductsExport(products: LsProduct[], categoryName: (id?
     }),
   );
 
+  return { headers, rows };
+}
+
+export function downloadProductsExport(products: LsProduct[], categoryName: (id?: string | null) => string): void {
+  const { headers, rows } = productRowsForExport(products, categoryName);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headers, ...rows]), 'Produtos');
   XLSX.writeFile(wb, `logstoka-produtos-${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
+export function downloadProductsExportCsv(products: LsProduct[], categoryName: (id?: string | null) => string): void {
+  const { headers, rows } = productRowsForExport(products, categoryName);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headers, ...rows]), 'Produtos');
+  const csv = XLSX.utils.sheet_to_csv(wb.Sheets.Produtos!, { FS: ';' });
+  const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `logstoka-produtos-${new Date().toISOString().slice(0, 10)}.csv`;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }

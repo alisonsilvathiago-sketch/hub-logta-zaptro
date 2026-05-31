@@ -1,7 +1,7 @@
 import type { LogstokaConfig } from '../../config.js';
 
 const DEFAULT_OLLAMA = 'http://108.174.151.98:11434';
-const DEFAULT_MODEL = 'llama3.2';
+const DEFAULT_MODEL = 'llama3.2:latest';
 
 export type OllamaChatTurn = { role: 'user' | 'assistant' | 'system'; content: string };
 

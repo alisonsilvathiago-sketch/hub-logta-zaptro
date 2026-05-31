@@ -14,6 +14,8 @@ type LogstokaBrandingContextValue = {
   setPrimaryColor: (color: string) => void;
   setLogoUrl: (logoUrl: string | null) => void;
   setCompanyName: (name: string | null) => void;
+  setCompanyAddress: (address: string | null) => void;
+  setCompanyContact: (contact: string | null) => void;
   resetBranding: () => void;
 };
 
@@ -50,6 +52,16 @@ export const LogstokaBrandingProvider: React.FC<{ children: React.ReactNode }> =
     [branding, persist],
   );
 
+  const setCompanyAddress = useCallback(
+    (companyAddress: string | null) => persist({ ...branding, companyAddress }),
+    [branding, persist],
+  );
+
+  const setCompanyContact = useCallback(
+    (companyContact: string | null) => persist({ ...branding, companyContact }),
+    [branding, persist],
+  );
+
   const resetBranding = useCallback(() => persist({ ...DEFAULT_BRANDING }), [persist]);
 
   const cssVars = useMemo(() => brandCssVariables(branding.primaryColor), [branding.primaryColor]);
@@ -61,9 +73,11 @@ export const LogstokaBrandingProvider: React.FC<{ children: React.ReactNode }> =
       setPrimaryColor,
       setLogoUrl,
       setCompanyName,
+      setCompanyAddress,
+      setCompanyContact,
       resetBranding,
     }),
-    [branding, cssVars, setPrimaryColor, setLogoUrl, setCompanyName, resetBranding],
+    [branding, cssVars, setPrimaryColor, setLogoUrl, setCompanyName, setCompanyAddress, setCompanyContact, resetBranding],
   );
 
   return (

@@ -1,35 +1,55 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ClipboardCheck } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  BadgeCheck,
+  ClipboardCheck,
+  ClipboardList,
+  Download,
+  ListChecks,
+  Printer,
+  RefreshCw,
+  RotateCw,
+  Share2,
+} from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import MovementScanSection from '@/components/movements/MovementScanSection';
+import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
 import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
+import LogstokaKpiAdjustModal from '@/components/layout/LogstokaKpiAdjustModal';
+import LogstokaIconNav, { LogstokaIconNavButton } from '@/components/ui/LogstokaIconNav';
 import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
-import { useIntelligentScanState } from '@/hooks/useIntelligentScanState';
+import LogstokaTableCheckbox from '@/components/ui/LogstokaTableCheckbox';
+import LogstokaTableFilterBar from '@/components/ui/LogstokaTableFilterBar';
+import LogstokaShareModal from '@/components/sharing/LogstokaShareModal';
+import LogstokaTableIconToolbar, { type LogstokaToolbarAction } from '@/components/ui/LogstokaTableIconToolbar';
 import { useTablePagination } from '@/hooks/useTablePagination';
+import { useRowSelection } from '@/hooks/useRowSelection';
 import { supabase } from '@/lib/supabase';
+import { showLogstokaBanner } from '@/lib/logstokaBanner';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { useWarehouses } from '@/hooks/useCatalog';
 import { logstokaApi } from '@/lib/logstokaApi';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import { DEMO_INVENTORIES, type DemoInventoryRow } from '@/lib/logstokaDemoSeed';
-import type { ProductLookupResult } from '@/lib/productLookup';
 import { can } from '@/lib/permissions';
 import { useAuth } from '@/context/LogstokaAuthProvider';
+import { countPendingDivergences } from '@/lib/conferenceDivergences';
+import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
+import InventoryGuidedModal from './InventoryGuidedModal';
 
 const InventoryPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { profile } = useAuth();
   const { companyId } = useLogstokaTenant();
   const demo = isLogstokaDemoCompany(companyId);
   const { warehouses } = useWarehouses();
   const [inventories, setInventories] = useState<DemoInventoryRow[]>([]);
   const [activeId, setActiveId] = useState<string | null>('inv-1');
-  const [warehouseId, setWarehouseId] = useState('wh-4');
-  const [registering, setRegistering] = useState(false);
+  const [warehouseId, setWarehouseId] = useState(searchParams.get('warehouse') ?? 'wh-4');
+  const [guidedOpen, setGuidedOpen] = useState(false);
+  const [kpiModal, setKpiModal] = useState<{ label: string; value: string | number } | null>(null);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const canApprove = can('inventory.approve', profile?.role);
-
-  const scan = useIntelligentScanState(companyId, demo, 'entry');
 
   const load = useCallback(async () => {
     if (!companyId) return;
@@ -50,6 +70,25 @@ const InventoryPage: React.FC = () => {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const refresh = () => void load();
+    window.addEventListener('logstoka:system-pulse', refresh);
+    return () => window.removeEventListener('logstoka:system-pulse', refresh);
+  }, [load]);
+
+  useEffect(() => {
+    const wh = searchParams.get('warehouse');
+    if (wh) setWarehouseId(wh);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!warehouseId) return;
+    const wh = warehouses.find((w) => w.id === warehouseId);
+    if (!wh) return;
+    const match = inventories.find((inv) => inv.warehouse_name === wh.name);
+    if (match) setActiveId(match.id);
+  }, [warehouseId, warehouses, inventories]);
+
   const startInventory = async (type: 'rotating' | 'general') => {
     if (!warehouseId) {
       toast.error('Selecione um depósito');
@@ -69,34 +108,25 @@ const InventoryPage: React.FC = () => {
     }
   };
 
-  const countItem = async (sku: string) => {
-    if (!activeId) {
-      toast.error('Inicie ou selecione um inventário');
-      return;
-    }
-    if (demo) {
-      toast.success(`[Demo] Contagem: ${sku} × ${scan.quantity}`);
-      scan.clearScan();
-      return;
-    }
-    try {
-      await logstokaApi.countInventory(activeId, { sku, counted_quantity: scan.quantity });
-      toast.success(`Contagem registrada: ${sku}`);
-      scan.clearScan();
-      await load();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro');
-    }
-  };
-
   const approve = async (id: string) => {
     if (demo) {
-      toast.success('[Demo] Inventário aprovado e estoque ajustado');
+      showLogstokaBanner({
+        type: 'success',
+        title: 'Inventário aprovado',
+        description: 'Controle de contagem de inventário aprovado e estoque ajustado com sucesso em modo demonstração.',
+        actionPath: `/app/inventory/${id}`,
+      });
       return;
     }
     try {
       const res = await logstokaApi.approveInventory(id);
-      toast.success(`Inventário ajustado — ${(res as { adjusted: number }).adjusted} diferenças`);
+      const adjusted = (res as { adjusted: number }).adjusted;
+      showLogstokaBanner({
+        type: 'success',
+        title: 'Inventário aprovado',
+        description: `Controle de contagem de inventário aprovado com sucesso. Total de ${adjusted} diferença(s) aplicada(s) ao estoque geral WMS.`,
+        actionPath: `/app/inventory/${id}`,
+      });
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro');
@@ -106,6 +136,12 @@ const InventoryPage: React.FC = () => {
   const active = inventories.find((i) => i.id === activeId) ?? inventories[0];
   const activeItems = active?.ls_inventory_items ?? [];
   const { paginatedItems, footerProps } = useTablePagination(activeItems, 10, activeId);
+  const { selectedKeys, toggleSelect, toggleSelectAll, isAllSelected, selectedCount } = useRowSelection(
+    paginatedItems,
+    (item) => item.id,
+  );
+
+  const todayLabel = useMemo(() => new Date().toLocaleDateString('pt-BR'), []);
 
   const kpis = useMemo(() => {
     const diffs = activeItems.filter((item) => Number(item.difference) !== 0).length;
@@ -118,121 +154,249 @@ const InventoryPage: React.FC = () => {
     };
   }, [activeItems, inventories]);
 
-  const handleRegister = () => {
-    const sku = scan.resolvedSku();
-    if (!sku) {
-      toast.error('Leia ou digite um código primeiro');
-      return;
-    }
-    setRegistering(true);
-    void countItem(sku).finally(() => setRegistering(false));
+  const updateDemoItemCount = (itemId: string, counted: number) => {
+    if (!active) return;
+    setInventories((prev) =>
+      prev.map((inv) => {
+        if (inv.id !== active.id) return inv;
+        return {
+          ...inv,
+          ls_inventory_items: inv.ls_inventory_items.map((item) => {
+            if (item.id !== itemId) return item;
+            const difference = counted - Number(item.system_quantity);
+            return { ...item, counted_quantity: counted, difference };
+          }),
+        };
+      }),
+    );
   };
 
-  const handleUseExisting = (product: ProductLookupResult) => {
-    void countItem(product.sku);
+  const guidedCountItem = async (item: DemoInventoryRow['ls_inventory_items'][number], quantity: number) => {
+    const sku = item.ls_products?.sku;
+    if (!sku) return;
+    if (demo) {
+      updateDemoItemCount(item.id, quantity);
+      toast.success(`Contagem registrada: ${sku} · ${quantity} un.`);
+      return;
+    }
+    if (!activeId) return;
+    await logstokaApi.countInventory(activeId, { sku, counted_quantity: quantity });
+    toast.success(`Contagem registrada: ${sku}`);
+    await load();
   };
+
+  const pendingDivergences = countPendingDivergences(companyId);
+
+  const tableToolbarActions: LogstokaToolbarAction[] = [
+    {
+      key: 'refresh',
+      label: 'Atualizar inventário',
+      icon: <RefreshCw size={18} strokeWidth={2} />,
+      onClick: () => void load(),
+    },
+    {
+      key: 'guided',
+      label: 'Contagem guiada contínua',
+      icon: <ListChecks size={18} strokeWidth={2} />,
+      onClick: () => setGuidedOpen(true),
+      accent: true,
+      disabled: activeItems.length === 0,
+    },
+    {
+      key: 'approve',
+      label: 'Aprovar e ajustar estoque',
+      icon: <BadgeCheck size={18} strokeWidth={2} />,
+      onClick: () => active && void approve(active.id),
+      hidden: !(canApprove && active?.status === 'review'),
+      separatorBefore: true,
+    },
+    {
+      key: 'pending',
+      label: `Pendências (${pendingDivergences})`,
+      icon: <ClipboardCheck size={18} strokeWidth={2} />,
+      onClick: () => navigate(LOGSTOKA_ROUTES.CONFERENCE_PENDING),
+      hidden: pendingDivergences <= 0,
+    },
+    {
+      key: 'print',
+      label: 'Imprimir lista',
+      icon: <Printer size={18} strokeWidth={2} />,
+      onClick: () => toast('Imprimir inventário ativo'),
+      separatorBefore: true,
+    },
+    {
+      key: 'export',
+      label: 'Exportar CSV',
+      icon: <Download size={18} strokeWidth={2} />,
+      onClick: () => toast('Exportação CSV do inventário'),
+    },
+    {
+      key: 'share',
+      label: 'Compartilhar',
+      icon: <Share2 size={18} strokeWidth={2} />,
+      onClick: () => setShareModalOpen(true),
+    },
+  ];
+
+  const warehouseSelect = (
+    <select
+      className="ls-input w-auto min-w-[180px]"
+      value={warehouseId}
+      onChange={(e) => setWarehouseId(e.target.value)}
+      aria-label="Depósito"
+    >
+      <option value="">Depósito</option>
+      {warehouses.map((w) => (
+        <option key={w.id} value={w.id}>
+          {w.name}
+        </option>
+      ))}
+    </select>
+  );
 
   return (
     <div className="space-y-6">
-      <MovementScanSection
-        companyId={companyId}
-        demo={demo}
-        scanMode={scan.scanMode}
-        onScanModeChange={scan.setScanMode}
-        scanValue={scan.scanValue}
-        onScanValueChange={(value) => {
-          scan.setScanValue(value);
-          toast.success(`Código lido: ${value}`);
-        }}
-        onClearScan={scan.clearScan}
-        quantity={scan.quantity}
-        onQuantityChange={scan.setQuantity}
-        resolvedProduct={scan.resolvedProduct}
-        resolving={scan.resolving}
-        interpreting={scan.interpreting}
-        scanInterpretation={scan.scanInterpretation}
-        movementLabel="Inventário"
-        pageTitleIcon={<ClipboardCheck size={20} strokeWidth={2.25} aria-hidden />}
-        headerActions={
-          <div className="flex flex-wrap items-center gap-2">
-            <select className="ls-input w-auto min-w-[180px]" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
-              <option value="">Depósito</option>
-              {warehouses.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
-            <button type="button" className="ls-btn-primary px-3 py-2 text-sm" onClick={() => void startInventory('rotating')}>
-              Rotativo
-            </button>
-            <button type="button" className="ls-btn-secondary px-3 py-2 text-sm" onClick={() => void startInventory('general')}>
-              Geral
-            </button>
-          </div>
+      <LogstokaPageHeader
+        icon={<ClipboardList size={20} strokeWidth={2.25} />}
+        leading={warehouseSelect}
+        title="Inventário"
+        subtitle="Contagem física contínua — conferência por SKU, rua e depósito. Atualização automática ao registrar."
+        actions={
+          <LogstokaIconNav
+            aria-label="Tipo de inventário"
+            variant="inline"
+            items={[
+              {
+                type: 'button',
+                key: 'rotating',
+                label: 'Inventário rotativo',
+                icon: <RotateCw size={18} strokeWidth={2.2} aria-hidden />,
+                onClick: () => void startInventory('rotating'),
+              },
+              {
+                type: 'button',
+                key: 'general',
+                label: 'Inventário geral',
+                icon: <ClipboardList size={18} strokeWidth={2.2} aria-hidden />,
+                onClick: () => void startInventory('general'),
+              },
+            ]}
+          />
         }
-        onRegister={handleRegister}
-        onUseExisting={handleUseExisting}
-        registering={registering}
       />
 
       <LogstokaKpiStrip
         items={[
-          { label: 'Inventários abertos', value: kpis.open },
-          { label: 'Itens no ativo', value: kpis.items },
-          { label: 'Contados', value: kpis.counted },
-          { label: 'Diferenças', value: kpis.diffs },
+          {
+            label: 'Inventários abertos',
+            value: kpis.open,
+            onClick: () => setKpiModal({ label: 'Inventários abertos', value: kpis.open }),
+          },
+          {
+            label: 'Itens no ativo',
+            value: kpis.items,
+            onClick: () => setGuidedOpen(true),
+          },
+          {
+            label: 'Contados',
+            value: kpis.counted,
+            onClick: () => setKpiModal({ label: 'Contados', value: kpis.counted }),
+          },
+          {
+            label: 'Diferenças',
+            value: kpis.diffs,
+            onClick: () => setKpiModal({ label: 'Diferenças', value: kpis.diffs }),
+          },
+          { label: 'Hoje', value: todayLabel },
         ]}
       />
 
       {active ? (
-        <section className="ls-page-table space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+        <section className="ls-entry-card ls-page-table">
+          <div className="ls-entry-card__head pb-2">
             <div>
-              <h3 className="text-[15px] font-black uppercase tracking-widest text-[#828282]">
-                {active.warehouse_name ?? 'Inventário ativo'}
-              </h3>
-              <p className="mt-1 text-sm text-[#a3a3a3]">
+              <h2 className="ls-entry-card__title">{active.warehouse_name ?? 'Inventário ativo'}</h2>
+              <p className="ls-entry-card__desc">
                 {active.inventory_type} · {active.status}
+                {selectedCount > 0 ? ` · ${selectedCount} selecionado(s)` : ''}
               </p>
             </div>
-            {canApprove && active.status === 'review' ? (
-              <button type="button" className="ls-btn-primary" onClick={() => void approve(active.id)}>
-                Aprovar e ajustar estoque
-              </button>
-            ) : null}
+          </div>
+
+          <div className="px-6 py-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+            <div className="flex-1 w-full max-w-2xl">
+              <LogstokaTableFilterBar
+                placeholder="Pesquisar itens do inventário por código ou SKU..."
+                onSearch={(query) => {
+                  toast.success(`Itens do inventário filtrados por: "${query}"`);
+                }}
+              />
+            </div>
+            <div className="shrink-0 flex items-center ml-auto">
+              <LogstokaTableIconToolbar actions={tableToolbarActions} ariaLabel="Ações do inventário" />
+            </div>
           </div>
 
           <div className="ls-table-wrap">
             <table className="ls-table">
               <thead>
                 <tr>
+                  <th className="w-10">
+                    <LogstokaTableCheckbox
+                      checked={isAllSelected}
+                      indeterminate={selectedCount > 0 && !isAllSelected}
+                      onChange={toggleSelectAll}
+                      ariaLabel="Selecionar todos os itens"
+                    />
+                  </th>
                   <th>SKU</th>
                   <th>Produto</th>
+                  <th>Depósito</th>
                   <th>Sistema</th>
                   <th>Contado</th>
                   <th>Diferença</th>
+                  <th aria-label="Ações" />
                 </tr>
               </thead>
               <tbody>
                 {activeItems.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-slate-500">
+                    <td colSpan={8} className="py-6 text-center text-slate-500">
                       Nenhum item neste inventário.
                     </td>
                   </tr>
                 ) : null}
-                {paginatedItems.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.ls_products?.sku}</td>
-                    <td>{item.ls_products?.name}</td>
-                    <td>{item.system_quantity}</td>
-                    <td>{item.counted_quantity ?? '—'}</td>
-                    <td className={Number(item.difference) !== 0 ? 'font-bold text-amber-600' : ''}>
-                      {item.difference ?? '—'}
-                    </td>
-                  </tr>
-                ))}
+                {paginatedItems.map((item) => {
+                  const selected = selectedKeys.has(item.id);
+                  return (
+                    <tr key={item.id} className={selected ? 'ls-table-row--selected' : undefined}>
+                      <td>
+                        <LogstokaTableCheckbox
+                          checked={selected}
+                          onChange={() => toggleSelect(item.id)}
+                          ariaLabel={`Selecionar ${item.ls_products?.sku ?? item.id}`}
+                        />
+                      </td>
+                      <td>{item.ls_products?.sku}</td>
+                      <td>{item.ls_products?.name}</td>
+                      <td>{active.warehouse_name ?? '—'}</td>
+                      <td>{item.system_quantity}</td>
+                      <td>{item.counted_quantity ?? '—'}</td>
+                      <td className={Number(item.difference) !== 0 ? 'font-bold text-amber-600' : ''}>
+                        {item.difference ?? '—'}
+                      </td>
+                      <td>
+                        <LogstokaIconNavButton
+                          title="Conferir item"
+                          accent
+                          onClick={() => setKpiModal({ label: item.ls_products?.sku ?? 'Item', value: item.counted_quantity ?? item.system_quantity })}
+                        >
+                          <ListChecks size={16} strokeWidth={2.2} />
+                        </LogstokaIconNavButton>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -241,7 +405,7 @@ const InventoryPage: React.FC = () => {
       ) : null}
 
       <section className="space-y-2">
-        <h3 className="text-[15px] font-black uppercase tracking-widest text-[#828282]">Histórico</h3>
+        <h3 className="text-[15px] font-black uppercase tracking-widest text-[#828282]">Histórico do dia</h3>
         {inventories.map((inv) => (
           <button
             key={inv.id}
@@ -256,11 +420,53 @@ const InventoryPage: React.FC = () => {
           >
             <span className="font-bold text-[#383838]">{inv.warehouse_name}</span>
             <span className="ml-2 text-xs text-[#828282]">
-              {inv.inventory_type} · {inv.status}
+              {new Date(inv.created_at).toLocaleDateString('pt-BR')} · {inv.inventory_type} · {inv.status}
             </span>
           </button>
         ))}
       </section>
+
+      <InventoryGuidedModal
+        open={guidedOpen}
+        inventory={active ?? null}
+        onClose={() => setGuidedOpen(false)}
+        onConfirmCount={guidedCountItem}
+      />
+
+      <LogstokaKpiAdjustModal
+        open={Boolean(kpiModal)}
+        title="Conferir inventário"
+        label={kpiModal?.label ?? ''}
+        currentValue={kpiModal?.value ?? 0}
+        subtitle="Informe a quantidade contada e marque se confere com o sistema"
+        onClose={() => setKpiModal(null)}
+        onSave={(value, status) => {
+          const item = activeItems.find((i) => i.ls_products?.sku === kpiModal?.label);
+          if (item && demo) updateDemoItemCount(item.id, value);
+          toast.success(
+            status === 'correct'
+              ? `${kpiModal?.label} conferido · ${value} un.`
+              : `${kpiModal?.label} divergente · ${value} un.`,
+          );
+          setKpiModal(null);
+        }}
+      />
+
+      <LogstokaShareModal
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        resourceType="inventory"
+        resourceId={active?.id || 'inv-1'}
+        resourceName={active?.warehouse_name || 'Lista de Inventário'}
+        snapshotData={activeItems.map((item) => ({
+          id: item.id,
+          sku: item.ls_products?.sku,
+          name: item.ls_products?.name,
+          system_quantity: item.system_quantity,
+          counted_quantity: item.counted_quantity,
+          difference: item.difference
+        }))}
+      />
     </div>
   );
 };

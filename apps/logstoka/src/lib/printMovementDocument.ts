@@ -7,6 +7,7 @@ import {
   movementTypeLabel,
   type DemoMovementRow,
 } from '@/lib/logstokaDemoSeed';
+import { openPrintDocument } from '@/lib/openPrintDocument';
 
 export type PrintMovementOptions = {
   companyName?: string;
@@ -370,11 +371,8 @@ function buildPrintHtml(movement: DemoMovementRow, opts: PrintMovementOptions): 
 
 export function printMovementDocument(movement: DemoMovementRow, opts: PrintMovementOptions = {}) {
   const html = buildPrintHtml(movement, opts);
-  const win = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
+  const win = openPrintDocument(html);
   if (!win) {
     throw new Error('Permita pop-ups para imprimir o comprovante');
   }
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
 }

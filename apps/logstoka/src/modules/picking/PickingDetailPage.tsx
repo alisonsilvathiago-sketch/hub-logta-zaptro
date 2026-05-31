@@ -1,17 +1,31 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { PackageCheck, Printer } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { LogstokaDetailPageLayout } from '@/components/layout/LogstokaDetailPageLayout';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import { getDemoPickingByKey } from '@/lib/logstokaDemoSeed';
+import { markPickingSeparated, mergePickingLines } from '@/lib/pickingSession';
 import { MARKETPLACE_LABELS } from '@/types';
 
 const PickingDetailPage: React.FC = () => {
+  const navigate = useNavigate();
   const { key } = useParams<{ key: string }>();
   const { companyId } = useLogstokaTenant();
   const row = key && isLogstokaDemoCompany(companyId) ? getDemoPickingByKey(key) : null;
+
+  const confirmSeparation = () => {
+    if (!companyId || !row) return;
+    const [line] = mergePickingLines(companyId, [row]);
+    if (line.status === 'conferenced') {
+      toast.error('Item já conferido');
+      return;
+    }
+    markPickingSeparated(companyId, line);
+    toast.success('Separado — incluído na conferência diária');
+    navigate('/app/picking');
+  };
 
   if (!row) {
     return (
@@ -33,9 +47,9 @@ const PickingDetailPage: React.FC = () => {
             <Printer size={16} />
             Imprimir picking list
           </button>
-          <button type="button" className="ls-btn-primary" onClick={() => toast.success('[Demo] Separação confirmada — baixa no estoque')}>
+          <button type="button" className="ls-btn-primary" onClick={confirmSeparation}>
             <PackageCheck size={16} />
-            Confirmar separação / baixa
+            Confirmar separação
           </button>
         </>
       }

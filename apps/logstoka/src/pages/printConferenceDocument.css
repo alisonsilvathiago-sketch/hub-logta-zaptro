@@ -1,0 +1,44 @@
+.ls-print-doc-missing,
+.ls-print-doc-loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  text-align: center;
+  background: #f9fafb;
+  color: #374151;
+}
+
+.ls-print-doc-missing h1 {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #111827;
+}
+
+.ls-print-doc-missing p {
+  max-width: 28rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.ls-print-doc-missing a {
+  margin-top: 8px;
+  padding: 0.625rem 1rem;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.ls-print-doc-loading p {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #6b7280;
+}

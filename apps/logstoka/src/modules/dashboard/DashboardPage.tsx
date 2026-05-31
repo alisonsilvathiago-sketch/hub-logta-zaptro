@@ -60,16 +60,10 @@ const DashboardPage: React.FC = () => {
 
   return (
     <LogstokaStandardPageLayout
-      title={
-        <>
-          Olá, {firstName}{' '}
-          <span className="inline-block translate-y-px" aria-hidden>
-            👋
-          </span>
-        </>
-      }
+      title="Dashboard operacional"
+      subtitle={`Olá, ${firstName} — visão completa do WMS, canais e estoque.`}
       titleClassName="ls-dashboard-greeting-title text-[34px] leading-tight"
-      headerClassName="py-5"
+      headerClassName="py-2"
       headerBelow={<DashboardAlertCarousel alerts={alerts} />}
       headerAction={
         <LogstokaMovementShortcuts onRefresh={() => void reload()} refreshing={loading} />
@@ -83,9 +77,9 @@ const DashboardPage: React.FC = () => {
       mainContentTitle="Estoque"
       belowGrid={
         <>
+          <DashboardActivityTable companyId={companyId} />
           <DashboardMarketplaceSales />
           <DashboardHealthCharts summary={summary} loading={loading} stale={stale} />
-          <DashboardActivityTable companyId={companyId} />
         </>
       }
       sidePanel={<DashboardStockPanel summary={summary} loading={loading} />}
@@ -94,17 +88,17 @@ const DashboardPage: React.FC = () => {
       <div className="grid gap-4 sm:grid-cols-2">
         <Link
           to={LOGSTOKA_ROUTES.PRODUCTS}
-          className="group relative block overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 transition-shadow hover:shadow-md"
+          className="group relative block overflow-hidden rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-5 transition-shadow hover:shadow-md"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-emerald-700/80">Quantidade total</p>
+              <p className="text-[11px] font-black uppercase tracking-widest text-orange-700/80">Quantidade total</p>
               <p className="ls-dashboard-stat-value">
                 {loading ? '…' : summary.stock.totalQuantity.toLocaleString('pt-BR')}
               </p>
-              <p className="mt-1 text-xs font-medium text-emerald-800/70">unidades em todos os depósitos</p>
+              <p className="mt-1 text-xs font-medium text-orange-800/70">unidades em todos os depósitos</p>
             </div>
-            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 transition-colors group-hover:bg-emerald-200">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-orange-700 transition-colors group-hover:bg-orange-200">
               <Boxes size={22} strokeWidth={2.2} />
             </span>
           </div>

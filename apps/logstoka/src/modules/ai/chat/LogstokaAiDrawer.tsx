@@ -12,6 +12,7 @@ import {
   buildAiWelcomeMessage,
   type AiChatTurn,
 } from '../types';
+import { formatLogstokaApiError } from '@/lib/logstokaApiBase';
 import { useAiChat } from './useAiChat';
 import { useAiHealth } from './useAiHealth';
 
@@ -113,10 +114,7 @@ const LogstokaAiDrawer: React.FC<Props> = ({
         {
           id: newId(),
           role: 'assistant',
-          content:
-            err instanceof Error
-              ? err.message
-              : 'Motor Llama 3.2 temporariamente indisponível. A reconexão é automática — tente novamente em instantes.',
+          content: formatLogstokaApiError(err),
         },
       ]);
     }

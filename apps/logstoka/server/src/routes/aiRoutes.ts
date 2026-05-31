@@ -9,11 +9,12 @@ import { interpretIntelligentScan } from '../modules/ai/intelligentScanService.j
 import { pingOllama } from '../modules/ai/ollamaService.js';
 import { parseExcelBuffer, parsePdfBuffer, extractRowsWithOllama } from '../services/ocrImportService.js';
 import { parseReportCsv } from '../services/importParser.js';
+import { isDemoCompany } from '../lib/demoAuth.js';
 
 export function registerAiRoutes(app: Express, cfg: LogstokaConfig) {
   const auth = requireAuth(cfg);
 
-  app.get('/v1/ai/health', auth, async (_req, res) => {
+  app.get('/v1/ai/health', async (_req, res) => {
     const status = await pingOllama();
     res.json({ ollama: status });
   });
@@ -30,13 +31,17 @@ export function registerAiRoutes(app: Express, cfg: LogstokaConfig) {
   });
 
   app.post('/v1/ai/chat', auth, async (req: AuthedRequest, res) => {
-    const admin = getSupabaseAdmin(cfg);
-    if (!admin || !req.auth?.companyId) return res.status(503).json({ error: 'Service unavailable' });
+    if (!req.auth?.companyId) return res.status(503).json({ error: 'Service unavailable' });
 
     const { message, history, screen, user_name, company_name } = req.body ?? {};
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: 'message is required' });
     }
+
+    const admin = getSupabaseAdmin(cfg);
+    const demo = isDemoCompany(req.auth.companyId);
+
+    if (!admin && !demo) return res.status(503).json({ error: 'Service unavailable' });
 
     try {
       const result = await runOperationalChat(cfg, admin, req.auth.companyId, {

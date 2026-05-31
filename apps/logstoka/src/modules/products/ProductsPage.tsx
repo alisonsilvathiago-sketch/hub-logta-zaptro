@@ -1,7 +1,7 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
-import { Link } from 'react-router-dom';
-import { ArrowUpRight, DollarSign, Package, Share2, Edit3, Eye, ImagePlus, Plus, Search } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowUpRight, DollarSign, Package, Share2, Edit3, Eye, ImagePlus, Plus } from 'lucide-react';
+import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
 import { toast } from 'react-hot-toast';
 import { useProducts } from '@/hooks/useLogstokaData';
 import { useCategories } from '@/hooks/useCatalog';
@@ -13,10 +13,16 @@ import { can } from '@/lib/permissions';
 import { useAuth } from '@/context/LogstokaAuthProvider';
 import Modal from '@/components/ui/Modal';
 import LogstokaAddIconButton from '@/components/ui/LogstokaAddIconButton';
+import LogstokaScanIconButton from '@/components/ui/LogstokaScanIconButton';
 import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
 import ClickableTableRow, { stopRowNavigate } from '@/components/ui/ClickableTableRow';
 import ProductThumb from '@/components/products/ProductThumb';
 import ProductsImportExportBar from '@/components/products/ProductsImportExportBar';
+import ProductRowActions from '@/components/products/ProductRowActions';
+import LogstokaTableFilterBar from '@/components/ui/LogstokaTableFilterBar';
+import { showLogstokaBanner } from '@/lib/logstokaBanner';
+import LogstokaShareModal from '@/components/sharing/LogstokaShareModal';
+import ProductsScanModal from '@/modules/products/ProductsScanModal';
 import ProductsKpiStrip from '@/components/products/ProductsKpiStrip';
 import { getDemoProductsCatalogKpis, getDemoStockQty } from '@/lib/logstokaDemoSeed';
 import {
@@ -33,6 +39,8 @@ import {
   validateProductForPublication,
 } from '@/lib/productPublication';
 import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
+import '@/modules/products/productAddWizard.css';
+import { useMarketplaceModule } from '@/hooks/useMarketplaceModule';
 import type { LsProduct, ProductPublicationStatus } from '@/types';
 
 function productToForm(p: LsProduct): UniversalProductFields {
@@ -65,8 +73,10 @@ function productToForm(p: LsProduct): UniversalProductFields {
 }
 
 const ProductsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const { companyId } = useLogstokaTenant();
+  const { isActive: marketplaceActive } = useMarketplaceModule();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
@@ -74,6 +84,9 @@ const ProductsPage: React.FC = () => {
   const { categories } = useCategories();
   const canWrite = can('products.write', profile?.role);
   const [modalOpen, setModalOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<LsProduct | null>(null);
   const [form, setForm] = useState<UniversalProductFields>(emptyUniversalProductForm());
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -81,6 +94,11 @@ const ProductsPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isDemo = isLogstokaDemoCompany(companyId);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => reload(), 60_000);
+    return () => window.clearInterval(timer);
+  }, [reload]);
 
   const fmtQty = (n: number) => n.toLocaleString('pt-BR');
   const fmtBrl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
@@ -149,12 +167,94 @@ const ProductsPage: React.FC = () => {
 
   const categoryName = (id?: string | null) => categories.find((c) => c.id === id)?.name ?? '—';
 
+  const applyScanFilter = (query: string) => {
+    setSearch(query.trim());
+    setPage(1);
+  };
+
   const openCreate = () => {
-    setEditing(null);
-    setForm(emptyUniversalProductForm());
-    setImageFile(null);
-    setImagePreview(null);
-    setModalOpen(true);
+    navigate(LOGSTOKA_ROUTES.PRODUCT_ADD);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === products.length) {
+      setSelectedIds(new Set());
+      return;
+    }
+    setSelectedIds(new Set(products.map((p) => p.id)));
+  };
+
+  const selectedProducts = products.filter((p) => selectedIds.has(p.id));
+
+  const handleBulkDelete = () => {
+    if (selectedProducts.length === 0) return;
+    if (isDemo) {
+      toast.success(`[Demo] ${selectedProducts.length} produto(s) marcado(s) para exclusão`);
+      setSelectedIds(new Set());
+      return;
+    }
+    toast('Exclusão em lote em breve — selecione produtos individualmente por enquanto');
+  };
+
+  const handleBulkShare = () => {
+    if (selectedProducts.length === 0) return;
+    const text = selectedProducts.map((p) => `${p.sku} · ${p.name}`).join('\n');
+    void navigator.clipboard.writeText(text).then(() => {
+      toast.success(`${selectedProducts.length} produto(s) copiado(s)`);
+    });
+  };
+
+  const handleSingleDelete = async (p: LsProduct) => {
+    const ok = window.confirm(`Excluir o produto "${p.name}"?`);
+    if (!ok) return;
+    if (isDemo) {
+      toast.success(`[Demo] Produto "${p.sku}" excluído`);
+      return;
+    }
+    try {
+      const { error } = await supabase.from('ls_products').delete().eq('id', p.id);
+      if (error) throw error;
+      toast.success('Produto excluído');
+      reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir');
+    }
+  };
+
+  const handleDuplicateProduct = async (p: LsProduct) => {
+    if (isDemo) {
+      toast.success(`[Demo] Produto "${p.sku}" duplicado como rascunho`);
+      return;
+    }
+    try {
+      const { data: current } = await supabase.from('ls_products').select('*').eq('id', p.id).single();
+      if (!current) throw new Error('Produto original não encontrado');
+      
+      const copy = {
+        ...current,
+        id: undefined,
+        sku: `${current.sku}-CÓPIA`,
+        name: `${current.name} (Cópia)`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      const { error } = await supabase.from('ls_products').insert(copy);
+      if (error) throw error;
+      toast.success('Produto duplicado');
+      reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao duplicar');
+    }
   };
 
   const openEdit = (p: LsProduct) => {
@@ -187,9 +287,12 @@ const ProductsPage: React.FC = () => {
     setSaving(true);
     try {
       if (isDemo) {
-        toast.success(
-          `[Demo] Produto ${editing ? 'atualizado' : 'criado'} em rascunho — use Publicação para enviar às lojas`,
-        );
+        showLogstokaBanner({
+          type: 'success',
+          title: 'Produto salvo',
+          description: 'Para permitir a navegação nos próximos passos, salvamos o seu produto.',
+          actionPath: editing ? `/app/products/${editing.id}` : undefined,
+        });
         setModalOpen(false);
         return;
       }
@@ -231,11 +334,20 @@ const ProductsPage: React.FC = () => {
       if (editing) {
         const { error } = await supabase.from('ls_products').update(payload).eq('id', editing.id);
         if (error) throw error;
-        toast.success('Produto atualizado');
+        showLogstokaBanner({
+          type: 'success',
+          title: 'Produto salvo',
+          description: 'Para permitir a navegação nos próximos passos, salvamos o seu produto.',
+          actionPath: `/app/products/${editing.id}`,
+        });
       } else {
         const { error } = await supabase.from('ls_products').insert(payload);
         if (error) throw error;
-        toast.success('Produto criado');
+        showLogstokaBanner({
+          type: 'success',
+          title: 'Produto salvo',
+          description: 'Para permitir a navegação nos próximos passos, salvamos o seu produto.',
+        });
       }
       setModalOpen(false);
       reload();
@@ -259,39 +371,42 @@ const ProductsPage: React.FC = () => {
 
   return (
     <div className="ls-products-page space-y-6">
-      <div className="ls-products-page-inset flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Produtos</h2>
-          <p className="text-sm text-[#a3a3a3]">
-            Cadastro em rascunho por padrão — publique depois em{' '}
-            <Link to={LOGSTOKA_ROUTES.PRODUCT_PUBLICATION} className="font-semibold text-orange-700 hover:underline">
-              Publicação
-            </Link>
-          </p>
-        </div>
-        {canWrite ? <LogstokaAddIconButton title="Novo produto" onClick={openCreate} /> : null}
-      </div>
+      <LogstokaPageHeader
+        className="ls-products-page-inset"
+        icon={<Package size={20} strokeWidth={2.25} />}
+        title="Estoques"
+        actions={
+          <div className="flex items-center gap-2">
+            <LogstokaScanIconButton title="Buscar produto por scanner" onClick={() => setScanOpen(true)} />
+            {canWrite ? <LogstokaAddIconButton title="Novo produto" onClick={openCreate} /> : null}
+          </div>
+        }
+      />
 
       <ProductsKpiStrip items={productKpis} />
 
-      <div className="ls-products-page-inset flex flex-wrap items-center justify-between gap-3">
-        <div className="relative min-w-[220px] flex-1 max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            className="ls-input pl-9"
-            placeholder="Buscar SKU, nome ou código de barras"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-          />
-        </div>
+      <div className="ls-products-page-inset">
         <ProductsImportExportBar
           companyId={companyId}
           categoryName={categoryName}
           canWrite={canWrite}
+          productsOnPage={products}
+          selectedProducts={selectedProducts}
+          totalCount={total}
+          loading={loading}
+          onDeleteSelected={handleBulkDelete}
+          onShareSelected={() => setShareModalOpen(true)}
           onImported={() => reload()}
+          onRefresh={() => reload()}
+          leftElement={
+            <LogstokaTableFilterBar
+              placeholder="Pesquisar catálogo por código, SKU ou GTIN..."
+              onSearch={(query) => {
+                setSearch(query);
+                setPage(1);
+              }}
+            />
+          }
         />
       </div>
 
@@ -300,6 +415,14 @@ const ProductsPage: React.FC = () => {
         <table className="ls-table">
           <thead>
             <tr>
+              <th className="ls-table-select-cell" aria-label="Selecionar">
+                <input
+                  type="checkbox"
+                  checked={products.length > 0 && selectedIds.size === products.length}
+                  onChange={toggleSelectAll}
+                  aria-label="Selecionar todos"
+                />
+              </th>
               <th>SKU</th>
               <th className="ls-hide-mobile">EAN</th>
               <th>Produto</th>
@@ -315,16 +438,24 @@ const ProductsPage: React.FC = () => {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={10} className="py-8 text-center text-slate-500">Carregando…</td>
+                <td colSpan={11} className="py-8 text-center text-slate-500">Carregando…</td>
               </tr>
             )}
             {!loading && products.length === 0 && (
               <tr>
-                <td colSpan={10} className="py-8 text-center text-slate-500">Nenhum produto cadastrado.</td>
+                <td colSpan={11} className="py-8 text-center text-slate-500">Nenhum produto cadastrado.</td>
               </tr>
             )}
             {products.map((p) => (
               <ClickableTableRow key={p.id} to={`/app/products/${p.id}`}>
+                <td className="ls-table-select-cell" onClick={stopRowNavigate}>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(p.id)}
+                    onChange={() => toggleSelect(p.id)}
+                    aria-label={`Selecionar ${p.name}`}
+                  />
+                </td>
                 <td>
                   <span className="ls-product-cell">
                     <ProductThumb src={p.main_image_url} name={p.name} size={28} />
@@ -351,17 +482,16 @@ const ProductsPage: React.FC = () => {
                     {p.status === 'active' ? 'Ativo' : 'Inativo'}
                   </span>
                 </td>
-                <td onClick={stopRowNavigate}>
-                  <div className="flex gap-2">
-                    <Link to={`/app/products/${p.id}`} className="ls-btn-secondary px-2 py-1">
-                      <Eye size={14} />
-                    </Link>
-                    {canWrite && (
-                      <button type="button" className="ls-btn-secondary px-2 py-1" onClick={() => openEdit(p)}>
-                        <Edit3 size={14} />
-                      </button>
-                    )}
-                  </div>
+                <td className="ls-table-actions-cell" onClick={stopRowNavigate}>
+                  <ProductRowActions
+                    productId={p.id}
+                    sku={p.sku}
+                    name={p.name}
+                    onEdit={() => openEdit(p)}
+                    onDuplicate={() => void handleDuplicateProduct(p)}
+                    onDelete={() => void handleSingleDelete(p)}
+                    canWrite={canWrite}
+                  />
                 </td>
               </ClickableTableRow>
             ))}
@@ -387,9 +517,9 @@ const ProductsPage: React.FC = () => {
       <Modal
         open={modalOpen}
         size="landscape"
-        title={editing ? 'Editar produto' : 'Novo produto'}
+        title="Editar produto"
         subtitle="Salva em rascunho — nada é enviado aos marketplaces até você publicar"
-        icon={editing ? <Edit3 size={20} strokeWidth={2.25} /> : <Package size={20} strokeWidth={2.25} />}
+        icon={<Edit3 size={20} strokeWidth={2.25} />}
         onClose={() => setModalOpen(false)}
         footer={modalFooter}
       >
@@ -457,11 +587,24 @@ const ProductsPage: React.FC = () => {
             </div>
 
             <p className="mt-3 rounded-xl bg-orange-50/80 px-3 py-2 text-xs font-semibold text-orange-900">
-              Não publica automaticamente. Use{' '}
-              <Link to={LOGSTOKA_ROUTES.PRODUCT_PUBLICATION} className="underline">
-                Central de Publicação
-              </Link>{' '}
-              quando estiver pronto.
+              Não publica automaticamente.{' '}
+              {marketplaceActive ? (
+                <>
+                  Use{' '}
+                  <Link to={LOGSTOKA_ROUTES.PRODUCT_PUBLICATION} className="underline">
+                    Central de Publicação
+                  </Link>{' '}
+                  quando estiver pronto.
+                </>
+              ) : (
+                <>
+                  Ative o módulo em{' '}
+                  <Link to={LOGSTOKA_ROUTES.MARKETPLACE_HUB} className="underline">
+                    Marketplace
+                  </Link>{' '}
+                  para publicar nas lojas.
+                </>
+              )}
             </p>
 
             {form.sku ? <span className="ls-product-modal__sku-chip">SKU · {form.sku}</span> : null}
@@ -605,6 +748,32 @@ const ProductsPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      <ProductsScanModal
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onFilterProduct={applyScanFilter}
+      />
+
+      <LogstokaShareModal
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        resourceType="general_table"
+        resourceId="products-list"
+        resourceName="Lista Geral de Produtos e Estoques"
+        snapshotData={products.map((p) => ({
+          id: p.id,
+          sku: p.sku,
+          barcode: p.barcode,
+          name: p.name,
+          category: categoryName(p.category_id),
+          cost: p.cost,
+          sale_price: p.sale_price,
+          unit: p.unit,
+          publication_status: p.publication_status,
+          stockTotal: isDemo ? getDemoStockQty(p.id) : 840
+        }))}
+      />
     </div>
   );
 };

@@ -13,7 +13,7 @@ type Props = {
   id?: string;
   className?: string;
   showMarketplaceBadge?: boolean;
-  layout?: 'grid' | 'carousel';
+  layout?: 'grid' | 'carousel' | 'responsive';
   carouselVisibleCount?: number;
 };
 
@@ -79,6 +79,23 @@ function SaleCard({
   );
 }
 
+function useIsMobile(breakpoint = 767): boolean {
+  const query = `(max-width: ${breakpoint}px)`;
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(query).matches : false,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, [query]);
+
+  return isMobile;
+}
+
 function useCarouselVisibleCount(defaultCount: number): number {
   const [count, setCount] = useState(defaultCount);
 
@@ -108,11 +125,14 @@ const MarketplaceSalesSection: React.FC<Props> = ({
   id,
   className = '',
   showMarketplaceBadge = true,
-  layout = 'grid',
+  layout = 'responsive',
   carouselVisibleCount = 4,
 }) => {
+  const isMobile = useIsMobile();
+  const effectiveLayout =
+    layout === 'responsive' ? (isMobile ? 'mobile-carousel' : 'grid') : layout;
   const responsiveVisibleCount = useCarouselVisibleCount(carouselVisibleCount);
-  const visibleCount = layout === 'carousel' ? responsiveVisibleCount : carouselVisibleCount;
+  const visibleCount = effectiveLayout === 'carousel' ? responsiveVisibleCount : carouselVisibleCount;
   const pendingCount = orders.filter((o) => o.status === 'pending_baixa').length;
   const firstPending = orders.findIndex((o) => o.status === 'pending_baixa');
   const [index, setIndex] = useState(firstPending >= 0 ? firstPending : 0);
@@ -150,7 +170,7 @@ const MarketplaceSalesSection: React.FC<Props> = ({
         ) : null}
       </div>
 
-      {layout === 'carousel' && visibleOrders.length > 0 ? (
+      {effectiveLayout === 'carousel' && visibleOrders.length > 0 ? (
         <div className="ls-dashboard-sales-carousel">
           {hasMany ? (
             <button type="button" className="ls-dashboard-sales-carousel__nav" onClick={prev} aria-label="Vendas anteriores">
@@ -184,6 +204,25 @@ const MarketplaceSalesSection: React.FC<Props> = ({
             <button type="button" className="ls-dashboard-sales-carousel__nav" onClick={next} aria-label="Próximas vendas">
               <ChevronRight size={18} strokeWidth={2.2} />
             </button>
+          ) : null}
+        </div>
+      ) : effectiveLayout === 'mobile-carousel' ? (
+        <div className="ls-hub-sales-mobile-carousel" aria-roledescription="carrossel">
+          <div className="ls-hub-sales-mobile-carousel__track">
+            {orders.map((item) => (
+              <SaleCard
+                key={item.id}
+                order={item}
+                onBaixa={onBaixa}
+                showMarketplaceBadge={showMarketplaceBadge}
+                carousel
+              />
+            ))}
+          </div>
+          {orders.length > 1 ? (
+            <p className="ls-hub-sales-mobile-carousel__hint">
+              Deslize para ver {orders.length} vendas
+            </p>
           ) : null}
         </div>
       ) : (

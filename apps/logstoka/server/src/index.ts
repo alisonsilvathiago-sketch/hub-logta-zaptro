@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { loadConfig } from './config.js';
 import { globalRateLimit } from './middleware/rateLimit.js';
+import { pingOllama } from './modules/ai/ollamaService.js';
 import { registerApiV1Routes } from './routes/apiV1Routes.js';
 import { registerWebhookRoutes } from './routes/webhookRoutes.js';
 import { registerIntegrationRoutes } from './routes/integrationRoutes.js';
@@ -25,12 +26,14 @@ async function main() {
     });
   });
 
-  app.get('/health', (_req, res) => {
+  app.get('/health', async (_req, res) => {
+    const ollama = await pingOllama();
     res.json({
       status: 'ok',
       timestamp: new Date().toISOString(),
       supabase: Boolean(cfg.supabaseUrl && cfg.supabaseServiceRoleKey),
       queue: cfg.redisUrl ? 'redis' : 'memory',
+      ollama,
     });
   });
 

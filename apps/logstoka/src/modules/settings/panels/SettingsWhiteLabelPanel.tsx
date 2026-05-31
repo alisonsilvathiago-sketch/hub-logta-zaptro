@@ -5,7 +5,15 @@ import { useLogstokaBranding } from '@/context/LogstokaBrandingContext';
 import { DEFAULT_BRAND_PRIMARY, isDefaultBranding } from '@/lib/logstokaBranding';
 
 const SettingsWhiteLabelPanel: React.FC = () => {
-  const { branding, setPrimaryColor, setLogoUrl, resetBranding } = useLogstokaBranding();
+  const {
+    branding,
+    setPrimaryColor,
+    setLogoUrl,
+    setCompanyName,
+    setCompanyAddress,
+    setCompanyContact,
+    resetBranding,
+  } = useLogstokaBranding();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const onLogoPick = (file: File | undefined) => {
@@ -68,6 +76,39 @@ const SettingsWhiteLabelPanel: React.FC = () => {
           </div>
 
           <div>
+            <label className="ls-label">Nome da empresa (header e documentos)</label>
+            <input
+              type="text"
+              className="ls-input mt-2"
+              value={branding.companyName ?? ''}
+              onChange={(e) => setCompanyName(e.target.value.trim() || null)}
+              placeholder="Ex.: Pluma Baby Distribuidora"
+            />
+          </div>
+
+          <div>
+            <label className="ls-label">Endereço (rodapé dos documentos A4)</label>
+            <input
+              type="text"
+              className="ls-input mt-2"
+              value={branding.companyAddress ?? ''}
+              onChange={(e) => setCompanyAddress(e.target.value.trim() || null)}
+              placeholder="Rua, número · Cidade · UF · CEP"
+            />
+          </div>
+
+          <div>
+            <label className="ls-label">Contato (rodapé dos documentos)</label>
+            <input
+              type="text"
+              className="ls-input mt-2"
+              value={branding.companyContact ?? ''}
+              onChange={(e) => setCompanyContact(e.target.value.trim() || null)}
+              placeholder="telefone · e-mail · site"
+            />
+          </div>
+
+          <div>
             <label className="ls-label flex items-center gap-2">
               <ImagePlus size={14} />
               Logomarca da empresa
@@ -99,7 +140,7 @@ const SettingsWhiteLabelPanel: React.FC = () => {
               />
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              Aparece no menu lateral, topbar e áreas de marca do app autenticado.
+              Aparece no menu lateral, topbar, documentos de conferência A4 e comprovantes impressos.
             </p>
           </div>
 
@@ -120,7 +161,7 @@ const SettingsWhiteLabelPanel: React.FC = () => {
               ) : (
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-900 text-xs font-bold text-white">LS</div>
               )}
-              <span className="font-black text-gray-900">Sua empresa WMS</span>
+              <span className="font-black text-gray-900">{branding.companyName || 'Sua empresa WMS'}</span>
             </div>
             <button type="button" className="ls-btn-primary w-full">Botão primário</button>
             <span className="ls-badge inline-flex bg-[var(--ls-brand-soft)] text-[var(--ls-brand-dark)]">

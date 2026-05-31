@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { BarChart3, TrendingUp } from 'lucide-react';
 import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
+import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
 import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
@@ -83,21 +84,19 @@ const ReportsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="ls-movement-scan__page-header !border-0 !px-0 !pb-0">
-        <h2 className="ls-movement-scan__page-title">
-          <span className="ls-movement-scan__page-title-icon">
-            <BarChart3 size={20} strokeWidth={2.25} aria-hidden />
-          </span>
-          Relatórios
-        </h2>
-        <div className="ls-movement-scan__page-actions">
+      <LogstokaPageHeader
+        eyebrow="Análises"
+        icon={<BarChart3 size={20} strokeWidth={2.25} />}
+        title="Relatórios"
+        subtitle="Entradas, saídas por canal e curva ABC de produtos no período selecionado."
+        actions={
           <select className="ls-input w-auto min-w-[140px]" value={period} onChange={(e) => setPeriod(Number(e.target.value))}>
             <option value={7}>7 dias</option>
             <option value={30}>30 dias</option>
             <option value={90}>90 dias</option>
           </select>
-        </div>
-      </div>
+        }
+      />
 
       <LogstokaKpiStrip
         items={[

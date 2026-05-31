@@ -26,7 +26,8 @@ const LogstokaTopbarNotify: React.FC = () => {
       <button
         type="button"
         className={`lsdash-icon-btn lsdash-icon-btn--notify${open ? ' active' : ''}`}
-        title="Reposição e alertas"
+        title="Notificações e reposição"
+        aria-label="Notificações e reposição"
         aria-haspopup="true"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}

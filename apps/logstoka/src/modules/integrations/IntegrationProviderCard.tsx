@@ -1,7 +1,11 @@
 import React from 'react';
-import { Link2, RefreshCw, Settings, Unplug } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ExternalLink, Link2, RefreshCw, Settings, Unplug } from 'lucide-react';
+import IntegrationBrandLogo from '@/components/integrations/IntegrationBrandLogo';
 import type { IntegrationConnection } from '@/lib/integrationConnections';
 import type { IntegrationProvider } from '@/lib/integrationsCatalog';
+import { getIntegrationBrandHubPath } from '@/lib/integrationBrandAssets';
+import { MARKETPLACE_HUB_SLUGS, marketplaceHubPath } from '@/lib/marketplaceHub';
 
 type Props = {
   provider: IntegrationProvider;
@@ -23,24 +27,43 @@ const IntegrationProviderCard: React.FC<Props> = ({
   connecting,
 }) => {
   const connected = connection.connected;
+  const marketplace = provider.marketplaceSlug
+    ? MARKETPLACE_HUB_SLUGS[provider.marketplaceSlug]
+    : undefined;
+  const hubPath = marketplace
+    ? marketplaceHubPath(marketplace)
+    : getIntegrationBrandHubPath(provider.id);
 
   return (
     <div className="ls-int-card">
       <div className="flex items-start gap-3">
-        <div
-          className="ls-int-card__logo"
-          style={{ background: `#${provider.logoColor}` }}
-          aria-hidden
-        >
-          {provider.name.slice(0, 2).toUpperCase()}
+        <div className="ls-int-card__logo" aria-hidden>
+          <IntegrationBrandLogo
+            brandKey={provider.id}
+            size={48}
+            linkToHub={Boolean(marketplace)}
+            fallbackColor={provider.logoColor}
+          />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-black text-[#404040]">{provider.name}</p>
+          {marketplace && hubPath ? (
+            <Link to={hubPath} className="font-black text-[#404040] hover:text-orange-700">
+              {provider.name}
+            </Link>
+          ) : (
+            <p className="font-black text-[#404040]">{provider.name}</p>
+          )}
           <p className="mt-0.5 text-xs font-medium text-[#a3a3a3]">{provider.description}</p>
           <p className={`ls-int-card__status mt-2 ${connected ? 'text-green-800' : 'text-[#a3a3a3]'}`}>
             <span className={`ls-int-card__status-dot ${connected ? 'ls-int-card__status-dot--on' : 'ls-int-card__status-dot--off'}`} />
             {connected ? 'Conectado' : 'Não conectado'}
           </p>
+          {marketplace && hubPath && (
+            <Link to={hubPath} className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-orange-700 hover:underline">
+              Abrir canal
+              <ExternalLink size={12} />
+            </Link>
+          )}
         </div>
       </div>
 

@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { FileUp, ScanText, History } from 'lucide-react';
+import { Download, FileUp, History, Printer, RefreshCw, ScanText, Share2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
 import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
+import LogstokaTableIconToolbar from '@/components/ui/LogstokaTableIconToolbar';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import { DEMO_IMPORTS } from '@/lib/logstokaDemoSeed';
@@ -138,14 +140,11 @@ const ImportsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="ls-movement-scan__page-header !border-0 !px-0 !pb-0">
-        <h2 className="ls-movement-scan__page-title">
-          <span className="ls-movement-scan__page-title-icon">
-            <FileUp size={20} strokeWidth={2.25} aria-hidden />
-          </span>
-          Centro de Importação
-        </h2>
-      </div>
+      <LogstokaPageHeader
+        icon={<FileUp size={20} strokeWidth={2.25} />}
+        title="Centro de Importação"
+        subtitle="NF-e, planilhas e OCR — entradas e saídas em lote"
+      />
 
       <LogstokaKpiStrip
         items={[
@@ -206,10 +205,49 @@ const ImportsPage: React.FC = () => {
         </div>
       </div>
 
-      <section className="ls-page-table">
-        <div className="mb-4 flex items-center gap-2 px-1 font-black text-[#383838]">
-          <History size={18} />
-          Histórico de importações
+      <section className="ls-entry-card ls-page-table">
+        <div className="ls-entry-card__head">
+          <div className="mb-0 flex items-center gap-2 font-black text-[#383838]">
+            <History size={18} />
+            Histórico de importações
+          </div>
+          <LogstokaTableIconToolbar
+            ariaLabel="Ações do histórico"
+            actions={[
+              {
+                key: 'refresh',
+                label: 'Atualizar histórico',
+                icon: <RefreshCw size={18} strokeWidth={2} className={loading ? 'animate-spin' : undefined} />,
+                onClick: () => void loadImports(),
+              },
+              {
+                key: 'upload',
+                label: 'Novo upload',
+                icon: <FileUp size={18} strokeWidth={2} />,
+                onClick: () => inputRef.current?.click(),
+                accent: true,
+              },
+              {
+                key: 'print',
+                label: 'Imprimir histórico',
+                icon: <Printer size={18} strokeWidth={2} />,
+                onClick: () => toast('Imprimir histórico de importações'),
+                separatorBefore: true,
+              },
+              {
+                key: 'export',
+                label: 'Exportar CSV',
+                icon: <Download size={18} strokeWidth={2} />,
+                onClick: () => toast('Exportar histórico CSV'),
+              },
+              {
+                key: 'share',
+                label: 'Compartilhar',
+                icon: <Share2 size={18} strokeWidth={2} />,
+                onClick: () => toast('Lista copiada'),
+              },
+            ]}
+          />
         </div>
         <div className="ls-table-wrap">
           <table className="ls-table">

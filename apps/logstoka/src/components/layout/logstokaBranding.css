@@ -128,3 +128,7 @@
   object-fit: contain;
   border-radius: 8px;
 }
+
+.logstoka-app-shell .lsdash-topbar-brand-logo-img {
+  max-width: 120px;
+}

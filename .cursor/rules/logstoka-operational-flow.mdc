@@ -1,0 +1,38 @@
+---
+description: Fluxo operacional LogStoka — marketplaces, estoque, expedição, calendário semanal
+globs:
+  - apps/logstoka/**/*
+alwaysApply: false
+---
+
+# Fluxo operacional LogStoka
+
+Construir features alinhadas ao **fluxo real do cliente**, não ERP genérico.
+
+## Pipeline
+
+Relatório → Separação → Conferência → Expedição → Transportadora
+
+## Calendário de saídas
+
+- **Segunda**: vendas sexta + sábado → expedir marketplaces
+- **Terça**: domingo + parte segunda (meta envio terça ~15h)
+- **Quarta**: terça + parte quarta
+- **Quinta**: pendências / atrasos
+- **Sexta**: operação até ~17:48; vendas pós-corte → fila segunda
+- **Sábado**: acumula para segunda
+
+## Entrada de dados
+
+Deve funcionar **com API e sem API**: webhook, Excel, CSV, PDF, foto (OCR/IA).
+
+## Perfis tenant
+
+- `stock` — só operação WMS
+- `full` — estoque + integrações marketplaces/ERP
+
+## UI operacional
+
+Painel de Trabalho (`/app/operacao`) é a tela principal do operador: o que separar, conferir, expedir, atrasado e não enviado.
+
+Referência: `apps/logstoka/LOGSTOKA_OPERATIONAL_FLOW.md`

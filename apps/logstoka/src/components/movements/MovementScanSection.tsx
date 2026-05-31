@@ -35,11 +35,15 @@ type Props = {
   movementLabel: string;
   pageTitleIcon?: React.ReactNode;
   headerActions?: React.ReactNode;
+  suppressPageHeader?: boolean;
   onRegister: () => void;
   onUseExisting: (product: ProductLookupResult) => void;
   registering?: boolean;
   suggestedInternalCode?: string | null;
   embedded?: boolean;
+  /** Apenas leitura — sem coluna de quantidade/registro (modal global) */
+  scanOnly?: boolean;
+  inputId?: string;
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -67,11 +71,14 @@ const MovementScanSection: React.FC<Props> = ({
   movementLabel,
   pageTitleIcon,
   headerActions,
+  suppressPageHeader = false,
   onRegister,
   onUseExisting,
   registering = false,
   suggestedInternalCode = null,
   embedded = false,
+  scanOnly = false,
+  inputId = 'ls-movement-scan-input',
 }) => {
   const [inputValue, setInputValue] = useState(scanValue);
   const [inputMatch, setInputMatch] = useState<ProductLookupResult | null>(null);
@@ -155,7 +162,7 @@ const MovementScanSection: React.FC<Props> = ({
 
   return (
     <section className={`ls-movement-scan${embedded ? ' ls-movement-scan--embedded' : ''}`}>
-      {pageTitleIcon || headerActions ? (
+      {!suppressPageHeader && (pageTitleIcon || headerActions) ? (
         <div className="ls-movement-scan__page-header">
           <h2 className="ls-movement-scan__page-title">
             {pageTitleIcon ? <span className="ls-movement-scan__page-title-icon">{pageTitleIcon}</span> : null}
@@ -213,14 +220,14 @@ const MovementScanSection: React.FC<Props> = ({
 
       <div className="ls-movement-scan__body">
         <div className="ls-movement-scan__scan-col">
-          <label className="ls-label" htmlFor="ls-movement-scan-input">
+          <label className="ls-label" htmlFor={inputId}>
             {scanMode === 'barcode' ? 'Leitor / EAN / GTIN' : scanMode === 'code' ? 'Código ou nome' : 'QR Code, link, EAN ou código'}
           </label>
 
           <div className="ls-movement-scan__input-row">
             <div className="ls-movement-scan__input-wrap">
               <input
-                id="ls-movement-scan-input"
+                id={inputId}
                 ref={inputRef}
                 className="ls-input ls-movement-scan__input"
                 value={inputValue}
@@ -353,6 +360,7 @@ const MovementScanSection: React.FC<Props> = ({
           ) : null}
         </div>
 
+        {!scanOnly ? (
         <div className="ls-movement-scan__action-col">
           <div className="ls-movement-scan__qty">
             <label className="ls-label">Quantidade</label>
@@ -429,9 +437,10 @@ const MovementScanSection: React.FC<Props> = ({
             )}
           </div>
         </div>
+        ) : null}
       </div>
 
-      {!embedded ? (
+      {!embedded && !scanOnly ? (
       <div className="ls-movement-scan__footer">
         {activeProduct ? (
           <button

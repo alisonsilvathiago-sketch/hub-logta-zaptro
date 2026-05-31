@@ -12,6 +12,7 @@ export type LogstokaDetailPageLayoutProps = {
   /** Oculta título/subtítulo/ações — conteúdo fica só no corpo (ex: hero do produto) */
   hideTitleRow?: boolean;
   children: React.ReactNode;
+  topRightActions?: React.ReactNode;
 };
 
 export function LogstokaDetailPageLayout({
@@ -22,18 +23,22 @@ export function LogstokaDetailPageLayout({
   actions,
   hideTitleRow = false,
   children,
+  topRightActions,
 }: LogstokaDetailPageLayoutProps) {
   const showTitleRow = !hideTitleRow && (title || subtitle || actions);
 
   return (
     <div className="space-y-6">
-      <Link
-        to={backTo}
-        className="inline-flex items-center gap-2 rounded-xl px-2 py-1 text-sm font-semibold text-orange-700 transition hover:bg-orange-50 hover:text-orange-800"
-      >
-        <ArrowLeft size={16} />
-        {backLabel}
-      </Link>
+      <div className="flex items-center justify-between gap-4 w-full">
+        <Link
+          to={backTo}
+          className="inline-flex items-center gap-2 rounded-[14px] px-3.5 py-2 text-xs font-bold text-orange-700 transition bg-orange-50/50 border border-orange-100/30 hover:bg-orange-50 hover:text-orange-800 active:scale-95 shadow-sm"
+        >
+          <ArrowLeft size={14} />
+          {backLabel}
+        </Link>
+        {topRightActions ? <div className="flex items-center gap-2">{topRightActions}</div> : null}
+      </div>
 
       {showTitleRow ? (
         <div className="flex flex-wrap items-start justify-between gap-4">

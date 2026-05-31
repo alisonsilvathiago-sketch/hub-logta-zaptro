@@ -31,10 +31,11 @@
     margin-right: 0;
   }
 
-  .logstoka-app-content-gutter--inicio {
+  .logstoka-app-content-gutter.logstoka-app-content-gutter--inicio {
     padding: 0;
     padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
     margin-left: 0;
+    margin-right: 0;
   }
 
   .lsdash-topbar {

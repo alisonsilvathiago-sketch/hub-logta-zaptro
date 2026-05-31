@@ -4,8 +4,15 @@ import { toast } from 'react-hot-toast';
 import { Link2, Plug } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
-import { LOGSTOKA_PAGE_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
+import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
+import IntegrationBrandLogo from '@/components/integrations/IntegrationBrandLogo';
 import MarketplaceLogo from '@/components/marketplace/MarketplaceLogo';
+import {
+  ECOMMERCE_BRAND_KEYS,
+  getIntegrationBrandLabel,
+  MARKETPLACE_BRAND_KEYS,
+} from '@/lib/integrationBrandAssets';
+import { marketplaceHubPath } from '@/lib/marketplaceHub';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import {
@@ -169,18 +176,18 @@ const IntegrationsCentralPage: React.FC = () => {
 
   return (
     <div className="ls-int-central space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className={LOGSTOKA_PAGE_TITLE_CLASS}>Central de Integrações</h2>
-          <p className="text-sm text-[#a3a3a3]">
-            Conecte marketplaces, ERPs, pagamentos e automações · sync bidirecional com {LOGSTOKA_DOMAINS.api}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 rounded-xl bg-orange-50 px-3 py-2 text-xs font-bold text-orange-800">
-          <Plug size={16} />
-          Hub de interações LogStoka
-        </div>
-      </div>
+      <LogstokaPageHeader
+        eyebrow="Hub multicanal"
+        icon={<Plug size={20} strokeWidth={2.25} />}
+        title="Central de integrações"
+        subtitle={`Conecte marketplaces, ERPs e pagamentos · sync bidirecional com ${LOGSTOKA_DOMAINS.api}`}
+        actions={
+          <div className="flex items-center gap-2 rounded-xl bg-orange-50 px-3 py-2 text-xs font-bold text-orange-800">
+            <Plug size={16} />
+            Hub LogStoka
+          </div>
+        }
+      />
 
       {loading && (
         <p className="text-sm text-[#a3a3a3]">Carregando integrações…</p>
@@ -218,6 +225,34 @@ const IntegrationsCentralPage: React.FC = () => {
 
       {tab === 'marketplaces' && (
         <div className="space-y-4">
+          <div>
+            <p className="mb-2 text-xs font-black uppercase tracking-wide text-[#a3a3a3]">
+              Canais operacionais
+            </p>
+            <div className="ls-int-marketplace-strip">
+              {MARKETPLACE_BRAND_KEYS.map((key) => (
+                <Link key={key} to={marketplaceHubPath(key)} className="ls-int-marketplace-chip">
+                  <IntegrationBrandLogo brandKey={key} size={36} />
+                  {getIntegrationBrandLabel(key)}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-black uppercase tracking-wide text-[#a3a3a3]">
+              Lojas virtuais e delivery
+            </p>
+            <div className="ls-int-marketplace-strip">
+              {ECOMMERCE_BRAND_KEYS.map((key) => (
+                <span key={key} className="ls-int-marketplace-chip cursor-default">
+                  <IntegrationBrandLogo brandKey={key} size={36} />
+                  {getIntegrationBrandLabel(key)}
+                </span>
+              ))}
+            </div>
+          </div>
+
           <div className="ls-hub-panel border-orange-100 bg-orange-50/40">
             <p className="flex items-center gap-2 text-sm font-black text-[#404040]">
               <MarketplaceLogo marketplace="mercadolivre" size={22} />

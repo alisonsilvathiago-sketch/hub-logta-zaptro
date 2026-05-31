@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeftRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import MovementScanSection from '@/components/movements/MovementScanSection';
 import TransferRegisterModal, { type TransferFormState } from '@/components/transfers/TransferRegisterModal';
+import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
 import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
 import LogstokaAddIconButton from '@/components/ui/LogstokaAddIconButton';
 import ClickableTableRow, { stopRowNavigate } from '@/components/ui/ClickableTableRow';
@@ -88,24 +88,8 @@ const TransfersPage: React.FC = () => {
     [transfers],
   );
 
-  const syncFormFromScan = () => {
-    const sku = scan.resolvedProduct?.sku ?? scan.scanValue.trim();
-    if (sku) {
-      setForm((f) => ({ ...f, sku, quantity: scan.quantity }));
-    }
-  };
-
   const openModal = () => {
-    syncFormFromScan();
     setModalOpen(true);
-  };
-
-  const handlePageRegister = () => {
-    if (!scan.scanValue.trim()) {
-      toast.error('Leia ou digite um código primeiro');
-      return;
-    }
-    openModal();
   };
 
   const handleUseExisting = (product: ProductLookupResult) => {
@@ -162,18 +146,19 @@ const TransfersPage: React.FC = () => {
     resolving: scan.resolving,
     interpreting: scan.interpreting,
     scanInterpretation: scan.scanInterpretation,
-    onRegister: handlePageRegister,
+    onRegister: () => void createTransfer(),
     onUseExisting: handleUseExisting,
     registering,
   };
 
   return (
     <div className="space-y-6">
-      <MovementScanSection
-        {...scanProps}
-        movementLabel="Transferências"
-        pageTitleIcon={<ArrowLeftRight size={20} strokeWidth={2.25} aria-hidden />}
-        headerActions={<LogstokaAddIconButton title="Nova transferência" onClick={openModal} />}
+      <LogstokaPageHeader
+        eyebrow="Operação WMS"
+        icon={<ArrowLeftRight size={20} strokeWidth={2.25} />}
+        title="Transferências"
+        subtitle="Movimentação entre depósitos. Use o scanner global ou cadastre manualmente."
+        actions={<LogstokaAddIconButton title="Nova transferência" onClick={openModal} />}
       />
 
       <LogstokaKpiStrip

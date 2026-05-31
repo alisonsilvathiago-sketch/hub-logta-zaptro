@@ -1,0 +1,85 @@
+.ls-op-today-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.875rem;
+  margin-bottom: 25px;
+  padding: 0.7rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(234, 88, 12, 0.16);
+  background: linear-gradient(90deg, rgba(255, 247, 237, 0.96) 0%, rgba(255, 255, 255, 0.99) 72%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 4px 16px rgba(15, 23, 42, 0.06);
+  color: #57534e;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.ls-op-today-banner__icon {
+  flex-shrink: 0;
+  color: #ea580c;
+}
+
+.ls-op-today-banner__text strong,
+.ls-op-today-banner__chip strong {
+  color: #c2410c;
+  font-weight: 800;
+}
+
+.ls-op-today-banner__sep {
+  color: #d6d3d1;
+  user-select: none;
+}
+
+.ls-op-today-banner__chip {
+  white-space: nowrap;
+}
+
+.ls-op-today-banner__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.ls-op-today-banner__link,
+.ls-op-today-banner__print {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(234, 88, 12, 0.2);
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #c2410c;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.ls-op-today-banner__link:hover,
+.ls-op-today-banner__print:hover {
+  background: #fff7ed;
+  border-color: rgba(234, 88, 12, 0.35);
+}
+
+@media (max-width: 640px) {
+  .ls-op-today-banner__sep {
+    display: none;
+  }
+
+  .ls-op-today-banner__chip {
+    width: 100%;
+    padding-left: 1.625rem;
+  }
+
+  .ls-op-today-banner__actions {
+    width: 100%;
+    margin-left: 0;
+    padding-left: 1.625rem;
+  }
+}

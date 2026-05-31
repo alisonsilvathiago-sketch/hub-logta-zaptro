@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
@@ -6,6 +7,15 @@ import { useCategories, useStores, useSuppliers, useWarehouses } from '@/hooks/u
 import { DEFAULT_STORES, MARKETPLACE_LABELS } from '@/types';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import type { Marketplace } from '@/types';
+import {
+  DEFAULT_OPERATIONAL_PROFILE,
+  loadOperationalProfile,
+  operationalModeLabel,
+  saveOperationalProfile,
+  type OperationalProfileConfig,
+  type OperationalTenantMode,
+} from '@/lib/operationalProfile';
+import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
 import { PlusCircle } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
@@ -22,8 +32,22 @@ const SettingsCompanyPanel: React.FC = () => {
   const [tab, setTab] = useState<Tab>('dados');
   const [modal, setModal] = useState<'store' | 'category' | 'supplier' | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [operationalProfile, setOperationalProfile] = useState<OperationalProfileConfig>(
+    DEFAULT_OPERATIONAL_PROFILE,
+  );
   const storesPagination = useTablePagination(stores, 10, 'stores');
   const suppliersPagination = useTablePagination(suppliers, 10, 'suppliers');
+
+  useEffect(() => {
+    if (!companyId) return;
+    setOperationalProfile(loadOperationalProfile(companyId));
+  }, [companyId]);
+
+  const saveOperationalSettings = () => {
+    if (!companyId) return;
+    saveOperationalProfile(companyId, operationalProfile);
+    toast.success('Fluxo operacional salvo');
+  };
 
   const seedStores = async () => {
     if (!companyId) return;
@@ -137,6 +161,86 @@ const SettingsCompanyPanel: React.FC = () => {
                 </span>
               ))}
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-orange-100 bg-orange-50/40 p-5">
+            <h3 className="text-base font-black text-gray-900">Fluxo operacional</h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Defina o perfil da empresa e as regras de expedição semanal (sexta/sábado → segunda, etc.).
+            </p>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <label className="block space-y-2">
+                <span className="text-xs font-bold uppercase text-gray-500">Objetivo da empresa</span>
+                <select
+                  className="ls-input"
+                  value={operationalProfile.mode}
+                  onChange={(e) =>
+                    setOperationalProfile((prev) => ({
+                      ...prev,
+                      mode: e.target.value as OperationalTenantMode,
+                    }))
+                  }
+                >
+                  <option value="stock">{operationalModeLabel('stock')}</option>
+                  <option value="full">{operationalModeLabel('full')}</option>
+                </select>
+                <span className="text-xs text-gray-500">
+                  {operationalProfile.mode === 'stock'
+                    ? 'Foco em entrada, saída, separação, conferência e expedição.'
+                    : 'Inclui marketplaces, APIs, webhooks e automações.'}
+                </span>
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-xs font-bold uppercase text-gray-500">Encerramento na sexta</span>
+                <input
+                  className="ls-input"
+                  type="time"
+                  value={operationalProfile.fridayCutoff}
+                  onChange={(e) =>
+                    setOperationalProfile((prev) => ({ ...prev, fridayCutoff: e.target.value }))
+                  }
+                />
+                <span className="text-xs text-gray-500">Operação encerra por volta deste horário.</span>
+              </label>
+            </div>
+
+            <label className="mt-4 flex items-start gap-3 rounded-xl bg-white px-4 py-3 ring-1 ring-orange-100">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={operationalProfile.weekendBatchOnMonday}
+                onChange={(e) =>
+                  setOperationalProfile((prev) => ({
+                    ...prev,
+                    weekendBatchOnMonday: e.target.checked,
+                  }))
+                }
+              />
+              <span>
+                <span className="block text-sm font-bold text-gray-900">
+                  Processar sexta e sábado na segunda-feira
+                </span>
+                <span className="block text-xs text-gray-500">
+                  Vendas até meia-noite de sexta/sábado entram no lote de expedição de segunda.
+                </span>
+              </span>
+            </label>
+
+            <button
+              type="button"
+              className="ls-btn-primary mt-4"
+              onClick={saveOperationalSettings}
+            >
+              Salvar perfil
+            </button>
+            <Link
+              to={LOGSTOKA_ROUTES.OPERATIONAL_FLOW}
+              className="mt-3 inline-flex text-sm font-bold text-orange-700 hover:underline"
+            >
+              Abrir controle de fluxo →
+            </Link>
           </div>
         </div>
       )}

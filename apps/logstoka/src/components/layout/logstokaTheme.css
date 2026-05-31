@@ -1,0 +1,236 @@
+/* Tema claro/escuro — LogStoka (tom escuro estilo ERP, não preto 100%) */
+:root[data-theme='dark'] {
+  --ls-shell-bg: #1a1a1a;
+  --ls-surface: #242424;
+  --ls-surface-elevated: #2d2d2d;
+  --ls-text: #f5f5f5;
+  --ls-text-rgb: 245, 245, 245;
+  --ls-muted: #a3a3a3;
+  --ls-border: rgba(255, 255, 255, 0.08);
+  --ls-neutral-50: #2a2a2a;
+  --ls-neutral-100: #333333;
+  --ls-neutral-200: #404040;
+  --ls-inicio-bg: #1e1e1e;
+  --ls-inicio-panel: #262626;
+  --ls-inicio-border: rgba(255, 255, 255, 0.08);
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --ls-shell-bg: #ffffff;
+  --ls-inicio-bg: #ffffff;
+  --ls-inicio-panel: #ffffff;
+  --ls-inicio-border: rgba(56, 56, 56, 0.08);
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] .logstoka-app-shell {
+  background: var(--ls-shell-bg);
+  color: var(--ls-text);
+}
+
+:root[data-theme='dark'] .lsdash-topbar {
+  color: var(--ls-text);
+}
+
+:root[data-theme='dark'] .lsdash-topbar-inicio-search {
+  background: #2a2a2a;
+  border-color: var(--ls-border);
+  color: var(--ls-muted);
+}
+
+:root[data-theme='dark'] .lsdash-topbar-inicio-profile strong {
+  color: var(--ls-text);
+}
+
+:root[data-theme='dark'] .lsdash-topbar-inicio-profile em {
+  color: var(--ls-muted);
+}
+
+:root[data-theme='dark'] .logstoka-app-sidebar {
+  background: var(--ls-surface);
+  border-color: var(--ls-border);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme='dark'] .logstoka-app-nav-item {
+  color: #d4d4d4;
+}
+
+:root[data-theme='dark'] .ls-sales-panel,
+:root[data-theme='dark'] .ls-table-wrap,
+:root[data-theme='dark'] .ls-card,
+:root[data-theme='dark'] .ls-stat {
+  background: var(--ls-surface);
+  border-color: var(--ls-border);
+  color: var(--ls-text);
+}
+
+:root[data-theme='dark'] .ls-sales-panel__head h3,
+:root[data-theme='dark'] .ls-sales-kpi__value,
+:root[data-theme='dark'] .lsdash-crumb-strong {
+  color: var(--ls-text);
+}
+
+:root[data-theme='dark'] .ls-sales-kpi,
+:root[data-theme='dark'] .ls-brazil-map__stats,
+:root[data-theme='dark'] .ls-inicio-profile-card,
+:root[data-theme='dark'] .ls-inicio-shortcuts__card,
+:root[data-theme='dark'] .ls-section-sidebar-float,
+:root[data-theme='dark'] .ls-inicio-summary-card {
+  background: var(--ls-surface-elevated);
+  border-color: var(--ls-border);
+}
+
+:root[data-theme='dark'] .ls-inicio-profile-card__text strong {
+  color: #fdba74;
+}
+
+:root[data-theme='dark'] .ls-inicio-shortcuts__icon {
+  background: #333;
+  color: #a3a3a3;
+}
+
+:root[data-theme='dark'] .ls-inicio-shortcuts__menu {
+  background: var(--ls-surface-elevated);
+  border-color: var(--ls-border);
+}
+
+:root[data-theme='dark'] .ls-brazil-map__canvas {
+  background: linear-gradient(180deg, #2a2a2a 0%, #242424 100%);
+  border-color: var(--ls-border);
+}
+
+:root[data-theme='dark'] .ls-sales-page__toolbar {
+  background: var(--ls-surface);
+  border-color: var(--ls-border);
+}
+
+:root[data-theme='dark'] .ls-sales-page__chips,
+:root[data-theme='dark'] .ls-sales-page__date-display {
+  background: #2a2a2a;
+  border-color: var(--ls-border);
+}
+
+:root[data-theme='dark'] .ls-sales-page__chip {
+  background: #333;
+  border-color: var(--ls-border);
+  color: #e5e5e5;
+}
+
+:root[data-theme='dark'] .ls-sales-view-switch {
+  background: #2a2a2a;
+  border-color: var(--ls-border);
+}
+
+:root[data-theme='dark'] .lsdash-topbar--mega-nav {
+  background: var(--ls-surface);
+  border-bottom: 1px solid var(--ls-border);
+}
+
+:root[data-theme='dark'] .ls-inicio-home__foot-btn {
+  background: var(--ls-surface-elevated, #2d2d2d);
+  border-color: var(--ls-border);
+  color: #d4d4d4;
+}
+
+:root[data-theme='dark'] .ls-inicio-home__foot-btn:hover {
+  background: rgba(234, 88, 12, 0.12);
+  color: #fdba74;
+}
+
+:root[data-theme='dark'] .ls-page-header__title {
+  color: var(--ls-text);
+}
+
+:root[data-theme='dark'] .ls-page-header__subtitle {
+  color: #a3a3a3;
+}
+
+:root[data-theme='dark'] .ls-data-mode-badge--demo {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fcd34d;
+}
+
+:root[data-theme='dark'] .ls-data-mode-badge--live {
+  background: rgba(234, 88, 12, 0.15);
+  border-color: rgba(234, 88, 12, 0.35);
+  color: #fdba74;
+}
+
+:root[data-theme='dark'] .logstoka-app-body {
+  background: var(--ls-shell-bg);
+}
+
+:root[data-theme='dark'] .ls-inicio-mega__trigger,
+:root[data-theme='dark'] .ls-mega-nav__trigger,
+:root[data-theme='dark'] .ls-inicio-profile-card__text strong,
+:root[data-theme='dark'] .ls-inicio-summary-card h3,
+:root[data-theme='dark'] .ls-inicio-overview__head h1 {
+  color: var(--ls-text);
+}
+
+:root[data-theme='dark'] .ls-inicio-mega__panel,
+:root[data-theme='dark'] .ls-mega-nav__panel {
+  background: var(--ls-surface-elevated);
+  border-color: var(--ls-border);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme='dark'] .lsdash-menu {
+  background: var(--ls-surface-elevated);
+  border-color: var(--ls-border);
+}
+
+:root[data-theme='dark'] .lsdash-menu-items button,
+:root[data-theme='dark'] .lsdash-menu-hero-text strong {
+  color: var(--ls-text);
+}
+
+.lsdash-menu-theme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.875rem;
+  font-size: 13px;
+  font-weight: 600;
+  color: #525252;
+}
+
+:root[data-theme='dark'] .lsdash-menu-theme {
+  color: #d4d4d4;
+}
+
+.ls-theme-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  background: #d4d4d4;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.ls-theme-switch[aria-checked='true'] {
+  background: var(--ls-brand, #ea580c);
+}
+
+.ls-theme-switch__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.ls-theme-switch[aria-checked='true'] .ls-theme-switch__thumb {
+  transform: translateX(20px);
+}

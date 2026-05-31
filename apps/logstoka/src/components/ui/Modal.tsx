@@ -13,6 +13,8 @@ interface ModalProps {
   /** @deprecated use size="wide" */
   wide?: boolean;
   size?: 'default' | 'wide' | 'landscape';
+  paddingVariant?: 'default' | 'balanced';
+  panelClassName?: string;
   footer?: React.ReactNode;
 }
 
@@ -25,6 +27,8 @@ const Modal: React.FC<ModalProps> = ({
   children,
   wide,
   size,
+  paddingVariant = 'default',
+  panelClassName,
   footer,
 }) => {
   if (!open) return null;
@@ -36,12 +40,13 @@ const Modal: React.FC<ModalProps> = ({
       : resolvedSize === 'wide'
         ? 'ls-modal__panel--wide'
         : 'ls-modal__panel--default';
+  const paddingClass = paddingVariant === 'balanced' ? ' ls-modal__panel--balanced' : '';
 
   return createPortal(
     <div className="ls-modal" role="dialog" aria-modal="true" aria-labelledby="ls-modal-title">
       <button type="button" className="ls-modal__backdrop" aria-label="Fechar" onClick={onClose} />
-      <div className={`ls-modal__panel ${sizeClass}`}>
-        <div className={`ls-modal__header${resolvedSize === 'landscape' ? ' ls-modal__header--landscape' : ''}`}>
+      <div className={`ls-modal__panel ${sizeClass}${paddingClass}${panelClassName ? ` ${panelClassName}` : ''}`}>
+        <div className={`ls-modal__header${resolvedSize === 'landscape' ? ' ls-modal__header--landscape' : ''}${paddingVariant === 'balanced' ? ' ls-modal__header--balanced' : ''}`}>
           <div className="ls-modal__header-brand">
             {icon ? (
               <span className="ls-modal__header-icon" aria-hidden>
@@ -61,12 +66,16 @@ const Modal: React.FC<ModalProps> = ({
         </div>
 
         <div
-          className={`ls-modal__body${footer ? ' ls-modal__body--with-footer' : ''}${resolvedSize === 'landscape' ? ' ls-modal__body--landscape' : ''}`}
+          className={`ls-modal__body${footer ? ' ls-modal__body--with-footer' : ''}${resolvedSize === 'landscape' ? ' ls-modal__body--landscape' : ''}${paddingVariant === 'balanced' ? ' ls-modal__body--balanced' : ''}`}
         >
           {children}
         </div>
 
-        {footer ? <div className="ls-modal__footer">{footer}</div> : null}
+        {footer ? (
+          <div className={`ls-modal__footer${paddingVariant === 'balanced' ? ' ls-modal__footer--balanced' : ''}`}>
+            {footer}
+          </div>
+        ) : null}
       </div>
     </div>,
     document.body,

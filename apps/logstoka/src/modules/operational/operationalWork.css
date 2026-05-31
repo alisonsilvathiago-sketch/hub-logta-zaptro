@@ -1,0 +1,287 @@
+.ls-operational-work {
+  --ls-op-accent: #ea580c;
+  --ls-op-accent-soft: #fff7ed;
+}
+
+.ls-operational-work .ls-op-page-head h1 {
+  font-size: 35px;
+  line-height: 1.15;
+}
+
+.ls-op-day-banner {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 1.25rem;
+  border: 1px solid #fed7aa;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffffff 55%);
+}
+
+@media (min-width: 900px) {
+  .ls-op-day-banner {
+    grid-template-columns: 1.4fr 1fr;
+    align-items: start;
+  }
+}
+
+.ls-op-day-banner__weekday {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c2410c;
+}
+
+.ls-op-day-banner__title {
+  margin-top: 0.35rem;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #111827;
+}
+
+.ls-op-day-banner__summary {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.ls-op-day-banner__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.875rem;
+}
+
+.ls-op-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #fdba74;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #9a3412;
+}
+
+.ls-op-day-banner__aside {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #ffedd5;
+}
+
+.ls-op-pipeline__track {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.ls-op-pipeline__step {
+  flex: 1 1 120px;
+  min-width: 110px;
+  padding: 0.875rem 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  text-align: center;
+}
+
+.ls-op-pipeline__count {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #111827;
+}
+
+.ls-op-pipeline__label {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
+
+.ls-op-stage--report {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.ls-op-stage--separation {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.ls-op-stage--conference {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.ls-op-stage--expedition {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.ls-op-stage--carrier {
+  border-color: #ddd6fe;
+  background: #f5f3ff;
+}
+
+.ls-op-stage--transit {
+  border-color: #a5f3fc;
+  background: #ecfeff;
+}
+
+.ls-op-stage--done {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.ls-op-card {
+  padding: 1.25rem;
+  border-radius: 1.25rem;
+  border: 1px solid #f3f4f6;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ls-op-filter {
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #4b5563;
+}
+
+.ls-op-filter--active {
+  border-color: #fdba74;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.ls-op-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ls-op-row--late {
+  background: #fef2f2;
+}
+
+.ls-op-pending-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.75rem;
+  border-radius: 0.875rem;
+  background: #f9fafb;
+}
+
+.ls-op-pending-item svg {
+  margin-top: 0.1rem;
+  color: #ea580c;
+}
+
+.ls-op-quick-link {
+  display: block;
+  padding: 0.65rem 0.875rem;
+  border-radius: 0.875rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #374151;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ls-op-quick-link:hover {
+  border-color: #fdba74;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+/* Pendências de conferência */
+.ls-conf-pending-page .ls-page-header__title {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.ls-conf-pending-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.ls-conf-context-badge {
+  display: inline-flex;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #f3f4f6;
+  color: #525252;
+}
+
+.ls-conf-reason {
+  display: inline-flex;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.ls-conf-reason--not-found {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.ls-conf-reason--qty {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.ls-conf-reason--damaged {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.ls-conf-reason--swapped {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.ls-conf-reason--other {
+  background: #f3f4f6;
+  color: #525252;
+}
+
+.ls-conf-pending-row--alert {
+  background: #fffafb;
+}
+
+.ls-conf-pending-modal__hint {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #fed7aa;
+  background: #fffbeb;
+}

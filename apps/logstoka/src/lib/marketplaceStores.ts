@@ -108,7 +108,7 @@ export function resolveBrandToStore(brand?: string | null): MarketplaceStoreStat
 }
 
 export function marketplaceStorePath(marketplace: Marketplace, storeSlug?: string): string {
-  const base = `/app/configuracoes/integracoes/${marketplace}`;
+  const base = `/app/${marketplace}`;
   return storeSlug ? `${base}/${storeSlug}` : base;
 }
 

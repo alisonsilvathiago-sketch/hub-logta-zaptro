@@ -537,6 +537,54 @@
   }
 }
 
+/* Carrossel horizontal no celular — deslize entre vendas */
+.ls-hub-sales-mobile-carousel {
+  position: relative;
+  margin-left: -20px;
+  margin-right: -20px;
+}
+
+.ls-hub-sales-mobile-carousel__track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 20px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  padding: 4px 20px 12px;
+  scrollbar-width: none;
+}
+
+.ls-hub-sales-mobile-carousel__track::-webkit-scrollbar {
+  display: none;
+}
+
+.ls-hub-sales-mobile-carousel__track > .ls-hub-sale-card {
+  flex: 0 0 min(88vw, 320px);
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  min-height: auto;
+}
+
+.ls-hub-sales-mobile-carousel__hint {
+  margin: 0;
+  padding: 0 20px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a3a3a3;
+}
+
+@media (min-width: 768px) {
+  .ls-hub-sales-mobile-carousel {
+    display: none;
+  }
+}
+
 .ls-hub-sale-card {
   display: flex;
   flex-direction: column;

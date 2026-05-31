@@ -1,0 +1,190 @@
+.ls-picking-page .ls-page-header__title {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.ls-pick-day-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #c2410c;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: capitalize;
+  vertical-align: middle;
+}
+
+.ls-pick-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.ls-pick-card--secondary {
+  background: #fafafa;
+  border-color: #ececec;
+}
+
+.ls-pick-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ls-pick-card--secondary .ls-pick-card__head {
+  border-bottom-color: #e8e8e8;
+}
+
+.ls-pick-card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 15px;
+  font-weight: 800;
+  color: #383838;
+}
+
+.ls-pick-card__desc {
+  margin-top: 0.25rem;
+  font-size: 13px;
+  color: #737373;
+}
+
+.ls-pick-toolbar {
+  flex-shrink: 0;
+}
+
+.ls-pick-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.ls-pick-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #ea580c;
+  cursor: pointer;
+}
+
+.ls-pick-row--selected {
+  background: #fffbf7;
+}
+
+.ls-pick-detail-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  font-weight: 800;
+  color: #9ca3af;
+  text-decoration: none;
+}
+
+.ls-pick-detail-link:hover {
+  background: #f3f4f6;
+  color: #525252;
+}
+
+.ls-pick-card .ls-table-wrap {
+  border: none;
+  border-radius: 0;
+}
+
+.ls-pick-card .ls-table-footer {
+  border-top: 1px solid #f0f0f0;
+}
+
+.ls-pick-add-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ls-pick-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.55rem;
+  border-radius: 10px;
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.ls-pick-add-btn:hover {
+  border-color: #fb923c;
+  background: #ffedd5;
+  color: #9a3412;
+  box-shadow: 0 1px 2px rgba(234, 88, 12, 0.12);
+}
+
+.ls-pick-add-btn:active {
+  transform: scale(0.97);
+}
+
+.ls-pick-add-btn__label {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .ls-pick-add-btn {
+    min-width: auto;
+    padding: 0 0.65rem;
+  }
+
+  .ls-pick-add-btn__label {
+    display: inline;
+  }
+}
+
+.ls-pick-add-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #525252;
+  font-size: 13px;
+  font-weight: 700;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.ls-pick-add-all-btn:hover {
+  border-color: #fdba74;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+@media (max-width: 900px) {
+  .ls-pick-card__head {
+    flex-direction: column;
+  }
+
+  .ls-pick-toolbar {
+    width: 100%;
+    overflow-x: auto;
+  }
+}

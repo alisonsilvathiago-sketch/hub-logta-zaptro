@@ -1,7 +1,9 @@
 import { supabase } from './supabase.js';
+import { hasLogstokaMockSession } from '@/lib/logstokaAuthSession';
+import { LOGSTOKA_DEMO_BEARER } from '@/lib/logstokaDemoAuth';
+import { formatLogstokaApiError, resolveLogstokaApiBase } from '@/lib/logstokaApiBase';
 
-const API_BASE =
-  import.meta.env.VITE_LOGSTOKA_API_URL?.replace(/\/$/, '') || '/logstoka-api';
+const API_BASE = resolveLogstokaApiBase();
 
 export type IntegrationApiConnection = {
   providerId: string;
@@ -18,18 +20,31 @@ export type IntegrationApiConnection = {
   sync: Record<string, boolean>;
 };
 
-async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+async function resolveAuthHeader(): Promise<Record<string, string>> {
+  if (hasLogstokaMockSession()) {
+    return { Authorization: `Bearer ${LOGSTOKA_DEMO_BEARER}` };
+  }
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init?.headers ?? {}),
-    },
-  });
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const authHeader = await resolveAuthHeader();
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeader,
+        ...(init?.headers ?? {}),
+      },
+    });
+  } catch (err) {
+    throw new Error(formatLogstokaApiError(err));
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -44,6 +59,7 @@ export const logstokaApi = {
     apiFetch<{ data: unknown[]; total: number }>(`/v1/products?page=${page}&limit=${limit}`),
   getStock: () => apiFetch<{ data: unknown[] }>('/v1/stock'),
   getMovements: () => apiFetch<{ data: unknown[] }>('/v1/movements'),
+  getSalesDashboard: (days = 30) => apiFetch<unknown>(`/v1/sales/dashboard?days=${days}`),
   getImports: () => apiFetch<{ data: unknown[] }>('/v1/imports'),
   getReplenishment: () => apiFetch<{ data: unknown[] }>('/v1/replenishment'),
   getProductTimeline: (productId: string) =>
