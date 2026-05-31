@@ -1,5 +1,20 @@
 export type ShareLinkPermission = 'view_only' | 'view_comment' | 'view_approve' | 'view_reprove';
 
+/** Linha de produto/inventário no snapshot público (lista congelada). */
+export type PublicShareSnapshotRow = {
+  name: string;
+  sku?: string;
+  unit?: string;
+  category?: string;
+  brand?: string;
+  main_image_url?: string | null;
+  publication_status?: string;
+  stockTotal?: number;
+  system_quantity?: number;
+  counted_quantity?: number;
+  difference?: number;
+};
+
 /** Dados permitidos na internet — somente via link explícito e snapshot congelado. */
 export type PublicShareSnapshot = {
   title: string;
@@ -16,6 +31,9 @@ export type PublicShareSnapshot = {
   divergencesFound?: boolean;
   publication_status?: string;
   lines?: Array<{ label: string; value: string }>;
+  /** Lista congelada (catálogo, inventário, etc.) */
+  rows?: PublicShareSnapshotRow[];
+  rowCount?: number;
 };
 
 const FORBIDDEN_KEYS = new Set([
@@ -50,18 +68,73 @@ function stripForbiddenDeep(value: unknown): unknown {
   return out;
 }
 
-/**
- * Congela apenas o que pode ir para `/shared/:token`.
- * Nunca envie objeto vivo do WMS — sempre passe por aqui antes de createShareLink.
- */
-export function buildPublicShareSnapshot(
-  raw: unknown,
+function permissionShowsQuantities(permission: ShareLinkPermission): boolean {
+  return (
+    permission === 'view_comment' ||
+    permission === 'view_approve' ||
+    permission === 'view_reprove'
+  );
+}
+
+function sanitizeSnapshotRow(
+  raw: Record<string, unknown>,
+  showQuantities: boolean,
+): PublicShareSnapshotRow {
+  const row: PublicShareSnapshotRow = {
+    name: String(raw.name ?? raw.title ?? '—').slice(0, 200),
+    sku: raw.sku ? String(raw.sku).slice(0, 64) : undefined,
+    unit: raw.unit ? String(raw.unit).slice(0, 16) : undefined,
+    category: raw.category ? String(raw.category).slice(0, 80) : undefined,
+    brand: raw.brand ? String(raw.brand).slice(0, 80) : undefined,
+    main_image_url: typeof raw.main_image_url === 'string' ? raw.main_image_url : null,
+    publication_status:
+      typeof raw.publication_status === 'string' ? raw.publication_status : undefined,
+  };
+
+  if (showQuantities) {
+    if (typeof raw.stockTotal === 'number') row.stockTotal = raw.stockTotal;
+    if (typeof raw.system_quantity === 'number') row.system_quantity = raw.system_quantity;
+    if (typeof raw.counted_quantity === 'number') row.counted_quantity = raw.counted_quantity;
+    if (typeof raw.difference === 'number') row.difference = raw.difference;
+  }
+
+  return row;
+}
+
+function buildListSnapshot(
+  rawRows: unknown[],
   permission: ShareLinkPermission,
   resourceName: string,
-): PublicShareSnapshot | null {
-  if (raw == null) return null;
-  const safe = stripForbiddenDeep(raw) as Record<string, unknown>;
+): PublicShareSnapshot {
+  const showQuantities = permissionShowsQuantities(permission);
+  const rows = rawRows
+    .map((entry) => stripForbiddenDeep(entry))
+    .filter((entry): entry is Record<string, unknown> => entry != null && typeof entry === 'object' && !Array.isArray(entry))
+    .map((entry) => sanitizeSnapshotRow(entry, showQuantities));
 
+  let stockTotal: number | undefined;
+  if (showQuantities) {
+    const sum = rows.reduce((acc, row) => acc + (row.stockTotal ?? 0), 0);
+    if (sum > 0) stockTotal = sum;
+  }
+
+  const title = resourceName.slice(0, 200);
+  return {
+    title,
+    name: title,
+    rowCount: rows.length,
+    rows,
+    stockTotal,
+    lines: [{ label: 'Itens no snapshot', value: String(rows.length) }],
+  };
+}
+
+function buildSingleSnapshot(
+  safe: Record<string, unknown>,
+  permission: ShareLinkPermission,
+  resourceName: string,
+): PublicShareSnapshot {
+  const showQuantities = permissionShowsQuantities(permission);
   const title = String(safe.name ?? safe.title ?? resourceName).slice(0, 200);
   const snapshot: PublicShareSnapshot = {
     title,
@@ -75,11 +148,6 @@ export function buildPublicShareSnapshot(
     divergencesFound: Boolean(safe.divergencesFound),
   };
 
-  const showQuantities =
-    permission === 'view_comment' ||
-    permission === 'view_approve' ||
-    permission === 'view_reprove';
-
   if (showQuantities) {
     if (typeof safe.stockTotal === 'number') snapshot.stockTotal = safe.stockTotal;
     if (typeof safe.stockAvailable === 'number') snapshot.stockAvailable = safe.stockAvailable;
@@ -87,4 +155,26 @@ export function buildPublicShareSnapshot(
   }
 
   return snapshot;
+}
+
+/**
+ * Congela apenas o que pode ir para `/shared/:token`.
+ * Nunca envie objeto vivo do WMS — sempre passe por aqui antes de createShareLink.
+ */
+export function buildPublicShareSnapshot(
+  raw: unknown,
+  permission: ShareLinkPermission,
+  resourceName: string,
+): PublicShareSnapshot | null {
+  if (raw == null) return null;
+
+  if (Array.isArray(raw)) {
+    if (raw.length === 0) return null;
+    return buildListSnapshot(raw, permission, resourceName);
+  }
+
+  const safe = stripForbiddenDeep(raw);
+  if (safe == null || typeof safe !== 'object' || Array.isArray(safe)) return null;
+
+  return buildSingleSnapshot(safe as Record<string, unknown>, permission, resourceName);
 }

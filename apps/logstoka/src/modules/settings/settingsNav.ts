@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Bell,
   Building2,
+  CreditCard,
   Cpu,
   Palette,
   ScrollText,
@@ -23,6 +24,7 @@ export const SETTINGS_BASE = '/app/configuracoes';
 
 export const SETTINGS_NAV: SettingsNavItem[] = [
   { to: `${SETTINGS_BASE}/meu-perfil`, label: 'Meu Perfil', icon: User, end: true },
+  { to: `${SETTINGS_BASE}/conta`, label: 'Conta e Plano', icon: CreditCard },
   { to: `${SETTINGS_BASE}/empresa`, label: 'Perfil da Empresa', icon: Building2 },
   { to: `${SETTINGS_BASE}/equipe`, label: 'Equipe e Permissões', icon: Users },
   { to: `${SETTINGS_BASE}/api-webhooks`, label: 'API e Webhooks', icon: Webhook },

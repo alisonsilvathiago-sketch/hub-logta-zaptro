@@ -1,0 +1,155 @@
+.ls-org-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(234, 88, 12, 0.14);
+  background: linear-gradient(135deg, #fffaf5 0%, #fff 55%);
+}
+
+.ls-org-banner--compact {
+  gap: 12px;
+}
+
+.ls-org-banner__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.ls-org-banner__eyebrow {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ea580c;
+}
+
+.ls-org-banner__title {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #383838;
+}
+
+.ls-org-banner__subtitle {
+  margin: 6px 0 0;
+  max-width: 720px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #737373;
+  line-height: 1.45;
+}
+
+.ls-org-banner__you {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(56, 56, 56, 0.06);
+  min-width: min(100%, 280px);
+}
+
+.ls-org-banner__you svg {
+  color: #ea580c;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ls-org-banner__you-role {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 900;
+  color: #383838;
+}
+
+.ls-org-banner__you-scope,
+.ls-org-banner__you-cd {
+  margin: 2px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #737373;
+}
+
+.ls-org-banner__layers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+@media (min-width: 1024px) {
+  .ls-org-banner__layers {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.ls-org-banner__layer {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(56, 56, 56, 0.05);
+}
+
+.ls-org-banner__layer-step {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 12px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.ls-org-banner__layer-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #404040;
+}
+
+.ls-org-banner__layer-desc {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #737373;
+  line-height: 1.4;
+}
+
+.ls-org-banner__layer-example {
+  margin: 6px 0 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: #a3a3a3;
+}
+
+.ls-org-banner__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ls-org-banner__chips span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid rgba(56, 56, 56, 0.06);
+  font-size: 11px;
+  font-weight: 700;
+  color: #525252;
+}

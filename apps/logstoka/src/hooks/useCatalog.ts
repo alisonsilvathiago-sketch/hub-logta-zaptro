@@ -3,10 +3,12 @@ import { supabase } from '@/lib/supabase';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import {
+  loadMergedDemoWarehouses,
+} from '@/lib/demoWarehouseStore';
+import {
   DEMO_CATEGORIES,
   DEMO_STORES,
   DEMO_SUPPLIERS,
-  DEMO_WAREHOUSES,
 } from '@/lib/logstokaDemoSeed';
 import type { LsStore, LsWarehouse } from '@/types';
 
@@ -30,9 +32,12 @@ export function useWarehouses() {
   const { companyId } = useLogstokaTenant();
   const [warehouses, setWarehouses] = useState<LsWarehouse[]>([]);
   const reload = useCallback(async () => {
-    if (!companyId) return;
+    if (!companyId) {
+      setWarehouses([]);
+      return;
+    }
     if (isLogstokaDemoCompany(companyId)) {
-      setWarehouses(DEMO_WAREHOUSES);
+      setWarehouses(loadMergedDemoWarehouses(companyId));
       return;
     }
     const { data } = await supabase
@@ -45,6 +50,16 @@ export function useWarehouses() {
   }, [companyId]);
   useEffect(() => {
     void reload();
+  }, [reload]);
+  useEffect(() => {
+    const onPulse = () => void reload();
+    const onDemoWarehouses = () => void reload();
+    window.addEventListener('logstoka:system-pulse', onPulse);
+    window.addEventListener('logstoka:demo-warehouses-updated', onDemoWarehouses);
+    return () => {
+      window.removeEventListener('logstoka:system-pulse', onPulse);
+      window.removeEventListener('logstoka:demo-warehouses-updated', onDemoWarehouses);
+    };
   }, [reload]);
   return { warehouses, reload };
 }

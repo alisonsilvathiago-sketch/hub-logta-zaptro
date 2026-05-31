@@ -1,10 +1,13 @@
-import type { DemoMovementRow } from '@/lib/logstokaDemoSeed';
+import type { DemoMovementRow, MovementExitApproval } from '@/lib/logstokaDemoSeed';
 import { getDemoStockQty } from '@/lib/logstokaDemoSeed';
 import {
   appendDemoMovements,
   findTodayEntryBySku,
   updateDemoMovement,
 } from '@/lib/demoMovementStore';
+import {
+  recordMovementRegistered,
+} from '@/lib/movementHistory';
 import { cacheMovementRow } from '@/lib/movementLoader';
 import type { ProductLookupResult } from '@/lib/productLookup';
 import { logstokaApi } from '@/lib/logstokaApi';
@@ -70,7 +73,17 @@ export async function registerEntryMovement(opts: RegisterEntryOpts): Promise<{
     const newQty = duplicate.total_quantity + quantity;
     if (demo) {
       updateDemoMovement(companyId, duplicate.id, { total_quantity: newQty });
-      return { movement: { ...duplicate, total_quantity: newQty }, merged: true };
+      const merged = { ...duplicate, total_quantity: newQty };
+      if (opts.actorName) {
+        recordMovementRegistered({
+          companyId,
+          movement: merged,
+          actorName: opts.actorName,
+          source: 'scanner',
+          merged: true,
+        });
+      }
+      return { movement: merged, merged: true };
     }
     return { movement: { ...duplicate, total_quantity: newQty }, merged: true };
   }
@@ -82,6 +95,14 @@ export async function registerEntryMovement(opts: RegisterEntryOpts): Promise<{
       warehouseName,
     });
     appendDemoMovements(companyId, [row]);
+    if (opts.actorName) {
+      recordMovementRegistered({
+        companyId,
+        movement: row,
+        actorName: opts.actorName,
+        source: 'scanner',
+      });
+    }
     return { movement: row, merged: false };
   }
 
@@ -99,6 +120,14 @@ export async function registerEntryMovement(opts: RegisterEntryOpts): Promise<{
   });
   row.id = res?.id ?? res?.movement_id ?? row.id;
   cacheMovementRow(companyId, row);
+  if (opts.actorName) {
+    recordMovementRegistered({
+      companyId,
+      movement: row,
+      actorName: opts.actorName,
+      source: 'scanner',
+    });
+  }
   return { movement: row, merged: false };
 }
 
@@ -108,7 +137,13 @@ export function buildDemoExitRow(
   companyId: string,
   product: ProductLookupResult,
   quantity: number,
-  opts?: { referenceCode?: string; marketplace?: Marketplace | null; warehouseName?: string },
+  opts?: {
+    referenceCode?: string;
+    marketplace?: Marketplace | null;
+    warehouseName?: string;
+    warehouseId?: string;
+    exitApproval?: MovementExitApproval;
+  },
 ): DemoMovementRow {
   return {
     id: `mov-exit-${Date.now()}`,
@@ -116,7 +151,7 @@ export function buildDemoExitRow(
     movement_type: 'exit',
     sub_type: 'sale',
     status: 'completed',
-    warehouse_id: 'wh-1',
+    warehouse_id: opts?.warehouseId ?? 'wh-1',
     marketplace: opts?.marketplace ?? null,
     reference_code: opts?.referenceCode ?? 'Saída manual',
     total_quantity: quantity,
@@ -124,18 +159,21 @@ export function buildDemoExitRow(
     sku: product.sku,
     product_name: product.name,
     warehouse_name: opts?.warehouseName ?? 'CD Principal',
+    exit_approval: opts?.exitApproval ?? null,
   };
 }
 
 export type RegisterExitOpts = Omit<RegisterEntryOpts, 'existingEntries'> & {
   existingExits: DemoMovementRow[];
+  exitApproval?: MovementExitApproval;
 };
 
 export async function registerExitMovement(opts: RegisterExitOpts): Promise<{
   movement: DemoMovementRow;
   merged: boolean;
 }> {
-  const { companyId, demo, product, quantity, referenceCode, marketplace, warehouseName, existingExits } = opts;
+  const { companyId, demo, product, quantity, referenceCode, marketplace, warehouseName, existingExits, exitApproval } =
+    opts;
   const duplicate = existingExits.find(
     (m) =>
       m.movement_type === 'exit' &&
@@ -147,14 +185,37 @@ export async function registerExitMovement(opts: RegisterExitOpts): Promise<{
     const newQty = duplicate.total_quantity + quantity;
     if (demo) {
       updateDemoMovement(companyId, duplicate.id, { total_quantity: newQty });
-      return { movement: { ...duplicate, total_quantity: newQty }, merged: true };
+      const merged = { ...duplicate, total_quantity: newQty };
+      if (opts.actorName) {
+        recordMovementRegistered({
+          companyId,
+          movement: merged,
+          actorName: opts.actorName,
+          source: 'scanner',
+          merged: true,
+        });
+      }
+      return { movement: merged, merged: true };
     }
     return { movement: { ...duplicate, total_quantity: newQty }, merged: true };
   }
 
   if (demo) {
-    const row = buildDemoExitRow(companyId, product, quantity, { referenceCode, marketplace, warehouseName });
+    const row = buildDemoExitRow(companyId, product, quantity, {
+      referenceCode,
+      marketplace,
+      warehouseName,
+      exitApproval,
+    });
     appendDemoMovements(companyId, [row]);
+    if (opts.actorName) {
+      recordMovementRegistered({
+        companyId,
+        movement: row,
+        actorName: opts.actorName,
+        source: 'scanner',
+      });
+    }
     return { movement: row, merged: false };
   }
 
@@ -165,8 +226,21 @@ export async function registerExitMovement(opts: RegisterExitOpts): Promise<{
     notes: warehouseName ? `Depósito: ${warehouseName}` : undefined,
   })) as { id?: string; movement_id?: string };
 
-  const row = buildDemoExitRow(companyId, product, quantity, { referenceCode, marketplace, warehouseName });
+  const row = buildDemoExitRow(companyId, product, quantity, {
+    referenceCode,
+    marketplace,
+    warehouseName,
+    exitApproval,
+  });
   row.id = res?.id ?? res?.movement_id ?? row.id;
   cacheMovementRow(companyId, row);
+  if (opts.actorName) {
+    recordMovementRegistered({
+      companyId,
+      movement: row,
+      actorName: opts.actorName,
+      source: 'scanner',
+    });
+  }
   return { movement: row, merged: false };
 }

@@ -11,7 +11,7 @@ type Props = {
 
 const LogstokaMoneyPrivacyToggle: React.FC<Props> = ({ size = 'md', className = '' }) => {
   const { hideMoney, toggleHideMoney } = useLogstokaMoneyPrivacy();
-  const iconSize = size === 'sm' ? 14 : 18;
+  const iconSize = size === 'sm' ? 18 : 22;
 
   const button = (
     <button

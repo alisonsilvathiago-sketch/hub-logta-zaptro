@@ -60,6 +60,38 @@ export function getXRayContextTitle(context: XRayPageContext): string {
   }
 }
 
+/** Áreas analisadas no painel lateral do Raio-X. */
+export function getXRayContextFocusAreas(context: XRayPageContext): string {
+  switch (context) {
+    case 'products':
+      return 'cadastro, publicação, estoque e atrasos de saída';
+    case 'stock':
+      return 'saldos, reservas, depósitos e inventário';
+    case 'movements':
+      return 'entradas, saídas, atrasos e conferência';
+    case 'marketplace':
+      return 'sync de canais, anúncios e estoque publicado';
+    case 'integrations':
+      return 'OAuth, webhooks e filas de sincronização';
+    case 'conference':
+    case 'picking':
+      return 'conferência guiada, separação e divergências';
+    case 'operational':
+      return 'fluxo do dia, cortes e pendências operacionais';
+    case 'activities':
+      return 'atividades recentes, atrasos e alertas';
+    case 'settings':
+      return 'permissões, integrações e parâmetros WMS';
+    case 'dashboard':
+      return 'KPIs, alertas e visão consolidada';
+    case 'reports':
+      return 'métricas, exportações e consistência de dados';
+    case 'global':
+    default:
+      return 'catálogo, estoque, movimentações e integrações';
+  }
+}
+
 /** Três frases curtas — uma por vez, sem quebra de linha. */
 export function getXRayScanPhrases(context: XRayPageContext): [string, string, string] {
   switch (context) {

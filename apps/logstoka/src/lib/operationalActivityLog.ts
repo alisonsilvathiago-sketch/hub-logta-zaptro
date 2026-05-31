@@ -1,4 +1,12 @@
 import { LOGSTOKA_AI_BRAND } from '@/modules/ai/constants';
+import {
+  conferenceHistoryKindLabel,
+  ensureConferenceHistoryDemoSeed,
+  formatConferenceHistoryDetail,
+  loadConferenceHistory,
+  type ConferenceHistoryRecord,
+} from '@/lib/conferenceHistory';
+import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
 import type { SystemActivityRow } from '@/lib/systemActivityFeed';
 import { loadSystemActivities } from '@/lib/systemActivityFeed';
 
@@ -360,10 +368,46 @@ function mapSystemRowKind(
   return 'user_change';
 }
 
+function conferenceRecordToActivity(row: ConferenceHistoryRecord): OperationalActivityEvent {
+  const detail = formatConferenceHistoryDetail(row);
+  const isDivergence = row.kind === 'item_divergence';
+  return {
+    id: `conf-cal-${row.id}`,
+    companyId: row.companyId,
+    time: row.at,
+    kind: 'conference',
+    domain: 'conference',
+    actorName: row.actorName,
+    actorId: row.actorId,
+    title: conferenceHistoryKindLabel(row.kind),
+    description: row.productName
+      ? `${detail} · ${row.productName}${row.store ? ` · ${row.store}` : ''}`
+      : row.note ?? detail,
+    reference: row.orderRef ?? row.store ?? row.sessionId.slice(0, 12),
+    status: isDivergence ? 'Divergência' : row.kind === 'session_completed' ? 'Concluído' : 'Conferido',
+    result: isDivergence ? 'warning' : 'success',
+    entityId: row.sessionId,
+    productSku: row.sku,
+    orderRef: row.orderRef,
+    href: LOGSTOKA_ROUTES.PICKING_HISTORY,
+    meta: {
+      productName: row.productName,
+      sku: row.sku,
+      quantity: row.quantityRegistered ?? row.quantityExpected,
+      referenceCode: row.orderRef ?? row.store,
+      warehouseName: row.store,
+      conferenceKind: row.kind,
+      actorEmail: row.actorEmail,
+    },
+  };
+}
+
 export async function loadCentralActivities(companyId: string | null): Promise<OperationalActivityEvent[]> {
   if (!companyId) return [];
   ensureActivitySeed(companyId);
+  ensureConferenceHistoryDemoSeed(companyId);
   const stored = loadStoredActivities(companyId);
+  const confHistory = loadConferenceHistory(companyId).map(conferenceRecordToActivity);
   const systemRows = await loadSystemActivities(companyId);
   const fromSystem: OperationalActivityEvent[] = systemRows.map((row) => ({
     id: `sys-${row.id}`,
@@ -396,7 +440,7 @@ export async function loadCentralActivities(companyId: string | null): Promise<O
     meta: row.preview,
   }));
 
-  const merged = [...stored, ...fromSystem];
+  const merged = [...stored, ...confHistory, ...fromSystem];
   const seen = new Set<string>();
   const unique = merged.filter((event) => {
     const key = `${event.time}-${event.reference}-${event.title}`;

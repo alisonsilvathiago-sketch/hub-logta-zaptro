@@ -37,8 +37,8 @@ const LogstokaGuard: React.FC = () => {
     );
   }
 
-  if (profile && !canAccessRoute(location.pathname, profile.role)) {
-    const role = resolveRole(profile.role);
+  if (profile && !canAccessRoute(location.pathname, profile)) {
+    const role = resolveRole(profile.role, profile.is_account_owner);
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f4f4f4] p-6">
         <AccessDeniedPanel

@@ -16,12 +16,28 @@ export function buildLogstokaDemoProfile(userId?: string) {
   return {
     id: userId || LOGSTOKA_DEMO_USER_ID,
     email: LOGSTOKA_DEMO_LOGIN_EMAIL,
-    full_name: 'Administrador LogStoka',
+    full_name: 'Alison Thiago',
     role: 'admin' as const,
+    is_account_owner: true,
+    account_purchased_at: '2025-11-14T10:30:00.000Z',
     company_id: LOGSTOKA_DEMO_COMPANY_ID,
     avatar_url: null as string | null,
     permissions: {} as Record<string, unknown>,
     metadata: { modules: { logstoka: true } },
+  };
+}
+
+/** Perfil demo — Administrador regional (sem billing). CD Osasco. */
+export function buildLogstokaDemoRegionalAdminProfile() {
+  return {
+    id: 'logstoka-demo-regional-admin',
+    email: 'nadia@logstoka.com',
+    full_name: 'Nádia Souza',
+    role: 'regional_admin' as const,
+    is_account_owner: false,
+    warehouse_id: 'wh-2',
+    company_id: LOGSTOKA_DEMO_COMPANY_ID,
+    avatar_url: null as string | null,
   };
 }
 

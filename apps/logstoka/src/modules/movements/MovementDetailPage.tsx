@@ -144,6 +144,10 @@ const MovementDetailPage: React.FC = () => {
   const linkedTransfer = useMemo(() => (movement ? getDemoTransferForMovement(movement) : null), [movement]);
   const relatedMovements = useMemo(() => (movement ? getDemoRelatedMovements(movement) : []), [movement]);
   const auditTrail = useMemo(() => (movement ? buildAuditTrail(movement) : []), [movement]);
+  const labelData = useMemo(
+    () => (movement ? stockLabelFromMovement(movement, stockSnapshot?.product ?? undefined) : null),
+    [movement, stockSnapshot],
+  );
 
   if (loading) {
     return (
@@ -194,11 +198,6 @@ const MovementDetailPage: React.FC = () => {
   const handleDuplicate = () => {
     toast.success('Duplicar movimentação — use a lista em Movimentações');
   };
-
-  const labelData = useMemo(
-    () => stockLabelFromMovement(movement, product ?? undefined),
-    [movement, product],
-  );
 
   const facts: Array<[string, React.ReactNode]> = [
     ['ID interno', movement.id],
@@ -548,7 +547,11 @@ const MovementDetailPage: React.FC = () => {
         onSave={handleSave}
       />
 
-      <StockLabelPreviewModal open={labelOpen} onClose={() => setLabelOpen(false)} data={labelData} />
+      <StockLabelPreviewModal
+        open={labelOpen && labelData != null}
+        onClose={() => setLabelOpen(false)}
+        data={labelData!}
+      />
     </LogstokaDetailPageLayout>
   );
 };

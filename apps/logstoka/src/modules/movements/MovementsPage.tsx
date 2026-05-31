@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowDownToLine,
@@ -7,10 +7,12 @@ import {
   ArrowUpFromLine,
   Clock,
   FileUp,
+  History,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import EntryDeleteConfirmModal from '@/components/movements/EntryDeleteConfirmModal';
 import EntryReceivingPanel, { type EntryReceivingPanelHandle } from '@/components/movements/EntryReceivingPanel';
+import MovementExitRegisterModal, { type ExitFormState } from '@/components/movements/MovementExitRegisterModal';
 import EntryToolbar from '@/components/movements/EntryToolbar';
 import MovementEditModal, { type MovementEditPayload } from '@/components/movements/MovementEditModal';
 import MovementRowActions from '@/components/movements/MovementRowActions';
@@ -22,12 +24,19 @@ import StockLabelPreviewModal from '@/components/labels/StockLabelPreviewModal';
 import ClickableTableRow from '@/components/ui/ClickableTableRow';
 import LogstokaTableCheckbox from '@/components/ui/LogstokaTableCheckbox';
 import LogstokaIconNav, { type LogstokaIconNavButtonItem, LogstokaIconNavButton } from '@/components/ui/LogstokaIconNav';
+import LogstokaAddIconButton from '@/components/ui/LogstokaAddIconButton';
 import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
 import { useRowSelection } from '@/hooks/useRowSelection';
 import { useTablePagination } from '@/hooks/useTablePagination';
 import { useAuth } from '@/context/LogstokaAuthProvider';
 import { useLogstokaBranding } from '@/context/LogstokaBrandingContext';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import { useIntelligentScanState } from '@/hooks/useIntelligentScanState';
+import { useWarehouses } from '@/hooks/useCatalog';
+import { useLogstokaWarehouseScope } from '@/context/LogstokaWarehouseScopeContext';
+import { upsertDemoDriver } from '@/lib/demoDriverStore';
+import { registerExitMovement } from '@/lib/entryMovements';
+import { getProductStockAtWarehouse } from '@/lib/productStockByCd';
 import { removeDemoMovement, updateDemoMovement } from '@/lib/demoMovementStore';
 import { logstokaApi } from '@/lib/logstokaApi';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
@@ -47,8 +56,34 @@ import { EMPTY_STOCK_LABEL, stockLabelFromMovement } from '@/lib/stockLabelData'
 import type { StockLabelData } from '@/lib/printStockLabel';
 import LogstokaTableSearchBar from '@/components/ui/LogstokaTableSearchBar';
 import LogstokaTableBulkBar from '@/components/ui/LogstokaTableBulkBar';
+import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
+import {
+  recordMovementDeleted,
+  recordMovementEdited,
+} from '@/lib/movementHistory';
 import { MARKETPLACE_LABELS } from '@/types';
+import type { ProductLookupResult } from '@/lib/productLookup';
 import './entryPage.css';
+
+const emptyExitForm: ExitFormState = {
+  warehouseId: '',
+  productId: '',
+  sku: '',
+  productName: '',
+  internalCode: '',
+  quantity: 1,
+  referenceCode: '',
+  releasedByName: '',
+  driverId: '',
+  driverName: '',
+  driverCpf: '',
+  companyName: '',
+  companyCnpj: '',
+  driverPlate: '',
+  signatureDataUrl: '',
+  signatureSignedAt: '',
+  confirmed: false,
+};
 
 function matchesMovementSearch(row: DemoMovementRow, query: string): boolean {
   const q = query.trim().toLowerCase();
@@ -104,6 +139,8 @@ const MovementsPage: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { companyId } = useLogstokaTenant();
+  const { visibleWarehouses, assignedWarehouseId } = useLogstokaWarehouseScope();
+  const { warehouses: allWarehouses } = useWarehouses();
   const { branding } = useLogstokaBranding();
   const companyName = branding.companyName ?? 'LogStoka WMS';
   const demo = isLogstokaDemoCompany(companyId);
@@ -148,7 +185,10 @@ const MovementsPage: React.FC = () => {
   const [editSaving, setEditSaving] = useState(false);
   const xmlRef = useRef<HTMLInputElement>(null);
   const entryPanelRef = useRef<EntryReceivingPanelHandle>(null);
-  const exitPanelRef = useRef<EntryReceivingPanelHandle>(null);
+  const [exitModalOpen, setExitModalOpen] = useState(false);
+  const [exitForm, setExitForm] = useState<ExitFormState>(emptyExitForm);
+  const [exitSaving, setExitSaving] = useState(false);
+  const exitScan = useIntelligentScanState(companyId, demo, 'exit');
   const [kpiModal, setKpiModal] = useState<{ label: string; value: string | number } | null>(null);
   const [labelModal, setLabelModal] = useState<StockLabelData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -160,6 +200,7 @@ const MovementsPage: React.FC = () => {
   const isEntryTab = tab === 'entry';
   const isExitTab = tab === 'exit';
   const isOverdueTab = tab === 'overdue';
+  const isTransferTab = tab === 'transfer';
   const isScanTab = isEntryTab || isExitTab;
   const ActiveTabIcon = activeTab.Icon;
 
@@ -227,6 +268,148 @@ const MovementsPage: React.FC = () => {
 
   const entryMovements = useMemo(() => filterMovementsByTab(movements, 'entry'), [movements]);
   const exitMovements = useMemo(() => filterMovementsByTab(movements, 'exit'), [movements]);
+
+  const physicalWarehouses = useMemo(
+    () =>
+      visibleWarehouses.filter((w) => w.type === 'physical' && w.is_active).length > 0
+        ? visibleWarehouses.filter((w) => w.type === 'physical' && w.is_active)
+        : allWarehouses.filter((w) => w.type === 'physical' && w.is_active),
+    [visibleWarehouses, allWarehouses],
+  );
+
+  const defaultWarehouseId = assignedWarehouseId ?? physicalWarehouses[0]?.id ?? '';
+
+  useEffect(() => {
+    if (!exitScan.resolvedProduct) return;
+    const p = exitScan.resolvedProduct;
+    setExitForm((f) => ({
+      ...f,
+      productId: p.id,
+      sku: p.sku,
+      productName: p.name,
+      internalCode: p.internal_code ?? '',
+      quantity: exitScan.quantity,
+    }));
+  }, [exitScan.resolvedProduct, exitScan.quantity]);
+
+  const openExitModal = useCallback(() => {
+    setExitForm({
+      ...emptyExitForm,
+      warehouseId: defaultWarehouseId,
+      releasedByName: actorName,
+      quantity: 1,
+    });
+    exitScan.clearScan();
+    setExitModalOpen(true);
+  }, [actorName, defaultWarehouseId, exitScan]);
+
+  const applyExitProduct = (product: ProductLookupResult) => {
+    setExitForm((f) => ({
+      ...f,
+      productId: product.id,
+      sku: product.sku,
+      productName: product.name,
+      internalCode: product.internal_code ?? '',
+      quantity: exitScan.quantity,
+    }));
+    exitScan.setScanValue(product.internal_code ?? product.sku);
+  };
+
+  const createExitMovement = async () => {
+    const sku = exitForm.sku || exitScan.resolvedProduct?.sku;
+    const product = exitScan.resolvedProduct;
+    const productId = exitForm.productId || product?.id;
+
+    if (!companyId) return;
+    if (!exitForm.warehouseId) {
+      toast.error('Selecione o depósito de saída');
+      return;
+    }
+    if (!sku || !productId || !product) {
+      toast.error('Busque o produto pelo código LS ou EAN antes de confirmar');
+      return;
+    }
+    if (exitForm.quantity < 1) {
+      toast.error('Informe a quantidade');
+      return;
+    }
+    if (!exitForm.releasedByName.trim()) {
+      toast.error('Informe o responsável pela liberação');
+      return;
+    }
+    if (!exitForm.driverName.trim()) {
+      toast.error('Informe o motorista ou quem vai entregar');
+      return;
+    }
+    if (!exitForm.signatureDataUrl) {
+      toast.error('Assinatura do responsável é obrigatória');
+      return;
+    }
+    if (!exitForm.confirmed) {
+      toast.error('Marque a confirmação de conferência dos itens');
+      return;
+    }
+
+    const warehouse = physicalWarehouses.find((w) => w.id === exitForm.warehouseId);
+    const available = demo ? getProductStockAtWarehouse(productId, exitForm.warehouseId, companyId) : null;
+    if (demo && available !== null && exitForm.quantity > available) {
+      toast.error(`Saldo insuficiente no CD (${available} un. disponíveis)`);
+      return;
+    }
+
+    setExitSaving(true);
+    try {
+      let driverId = exitForm.driverId;
+      if (demo) {
+        const driver = upsertDemoDriver(companyId, {
+          full_name: exitForm.driverName.trim(),
+          cpf: exitForm.driverCpf.trim(),
+          company_name: exitForm.companyName.trim(),
+          company_cnpj: exitForm.companyCnpj.trim(),
+          warehouse_id: exitForm.warehouseId,
+        });
+        driverId = driver.id;
+      }
+
+      const exitApproval = {
+        released_by_name: exitForm.releasedByName.trim(),
+        driver_id: driverId || null,
+        driver_name: exitForm.driverName.trim(),
+        driver_cpf: exitForm.driverCpf.trim() || null,
+        company_name: exitForm.companyName.trim() || null,
+        company_cnpj: exitForm.companyCnpj.trim() || null,
+        driver_plate: exitForm.driverPlate.trim() || null,
+        signature_data_url: exitForm.signatureDataUrl,
+        approved_at: exitForm.signatureSignedAt || new Date().toISOString(),
+      };
+
+      const result = await registerExitMovement({
+        companyId,
+        demo,
+        product,
+        quantity: exitForm.quantity,
+        referenceCode: exitForm.referenceCode.trim() || 'Saída manual',
+        warehouseName: warehouse?.name ?? 'CD Principal',
+        existingExits: exitMovements,
+        actorName,
+        exitApproval,
+      });
+
+      toast.success(
+        result.merged
+          ? `Saída somada · ${product.name} · ${result.movement.total_quantity} un.`
+          : `Saída registrada · ${product.name} · ${exitForm.quantity} un.`,
+      );
+      setExitModalOpen(false);
+      setExitForm(emptyExitForm);
+      exitScan.clearScan();
+      reloadMovements();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao registrar saída');
+    } finally {
+      setExitSaving(false);
+    }
+  };
   const movementPagination = useTablePagination(
     searchedMovements,
     10,
@@ -303,6 +486,11 @@ const MovementsPage: React.FC = () => {
     setDeleteBusy(true);
     try {
       if (demo) removeDemoMovement(companyId, deletingMovement.id);
+      recordMovementDeleted({
+        companyId,
+        movement: deletingMovement,
+        actorName,
+      });
       setMovements((prev) => prev.filter((m) => m.id !== deletingMovement.id));
       toast.success('Movimentação excluída');
       setDeletingMovement(null);
@@ -383,8 +571,14 @@ const MovementsPage: React.FC = () => {
     setEditSaving(true);
     try {
       if (demo) updateDemoMovement(companyId, editingMovement.id, payload);
+      const updated = { ...editingMovement, ...payload };
+      recordMovementEdited({
+        companyId,
+        movement: updated,
+        actorName,
+      });
       setMovements((prev) =>
-        prev.map((m) => (m.id === editingMovement.id ? { ...m, ...payload } : m)),
+        prev.map((m) => (m.id === editingMovement.id ? updated : m)),
       );
       toast.success('Movimentação atualizada');
       setEditingMovement(null);
@@ -397,8 +591,14 @@ const MovementsPage: React.FC = () => {
   };
 
   const focusScanner = () => {
-    if (isExitTab) exitPanelRef.current?.openScanner();
+    if (isExitTab) openExitModal();
     else entryPanelRef.current?.openScanner();
+  };
+
+  const openNewMovement = () => {
+    if (isExitTab) openExitModal();
+    else if (isEntryTab) entryPanelRef.current?.openScanner();
+    else if (isTransferTab) navigate(`${LOGSTOKA_ROUTES.TRANSFERS}?new=1`);
   };
 
   const selectedMovements = useMemo(
@@ -429,6 +629,7 @@ const MovementsPage: React.FC = () => {
     try {
       for (const row of selectedMovements) {
         if (demo) removeDemoMovement(companyId, row.id);
+        recordMovementDeleted({ companyId, movement: row, actorName });
       }
       setMovements((prev) => prev.filter((m) => !selectedKeys.has(m.id)));
       clearSelection();
@@ -593,7 +794,7 @@ const MovementsPage: React.FC = () => {
                   <th>Referência</th>
                   <th>
                     <span className="ls-table-col-head">Qtd</span>
-                    <span className="ls-table-col-total">{movementTotals.units.toLocaleString('pt-BR')} un.</span>
+                    <span className="ls-table-col-total ls-table-col-total--units">{movementTotals.units.toLocaleString('pt-BR')} un.</span>
                   </th>
                   <th>Data</th>
                 </>
@@ -751,13 +952,32 @@ const MovementsPage: React.FC = () => {
           isEntryTab
             ? `Recebimento do dia ${todayLabel} — escaneie, some quantidades e registre no estoque. Itens sem saída vão para Atrasos.`
             : isExitTab
-              ? `Saídas do dia ${todayLabel} — expedição automática ou registro manual pelo scanner.`
+              ? `Saídas do dia ${todayLabel} — expedição com motorista, assinatura e registro manual pelo +.`
               : isOverdueTab
                 ? 'Entradas sem saída correspondente — acumula por dia até você registrar a expedição.'
-                : `${activeTab.label} · NF-e e registro em tempo real.`
+                : isTransferTab
+                  ? 'Transferência entre CDs — histórico do dia. Use + para nova transferência com aprovação.'
+                  : `${activeTab.label} · NF-e e registro em tempo real.`
         }
         actions={
           <>
+            {isEntryTab ? (
+              <LogstokaAddIconButton
+                variant="dark"
+                title="Nova entrada manual"
+                onClick={() => entryPanelRef.current?.openScanner()}
+              />
+            ) : null}
+            {isExitTab ? (
+              <LogstokaAddIconButton variant="dark" title="Nova saída manual" onClick={openExitModal} />
+            ) : null}
+            {isTransferTab ? (
+              <LogstokaAddIconButton
+                variant="dark"
+                title="Nova transferência entre CDs"
+                onClick={() => navigate(`${LOGSTOKA_ROUTES.TRANSFERS}?new=1`)}
+              />
+            ) : null}
             <input
               ref={xmlRef}
               type="file"
@@ -770,6 +990,14 @@ const MovementsPage: React.FC = () => {
               }}
             />
             <LogstokaIconNav aria-label="Tipo de movimentação" items={tabNavItems} variant="inline" />
+            <Link
+              to={`${LOGSTOKA_ROUTES.MOVEMENTS_HISTORY}?tipo=${tab}`}
+              className="ls-btn-secondary inline-flex items-center gap-2 text-sm shrink-0"
+              title="Histórico · colaborador, período e detalhe"
+            >
+              <History size={16} strokeWidth={2.25} aria-hidden />
+              Histórico
+            </Link>
             {!isEntryTab ? (
               <LogstokaIconNavButton title="Importar XML da NF-e" onClick={() => xmlRef.current?.click()}>
                 <FileUp size={18} strokeWidth={2.2} aria-hidden />
@@ -794,15 +1022,40 @@ const MovementsPage: React.FC = () => {
       ) : null}
 
       {isExitTab ? (
-        <EntryReceivingPanel
-          ref={exitPanelRef}
-          hidden
-          variant="exit"
+        <MovementExitRegisterModal
+          open={exitModalOpen}
+          saving={exitSaving}
           companyId={companyId}
-          demo={demo}
-          actorName={actorName}
-          entryMovements={exitMovements}
-          onRefresh={reloadMovements}
+          form={exitForm}
+          warehouses={physicalWarehouses}
+          defaultOperatorName={actorName}
+          onClose={() => {
+            setExitModalOpen(false);
+            exitScan.clearScan();
+          }}
+          onChange={(patch) => setExitForm((f) => ({ ...f, ...patch }))}
+          onSubmit={() => void createExitMovement()}
+          scan={{
+            companyId,
+            demo,
+            scanMode: exitScan.scanMode,
+            onScanModeChange: exitScan.setScanMode,
+            scanValue: exitScan.scanValue,
+            onScanValueChange: exitScan.setScanValue,
+            onClearScan: exitScan.clearScan,
+            quantity: exitForm.quantity || exitScan.quantity,
+            onQuantityChange: (qty) => {
+              exitScan.setQuantity(qty);
+              setExitForm((f) => ({ ...f, quantity: qty }));
+            },
+            resolvedProduct: exitScan.resolvedProduct,
+            resolving: exitScan.resolving,
+            interpreting: exitScan.interpreting,
+            scanInterpretation: exitScan.scanInterpretation,
+            onRegister: () => void createExitMovement(),
+            onUseExisting: applyExitProduct,
+            registering: exitSaving,
+          }}
         />
       ) : null}
 
@@ -815,6 +1068,19 @@ const MovementsPage: React.FC = () => {
               {selectedCount > 0 ? ` · ${selectedCount} selecionado(s)` : ''} · {actorName}
             </p>
           </div>
+          {isEntryTab || isExitTab || isTransferTab ? (
+            <LogstokaAddIconButton
+              variant="dark"
+              title={
+                isEntryTab
+                  ? 'Nova entrada manual'
+                  : isExitTab
+                    ? 'Nova saída manual'
+                    : 'Nova transferência entre CDs'
+              }
+              onClick={openNewMovement}
+            />
+          ) : null}
         </div>
         {renderMovementTable(useRichTableLayout)}
       </section>

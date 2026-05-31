@@ -1,0 +1,23 @@
+.ls-import-detail__issue {
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.ls-import-detail__issue--error {
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  background: #fff1f2;
+  color: #9f1239;
+}
+
+.ls-import-detail__issue--warn {
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.ls-import-detail__issues .ls-import-detail__issue + .ls-import-detail__issue {
+  margin-top: 0;
+}

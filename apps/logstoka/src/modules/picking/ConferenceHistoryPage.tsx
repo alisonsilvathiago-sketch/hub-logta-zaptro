@@ -158,7 +158,7 @@ const ConferenceHistoryPage: React.FC = () => {
       ) : null}
 
       <section className="ls-conf-history__filters ls-card p-4">
-        <div className="ls-conf-history__filter-row">
+        <div className="ls-conf-history__filter-row ls-conf-history__filter-row--quad">
           <label className="ls-conf-history__label">
             Período
             <select

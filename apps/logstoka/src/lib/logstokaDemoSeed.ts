@@ -32,6 +32,13 @@ export const DEMO_WAREHOUSES: LsWarehouse[] = DEFAULT_WAREHOUSES.map((w, i) => (
   type: w.type,
   marketplace: w.marketplace ?? null,
   is_active: true,
+  address_line: w.address_line ?? null,
+  city: w.city ?? null,
+  state: w.state ?? null,
+  manager_name: w.manager_name ?? null,
+  manager_role: w.manager_role ?? null,
+  manager_email: w.manager_email ?? null,
+  manager_phone: w.manager_phone ?? null,
 }));
 
 export const DEMO_CATEGORIES: LsCategory[] = [
@@ -129,13 +136,16 @@ export const DEMO_STOCK: LsStockRow[] = productDefs.flatMap((p, i) => {
   const prod = DEMO_PRODUCTS[i];
   const whMain = DEMO_WAREHOUSES[0];
   const whFull = DEMO_WAREHOUSES[2 + (i % 3)];
-  return [
+  const whOsasco = DEMO_WAREHOUSES[1];
+  const whBarueri = DEMO_WAREHOUSES[5];
+  const whRio = DEMO_WAREHOUSES[6];
+  const rows: LsStockRow[] = [
     {
       id: `stk-${i}-a`,
       company_id: CID,
       warehouse_id: whMain.id,
       product_id: prod.id,
-      quantity: Math.floor(p.qty * 0.7),
+      quantity: Math.floor(p.qty * 0.55),
       reserved_quantity: Math.floor(p.qty * 0.05),
       ls_products: { sku: prod.sku, name: prod.name },
       ls_warehouses: { name: whMain.name, code: whMain.code },
@@ -145,12 +155,49 @@ export const DEMO_STOCK: LsStockRow[] = productDefs.flatMap((p, i) => {
       company_id: CID,
       warehouse_id: whFull.id,
       product_id: prod.id,
-      quantity: Math.floor(p.qty * 0.3),
+      quantity: Math.floor(p.qty * 0.25),
       reserved_quantity: 0,
       ls_products: { sku: prod.sku, name: prod.name },
       ls_warehouses: { name: whFull.name, code: whFull.code },
     },
   ];
+  if (i % 3 === 0) {
+    rows.push({
+      id: `stk-${i}-c`,
+      company_id: CID,
+      warehouse_id: whOsasco.id,
+      product_id: prod.id,
+      quantity: Math.floor(p.qty * 0.12),
+      reserved_quantity: 0,
+      ls_products: { sku: prod.sku, name: prod.name },
+      ls_warehouses: { name: whOsasco.name, code: whOsasco.code },
+    });
+  }
+  if (i % 4 === 0) {
+    rows.push({
+      id: `stk-${i}-d`,
+      company_id: CID,
+      warehouse_id: whBarueri.id,
+      product_id: prod.id,
+      quantity: Math.floor(p.qty * 0.08),
+      reserved_quantity: 0,
+      ls_products: { sku: prod.sku, name: prod.name },
+      ls_warehouses: { name: whBarueri.name, code: whBarueri.code },
+    });
+  }
+  if (i % 5 === 0) {
+    rows.push({
+      id: `stk-${i}-e`,
+      company_id: CID,
+      warehouse_id: whRio.id,
+      product_id: prod.id,
+      quantity: Math.floor(p.qty * 0.06),
+      reserved_quantity: 0,
+      ls_products: { sku: prod.sku, name: prod.name },
+      ls_warehouses: { name: whRio.name, code: whRio.code },
+    });
+  }
+  return rows;
 });
 
 export const DEMO_DASHBOARD: DashboardSummary = {
@@ -161,34 +208,202 @@ export const DEMO_DASHBOARD: DashboardSummary = {
 };
 
 export const DEMO_ALERTS: LsAlert[] = [
-  { id: 'al-1', alert_type: 'low_stock', severity: 'critical', title: 'Ruptura iminente — PLM-LEN-80', message: 'Estoque abaixo do mínimo no CD Principal (45 / 200).', is_read: false, created_at: daysAgo(0, 8) },
+  { id: 'al-1', alert_type: 'low_stock', severity: 'critical', title: 'Ruptura iminente — PLM-LEN-80', message: 'Estoque abaixo do mínimo no CD Cotia (45 / 200).', is_read: false, created_at: daysAgo(0, 8) },
   { id: 'al-2', alert_type: 'low_stock', severity: 'warning', title: 'Estoque mínimo — MOD-CAM-M', message: '98 unidades · mínimo configurado 25 · atenção reposição.', is_read: false, created_at: daysAgo(0, 9) },
   { id: 'al-3', alert_type: 'inventory', severity: 'warning', title: 'Divergência inventário Full ML', message: '3 SKUs com diferença pendente de aprovação.', is_read: false, created_at: daysAgo(1) },
   { id: 'al-4', alert_type: 'integration', severity: 'info', title: 'Sync Shopee concluída', message: '142 SKUs atualizados às 15:18.', is_read: true, created_at: daysAgo(0, 15) },
   { id: 'al-5', alert_type: 'return', severity: 'info', title: 'Devolução aguardando triagem', message: 'Pedido ML-884921 · 2 itens recebidos.', is_read: false, created_at: daysAgo(0, 11) },
-  { id: 'al-6', alert_type: 'transfer', severity: 'info', title: 'Transferência em trânsito', message: 'CD Principal → Full Shopee · TR-8841.', is_read: true, created_at: daysAgo(2) },
+  { id: 'al-6', alert_type: 'transfer', severity: 'info', title: 'Transferência em trânsito', message: 'CD Cotia → Full Shopee · TR-8841.', is_read: true, created_at: daysAgo(2) },
 ];
+
+export type MovementExitApproval = {
+  released_by_name: string;
+  driver_id?: string | null;
+  driver_name: string;
+  driver_cpf?: string | null;
+  company_name?: string | null;
+  company_cnpj?: string | null;
+  driver_plate?: string | null;
+  signature_data_url: string;
+  approved_at: string;
+};
 
 export type DemoMovementRow = LsStockMovement & {
   sku?: string;
   product_name?: string;
   warehouse_name?: string;
+  exit_approval?: MovementExitApproval | null;
 };
 
 export const DEMO_MOVEMENTS: DemoMovementRow[] = [
-  { id: 'mov-1', company_id: CID, movement_type: 'entry', sub_type: 'purchase', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'NF-45821', total_quantity: 240, created_at: daysAgo(0, 7), sku: 'PLM-FRD-P', product_name: 'Fralda Pluma Premium P', warehouse_name: 'CD Principal' },
-  { id: 'mov-2', company_id: CID, movement_type: 'entry', sub_type: 'factory', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'NF-45822', total_quantity: 180, created_at: daysAgo(0, 8), sku: 'STK-ORG-12', product_name: 'Organizador Modular', warehouse_name: 'CD Principal' },
+  { id: 'mov-1', company_id: CID, movement_type: 'entry', sub_type: 'purchase', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'NF-45821', total_quantity: 240, created_at: daysAgo(0, 7), sku: 'PLM-FRD-P', product_name: 'Fralda Pluma Premium P', warehouse_name: 'CD Cotia' },
+  { id: 'mov-2', company_id: CID, movement_type: 'entry', sub_type: 'factory', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'NF-45822', total_quantity: 180, created_at: daysAgo(0, 8), sku: 'STK-ORG-12', product_name: 'Organizador Modular', warehouse_name: 'CD Cotia' },
   { id: 'mov-3', company_id: CID, movement_type: 'exit', sub_type: 'sale', status: 'completed', warehouse_id: 'wh-3', marketplace: 'shopee', reference_code: 'Stock Express', total_quantity: 12, created_at: daysAgo(0, 9), sku: 'PLM-FRD-M', product_name: 'Fralda Pluma Premium M', warehouse_name: 'Full Shopee' },
   { id: 'mov-4', company_id: CID, movement_type: 'exit', sub_type: 'sale', status: 'completed', warehouse_id: 'wh-4', marketplace: 'mercadolivre', reference_code: 'Pluma Baby', total_quantity: 8, created_at: daysAgo(0, 10), sku: 'BBR-MAM-300', product_name: 'Mamadeira Anti-Cólica', warehouse_name: 'Full Mercado Livre' },
   { id: 'mov-5', company_id: CID, movement_type: 'exit', sub_type: 'sale', status: 'completed', warehouse_id: 'wh-3', marketplace: 'shopee', reference_code: 'Stock Express', total_quantity: 24, created_at: daysAgo(0, 11), sku: 'TEC-CAB-2M', product_name: 'Cabo USB-C 2m', warehouse_name: 'Full Shopee' },
-  { id: 'mov-6', company_id: CID, movement_type: 'transfer', sub_type: 'warehouse', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'TR-8839', total_quantity: 60, created_at: daysAgo(0, 12), sku: 'STK-GAR-500', product_name: 'Pote Hermético Kit 6', warehouse_name: 'CD Principal' },
+  { id: 'mov-6', company_id: CID, movement_type: 'transfer', sub_type: 'warehouse', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'TR-8839', total_quantity: 60, created_at: daysAgo(0, 12), sku: 'STK-GAR-500', product_name: 'Pote Hermético Kit 6', warehouse_name: 'CD Cotia' },
   { id: 'mov-7', company_id: CID, movement_type: 'return', sub_type: 'customer', status: 'completed', warehouse_id: 'wh-4', marketplace: 'mercadolivre', reference_code: 'ML-884921', total_quantity: 2, created_at: daysAgo(0, 13), sku: 'PLM-FRD-P', product_name: 'Fralda Pluma Premium P', warehouse_name: 'Full Mercado Livre' },
-  { id: 'mov-8', company_id: CID, movement_type: 'damage', sub_type: 'handling', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'AV-102', total_quantity: 3, created_at: daysAgo(1), sku: 'MOD-CAM-M', product_name: 'Camiseta Básica M', warehouse_name: 'CD Principal' },
+  { id: 'mov-8', company_id: CID, movement_type: 'damage', sub_type: 'handling', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'AV-102', total_quantity: 3, created_at: daysAgo(1), sku: 'MOD-CAM-M', product_name: 'Camiseta Básica M', warehouse_name: 'CD Cotia' },
   { id: 'mov-9', company_id: CID, movement_type: 'exit', sub_type: 'sale', status: 'completed', warehouse_id: 'wh-5', marketplace: 'amazon', reference_code: 'Amazon Oficial', total_quantity: 6, created_at: daysAgo(0, 14), sku: 'PET-RAC-10', product_name: 'Ração Premium 10kg', warehouse_name: 'Full Amazon' },
-  { id: 'mov-10', company_id: CID, movement_type: 'entry', sub_type: 'xml', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'NF-e 99281', total_quantity: 500, created_at: daysAgo(1, 16), sku: 'PLM-LEN-80', product_name: 'Lenço Umedecido', warehouse_name: 'CD Principal' },
-  { id: 'mov-11', company_id: CID, movement_type: 'entry', sub_type: 'factory', status: 'completed', warehouse_id: 'wh-2', marketplace: null, reference_code: 'NF-44100', total_quantity: 120, created_at: daysAgo(4, 10), sku: 'BBR-CHU-A1', product_name: 'Chupeta Silicone', warehouse_name: 'CD Secundário' },
-  { id: 'mov-12', company_id: CID, movement_type: 'entry', sub_type: 'purchase', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'NF-44002', total_quantity: 90, created_at: daysAgo(7, 9), sku: 'MOD-CAM-M', product_name: 'Camiseta Básica M', warehouse_name: 'CD Principal' },
+  { id: 'mov-10', company_id: CID, movement_type: 'entry', sub_type: 'xml', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'NF-e 99281', total_quantity: 500, created_at: daysAgo(1, 16), sku: 'PLM-LEN-80', product_name: 'Lenço Umedecido', warehouse_name: 'CD Cotia' },
+  { id: 'mov-11', company_id: CID, movement_type: 'entry', sub_type: 'factory', status: 'completed', warehouse_id: 'wh-2', marketplace: null, reference_code: 'NF-44100', total_quantity: 120, created_at: daysAgo(4, 10), sku: 'BBR-CHU-A1', product_name: 'Chupeta Silicone', warehouse_name: 'CD Osasco' },
+  { id: 'mov-12', company_id: CID, movement_type: 'entry', sub_type: 'purchase', status: 'completed', warehouse_id: 'wh-1', marketplace: null, reference_code: 'NF-44002', total_quantity: 90, created_at: daysAgo(7, 9), sku: 'MOD-CAM-M', product_name: 'Camiseta Básica M', warehouse_name: 'CD Cotia' },
+  { id: 'mov-13', company_id: CID, movement_type: 'transfer', sub_type: 'warehouse', status: 'completed', warehouse_id: 'wh-6', marketplace: null, reference_code: 'TR-9012', total_quantity: 50, created_at: daysAgo(0, 6), sku: 'PLM-FRD-P', product_name: 'Fralda Pluma Premium P', warehouse_name: 'CD Barueri' },
+  { id: 'mov-14', company_id: CID, movement_type: 'entry', sub_type: 'purchase', status: 'completed', warehouse_id: 'wh-7', marketplace: null, reference_code: 'NF-RJ-2201', total_quantity: 80, created_at: daysAgo(2, 11), sku: 'PET-RAC-10', product_name: 'Ração Premium 10kg', warehouse_name: 'CD Rio de Janeiro' },
 ];
+
+export type TransferReleaseApproval = {
+  released_by_name: string;
+  driver_id?: string | null;
+  driver_name: string;
+  driver_cpf?: string | null;
+  company_name?: string | null;
+  company_cnpj?: string | null;
+  driver_plate?: string | null;
+  signature_data_url: string;
+  approved_at: string;
+};
+
+export type DemoDriver = {
+  id: string;
+  full_name: string;
+  cpf: string;
+  company_name: string;
+  company_cnpj: string;
+  phone?: string | null;
+  first_seen_at: string;
+  last_seen_at: string;
+  warehouse_ids: string[];
+  total_visits: number;
+};
+
+export type DemoDriverGateDirection = 'entry' | 'exit';
+
+export type DemoDriverGateRecord = {
+  id: string;
+  direction: DemoDriverGateDirection;
+  warehouse_id: string;
+  warehouse_name: string;
+  driver_id: string;
+  driver_name: string;
+  driver_cpf: string;
+  company_name: string;
+  company_cnpj: string;
+  vehicle_plate: string;
+  product_description?: string | null;
+  destination?: string | null;
+  signature_data_url: string;
+  signed_at: string;
+  registered_by_name: string;
+  notes?: string | null;
+  created_at: string;
+};
+
+/** Cadastro empresa-wide — mesmo motorista em qualquer CD da rede. */
+export const DEMO_DRIVERS: DemoDriver[] = [
+  {
+    id: 'drv-1',
+    full_name: 'João Pedro Silva',
+    cpf: '123.456.789-09',
+    company_name: 'Transportadora Rápida LTDA',
+    company_cnpj: '12.345.678/0001-90',
+    phone: '(11) 98765-4321',
+    first_seen_at: daysAgo(1460, 9),
+    last_seen_at: daysAgo(2, 14),
+    warehouse_ids: ['wh-6', 'wh-1'],
+    total_visits: 47,
+  },
+  {
+    id: 'drv-2',
+    full_name: 'Marcos Antônio Souza',
+    cpf: '987.654.321-00',
+    company_name: 'Log Express Transportes ME',
+    company_cnpj: '98.765.432/0001-10',
+    phone: '(11) 91234-5678',
+    first_seen_at: daysAgo(400, 11),
+    last_seen_at: daysAgo(0, 8),
+    warehouse_ids: ['wh-1', 'wh-2'],
+    total_visits: 22,
+  },
+  {
+    id: 'drv-3',
+    full_name: 'Carla Mendes',
+    cpf: '456.789.123-45',
+    company_name: 'Frota Própria LogStoka Demo',
+    company_cnpj: '11.222.333/0001-44',
+    phone: null,
+    first_seen_at: daysAgo(90, 10),
+    last_seen_at: daysAgo(7, 16),
+    warehouse_ids: ['wh-7'],
+    total_visits: 8,
+  },
+];
+
+export const DEMO_DRIVER_GATES: DemoDriverGateRecord[] = [
+  {
+    id: 'gate-1',
+    direction: 'entry',
+    warehouse_id: 'wh-6',
+    warehouse_name: 'CD Barueri',
+    driver_id: 'drv-1',
+    driver_name: 'João Pedro Silva',
+    driver_cpf: '123.456.789-09',
+    company_name: 'Transportadora Rápida LTDA',
+    company_cnpj: '12.345.678/0001-90',
+    vehicle_plate: 'ABC1D23',
+    product_description: 'Coleta fraldas · 120 cx',
+    destination: null,
+    signature_data_url: '',
+    signed_at: daysAgo(2, 14),
+    registered_by_name: 'Alison Demo',
+    notes: 'Entrada portaria — coleta programada',
+    created_at: daysAgo(2, 14),
+  },
+  {
+    id: 'gate-2',
+    direction: 'exit',
+    warehouse_id: 'wh-6',
+    warehouse_name: 'CD Barueri',
+    driver_id: 'drv-1',
+    driver_name: 'João Pedro Silva',
+    driver_cpf: '123.456.789-09',
+    company_name: 'Transportadora Rápida LTDA',
+    company_cnpj: '12.345.678/0001-90',
+    vehicle_plate: 'ABC1D23',
+    product_description: 'Saída confirmada · mesma carga',
+    destination: 'CD Cotia',
+    signature_data_url: '',
+    signed_at: daysAgo(2, 15),
+    registered_by_name: 'Alison Demo',
+    notes: null,
+    created_at: daysAgo(2, 15),
+  },
+  {
+    id: 'gate-3',
+    direction: 'entry',
+    warehouse_id: 'wh-1',
+    warehouse_name: 'CD Cotia',
+    driver_id: 'drv-2',
+    driver_name: 'Marcos Antônio Souza',
+    driver_cpf: '987.654.321-00',
+    company_name: 'Log Express Transportes ME',
+    company_cnpj: '98.765.432/0001-10',
+    vehicle_plate: 'FGH4E56',
+    product_description: 'Entrega NF-e 99281',
+    destination: null,
+    signature_data_url: '',
+    signed_at: daysAgo(0, 8),
+    registered_by_name: 'Marina Cotia',
+    notes: null,
+    created_at: daysAgo(0, 8),
+  },
+];
+
+export type TransferReceiveApproval = {
+  received_by_name: string;
+  signature_data_url: string;
+  received_at: string;
+};
 
 export type DemoTransferRow = {
   id: string;
@@ -200,13 +415,17 @@ export type DemoTransferRow = {
   origin_name: string;
   destination_name: string;
   items: Array<{ sku: string; name: string; quantity: number }>;
+  release_approval?: TransferReleaseApproval | null;
+  receive_approval?: TransferReceiveApproval | null;
 };
 
 export const DEMO_TRANSFERS: DemoTransferRow[] = [
-  { id: 'tr-1', status: 'completed', notes: 'Reposição Full Shopee', created_at: daysAgo(2), origin_warehouse_id: 'wh-1', destination_warehouse_id: 'wh-3', origin_name: 'CD Principal', destination_name: 'Full Shopee', items: [{ sku: 'PLM-FRD-P', name: 'Fralda Pluma P', quantity: 120 }] },
-  { id: 'tr-2', status: 'in_transit', notes: 'TR-8839 · reposição Full Shopee', created_at: daysAgo(0, 14), origin_warehouse_id: 'wh-1', destination_warehouse_id: 'wh-3', origin_name: 'CD Principal', destination_name: 'Full Shopee', items: [{ sku: 'STK-GAR-500', name: 'Pote Hermético', quantity: 60 }] },
-  { id: 'tr-3', status: 'pending', notes: 'Aguardando separação', created_at: daysAgo(0, 16), origin_warehouse_id: 'wh-2', destination_warehouse_id: 'wh-4', origin_name: 'CD Secundário', destination_name: 'Full Mercado Livre', items: [{ sku: 'BBR-CHU-A1', name: 'Chupeta Silicone', quantity: 200 }] },
-  { id: 'tr-4', status: 'completed', notes: 'Cross-dock Amazon', created_at: daysAgo(3), origin_warehouse_id: 'wh-1', destination_warehouse_id: 'wh-5', origin_name: 'CD Principal', destination_name: 'Full Amazon', items: [{ sku: 'TEC-FNT-20W', name: 'Carregador 20W', quantity: 80 }] },
+  { id: 'tr-1', status: 'completed', notes: 'Reposição Full Shopee', created_at: daysAgo(2), origin_warehouse_id: 'wh-1', destination_warehouse_id: 'wh-3', origin_name: 'CD Cotia', destination_name: 'Full Shopee', items: [{ sku: 'PLM-FRD-P', name: 'Fralda Pluma P', quantity: 120 }] },
+  { id: 'tr-2', status: 'in_transit', notes: 'TR-8839 · reposição Full Shopee', created_at: daysAgo(0, 14), origin_warehouse_id: 'wh-1', destination_warehouse_id: 'wh-3', origin_name: 'CD Cotia', destination_name: 'Full Shopee', items: [{ sku: 'STK-GAR-500', name: 'Pote Hermético', quantity: 60 }] },
+  { id: 'tr-3', status: 'pending', notes: 'Aguardando separação', created_at: daysAgo(0, 16), origin_warehouse_id: 'wh-2', destination_warehouse_id: 'wh-4', origin_name: 'CD Osasco', destination_name: 'Full Mercado Livre', items: [{ sku: 'BBR-CHU-A1', name: 'Chupeta Silicone', quantity: 200 }] },
+  { id: 'tr-4', status: 'completed', notes: 'Cross-dock Amazon', created_at: daysAgo(3), origin_warehouse_id: 'wh-1', destination_warehouse_id: 'wh-5', origin_name: 'CD Cotia', destination_name: 'Full Amazon', items: [{ sku: 'TEC-FNT-20W', name: 'Carregador 20W', quantity: 80 }] },
+  { id: 'tr-5', status: 'completed', notes: 'Balanceamento entre CDs SP', created_at: daysAgo(1), origin_warehouse_id: 'wh-1', destination_warehouse_id: 'wh-2', origin_name: 'CD Cotia', destination_name: 'CD Osasco', items: [{ sku: 'PLM-FRD-M', name: 'Fralda Pluma M', quantity: 50 }] },
+  { id: 'tr-6', status: 'in_transit', notes: 'Envio regional RJ', created_at: daysAgo(0, 10), origin_warehouse_id: 'wh-6', destination_warehouse_id: 'wh-7', origin_name: 'CD Barueri', destination_name: 'CD Rio de Janeiro', items: [{ sku: 'PET-RAC-10', name: 'Ração Premium 10kg', quantity: 40 }] },
 ];
 
 export type DemoReturnRow = {
@@ -241,6 +460,8 @@ export type DemoInventoryRow = {
     system_quantity: number;
     counted_quantity?: number | null;
     difference?: number | null;
+    last_actor_name?: string | null;
+    last_counted_at?: string | null;
     ls_products?: { sku: string; name: string };
   }>;
 };
@@ -319,6 +540,40 @@ export const DEMO_CONFERENCE: Record<string, { sold: number; exit: number; retur
 export const DEMO_AI_BRIEFING =
   'Hoje: 18 entradas, 42 saídas e 3 SKUs abaixo do mínimo. Priorize reposição de PLM-LEN-80 e aprovação do inventário Full ML. Transferência TR-8841 em trânsito para Full Shopee.';
 
+export type ImportColumnIssue = {
+  column_index: number;
+  column_header: string;
+  expected: string;
+  severity: 'error' | 'warning';
+  message: string;
+};
+
+export type ImportParsedLine = {
+  row_index: number;
+  sku: string;
+  quantity: number;
+  marketplace: string;
+  store: string;
+  warehouse: string;
+  date: string;
+  product_name: string;
+  status: 'ok' | 'error' | 'warning';
+  message?: string;
+};
+
+export type ImportValidationSnapshot = {
+  valid: boolean;
+  score: number;
+  rows_total: number;
+  rows_ok: number;
+  summary: string;
+  column_issues: ImportColumnIssue[];
+  line_issues: Array<{ row_index: number; message: string; severity: 'error' | 'warning' }>;
+  lines: ImportParsedLine[];
+  headers: string[];
+  raw_rows: string[][];
+};
+
 export type DemoImportRow = {
   id: string;
   file_name: string;
@@ -326,6 +581,8 @@ export type DemoImportRow = {
   status: string;
   rows_processed: number;
   created_at: string;
+  validation?: ImportValidationSnapshot;
+  movements_created?: number;
 };
 
 export const DEMO_IMPORTS: DemoImportRow[] = [
@@ -333,6 +590,44 @@ export const DEMO_IMPORTS: DemoImportRow[] = [
   { id: 'imp-2', file_name: 'vendas_shopee_marco.csv', file_type: 'csv', status: 'completed', rows_processed: 842, created_at: daysAgo(1) },
   { id: 'imp-3', file_name: 'relatorio_ml.xlsx', file_type: 'xlsx', status: 'completed', rows_processed: 614, created_at: daysAgo(2) },
   { id: 'imp-4', file_name: 'nota_fiscal_scan.pdf', file_type: 'pdf', status: 'warning', rows_processed: 8, created_at: daysAgo(3) },
+  {
+    id: 'imp-6',
+    file_name: 'vendas_semana_errada.xlsx',
+    file_type: 'xlsx',
+    status: 'failed',
+    rows_processed: 0,
+    created_at: daysAgo(0, 9),
+    validation: {
+      valid: false,
+      score: 42,
+      rows_total: 15,
+      rows_ok: 6,
+      summary: '2 coluna(s) com erro — refaça o cabeçalho usando o modelo oficial.',
+      headers: ['produto', 'qtd_vendida', 'canal', 'loja_nome'],
+      raw_rows: [],
+      column_issues: [
+        {
+          column_index: 1,
+          column_header: 'produto',
+          expected: 'sku',
+          severity: 'error',
+          message: 'Coluna "produto" deveria ser "sku". Renomeie conforme o modelo oficial.',
+        },
+        {
+          column_index: 2,
+          column_header: 'qtd_vendida',
+          expected: 'quantidade',
+          severity: 'error',
+          message: 'Coluna "qtd_vendida" deveria ser "quantidade".',
+        },
+      ],
+      line_issues: [
+        { row_index: 4, message: 'Linha 4: SKU "XYZ-999" não cadastrado', severity: 'warning' },
+        { row_index: 8, message: 'Linha 8: quantidade "abc" inválida', severity: 'error' },
+      ],
+      lines: [],
+    },
+  },
   { id: 'imp-5', file_name: 'foto_romaneio.jpg', file_type: 'ocr', status: 'completed', rows_processed: 24, created_at: daysAgo(4) },
 ];
 

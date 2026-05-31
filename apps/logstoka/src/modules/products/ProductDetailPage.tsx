@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowDownLeft, ArrowUpRight, Copy, Hand, Package, RotateCcw, Share2, Store, Tag } from 'lucide-react';
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Copy, Hand, Package, RotateCcw, Share2, Store, Tag, TriangleAlert } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { LogstokaDetailPageLayout } from '@/components/layout/LogstokaDetailPageLayout';
 import StockLabelPreviewModal from '@/components/labels/StockLabelPreviewModal';
@@ -22,12 +22,14 @@ import {
   storesGroupedByMarketplace,
 } from '@/lib/productPublication';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import { useLogstokaWarehouseScope } from '@/context/LogstokaWarehouseScopeContext';
+import { ProductStockByCdPanel } from '@/components/products/ProductStockByCdPanel';
+import { getProductStockByCd, getProductStockTotalByCd } from '@/lib/productStockByCd';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
 import {
   getDemoCategoryName,
   getDemoProductById,
   getDemoProductMovementStats,
-  getDemoProductStockStats,
   getDemoProductTimeline,
   marketplaceLabel,
   movementTypeLabel,
@@ -59,6 +61,11 @@ const ProductDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { companyId } = useLogstokaTenant();
+  const { visibleWarehouses } = useLogstokaWarehouseScope();
+  const allowedWarehouseIds = useMemo(
+    () => visibleWarehouses.filter((w) => w.type === 'physical').map((w) => w.id),
+    [visibleWarehouses],
+  );
   const { isActive: marketplaceActive } = useMarketplaceModule();
   const [product, setProduct] = useState<LsProduct | null>(null);
   const [timeline, setTimeline] = useState<LsStockMovement[]>([]);
@@ -112,8 +119,16 @@ const ProductDetailPage: React.FC = () => {
 
   const stockStats = useMemo(() => {
     if (!product || !isDemo) return { total: 0, reserved: 0, available: 0, rows: [] };
-    return getDemoProductStockStats(product.id);
-  }, [product, isDemo]);
+    const cdLines = getProductStockByCd(product.id, companyId, allowedWarehouseIds);
+    const total = getProductStockTotalByCd(cdLines);
+    const reserved = cdLines.reduce((sum, line) => sum + line.reserved, 0);
+    return { total, reserved, available: total - reserved, rows: cdLines };
+  }, [product, isDemo, companyId, allowedWarehouseIds]);
+
+  const cdStockLines = useMemo(() => {
+    if (!product || !isDemo) return [];
+    return getProductStockByCd(product.id, companyId, allowedWarehouseIds);
+  }, [product, isDemo, companyId, allowedWarehouseIds]);
 
   const movementStats = useMemo(() => {
     if (!product || !isDemo) {
@@ -172,7 +187,7 @@ const ProductDetailPage: React.FC = () => {
       hideTitleRow
       topRightActions={
         <>
-          <LogstokaMoneyPrivacyToggle size="sm" />
+          <LogstokaMoneyPrivacyToggle />
           <LogstokaXRayTrigger />
         </>
       }
@@ -211,7 +226,16 @@ const ProductDetailPage: React.FC = () => {
                 <span className="ls-badge bg-[#f5f5f5] text-[#565656]">{product.brand}</span>
               ) : null}
               {lowStock ? (
-                <span className="ls-badge bg-red-50 text-red-700">Estoque baixo</span>
+                <button
+                  type="button"
+                  className="ls-product-detail-hero__alert-btn"
+                  onClick={() =>
+                    document.getElementById('ls-product-stock-kpis')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                  }
+                >
+                  <TriangleAlert size={13} strokeWidth={2.5} aria-hidden />
+                  Estoque baixo
+                </button>
               ) : null}
             </div>
             {product.description_short ? (
@@ -241,6 +265,15 @@ const ProductDetailPage: React.FC = () => {
                 <Tag size={16} />
                 Etiqueta
               </button>
+              {isDemo && cdStockLines.length > 0 ? (
+                <Link
+                  to={`/app/transfers?new=1&productId=${encodeURIComponent(product.id)}`}
+                  className="ls-btn-secondary"
+                >
+                  <ArrowLeftRight size={16} />
+                  Transferir entre CDs
+                </Link>
+              ) : null}
               {marketplaceActive ? (
                 <Link to={LOGSTOKA_ROUTES.PRODUCT_PUBLICATION} className="ls-btn-secondary">
                   <Store size={16} />
@@ -315,7 +348,7 @@ const ProductDetailPage: React.FC = () => {
         </section>
 
         {/* KPIs de estoque */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+        <div id="ls-product-stock-kpis" className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
           <div className={`ls-product-detail-kpi ${lowStock ? 'ls-product-detail-kpi--danger' : ''}`}>
             <p className="ls-product-detail-kpi__label">Em estoque</p>
             <p className="ls-product-detail-kpi__value ls-product-detail-kpi__value--primary">{fmtQty(stockStats.total)}</p>
@@ -349,6 +382,8 @@ const ProductDetailPage: React.FC = () => {
             </p>
           </div>
         </div>
+
+        <ProductStockByCdPanel productSku={product.sku} lines={cdStockLines} />
 
         {/* Preços */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -494,12 +529,12 @@ const ProductDetailPage: React.FC = () => {
               <section className="ls-product-detail-panel">
                 <h3 className="ls-product-detail-panel__title">Estoque por armazém</h3>
                 {stockStats.rows.map((row) => (
-                  <div key={row.id} className="ls-product-detail-wh-row">
+                  <div key={row.warehouse_id} className="ls-product-detail-wh-row">
                     <div>
-                      <p className="ls-product-detail-wh-row__name">{row.ls_warehouses?.name ?? 'Armazém'}</p>
-                      {row.reserved_quantity > 0 && (
+                      <p className="ls-product-detail-wh-row__name">{row.warehouse_name}</p>
+                      {row.reserved > 0 && (
                         <p className="text-[11px] font-semibold text-[#a3a3a3]">
-                          {fmtQty(row.reserved_quantity)} reservadas
+                          {fmtQty(row.reserved)} reservadas
                         </p>
                       )}
                     </div>

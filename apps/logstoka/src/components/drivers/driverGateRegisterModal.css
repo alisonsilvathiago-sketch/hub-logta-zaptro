@@ -1,0 +1,109 @@
+.ls-driver-gate-modal-panel {
+  max-width: min(760px, calc(100vw - 24px)) !important;
+  max-height: min(94vh, 820px) !important;
+}
+
+.ls-driver-gate-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.ls-driver-gate-modal__direction {
+  display: flex;
+  gap: 8px;
+}
+
+.ls-driver-gate-modal__direction-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #ececec;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  color: #525252;
+  cursor: pointer;
+}
+
+.ls-driver-gate-modal__direction-btn--active[data-direction='entry'] {
+  border-color: rgba(5, 150, 105, 0.35);
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.ls-driver-gate-modal__direction-btn--active[data-direction='exit'] {
+  border-color: rgba(234, 88, 12, 0.35);
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.ls-driver-gate-modal__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .ls-driver-gate-modal__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ls-driver-gate-modal__grid--wide {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.ls-driver-gate-modal__field {
+  min-width: 0;
+}
+
+.ls-driver-gate-modal__field--span2 {
+  grid-column: 1 / -1;
+}
+
+.ls-driver-gate-modal__approval {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 56, 56, 0.1);
+  background: #fafafa;
+}
+
+.ls-driver-gate-modal__term {
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 56, 56, 0.08);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: #525252;
+  line-height: 1.5;
+}
+
+.ls-driver-gate-modal__term h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #383838;
+}
+
+.ls-driver-gate-modal__term p {
+  margin: 0 0 8px;
+}
+
+.ls-driver-gate-modal .ls-label {
+  margin-bottom: 0.35rem;
+  font-size: 10px;
+  display: block;
+}
+
+.ls-driver-gate-modal .ls-input {
+  width: 100%;
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+  font-size: 13px;
+  box-sizing: border-box;
+}

@@ -79,6 +79,41 @@
   gap: 8px;
 }
 
+.ls-product-detail-hero__alert-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.ls-product-detail-hero__alert-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.14);
+}
+
+.ls-product-detail-hero__alert-btn:active {
+  transform: scale(0.98);
+}
+
+.ls-product-detail-hero__alert-btn:focus-visible {
+  outline: 2px solid #f87171;
+  outline-offset: 2px;
+}
+
 .ls-product-detail-hero__aside {
   display: flex;
   flex-direction: column;

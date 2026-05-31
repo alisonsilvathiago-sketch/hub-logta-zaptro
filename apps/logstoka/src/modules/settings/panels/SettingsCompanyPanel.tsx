@@ -187,8 +187,8 @@ const SettingsCompanyPanel: React.FC = () => {
                 </select>
                 <span className="text-xs text-gray-500">
                   {operationalProfile.mode === 'stock'
-                    ? 'Foco em entrada, saída, separação, conferência e expedição.'
-                    : 'Inclui marketplaces, APIs, webhooks e automações.'}
+                    ? 'Foco em entrada, saída, separação, conferência e expedição. Operadores (estoquistas) não veem marketplace — só administrador e gestor.'
+                    : 'Inclui marketplaces, APIs, webhooks e automações para toda a equipe autorizada.'}
                 </span>
               </label>
 

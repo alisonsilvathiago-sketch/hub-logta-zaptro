@@ -380,6 +380,18 @@
   cursor: not-allowed;
 }
 
+.ls-add-icon-btn--dark {
+  border: 1px solid #383838;
+  background: #383838;
+  color: #fff;
+}
+
+.ls-add-icon-btn--dark:hover:not(:disabled) {
+  background: #525252;
+  border-color: #525252;
+  color: #fff;
+}
+
 .ls-scan-icon-btn {
   position: relative;
   display: inline-flex;
@@ -471,6 +483,10 @@
 }
 
 .ls-page-header__leading {
+  flex-shrink: 0;
+}
+
+.ls-page-header__trailing {
   flex-shrink: 0;
 }
 

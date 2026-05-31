@@ -63,6 +63,28 @@
   color: #dc2626;
 }
 
+.ls-section-sidebar-float .logstoka-app-nav-item--customize {
+  background: #c2410c;
+  color: #fff;
+  margin-top: 2px;
+}
+
+.ls-section-sidebar-float .logstoka-app-nav-item--customize:hover {
+  background: #9a3412;
+  color: #fff;
+}
+
+.logstoka-app-nav-item--customize {
+  background: #c2410c;
+  color: #fff;
+  margin-top: 2px;
+}
+
+.logstoka-app-nav-item--customize:hover {
+  background: #9a3412;
+  color: #fff;
+}
+
 .logstoka-app-body .logstoka-app-content-gutter {
   flex: 1;
   min-width: 0;
@@ -98,4 +120,14 @@
 :root[data-theme='dark'] .ls-section-sidebar-float .logstoka-app-nav-item--logout:hover {
   background: rgba(239, 68, 68, 0.12);
   color: #fca5a5;
+}
+
+:root[data-theme='dark'] .ls-section-sidebar-float .logstoka-app-nav-item--customize {
+  background: #c2410c;
+  color: #fff;
+}
+
+:root[data-theme='dark'] .ls-section-sidebar-float .logstoka-app-nav-item--customize:hover {
+  background: #9a3412;
+  color: #fff;
 }

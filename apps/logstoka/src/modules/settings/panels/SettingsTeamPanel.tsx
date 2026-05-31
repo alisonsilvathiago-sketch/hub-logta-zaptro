@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, UserPlus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { LOGSTOKA_ROW_TITLE_CLASS } from '@/components/layout/LogstokaStandardPageLayout';
+import { LOGSTOKA_ADMIN_HIERARCHY } from '@/lib/logstokaOrgModel';
 import { DEMO_COLLABORATORS, type LogstokaCollaborator } from '@/lib/logstokaDemoTeam';
 import { SETTINGS_BASE } from '@/modules/settings/settingsNav';
 import Modal from '@/components/ui/Modal';
@@ -134,17 +135,24 @@ const SettingsTeamPanel: React.FC = () => {
       )}
 
       {tab === 'permissoes' && (
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
-            ['Administrador Master', 'Acesso total ao LogStoka'],
-            ['Gestor Logístico', 'Aprova movimentações, inventários e transferências'],
-            ['Operador', 'Entrada, saída, conferência e inventário'],
-          ].map(([role, desc]) => (
-            <div key={role} className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
-              <p className="font-black">{role}</p>
-              <p className="mt-1 text-sm text-slate-500">{desc}</p>
-            </div>
-          ))}
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            <strong>Admin Sênior</strong> = quem comprou a plataforma (titular). <strong>Administrador</strong> =
+            mesmas funções operacionais, sem alterar pagamento. Operadores ficam restritos ao CD autorizado.
+          </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            {LOGSTOKA_ADMIN_HIERARCHY.map((row) => (
+              <div
+                key={row.code}
+                className={`rounded-2xl border p-5 ${row.code === 'owner' ? 'border-orange-200 bg-orange-50' : 'border-gray-100 bg-gray-50'}`}
+              >
+                <p className="font-black">{row.title}</p>
+                <p className="text-xs font-bold text-orange-700">{row.subtitle}</p>
+                <p className="mt-2 text-sm text-slate-500">{row.powers}</p>
+                <p className="mt-2 text-xs font-semibold text-slate-400">{row.limits}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

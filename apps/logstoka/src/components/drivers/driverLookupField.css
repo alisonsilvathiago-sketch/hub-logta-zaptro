@@ -1,0 +1,84 @@
+.ls-driver-lookup {
+  position: relative;
+  min-width: 0;
+}
+
+.ls-driver-lookup__input-wrap {
+  position: relative;
+}
+
+.ls-driver-lookup__badge {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 9px;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.ls-driver-lookup__list {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  max-height: 220px;
+  overflow: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.ls-driver-lookup__option {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ls-driver-lookup__option:hover,
+.ls-driver-lookup__option--active {
+  background: #fff7ed;
+}
+
+.ls-driver-lookup__option-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #383838;
+}
+
+.ls-driver-lookup__option-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #737373;
+}
+
+.ls-driver-lookup__hint {
+  margin: 4px 0 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: #737373;
+}
+
+.ls-driver-lookup__hint--found {
+  color: #047857;
+}

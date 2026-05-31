@@ -7,6 +7,8 @@ type Props = {
   eyebrow?: string;
   icon?: React.ReactNode;
   leading?: React.ReactNode;
+  /** Conteúdo após o título (ex.: filtro de depósito) */
+  trailing?: React.ReactNode;
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   actions?: React.ReactNode;
@@ -19,6 +21,7 @@ const LogstokaPageHeader: React.FC<Props> = ({
   eyebrow,
   icon,
   leading,
+  trailing,
   title,
   subtitle,
   actions,
@@ -40,6 +43,7 @@ const LogstokaPageHeader: React.FC<Props> = ({
             <span className="ls-page-header__title-text">{title}</span>
           </h1>
         ) : null}
+        {trailing ? <div className="ls-page-header__trailing">{trailing}</div> : null}
       </div>
       {subtitle ? <div className="ls-page-header__subtitle">{subtitle}</div> : null}
     </div>

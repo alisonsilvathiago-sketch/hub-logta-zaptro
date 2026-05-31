@@ -811,11 +811,15 @@ body {
 .ls-table-col-total {
   display: block;
   margin-top: 0.35rem;
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   text-transform: none;
   color: #383838;
+}
+
+.ls-table-col-total--units {
+  font-size: 0.8125rem;
 }
 
 .ls-table td {

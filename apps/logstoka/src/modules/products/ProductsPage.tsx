@@ -25,7 +25,10 @@ import StockLabelPreviewModal from '@/components/labels/StockLabelPreviewModal';
 import ProductsScanModal from '@/modules/products/ProductsScanModal';
 import ProductsKpiStrip from '@/components/products/ProductsKpiStrip';
 import LogstokaMoneyValue from '@/components/privacy/LogstokaMoneyValue';
-import { getDemoProductsCatalogKpis, getDemoStockQty } from '@/lib/logstokaDemoSeed';
+import { getDemoProductsCatalogKpis } from '@/lib/logstokaDemoSeed';
+import { getProductStockByCd, getProductStockTotalByCd } from '@/lib/productStockByCd';
+import { ProductCdStockCell } from '@/components/products/ProductStockByCdPanel';
+import { useLogstokaWarehouseScope } from '@/context/LogstokaWarehouseScopeContext';
 import { formatOverdueLabel, getMaxOverdueDaysBySku } from '@/lib/movementOverdue';
 import { loadCompanyMovements } from '@/lib/movementLoader';
 import type { DemoMovementRow } from '@/lib/logstokaDemoSeed';
@@ -84,6 +87,11 @@ const ProductsPage: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { companyId } = useLogstokaTenant();
+  const { visibleWarehouses } = useLogstokaWarehouseScope();
+  const allowedWarehouseIds = useMemo(
+    () => visibleWarehouses.filter((w) => w.type === 'physical').map((w) => w.id),
+    [visibleWarehouses],
+  );
   const { isActive: marketplaceActive } = useMarketplaceModule();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -438,6 +446,7 @@ const ProductsPage: React.FC = () => {
               <th className="ls-hide-mobile">EAN</th>
               <th>Produto</th>
               <th className="ls-hide-mobile">Categoria</th>
+              <th>CD / Região</th>
               <th>Estoque</th>
               <th>Preço</th>
               <th className="ls-hide-mobile">Publicação</th>
@@ -449,18 +458,20 @@ const ProductsPage: React.FC = () => {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={11} className="py-8 text-center text-slate-500">Carregando…</td>
+                <td colSpan={12} className="py-8 text-center text-slate-500">Carregando…</td>
               </tr>
             )}
             {!loading && products.length === 0 && (
               <tr>
-                <td colSpan={11} className="py-8 text-center text-slate-500">Nenhum produto cadastrado.</td>
+                <td colSpan={12} className="py-8 text-center text-slate-500">Nenhum produto cadastrado.</td>
               </tr>
             )}
             {products.map((p) => {
               const overdueDays =
                 overdueBySku.get(p.sku) ??
                 (p.internal_code ? overdueBySku.get(p.internal_code) : undefined);
+              const cdLines = isDemo ? getProductStockByCd(p.id, companyId, allowedWarehouseIds) : [];
+              const stockQty = isDemo ? getProductStockTotalByCd(cdLines) : 0;
               return (
               <ClickableTableRow
                 key={p.id}
@@ -495,7 +506,8 @@ const ProductsPage: React.FC = () => {
                   </LogstokaIconTooltip>
                 </td>
                 <td className="ls-hide-mobile">{categoryName(p.category_id)}</td>
-                <td>{isDemo ? getDemoStockQty(p.id) : '—'}</td>
+                <td>{isDemo ? <ProductCdStockCell lines={cdLines} /> : '—'}</td>
+                <td>{isDemo ? stockQty.toLocaleString('pt-BR') : '—'}</td>
                 <td className="ls-products-price-cell">
                   <LogstokaMoneyValue isMoney>
                     {Number(p.sale_price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -524,7 +536,7 @@ const ProductsPage: React.FC = () => {
                     onPrintLabel={() =>
                       setLabelModal({
                         productId: p.id,
-                        data: stockLabelFromProduct(p, isDemo ? Math.max(1, getDemoStockQty(p.id)) : 1),
+                        data: stockLabelFromProduct(p, isDemo ? Math.max(1, stockQty || 1) : 1),
                       })
                     }
                     onDelete={() => void handleSingleDelete(p)}
@@ -799,18 +811,29 @@ const ProductsPage: React.FC = () => {
         onClose={() => setShareModalOpen(false)}
         resourceType="general_table"
         resourceId="products-list"
-        resourceName="Lista Geral de Produtos e Estoques"
-        snapshotData={products.map((p) => ({
+        resourceName={
+          selectedProducts.length > 0
+            ? `Lista · ${selectedProducts.length} produto(s)`
+            : 'Lista Geral de Produtos e Estoques'
+        }
+        snapshotData={(selectedProducts.length > 0 ? selectedProducts : products).map((p) => ({
           id: p.id,
           sku: p.sku,
-          barcode: p.barcode,
           name: p.name,
           category: categoryName(p.category_id),
-          cost: p.cost,
-          sale_price: p.sale_price,
           unit: p.unit,
           publication_status: p.publication_status,
-          stockTotal: isDemo ? getDemoStockQty(p.id) : 840
+          main_image_url: p.main_image_url,
+          stockTotal: isDemo
+            ? getProductStockTotalByCd(getProductStockByCd(p.id, companyId, allowedWarehouseIds))
+            : undefined,
+          cdStock: isDemo
+            ? getProductStockByCd(p.id, companyId, allowedWarehouseIds).map((line) => ({
+                cd: line.warehouse_name,
+                qty: line.quantity,
+                manager: line.manager_name,
+              }))
+            : undefined,
         }))}
       />
 

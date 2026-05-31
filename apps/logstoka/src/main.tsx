@@ -8,6 +8,7 @@ import { LogstokaBrandingProvider } from '@/context/LogstokaBrandingContext';
 import { LogstokaThemeProvider } from '@/context/LogstokaThemeContext';
 import { LogstokaMoneyPrivacyProvider } from '@/context/LogstokaMoneyPrivacyContext';
 import { LogstokaSecurityProvider } from '@/context/LogstokaSecurityProvider';
+import { LogstokaWarehouseScopeProvider } from '@/context/LogstokaWarehouseScopeContext';
 import App from './App';
 import './index.css';
 import '@/components/privacy/moneyPrivacy.css';
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <LogstokaThemeProvider>
         <LogstokaAuthProvider>
           <LogstokaTenantProvider>
+            <LogstokaWarehouseScopeProvider>
             <LogstokaBrandingProvider>
               <LogstokaMoneyPrivacyProvider>
                 <LogstokaSecurityProvider>
@@ -26,6 +28,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 </LogstokaSecurityProvider>
               </LogstokaMoneyPrivacyProvider>
             </LogstokaBrandingProvider>
+            </LogstokaWarehouseScopeProvider>
           </LogstokaTenantProvider>
         </LogstokaAuthProvider>
       </LogstokaThemeProvider>

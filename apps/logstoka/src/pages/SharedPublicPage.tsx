@@ -1,11 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { 
-  Lock, AlertTriangle, Clock, Eye, MessageSquare, Send, CheckCircle, 
-  XCircle, ChevronRight, Package, Box, RefreshCw, BarChart2, DollarSign 
+import { useParams } from 'react-router-dom';
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Eye,
+  Lock,
+  MessageSquare,
+  Package,
+  Send,
+  Shield,
+  XCircle,
 } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import { secureSharing, type LsShareLink } from '@/lib/secureSharing';
+import './sharedPublicPage.css';
+
+const RESOURCE_LABEL: Record<LsShareLink['resourceType'], string> = {
+  product: 'Produto',
+  inventory: 'Inventário',
+  movements: 'Movimentações',
+  general_table: 'Relatório',
+};
+
+function formatExpiry(iso: string): string {
+  return new Date(iso).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 export const SharedPublicPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -14,24 +40,22 @@ export const SharedPublicPage: React.FC = () => {
   const [errorState, setErrorState] = useState<
     'expired' | 'revoked' | 'not_found' | 'no_snapshot' | 'max_visits' | null
   >(null);
-  
-  // States para interação
+
   const [visitorName, setVisitorName] = useState('');
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState<LsShareLink['comments']>([]);
   const [approval, setApproval] = useState<LsShareLink['approvalStatus']>('pending');
-  const [timeRemaining, setTimeRemaining] = useState<string>('');
+  const [timeRemaining, setTimeRemaining] = useState('');
 
   useEffect(() => {
     if (!token) return;
-    
-    // Simula tempo de carregamento da rede
+
     const timer = window.setTimeout(() => {
       const { share: data, error } = secureSharing.getShareLinkByToken(token);
-      
+
       if (error) {
         setErrorState(error);
-        setShare(data); // Apenas para auditoria se necessário
+        setShare(data);
       } else if (data) {
         setShare(data);
         setComments(data.comments);
@@ -39,12 +63,11 @@ export const SharedPublicPage: React.FC = () => {
         secureSharing.incrementVisits(token);
       }
       setLoading(false);
-    }, 800);
+    }, 500);
 
     return () => window.clearTimeout(timer);
   }, [token]);
 
-  // Timer regressivo para expiração
   useEffect(() => {
     if (!share || errorState) return;
 
@@ -55,16 +78,16 @@ export const SharedPublicPage: React.FC = () => {
         window.clearInterval(interval);
         return;
       }
-      
+
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      
+
       if (hours > 24) {
-        setTimeRemaining(`Expirando em ${Math.ceil(hours / 24)} dias`);
+        setTimeRemaining(`Expira em ${Math.ceil(hours / 24)} dias`);
       } else {
         setTimeRemaining(
-          `Expirando em: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+          `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
         );
       }
     }, 1000);
@@ -76,13 +99,12 @@ export const SharedPublicPage: React.FC = () => {
     e.preventDefault();
     if (!token || !newComment.trim()) return;
 
-    const author = visitorName.trim() || 'Auditor Externo';
+    const author = visitorName.trim() || 'Visitante';
     const updated = secureSharing.addCommentToShare(token, author, newComment.trim());
     if (updated) {
       setComments(updated.comments);
       setNewComment('');
-      setVisitorName('');
-      toast.success('Comentário enviado com sucesso!');
+      toast.success('Comentário enviado');
     }
   };
 
@@ -91,73 +113,56 @@ export const SharedPublicPage: React.FC = () => {
     const updated = secureSharing.updateShareApproval(token, status);
     if (updated) {
       setApproval(status);
-      toast.success(
-        status === 'approved' 
-          ? 'Estoque Aprovado com sucesso! O supervisor foi notificado.' 
-          : 'Contagem Rejeitada. Notificação enviada para reavaliação.'
-      );
+      toast.success(status === 'approved' ? 'Estoque aprovado' : 'Contagem rejeitada');
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fafafa] flex flex-col items-center justify-center font-sans p-6 text-slate-800">
-        <Toaster position="top-right" />
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="h-10 w-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-          <div>
-            <p className="text-sm font-black uppercase tracking-widest text-slate-400">LogStoka Secure Sharing</p>
-            <p className="text-lg font-bold text-slate-600 mt-1">Carregando túnel criptografado seguro...</p>
-          </div>
+      <div className="ls-share-public--loading">
+        <Toaster position="top-center" />
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-9 w-9 animate-spin rounded-full border-[3px] border-orange-500 border-t-transparent" />
+          <p className="text-sm font-semibold text-[#525252]">Abrindo compartilhamento…</p>
         </div>
       </div>
     );
   }
 
-  // Telas de Erro (Expirado, Revogado, Não Encontrado)
   if (errorState || !share) {
+    const errorTitle =
+      errorState === 'expired'
+        ? 'Link expirado'
+        : errorState === 'revoked'
+          ? 'Acesso revogado'
+          : errorState === 'max_visits'
+            ? 'Limite de acessos'
+            : errorState === 'no_snapshot'
+              ? 'Conteúdo indisponível'
+              : 'Link inválido';
+
+    const errorText =
+      errorState === 'expired'
+        ? 'Este link não está mais ativo. Peça um novo compartilhamento ao responsável do estoque.'
+        : errorState === 'revoked'
+          ? 'O emissor cancelou este acesso.'
+          : errorState === 'max_visits'
+            ? 'Este link atingiu o número máximo de visualizações.'
+            : errorState === 'no_snapshot'
+              ? 'Por segurança, só exibimos links com snapshot congelado.'
+              : 'Verifique se o endereço está correto.';
+
     return (
-      <div className="min-h-screen bg-[#fafafa] flex flex-col items-center justify-center font-sans p-6 text-slate-800">
-        <div className="max-w-md w-full bg-white border border-slate-200/60 p-8 rounded-3xl shadow-xl text-center space-y-6 animate-fade-in">
-          <div className="mx-auto h-16 w-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center">
-            <AlertTriangle className="h-8 w-8" />
+      <div className="ls-share-public--error">
+        <div className="ls-share-public__error-card">
+          <div className="ls-share-public__error-icon">
+            <AlertTriangle size={24} />
           </div>
-
-          <div className="space-y-2">
-            <h2 className="text-xl font-black text-slate-800">
-              {errorState === 'expired'
-                ? 'Este compartilhamento expirou'
-                : errorState === 'revoked'
-                  ? 'Acesso revogado pelo proprietário'
-                  : errorState === 'max_visits'
-                    ? 'Limite de acessos atingido'
-                    : errorState === 'no_snapshot'
-                      ? 'Link sem conteúdo seguro'
-                      : 'Conteúdo não disponível'}
-            </h2>
-            <p className="text-sm font-semibold text-slate-500 leading-relaxed">
-              {errorState === 'expired'
-                ? 'O tempo de validade deste link se esgotou. Nenhum dado de estoque permanece público.'
-                : errorState === 'revoked'
-                  ? 'O link foi cancelado manualmente. Acesso bloqueado.'
-                  : errorState === 'max_visits'
-                    ? 'Este link atingiu o número máximo de visualizações permitidas.'
-                    : errorState === 'no_snapshot'
-                      ? 'Links antigos sem snapshot congelado não podem ser exibidos por política de segurança.'
-                      : 'O token é inválido ou não existe.'}
-            </p>
-          </div>
-
-          <div className="border-t border-slate-100 pt-4 flex flex-col gap-2">
-            <div className="flex items-center justify-center gap-1.5 text-[10px] font-black uppercase text-slate-400">
-              <Lock size={12} /> LogStoka Security Tunnel
-            </div>
-            {share && (
-              <p className="text-[10px] text-slate-400 font-semibold mt-1">
-                Ref: {share.name} · Gerado por WMS Supervisor
-              </p>
-            )}
-          </div>
+          <h1 className="ls-share-public__error-title">{errorTitle}</h1>
+          <p className="ls-share-public__error-text">{errorText}</p>
+          {share ? (
+            <p className="ls-share-public__error-text mt-4 text-xs">{share.name}</p>
+          ) : null}
         </div>
       </div>
     );
@@ -165,478 +170,387 @@ export const SharedPublicPage: React.FC = () => {
 
   const snap = share.snapshotData;
   const isViewOnly = share.permissions === 'view_only';
+  const listRows = snap?.rows ?? [];
+  const isListShare = listRows.length > 0;
+  const isInventoryList = share.resourceType === 'inventory';
   const showQuantities =
     !isViewOnly &&
-    (snap?.stockTotal != null || snap?.stockAvailable != null || snap?.stockReserved != null);
+    (isListShare
+      ? listRows.some(
+          (row) =>
+            row.stockTotal != null ||
+            row.system_quantity != null ||
+            row.counted_quantity != null,
+        )
+      : snap?.stockTotal != null ||
+        snap?.stockAvailable != null ||
+        snap?.stockReserved != null);
   const allowComments = share.permissions === 'view_comment';
   const allowApproval = share.permissions === 'view_approve';
   const allowReprove = share.permissions === 'view_reprove';
+  const productTitle = snap?.title ?? snap?.name ?? share.name;
 
   return (
-    <div className="min-h-screen bg-[#fafafa] font-sans text-slate-800 flex flex-col antialiased">
-      <Toaster position="top-right" />
-      
-      {/* Sleek Glassmorphism Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/50 px-6 py-4 flex items-center justify-between sticky top-0 z-40 shadow-[0_2px_12px_rgba(15,23,42,0.02)]">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-orange-500/10">
+    <div className="ls-share-public">
+      <Toaster position="top-center" />
+
+      <header className="ls-share-public__header">
+        <div className="ls-share-public__brand">
+          <div className="ls-share-public__brand-mark" aria-hidden>
             L
           </div>
-          <div>
-            <h1 className="text-sm font-black tracking-tight text-slate-900 flex items-center gap-1">
-              LogStoka <span className="text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-lg text-xs font-bold border border-orange-100">Share</span>
-            </h1>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">Visualização Externa Segura</p>
+          <div className="min-w-0">
+            <p className="ls-share-public__brand-title">LogStoka</p>
+            <p className="ls-share-public__brand-sub">Visualização externa</p>
           </div>
         </div>
-
-        <div className="flex items-center gap-4">
-          {timeRemaining ? (
-            <div className="flex items-center gap-1.5 rounded-full bg-orange-50 border border-orange-100/70 px-3.5 py-1.5 text-xs font-bold text-orange-600 shadow-sm animate-pulse">
-              <Clock size={13} className="text-orange-500" />
-              {timeRemaining}
-            </div>
-          ) : null}
-          <div className="text-[10px] font-black text-slate-500 bg-slate-100 border border-slate-200/40 rounded-full px-3 py-1.5 uppercase tracking-widest flex items-center gap-1.5">
-            <Lock size={12} className="text-orange-600" /> Criptografado
+        {timeRemaining ? (
+          <div className="ls-share-public__timer">
+            <Clock size={13} aria-hidden />
+            {timeRemaining}
           </div>
-        </div>
+        ) : null}
       </header>
 
-      {/* Main Grid Layout - Much more spacious and balanced */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8 lg:py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Lado Esquerdo: Conteúdo Principal (Spacious layout, better text sizing) */}
-        <div className="lg:col-span-2 space-y-8">
-          
-          {/* Card de Boas-Vindas e Metadados do Compartilhamento */}
-          <section className="bg-white border border-slate-200/50 p-8 rounded-[28px] shadow-sm space-y-5 transition duration-200 hover:shadow-md">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider bg-slate-100 px-3 py-1.5 text-slate-500 rounded-full border border-slate-200/20">
-                {share.resourceType === 'product' ? '📦 Produto' : share.resourceType === 'inventory' ? '📋 Inventário' : '📊 Tabela'}
-              </span>
-              <span className="text-[10px] font-black uppercase tracking-wider bg-orange-50 border border-orange-200/40 px-3 py-1.5 text-orange-700 rounded-full flex items-center gap-1.5 shadow-sm">
-                🔒 Snapshot congelado · sem acesso ao WMS ao vivo
-              </span>
-            </div>
+      <main className="ls-share-public__main">
+        <div className="ls-share-public__banner">
+          <Shield size={16} aria-hidden />
+          <span>
+            Snapshot congelado em {formatExpiry(share.createdAt)} — leitura segura, sem acesso ao WMS
+            ao vivo.
+          </span>
+        </div>
 
-            <div className="space-y-2">
-              <h2 className="text-2xl font-black tracking-tight text-slate-900 leading-tight">
-                {share.name}
-              </h2>
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-                <span>Criador: <strong className="text-slate-600">{share.creatorName}</strong></span>
-                <span>·</span>
-                <span>Gerado: <strong className="text-slate-600">{new Date(share.createdAt).toLocaleDateString('pt-BR')}</strong></span>
-                <span>·</span>
-                <span className="flex items-center gap-1"><Eye size={13} className="text-slate-400" /> <strong>{share.visits}</strong> acessos</span>
+        <section className="ls-share-public__hero">
+          <div className="ls-share-public__hero-top">
+            {snap?.main_image_url ? (
+              <img src={snap.main_image_url} alt="" className="ls-share-public__image" />
+            ) : (
+              <div className="ls-share-public__image ls-share-public__image--empty">
+                <Package size={28} strokeWidth={1.5} aria-hidden />
               </div>
-            </div>
-
-            {share.note ? (
-              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200/40 relative overflow-hidden">
-                <p className="text-xs font-semibold text-slate-500 leading-relaxed relative z-10">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Observações do Emissor:</span>
-                  {share.note}
-                </p>
-                <div className="absolute right-0 bottom-0 translate-x-3 translate-y-3 opacity-5 text-slate-500">
-                  <MessageSquare size={80} />
-                </div>
-              </div>
-            ) : null}
-          </section>
-
-          {/* RENDERIZADOR DADO COMPARTILHADO (Spacious list layout, styled cards) */}
-          <section className="bg-white border border-slate-200/50 rounded-[28px] shadow-sm overflow-hidden transition duration-200 hover:shadow-md">
-            <div className="border-b border-slate-100 px-8 py-5 bg-slate-50/50 flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-400">Ficha Operacional de Auditoria</span>
-              <span className="text-xs font-extrabold text-slate-400 bg-white px-3 py-1 rounded-lg border border-slate-200/30">Ref: {share.resourceId}</span>
-            </div>
-            
-            {/* Visualizador de Detalhes do Produto */}
-            {share.resourceType === 'product' ? (
-              <div className="p-8 space-y-8">
-                
-                {/* Cabeçalho do Produto - Spacious and Premium */}
-                <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
-                  {share.snapshotData?.main_image_url ? (
-                    <img 
-                      src={share.snapshotData.main_image_url} 
-                      alt="" 
-                      className="h-28 w-28 object-cover border border-slate-200 rounded-[22px] shadow-[0_4px_12px_rgba(15,23,42,0.04)] bg-white p-1"
-                    />
-                  ) : (
-                    <div className="h-28 w-28 bg-slate-50 border border-slate-200/40 rounded-[22px] flex flex-col items-center justify-center text-[10px] font-black uppercase tracking-wider text-slate-400 gap-1.5 shadow-inner">
-                      <Package size={20} className="text-slate-300" />
-                      Sem Foto
-                    </div>
-                  )}
-                  <div className="flex-1 space-y-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-50 px-2.5 py-1 rounded-md border border-orange-100/50">
-                      Catálogo WMS Mestre
-                    </span>
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight leading-tight mt-2">
-                      {snap?.title ?? snap?.name ?? share.name}
-                    </h3>
-                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 pt-1">
-                      <span className="text-[10px] font-bold px-3 py-1 bg-slate-50 rounded-xl text-slate-600 border border-slate-200/20">
-                        SKU: <strong className="text-slate-800">{share.snapshotData?.sku || 'PLM-FRD-P'}</strong>
-                      </span>
-                      <span className="text-[10px] font-bold px-3 py-1 bg-slate-50 rounded-xl text-slate-600 border border-slate-200/20">
-                        Unidade: <strong className="text-slate-800">{share.snapshotData?.unit || 'UN'}</strong>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {showQuantities ? (
-                <div className="bg-slate-900 text-white p-8 rounded-[24px] shadow-xl relative overflow-hidden border border-slate-800">
-                  <div className="relative z-10 space-y-4">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Quantidade Geral Mestre Em Estoque</p>
-                      <p className="text-5xl font-black tracking-tight text-white flex items-baseline gap-2">
-                        {snap?.stockTotal?.toLocaleString('pt-BR') ?? '—'}{' '}
-                        <span className="text-base font-bold text-orange-500 uppercase tracking-widest bg-orange-500/10 px-2 py-0.5 rounded-lg border border-orange-500/20">unidades totais</span>
-                      </p>
-                    </div>
-
-                    <div className="bg-white/[0.03] backdrop-blur-md rounded-2xl p-4 flex items-start gap-3 border border-white/[0.05] mt-4">
-                      <div className="h-5 w-5 bg-orange-500/20 rounded-md flex items-center justify-center text-orange-500 flex-shrink-0 mt-0.5">
-                        <CheckCircle size={14} className="animate-pulse" />
-                      </div>
-                      <p className="text-xs font-semibold text-slate-300 leading-relaxed">
-                        Varredura inteligente por IA consolidou dados de 4 planilhas operacionais, WMS local e todos os canais de marketplace integrados. 
-                        {snap?.divergencesFound ? (
-                          <span className="text-orange-400 block font-bold mt-1">⚠️ Ajustes pendentes de conciliação detectados abaixo.</span>
-                        ) : (
-                          <span className="text-emerald-400 block font-bold mt-1">✓ Todos os registros estão 100% conciliados e sem divergências.</span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                  {/* Glowing background circles for extreme premium feel */}
-                  <div className="absolute right-0 bottom-0 h-40 w-40 bg-orange-600/10 rounded-full translate-x-12 translate-y-12 blur-2xl pointer-events-none" />
-                  <div className="absolute left-1/3 top-0 h-28 w-28 bg-orange-500/5 rounded-full -translate-y-8 blur-xl pointer-events-none" />
-                </div>
-                ) : (
-                  <p className="text-sm font-semibold text-slate-500 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    Quantidades de estoque ocultas neste link (somente visualização de cadastro).
-                  </p>
-                )}
-
-                {showQuantities ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-5 bg-white border border-slate-200/50 rounded-2xl flex items-center justify-between shadow-[0_2px_8px_rgba(15,23,42,0.01)] hover:border-slate-200 transition">
-                    <div className="space-y-1 text-left">
-                      <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Disponível WMS</p>
-                      <p className="text-2xl font-black text-slate-800">
-                        {snap?.stockAvailable?.toLocaleString('pt-BR') ?? '—'}
-                      </p>
-                    </div>
-                    <div className="h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-200/10">
-                      <Box size={18} />
-                    </div>
-                  </div>
-
-                  <div className="p-5 bg-white border border-slate-200/50 rounded-2xl flex items-center justify-between shadow-[0_2px_8px_rgba(15,23,42,0.01)] hover:border-slate-200 transition">
-                    <div className="space-y-1 text-left">
-                      <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Reservado Pedidos</p>
-                      <p className="text-2xl font-black text-slate-800">
-                        {snap?.stockReserved?.toLocaleString('pt-BR') ?? '—'}
-                      </p>
-                    </div>
-                    <div className="h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-200/10">
-                      <Eye size={18} />
-                    </div>
-                  </div>
-
-                </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="ls-share-public__eyebrow">{RESOURCE_LABEL[share.resourceType]}</p>
+              <h1 className="ls-share-public__title">{productTitle}</h1>
+              <div className="ls-share-public__chips">
+                {isListShare ? (
+                  <span className="ls-share-public__chip">
+                    Itens<strong>{listRows.length}</strong>
+                  </span>
                 ) : null}
+                {snap?.sku ? (
+                  <span className="ls-share-public__chip">
+                    SKU<strong>{snap.sku}</strong>
+                  </span>
+                ) : null}
+                {snap?.unit ? (
+                  <span className="ls-share-public__chip">
+                    Un.<strong>{snap.unit}</strong>
+                  </span>
+                ) : null}
+                {snap?.brand ? (
+                  <span className="ls-share-public__chip">
+                    Marca<strong>{snap.brand}</strong>
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </div>
 
-                {/* Table of WMS / Marketplace API integrations - More spacious row cards */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                    <RefreshCw size={12} className="text-slate-400 animate-spin-slow" />
-                    Isolamento & Auditoria de Canais API
-                  </h4>
-                  
-                  <div className="grid grid-cols-1 gap-3">
-                    
-                    <div className="bg-slate-50/70 border border-slate-200/40 p-4 rounded-2xl flex items-center justify-between hover:bg-slate-50 transition">
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 bg-slate-200/50 text-slate-700 rounded-xl flex items-center justify-center font-bold text-xs">
-                          WMS
-                        </div>
-                        <div>
-                          <p className="text-xs font-extrabold text-slate-800">WMS Central LogStoka</p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">Servidor Integrado</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs font-black text-slate-800">840 un.</p>
-                        <span className="text-[9px] font-extrabold px-2 py-0.5 bg-slate-200/60 rounded text-slate-600 block mt-1 uppercase">Servidor Master</span>
-                      </div>
-                    </div>
+          <div className="ls-share-public__meta">
+            <span>
+              Enviado por <strong>{share.creatorName}</strong>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Eye size={13} aria-hidden />
+              {share.visits} {share.visits === 1 ? 'visualização' : 'visualizações'}
+            </span>
+          </div>
 
-                    <div className="bg-slate-50/70 border border-slate-200/40 p-4 rounded-2xl flex items-center justify-between hover:bg-slate-50 transition">
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center font-bold text-xs border border-orange-100/50">
-                          ML
-                        </div>
-                        <div>
-                          <p className="text-xs font-extrabold text-slate-800">Mercado Livre (API Callback)</p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">Webhook Ativo</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs font-black text-amber-700">820 un.</p>
-                        <span className="text-[9px] font-extrabold px-2 py-0.5 bg-amber-50 border border-amber-100/50 rounded text-amber-700 block mt-1 uppercase">Aviso: Divergência ⚠️</span>
-                      </div>
-                    </div>
+          {share.note ? (
+            <div className="ls-share-public__note">
+              <p className="ls-share-public__note-label">Instruções do emissor</p>
+              <p className="ls-share-public__note-text">{share.note}</p>
+            </div>
+          ) : null}
+        </section>
 
-                    <div className="bg-slate-50/70 border border-slate-200/40 p-4 rounded-2xl flex items-center justify-between hover:bg-slate-50 transition">
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-bold text-xs border border-emerald-100/50">
-                          SH
-                        </div>
-                        <div>
-                          <p className="text-xs font-extrabold text-slate-800">Shopee Store (OAuth Ativo)</p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">Conexão Autenticada</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs font-black text-slate-800">840 un.</p>
-                        <span className="text-[9px] font-extrabold px-2 py-0.5 bg-emerald-50 border border-emerald-100/30 rounded text-emerald-600 block mt-1 uppercase flex items-center gap-0.5 justify-center">Conciliado ✓</span>
-                      </div>
-                    </div>
+        {isListShare && showQuantities && snap?.stockTotal != null ? (
+          <div className="ls-share-public__kpis ls-share-public__kpis--compact">
+            <div className="ls-share-public__kpi">
+              <p className="ls-share-public__kpi-label">Produtos</p>
+              <p className="ls-share-public__kpi-value">{listRows.length}</p>
+            </div>
+            <div className="ls-share-public__kpi">
+              <p className="ls-share-public__kpi-label">Unidades (soma)</p>
+              <p className="ls-share-public__kpi-value ls-share-public__kpi-value--accent">
+                {snap.stockTotal.toLocaleString('pt-BR')}
+              </p>
+            </div>
+          </div>
+        ) : null}
 
-                    <div className="bg-slate-50/70 border border-slate-200/40 p-4 rounded-2xl flex items-center justify-between hover:bg-slate-50 transition">
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 bg-slate-200/50 text-slate-700 rounded-xl flex items-center justify-center font-bold text-xs">
-                          XLS
+        {isListShare ? (
+          <section className="ls-share-public__card ls-share-public__card--flush">
+            <div className="ls-share-public__table-head">
+              <h2 className="ls-share-public__card-title">
+                {isInventoryList ? 'Itens do inventário' : 'Produtos compartilhados'}
+              </h2>
+              <span className="ls-share-public__table-count">
+                {listRows.length} {listRows.length === 1 ? 'item' : 'itens'}
+              </span>
+            </div>
+            <div className="ls-share-public__table-wrap">
+              <table className="ls-share-public__table">
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>SKU</th>
+                    {isInventoryList && showQuantities ? (
+                      <>
+                        <th className="ls-share-public__table-num">Sistema</th>
+                        <th className="ls-share-public__table-num">Contado</th>
+                        <th className="ls-share-public__table-num">Dif.</th>
+                      </>
+                    ) : showQuantities ? (
+                      <>
+                        <th>Categoria</th>
+                        <th className="ls-share-public__table-num">Estoque</th>
+                      </>
+                    ) : (
+                      <th>Categoria</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {listRows.map((row, index) => (
+                    <tr key={`${row.sku ?? row.name}-${index}`}>
+                      <td>
+                        <div className="ls-share-public__table-product">
+                          {row.main_image_url ? (
+                            <img src={row.main_image_url} alt="" className="ls-share-public__table-thumb" />
+                          ) : (
+                            <span className="ls-share-public__table-thumb ls-share-public__table-thumb--empty">
+                              <Package size={14} aria-hidden />
+                            </span>
+                          )}
+                          <span className="ls-share-public__table-name">{row.name}</span>
                         </div>
-                        <div>
-                          <p className="text-xs font-extrabold text-slate-800">Planilha Excel de Entrada</p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">Upload Lote Fralda-P</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs font-black text-slate-800">850 un.</p>
-                        <span className="text-[9px] font-extrabold px-2 py-0.5 bg-slate-100 rounded text-slate-500 block mt-1 uppercase">Não Aprovada</span>
-                      </div>
-                    </div>
+                      </td>
+                      <td className="ls-share-public__table-mono">{row.sku ?? '—'}</td>
+                      {isInventoryList && showQuantities ? (
+                        <>
+                          <td className="ls-share-public__table-num">
+                            {row.system_quantity?.toLocaleString('pt-BR') ?? '—'}
+                          </td>
+                          <td className="ls-share-public__table-num">
+                            {row.counted_quantity?.toLocaleString('pt-BR') ?? '—'}
+                          </td>
+                          <td
+                            className={`ls-share-public__table-num ${
+                              row.difference != null && row.difference !== 0
+                                ? 'ls-share-public__table-num--warn'
+                                : ''
+                            }`}
+                          >
+                            {row.difference?.toLocaleString('pt-BR') ?? '—'}
+                          </td>
+                        </>
+                      ) : showQuantities ? (
+                        <>
+                          <td>{row.category ?? '—'}</td>
+                          <td className="ls-share-public__table-num ls-share-public__table-num--accent">
+                            {row.stockTotal?.toLocaleString('pt-BR') ?? '—'}
+                            {row.unit ? ` ${row.unit}` : ''}
+                          </td>
+                        </>
+                      ) : (
+                        <td>{row.category ?? row.unit ?? '—'}</td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ) : null}
 
-                  </div>
-                </div>
+        {!isListShare && showQuantities ? (
+          <>
+            <div className="ls-share-public__kpis">
+              <div className="ls-share-public__kpi">
+                <p className="ls-share-public__kpi-label">Em estoque</p>
+                <p className="ls-share-public__kpi-value ls-share-public__kpi-value--accent">
+                  {snap?.stockTotal?.toLocaleString('pt-BR') ?? '—'}
+                </p>
+              </div>
+              <div className="ls-share-public__kpi">
+                <p className="ls-share-public__kpi-label">Disponível</p>
+                <p className="ls-share-public__kpi-value">
+                  {snap?.stockAvailable?.toLocaleString('pt-BR') ?? '—'}
+                </p>
+              </div>
+              <div className="ls-share-public__kpi">
+                <p className="ls-share-public__kpi-label">Reservado</p>
+                <p className="ls-share-public__kpi-value">
+                  {snap?.stockReserved?.toLocaleString('pt-BR') ?? '—'}
+                </p>
+              </div>
+            </div>
 
+            {snap?.divergencesFound ? (
+              <p className="ls-share-public__alert ls-share-public__alert--warn">
+                Há divergências pendentes de conciliação neste snapshot.
+              </p>
+            ) : (
+              <p className="ls-share-public__alert ls-share-public__alert--ok">
+                Quantidades conferidas e consistentes no momento do compartilhamento.
+              </p>
+            )}
+          </>
+        ) : !isListShare ? (
+          <p className="ls-share-public__alert ls-share-public__alert--warn">
+            Este link mostra apenas cadastro — quantidades de estoque estão ocultas.
+          </p>
+        ) : isListShare && !showQuantities ? (
+          <p className="ls-share-public__alert ls-share-public__alert--warn">
+            Lista de produtos — quantidades ocultas neste link (somente leitura de cadastro).
+          </p>
+        ) : null}
+
+        {allowApproval || allowReprove ? (
+          <section className="ls-share-public__card">
+            <h2 className="ls-share-public__card-title">
+              <CheckCircle size={15} aria-hidden />
+              Sua decisão
+            </h2>
+            <p className="ls-share-public__card-text">
+              Confirme se as quantidades deste snapshot estão corretas. O responsável do estoque será
+              notificado.
+            </p>
+
+            {approval === 'pending' ? (
+              <div className="ls-share-public__actions">
+                <button
+                  type="button"
+                  className="ls-share-public__btn ls-share-public__btn--approve"
+                  onClick={() => handleApproval('approved')}
+                >
+                  <CheckCircle size={16} />
+                  Aprovar estoque
+                  {snap?.stockTotal != null ? ` · ${snap.stockTotal.toLocaleString('pt-BR')} un.` : ''}
+                </button>
+                {allowReprove ? (
+                  <button
+                    type="button"
+                    className="ls-share-public__btn ls-share-public__btn--reject"
+                    onClick={() => handleApproval('rejected')}
+                  >
+                    <XCircle size={16} />
+                    Rejeitar e pedir recontagem
+                  </button>
+                ) : null}
               </div>
             ) : (
-              /* Visualizador de Tabela Geral */
-              <div className="p-8 space-y-6">
-                <div className="bg-slate-900 text-white p-6 rounded-2xl flex items-center gap-4 shadow-md">
-                  <div className="h-12 w-12 bg-white/10 rounded-xl flex items-center justify-center text-orange-500 flex-shrink-0">
-                    <BarChart2 size={24} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-wider text-slate-400">Total de Linhas Compartilhadas</p>
-                    <p className="text-xl font-black">15 Registros Conciliados</p>
-                  </div>
-                </div>
-
-                <div className="border border-slate-200 rounded-[18px] overflow-hidden">
-                  <table className="w-full border-collapse text-left text-xs">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200/50 text-slate-500">
-                        <th className="p-4 font-bold uppercase">Código</th>
-                        <th className="p-4 font-bold uppercase">Referência</th>
-                        <th className="p-4 font-bold uppercase">Status</th>
-                        <th className="p-4 font-bold uppercase text-right">Quantidade</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
-                      <tr className="hover:bg-slate-50/50 transition">
-                        <td className="p-4 font-bold text-slate-900">PLM-FRD-P</td>
-                        <td className="p-4">Fralda Pluma P 60un</td>
-                        <td className="p-4"><span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100/30 text-emerald-600 uppercase">Aprovado</span></td>
-                        <td className="p-4 font-black text-right text-slate-900">840</td>
-                      </tr>
-                      <tr className="hover:bg-slate-50/50 transition">
-                        <td className="p-4 font-bold text-slate-900">PLM-FRD-M</td>
-                        <td className="p-4">Fralda Pluma M 50un</td>
-                        <td className="p-4"><span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100/30 text-emerald-600 uppercase">Aprovado</span></td>
-                        <td className="p-4 font-black text-right text-slate-900">1.200</td>
-                      </tr>
-                      <tr className="hover:bg-slate-50/50 transition">
-                        <td className="p-4 font-bold text-slate-900">PLM-FRD-G</td>
-                        <td className="p-4">Fralda Pluma G 40un</td>
-                        <td className="p-4"><span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100/40 text-amber-700 uppercase">Pendente</span></td>
-                        <td className="p-4 font-black text-right text-slate-900">320</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+              <div
+                className={`ls-share-public__result ${
+                  approval === 'approved' ? 'ls-share-public__result--ok' : 'ls-share-public__result--err'
+                }`}
+              >
+                {approval === 'approved' ? <CheckCircle size={18} /> : <XCircle size={18} />}
+                <span>
+                  {approval === 'approved'
+                    ? 'Estoque aprovado. Obrigado pela confirmação.'
+                    : 'Contagem rejeitada. O estoque será reavaliado.'}
+                </span>
               </div>
             )}
           </section>
-        </div>
+        ) : null}
 
-        {/* Lado Direito: Comentários e Aprovações */}
-        <div className="space-y-8">
-          
-          {/* Painel de Aprovação de Estoque (Estilo WMS) */}
-          {(allowApproval || allowReprove) ? (
-            <section className="bg-white border border-slate-200/50 p-6 md:p-8 rounded-[28px] shadow-sm space-y-5 transition duration-200 hover:shadow-md">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                <CheckCircle size={14} className="text-orange-600" />
-                Decisão do Auditor
-              </h3>
-              
-              <p className="text-xs text-slate-500 leading-normal font-semibold">
-                Sua resposta será sincronizada de forma segura com o LogStoka WMS corporativo.
-              </p>
+        {allowComments ? (
+          <section className="ls-share-public__card">
+            <h2 className="ls-share-public__card-title">
+              <MessageSquare size={15} aria-hidden />
+              Comentários
+            </h2>
 
-              {approval === 'pending' ? (
-                <div className="flex flex-col gap-2.5 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => handleApproval('approved')}
-                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-3.5 px-4 shadow-lg shadow-emerald-600/10 transition duration-150 active:scale-[0.98]"
-                  >
-                    <CheckCircle size={16} />
-                    Aprovar Estoque (840 un)
-                  </button>
-                  {allowReprove && (
-                    <button
-                      type="button"
-                      onClick={() => handleApproval('rejected')}
-                      className="w-full flex items-center justify-center gap-2 rounded-2xl bg-white hover:bg-red-50 text-red-600 font-extrabold text-xs py-3.5 px-4 border-2 border-red-100 hover:border-red-200 transition duration-150 active:scale-[0.98]"
-                    >
-                      <XCircle size={16} />
-                      Rejeitar e Pedir Recontagem
-                    </button>
-                  )}
-                </div>
+            <div className="ls-share-public__comments">
+              {comments.length === 0 ? (
+                <p className="ls-share-public__empty">Nenhum comentário ainda.</p>
               ) : (
-                <div className={`p-5 rounded-2xl flex items-start gap-3 border-2 ${
-                  approval === 'approved' 
-                    ? 'bg-emerald-50/50 border-emerald-100 text-emerald-800' 
-                    : 'bg-red-50/50 border-red-100 text-red-800'
-                } animate-fade-in`}>
-                  {approval === 'approved' ? (
-                    <CheckCircle className="shrink-0 text-emerald-600 mt-0.5" />
-                  ) : (
-                    <XCircle className="shrink-0 text-red-600 mt-0.5" />
-                  )}
-                  <div>
-                    <p className="font-extrabold text-xs">
-                      {approval === 'approved' ? 'Estoque Aprovado ✓' : 'Estoque Reprovado ✗'}
-                    </p>
-                    <p className="text-[10px] text-slate-500 font-semibold mt-1.5 leading-relaxed">
-                      Sua resposta foi enviada ao sistema central do LogStoka. Este link seguro permanece auditado com status final.
-                    </p>
-                  </div>
-                </div>
+                comments.map((c) => (
+                  <article key={c.id} className="ls-share-public__comment">
+                    <div className="ls-share-public__comment-head">
+                      <span>{c.author}</span>
+                      <span className="ls-share-public__comment-time">
+                        {new Date(c.createdAt).toLocaleString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    <p className="ls-share-public__comment-text">{c.text}</p>
+                  </article>
+                ))
               )}
-            </section>
-          ) : null}
+            </div>
 
-          {/* Painel de Comentários / Discussão - Bubbles, spacious layout */}
-          {allowComments ? (
-            <section className="bg-white border border-slate-200/50 p-6 md:p-8 rounded-[28px] shadow-sm flex flex-col transition duration-200 hover:shadow-md">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-1.5">
-                <MessageSquare size={14} className="text-orange-600" />
-                Discussão e Notas
-              </h3>
-
-              {/* Lista de Comentários - Spacious message bubbles */}
-              <div className="flex-1 overflow-y-auto space-y-4 mb-6 pr-1 max-h-[300px] min-h-[160px] scrollbar-thin">
-                {comments.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
-                    <MessageSquare className="text-slate-300" size={24} />
-                    <p className="text-xs font-semibold text-slate-400 italic">
-                      Nenhum comentário registrado ainda.
-                    </p>
-                  </div>
-                ) : (
-                  comments.map((c) => {
-                    const authorInitials = c.author.slice(0, 2).toUpperCase();
-                    return (
-                      <div key={c.id} className="flex gap-3 items-start animate-fade-in">
-                        <div className="h-8 w-8 rounded-full bg-orange-100 border border-orange-200/30 text-orange-700 flex items-center justify-center text-[10px] font-black shrink-0">
-                          {authorInitials}
-                        </div>
-                        <div className="bg-slate-50 border border-slate-200/30 p-4 rounded-2xl flex-1 space-y-1 relative shadow-[0_1px_3px_rgba(15,23,42,0.01)]">
-                          <div className="flex items-center justify-between">
-                            <span className="font-extrabold text-[10px] text-slate-700">{c.author}</span>
-                            <span className="text-[9px] text-slate-400 font-bold">{new Date(c.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
-                          <p className="text-xs font-medium text-slate-600 leading-normal">{c.text}</p>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
+            <form onSubmit={handleAddComment} className="ls-share-public__form">
+              <div>
+                <label className="ls-share-public__label" htmlFor="share-visitor-name">
+                  Seu nome
+                </label>
+                <input
+                  id="share-visitor-name"
+                  type="text"
+                  className="ls-share-public__input"
+                  placeholder="Ex.: Maria — Conferência"
+                  value={visitorName}
+                  onChange={(e) => setVisitorName(e.target.value)}
+                />
               </div>
-
-              {/* Form para adicionar comentário - Spacious with custom inputs */}
-              <form onSubmit={handleAddComment} className="border-t border-slate-100 pt-5 space-y-3">
-                <div>
-                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">Seu Nome / Cargo</label>
+              <div>
+                <label className="ls-share-public__label" htmlFor="share-comment">
+                  Mensagem
+                </label>
+                <div className="ls-share-public__submit-row">
                   <input
+                    id="share-comment"
                     type="text"
-                    placeholder="Ex: Thiago WMS Auditor"
-                    className="ls-input text-xs"
-                    style={{ height: '46px', minHeight: '46px', borderRadius: '12px' }}
+                    className="ls-share-public__input"
+                    placeholder="Escreva uma observação…"
                     required
-                    value={visitorName}
-                    onChange={(e) => setVisitorName(e.target.value)}
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
                   />
+                  <button type="submit" className="ls-share-public__send" aria-label="Enviar comentário">
+                    <Send size={16} />
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">Mensagem</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Adicione um comentário ou nota..."
-                      className="ls-input text-xs pr-12"
-                      style={{ height: '46px', minHeight: '46px', borderRadius: '12px' }}
-                      required
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                    />
-                    <button
-                      type="submit"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-orange-600 hover:text-orange-700 bg-orange-50 border border-orange-100 hover:bg-orange-100 transition p-1.5 rounded-lg shadow-sm"
-                    >
-                      <Send size={14} />
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </section>
-          ) : null}
+              </div>
+            </form>
+          </section>
+        ) : null}
 
-          {/* Se nenhuma interação é permitida, mostra apenas aviso de View Only */}
-          {isViewOnly ? (
-            <section className="bg-white border border-slate-200/50 p-6 rounded-3xl shadow-sm text-center border-dashed">
-              <p className="text-xs font-extrabold text-slate-400 flex items-center justify-center gap-1.5">
-                <Lock size={13} className="text-orange-600 animate-pulse" />
-                Visualização Protegida Somente Leitura
-              </p>
-            </section>
-          ) : null}
-
-        </div>
+        {isViewOnly ? (
+          <section className="ls-share-public__card">
+            <p className="ls-share-public__card-text flex items-center justify-center gap-2 m-0">
+              <Lock size={14} aria-hidden />
+              Somente leitura — comentários e aprovação desativados neste link.
+            </p>
+          </section>
+        ) : null}
       </main>
 
-      {/* Footer Público Limpo e Profissional */}
-      <footer className="bg-white border-t border-slate-100 py-8 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest mt-16 space-y-1">
-        <div>LogStoka WMS Integrated Sharing Tunnel</div>
-        <div className="text-[9px] text-slate-400 font-semibold tracking-normal lowercase mt-0.5">
-          Protegido contra vazamento de dados. © {new Date().getFullYear()} LogStoka Inc.
-        </div>
+      <footer className="ls-share-public__footer">
+        LogStoka · compartilhamento seguro · {new Date().getFullYear()}
       </footer>
     </div>
   );
 };
+
 export default SharedPublicPage;

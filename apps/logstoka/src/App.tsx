@@ -13,6 +13,7 @@ const ConferencePendingPage = lazy(() => import('@/modules/operational/Conferenc
 const InicioHomePage = lazy(() => import('@/modules/inicio/InicioHomePage'));
 const ProductsSectionLayout = lazy(() => import('@/modules/products/ProductsSectionLayout'));
 const WarehousesPage = lazy(() => import('@/modules/warehouses/WarehousesPage'));
+const WarehouseDetailPage = lazy(() => import('@/modules/warehouses/WarehouseDetailPage'));
 const MovementsPage = lazy(() => import('@/modules/movements/MovementsPage'));
 const PickingPage = lazy(() => import('@/modules/picking/PickingPage'));
 const ConferenceHistoryPage = lazy(() => import('@/modules/picking/ConferenceHistoryPage'));
@@ -20,12 +21,14 @@ const ConferencePage = lazy(() => import('@/modules/conference/ConferencePage'))
 const InventoryPage = lazy(() => import('@/modules/inventory/InventoryPage'));
 const ReturnsPage = lazy(() => import('@/modules/returns/ReturnsPage'));
 const TransfersPage = lazy(() => import('@/modules/transfers/TransfersPage'));
+const DriverGatePage = lazy(() => import('@/modules/drivers/DriverGatePage'));
 const ProductsPage = lazy(() => import('@/modules/products/ProductsPage'));
 const ProductStoreGroupsPage = lazy(() => import('@/modules/products/ProductStoreGroupsPage'));
 const ProductPublicationPage = lazy(() => import('@/modules/products/ProductPublicationPage'));
 const ProductSyncPage = lazy(() => import('@/modules/products/ProductSyncPage'));
 const ProductAddWizardPage = lazy(() => import('@/modules/products/ProductAddWizardPage'));
 const ProductDetailPage = lazy(() => import('@/modules/products/ProductDetailPage'));
+const MovementHistoryPage = lazy(() => import('@/modules/movements/MovementHistoryPage'));
 const MovementDetailPage = lazy(() => import('@/modules/movements/MovementDetailPage'));
 const TransferDetailPage = lazy(() => import('@/modules/transfers/TransferDetailPage'));
 const ReturnDetailPage = lazy(() => import('@/modules/returns/ReturnDetailPage'));
@@ -45,6 +48,7 @@ const MarketplaceModuleHubPage = lazy(() => import('@/modules/marketplace/Market
 const MarketplaceHubPage = lazy(() => import('@/modules/integrations/MarketplaceHubPage'));
 const SettingsLayout = lazy(() => import('@/modules/settings/SettingsLayout'));
 const SettingsProfilePanel = lazy(() => import('@/modules/settings/panels/SettingsProfilePanel'));
+const SettingsAccountPanel = lazy(() => import('@/modules/settings/panels/SettingsAccountPanel'));
 const SettingsCompanyPanel = lazy(() => import('@/modules/settings/panels/SettingsCompanyPanel'));
 const SettingsTeamPanel = lazy(() => import('@/modules/settings/panels/SettingsTeamPanel'));
 const SettingsApiWebhooksPanel = lazy(() => import('@/modules/settings/panels/SettingsApiWebhooksPanel'));
@@ -142,6 +146,7 @@ const App: React.FC = () => (
             />
             <Route path=":id" element={<ProductDetailPage />} />
           </Route>
+          <Route path="movements/historico" element={<MovementHistoryPage />} />
           <Route path="movements/:id" element={<MovementDetailPage />} />
           <Route path="transfers/:id" element={<TransferDetailPage />} />
           <Route path="returns/:id" element={<ReturnDetailPage />} />
@@ -150,8 +155,10 @@ const App: React.FC = () => (
           <Route path="picking/historico" element={<ConferenceHistoryPage />} />
           <Route path="picking/:key" element={<PickingDetailPage />} />
           <Route path="warehouses" element={<WarehousesPage />} />
+          <Route path="warehouses/:warehouseId" element={<WarehouseDetailPage />} />
           <Route path="movements" element={<MovementsPage />} />
           <Route path="transfers" element={<TransfersPage />} />
+          <Route path="portaria" element={<DriverGatePage />} />
           <Route path="picking" element={<PickingPage />} />
           <Route path="conference" element={<ConferencePage />} />
           <Route path="inventory" element={<InventoryPage />} />
@@ -263,6 +270,7 @@ const App: React.FC = () => (
           <Route path="configuracoes" element={<SettingsLayout />}>
             <Route index element={<Navigate to="meu-perfil" replace />} />
             <Route path="meu-perfil" element={<SettingsProfilePanel />} />
+            <Route path="conta" element={<SettingsAccountPanel />} />
             <Route path="empresa" element={<SettingsCompanyPanel />} />
             <Route path="equipe" element={<SettingsTeamPanel />} />
             <Route path="equipe/ranking" element={<TeamRankingPage embedded />} />

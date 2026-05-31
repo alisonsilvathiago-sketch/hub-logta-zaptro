@@ -75,6 +75,10 @@ const ReturnDetailPage: React.FC = () => {
   );
 
   const timeline = useMemo(() => (item ? buildReturnTimeline(item) : []), [item]);
+  const labelData = useMemo(
+    () => (item ? stockLabelFromReturn(item, product) : EMPTY_STOCK_LABEL),
+    [item, product],
+  );
 
   if (!item) {
     return (
@@ -87,11 +91,6 @@ const ReturnDetailPage: React.FC = () => {
   const stepIndex = statusSteps.indexOf(item.status as (typeof statusSteps)[number]);
   const isRejected = item.status === 'rejected';
   const demo = (msg: string) => toast.success(`[Demo] ${msg}`);
-
-  const labelData = useMemo(
-    () => (item ? stockLabelFromReturn(item, product) : EMPTY_STOCK_LABEL),
-    [item, product],
-  );
 
   return (
     <LogstokaDetailPageLayout backTo="/app/returns" backLabel="Voltar para devoluções" hideTitleRow>

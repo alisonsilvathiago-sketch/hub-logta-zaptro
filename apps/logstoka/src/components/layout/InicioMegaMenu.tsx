@@ -4,7 +4,9 @@ import { ChevronDown, ShoppingBag, Sparkles } from 'lucide-react';
 import { getMegaMenuForMode, type InicioMegaLink } from '@/components/layout/inicioNavCatalog';
 import { resolveMegaMenuSectionId } from '@/components/layout/resolveAppSection';
 import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
+import { useAuth } from '@/context/LogstokaAuthProvider';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import { canViewMarketplaceNav } from '@/lib/marketplaceModule';
 import { loadOperationalProfile } from '@/lib/operationalProfile';
 
 type Props = {
@@ -49,8 +51,10 @@ function MegaLinkItem({
 const InicioMegaMenu: React.FC<Props> = ({ onOpenAi }) => {
   const { pathname } = useLocation();
   const { companyId } = useLogstokaTenant();
-  const profile = loadOperationalProfile(companyId);
-  const menuSections = getMegaMenuForMode(profile.mode);
+  const { profile } = useAuth();
+  const profileConfig = loadOperationalProfile(companyId);
+  const menuSections = getMegaMenuForMode(profileConfig.mode);
+  const showMarketplaceLink = canViewMarketplaceNav(profile?.role, companyId, profileConfig);
   const activeSectionId = resolveMegaMenuSectionId(pathname);
   const isMarketplaceHub = pathname.startsWith('/app/marketplace');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -144,7 +148,7 @@ const InicioMegaMenu: React.FC<Props> = ({ onOpenAi }) => {
   return (
     <nav className="ls-mega-nav" aria-label="Menu principal" ref={wrapRef}>
       {primarySections.map(renderSection)}
-      {marketplaceLink}
+      {showMarketplaceLink ? marketplaceLink : null}
       {accountSection ? renderSection(accountSection) : null}
     </nav>
   );

@@ -1,8 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, CalendarClock, Package, User } from 'lucide-react';
+import { ArrowRight, CalendarClock, ClipboardCheck, Package, Store, User } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import LogstokaMoneyValue from '@/components/privacy/LogstokaMoneyValue';
+import LogstokaMoneyPrivacyToggle from '@/components/privacy/LogstokaMoneyPrivacyToggle';
+import '@/components/privacy/moneyPrivacy.css';
+import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
 import { resolveActivityEventPreview } from '@/lib/activityEventPreview';
 import type { OperationalActivityEvent } from '@/lib/operationalActivityLog';
 
@@ -20,10 +23,11 @@ function resultClass(result: OperationalActivityEvent['result']): string {
 
 const ActivityEventPreviewModal: React.FC<Props> = ({ event, onClose }) => {
   const navigate = useNavigate();
+  const { companyId } = useLogstokaTenant();
 
   if (!event) return null;
 
-  const preview = resolveActivityEventPreview(event);
+  const preview = resolveActivityEventPreview(event, companyId);
   const canOpenDetail = Boolean(preview.href);
 
   const footer = (
@@ -40,7 +44,7 @@ const ActivityEventPreviewModal: React.FC<Props> = ({ event, onClose }) => {
             navigate(preview.href!);
           }}
         >
-          Ver ação completa
+          {preview.showResponsible ? 'Ver histórico completo' : 'Ver ação completa'}
           <ArrowRight size={16} strokeWidth={2.25} aria-hidden />
         </button>
       ) : null}
@@ -59,6 +63,19 @@ const ActivityEventPreviewModal: React.FC<Props> = ({ event, onClose }) => {
       panelClassName="ls-act-preview-modal"
     >
       <div className="ls-act-preview">
+        {preview.showResponsible ? (
+          <div className="ls-act-preview__responsible-card">
+            <ClipboardCheck size={18} strokeWidth={2.25} aria-hidden />
+            <div>
+              <p className="ls-act-preview__responsible-label">{preview.responsibleLabel}</p>
+              <p className="ls-act-preview__responsible-name">{preview.responsibleName}</p>
+              {preview.responsibleHint ? (
+                <p className="ls-act-preview__responsible-hint">{preview.responsibleHint}</p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
         <dl className="ls-act-preview__grid">
           <div>
             <dt>Data</dt>
@@ -68,6 +85,15 @@ const ActivityEventPreviewModal: React.FC<Props> = ({ event, onClose }) => {
             <dt>Hora</dt>
             <dd>{preview.timeLabel}</dd>
           </div>
+          {!preview.showResponsible ? (
+            <div className="ls-act-preview__span-2">
+              <dt>Operador</dt>
+              <dd className="ls-act-preview__product">
+                <User size={15} strokeWidth={2.25} aria-hidden />
+                {preview.responsibleName}
+              </dd>
+            </div>
+          ) : null}
           <div className="ls-act-preview__span-2">
             <dt>Produto</dt>
             <dd className="ls-act-preview__product">
@@ -75,6 +101,15 @@ const ActivityEventPreviewModal: React.FC<Props> = ({ event, onClose }) => {
               {preview.productName}
             </dd>
           </div>
+          {preview.storeOrChannel ? (
+            <div className="ls-act-preview__span-2">
+              <dt>Loja / canal</dt>
+              <dd className="ls-act-preview__product">
+                <Store size={15} strokeWidth={2.25} aria-hidden />
+                {preview.storeOrChannel}
+              </dd>
+            </div>
+          ) : null}
           <div>
             <dt>Quantidade</dt>
             <dd>{preview.quantityLabel}</dd>
@@ -85,7 +120,10 @@ const ActivityEventPreviewModal: React.FC<Props> = ({ event, onClose }) => {
               {preview.valueLabel === '—' ? (
                 '—'
               ) : (
-                <LogstokaMoneyValue isMoney>{preview.valueLabel}</LogstokaMoneyValue>
+                <span className="ls-money-value-row">
+                  <LogstokaMoneyPrivacyToggle size="sm" />
+                  <LogstokaMoneyValue isMoney>{preview.valueLabel}</LogstokaMoneyValue>
+                </span>
               )}
             </dd>
           </div>
@@ -102,11 +140,6 @@ const ActivityEventPreviewModal: React.FC<Props> = ({ event, onClose }) => {
         </dl>
 
         <p className="ls-act-preview__desc">{preview.description}</p>
-
-        <p className="ls-act-preview__actor">
-          <User size={14} strokeWidth={2.25} aria-hidden />
-          {preview.actorName}
-        </p>
       </div>
     </Modal>
   );

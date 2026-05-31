@@ -44,6 +44,10 @@ type Props = {
   embedded?: boolean;
   /** Apenas leitura — sem coluna de quantidade/registro (modal global) */
   scanOnly?: boolean;
+  /** Transferências: destacar código LS interno em vez de SKU marketplace */
+  preferInternalCode?: boolean;
+  /** Modal de transferência — sem título grande, padding reduzido */
+  compact?: boolean;
   inputId?: string;
 };
 
@@ -79,6 +83,8 @@ const MovementScanSection: React.FC<Props> = ({
   suggestedInternalCode = null,
   embedded = false,
   scanOnly = false,
+  preferInternalCode = false,
+  compact = false,
   inputId = 'ls-movement-scan-input',
 }) => {
   const [inputValue, setInputValue] = useState(scanValue);
@@ -88,6 +94,35 @@ const MovementScanSection: React.FC<Props> = ({
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const productCodeLine = (product: ProductLookupResult) => {
+    const ls = product.internal_code?.trim();
+    if (preferInternalCode && ls) {
+      return (
+        <>
+          Código LS <strong>{ls}</strong>
+          {product.sku && product.sku !== ls ? ` · Ref. ${product.sku}` : ''}
+          {product.barcode ? ` · EAN ${product.barcode}` : ''}
+        </>
+      );
+    }
+    return (
+      <>
+        {product.sku}
+        {product.internal_code ? ` · ${product.internal_code}` : ''}
+        {product.barcode ? ` · EAN ${product.barcode}` : ''}
+      </>
+    );
+  };
+
+  const codePlaceholder =
+    preferInternalCode
+      ? 'Código LS, EAN ou nome do produto'
+      : scanMode === 'barcode'
+        ? 'Leia código de barras ou digite EAN'
+        : scanMode === 'code'
+          ? 'SKU, código da empresa ou nome'
+          : 'QR JSON, URL, EAN, SKU ou nome — qualquer etiqueta';
 
   const suggestedCode = suggestedInternalCode ?? localSuggestedCode;
 
@@ -162,7 +197,9 @@ const MovementScanSection: React.FC<Props> = ({
   const ai = scanInterpretation?.ai;
 
   return (
-    <section className={`ls-movement-scan${embedded ? ' ls-movement-scan--embedded' : ''}`}>
+    <section
+      className={`ls-movement-scan${embedded ? ' ls-movement-scan--embedded' : ''}${compact ? ' ls-movement-scan--compact' : ''}`}
+    >
       {!suppressPageHeader && (pageTitleIcon || headerActions) ? (
         <div className="ls-movement-scan__page-header">
           <h2 className="ls-movement-scan__page-title">
@@ -173,6 +210,7 @@ const MovementScanSection: React.FC<Props> = ({
         </div>
       ) : null}
 
+      {!compact ? (
       <div className="ls-movement-scan__header">
         <div className="ls-movement-scan__header-main">
           <div className="min-w-0">
@@ -218,6 +256,40 @@ const MovementScanSection: React.FC<Props> = ({
           </div>
         </div>
       </div>
+      ) : (
+        <div className="ls-movement-scan__modes ls-movement-scan__modes--compact" role="tablist" aria-label="Modo de leitura">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={scanMode === 'universal'}
+            className={`ls-movement-scan__mode${scanMode === 'universal' ? ' ls-movement-scan__mode--active' : ''}`}
+            onClick={() => onScanModeChange('universal')}
+          >
+            <QrCode size={14} aria-hidden />
+            Universal
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={scanMode === 'code'}
+            className={`ls-movement-scan__mode${scanMode === 'code' ? ' ls-movement-scan__mode--active' : ''}`}
+            onClick={() => onScanModeChange('code')}
+          >
+            <Hash size={14} aria-hidden />
+            Código
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={scanMode === 'barcode'}
+            className={`ls-movement-scan__mode${scanMode === 'barcode' ? ' ls-movement-scan__mode--active' : ''}`}
+            onClick={() => onScanModeChange('barcode')}
+          >
+            <Barcode size={14} aria-hidden />
+            Barras
+          </button>
+        </div>
+      )}
 
       <div className="ls-movement-scan__body">
         <div className="ls-movement-scan__scan-col">
@@ -234,13 +306,7 @@ const MovementScanSection: React.FC<Props> = ({
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && submitScan()}
-                placeholder={
-                  scanMode === 'barcode'
-                    ? 'Leia código de barras ou digite EAN'
-                    : scanMode === 'code'
-                      ? 'SKU, código da empresa ou nome'
-                      : 'QR JSON, URL, EAN, SKU ou nome — qualquer etiqueta'
-                }
+                placeholder={codePlaceholder}
                 autoComplete="off"
               />
               {showCodeSuggestion && !embedded ? (
@@ -264,7 +330,7 @@ const MovementScanSection: React.FC<Props> = ({
             </button>
           </div>
 
-          {showCodeSuggestion && embedded ? (
+          {showCodeSuggestion && embedded && !compact ? (
             <span
               className="ls-movement-scan__code-suggest ls-movement-scan__code-suggest--below"
               title="Próximo código interno único ao cadastrar"
@@ -274,11 +340,13 @@ const MovementScanSection: React.FC<Props> = ({
             </span>
           ) : null}
 
+          {!compact ? (
           <p className="ls-movement-scan__enter-hint">
             Enter ou OK · leitor USB · câmera do celular para QR Code
           </p>
+          ) : null}
 
-          {showCodeSuggestion ? (
+          {!compact && showCodeSuggestion ? (
             <p className="ls-movement-scan__code-hint">
               Produto novo receberá <strong>{suggestedCode}</strong> — código interno único, sem repetição.
             </p>
@@ -308,7 +376,7 @@ const MovementScanSection: React.FC<Props> = ({
             <p className="ls-movement-scan__checking">Verificando se já está cadastrado…</p>
           ) : null}
 
-          {parsed && scanValue ? (
+          {parsed && scanValue && !compact ? (
             <div className="ls-intelligent-scan">
               <div className="ls-intelligent-scan__head">
                 <Sparkles size={15} className="text-orange-600" aria-hidden />
@@ -348,11 +416,7 @@ const MovementScanSection: React.FC<Props> = ({
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold text-emerald-900">Produto já cadastrado</p>
                 <p className="mt-1 truncate text-sm font-semibold text-slate-900">{inputMatch.name}</p>
-                <p className="text-xs text-slate-600">
-                  SKU {inputMatch.sku}
-                  {inputMatch.internal_code ? ` · ${inputMatch.internal_code}` : ''}
-                  {inputMatch.barcode ? ` · EAN ${inputMatch.barcode}` : ''}
-                </p>
+                <p className="text-xs text-slate-600">{productCodeLine(inputMatch)}</p>
               </div>
               <button type="button" className="ls-btn-primary shrink-0 text-xs" onClick={() => onUseExisting(inputMatch)}>
                 Usar este
@@ -413,10 +477,7 @@ const MovementScanSection: React.FC<Props> = ({
                     Encontrado
                   </p>
                   <p className="font-bold text-slate-900">{activeProduct.name}</p>
-                  <p className="text-xs text-slate-500">
-                    {activeProduct.sku}
-                    {activeProduct.barcode ? ` · EAN ${activeProduct.barcode}` : ''}
-                  </p>
+                  <p className="text-xs text-slate-500">{productCodeLine(activeProduct)}</p>
                 </div>
               </div>
             ) : scanValue ? (

@@ -1,4 +1,5 @@
 import { loadOperationalProfile, type OperationalProfileConfig } from '@/lib/operationalProfile';
+import { can } from '@/lib/permissions';
 
 export type MarketplaceModuleConfig = {
   active: boolean;
@@ -54,4 +55,16 @@ export function activateMarketplaceModule(companyId: string | null): void {
 export function deactivateMarketplaceModule(companyId: string | null): void {
   if (!companyId) return;
   saveMarketplaceModuleConfig(companyId, { active: false });
+}
+
+/** Marketplace visível na navegação — administrador/gestor ou módulo activado em modo estoque. */
+export function canViewMarketplaceNav(
+  profileRole?: string | null,
+  companyId?: string | null,
+  operationalProfile?: OperationalProfileConfig,
+): boolean {
+  if (!can('integrations.read', profileRole)) return false;
+  const profile = operationalProfile ?? loadOperationalProfile(companyId ?? null);
+  if (profile.mode === 'full') return true;
+  return loadMarketplaceModuleConfig(companyId ?? null).active;
 }

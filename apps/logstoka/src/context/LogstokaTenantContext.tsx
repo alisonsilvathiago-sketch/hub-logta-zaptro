@@ -18,7 +18,10 @@ const LogstokaTenantContext = createContext<LogstokaTenantContextValue>({
 export const LogstokaTenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile, isLoading } = useAuth();
   const companyId = profile?.company_id ?? null;
-  const role = useMemo(() => resolveRole(profile?.role), [profile?.role]);
+  const role = useMemo(
+    () => resolveRole(profile?.role, profile?.is_account_owner),
+    [profile?.role, profile?.is_account_owner],
+  );
 
   return (
     <LogstokaTenantContext.Provider

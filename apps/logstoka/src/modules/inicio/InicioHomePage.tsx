@@ -24,7 +24,9 @@ import {
   loadOperationalProfile,
 } from '@/lib/operationalProfile';
 import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
+import { displayRoleLabel } from '@/lib/permissions';
 import OperationalWorkSheetModal from '@/modules/operational/OperationalWorkSheetModal';
+import InicioCdsSection from './InicioCdsSection';
 import './inicioHome.css';
 
 const InicioHomePage: React.FC = () => {
@@ -82,14 +84,7 @@ const InicioHomePage: React.FC = () => {
     };
   }, [summary, todayPlan]);
 
-  const roleLabel =
-    profile?.role === 'admin' || profile?.role === 'master_admin'
-      ? 'Administrador'
-      : profile?.role === 'logistics_manager'
-        ? 'Gestor logístico'
-        : profile?.role === 'operator'
-          ? 'Operador'
-          : 'Equipe';
+  const roleLabel = displayRoleLabel(profile);
 
   const companyLabel = branding.companyName?.trim() || 'LogStoka';
 
@@ -245,6 +240,8 @@ const InicioHomePage: React.FC = () => {
             Configurar meu fluxo →
           </Link>
         )}
+
+        <InicioCdsSection />
       </section>
 
       <OperationalWorkSheetModal

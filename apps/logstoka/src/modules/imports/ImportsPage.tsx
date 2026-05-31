@@ -1,14 +1,24 @@
 import { LOGSTOKA_AI_BRAND } from '@/modules/ai/constants';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, FileUp, History, Printer, RefreshCw, ScanText, Share2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Download, FileUp, History, Printer, RefreshCw, ScanText, Share2, Sparkles } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import ImportExcelWizardModal from '@/components/imports/ImportExcelWizardModal';
 import LogstokaPageHeader from '@/components/layout/LogstokaPageHeader';
 import { LogstokaKpiStrip } from '@/components/layout/LogstokaStandardPageLayout';
 import LogstokaTableIconToolbar from '@/components/ui/LogstokaTableIconToolbar';
+import LogstokaAddIconButton from '@/components/ui/LogstokaAddIconButton';
 import { useLogstokaTenant } from '@/context/LogstokaTenantContext';
+import {
+  appendDemoImport,
+  appendDemoImportFromSpreadsheet,
+  estimateDemoImportFromFile,
+  loadMergedDemoImports,
+} from '@/lib/demoImportStore';
+import type { ImportValidationResult } from '@/lib/importSpreadsheetValidator';
 import { isLogstokaDemoCompany } from '@/lib/logstokaDemoMode';
-import { DEMO_IMPORTS } from '@/lib/logstokaDemoSeed';
 import { logstokaApi } from '@/lib/logstokaApi';
+import { pulseLogstokaSystem } from '@/lib/logstokaSystemPulse';
+import { supabase } from '@/lib/supabase';
 import ClickableTableRow from '@/components/ui/ClickableTableRow';
 import LogstokaTableFooter from '@/components/ui/LogstokaTableFooter';
 import { useTablePagination } from '@/hooks/useTablePagination';
@@ -32,30 +42,89 @@ async function fileToBase64(file: File): Promise<string> {
   return btoa(binary);
 }
 
+function preventDragDefaults(event: React.DragEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
 const ImportsPage: React.FC = () => {
   const { companyId } = useLogstokaTenant();
+  const demo = isLogstokaDemoCompany(companyId);
   const inputRef = useRef<HTMLInputElement>(null);
   const ocrInputRef = useRef<HTMLInputElement>(null);
   const [imports, setImports] = useState<ImportRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [ocrLoading, setOcrLoading] = useState(false);
+  const [fileDropActive, setFileDropActive] = useState(false);
+  const [ocrDropActive, setOcrDropActive] = useState(false);
+  const [excelWizardOpen, setExcelWizardOpen] = useState(false);
 
-  const loadImports = async () => {
-    if (isLogstokaDemoCompany(companyId)) {
-      setImports(DEMO_IMPORTS);
+  const loadImports = useCallback(async () => {
+    if (!companyId) {
+      setImports([]);
+      return;
+    }
+    if (demo) {
+      setImports(loadMergedDemoImports(companyId));
       return;
     }
     try {
       const res = await logstokaApi.getImports();
       setImports((res.data ?? []) as ImportRecord[]);
+      return;
     } catch {
-      /* API offline — lista vazia */
+      /* fallback Supabase */
     }
-  };
+    const { data } = await supabase
+      .from('ls_reports_imports')
+      .select('id, file_name, file_type, status, rows_processed, created_at')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    setImports((data ?? []) as ImportRecord[]);
+  }, [companyId, demo]);
 
   useEffect(() => {
     void loadImports();
-  }, [companyId]);
+  }, [loadImports]);
+
+  useEffect(() => {
+    const refresh = () => void loadImports();
+    window.addEventListener('logstoka:system-pulse', refresh);
+    window.addEventListener('logstoka:demo-imports-updated', refresh);
+    return () => {
+      window.removeEventListener('logstoka:system-pulse', refresh);
+      window.removeEventListener('logstoka:demo-imports-updated', refresh);
+    };
+  }, [loadImports]);
+
+  const registerDemoImport = useCallback(
+    async (file: File) => {
+      if (!companyId) return;
+      const { fileType, rows, status } = await estimateDemoImportFromFile(file);
+      appendDemoImport(companyId, {
+        id: `imp-${Date.now()}`,
+        file_name: file.name,
+        file_type: fileType,
+        status,
+        rows_processed: rows,
+        created_at: new Date().toISOString(),
+      });
+      pulseLogstokaSystem();
+      await loadImports();
+      toast.success(`[Demo] ${file.name} importado — ${rows} linha(s) processada(s)`);
+    },
+    [companyId, loadImports],
+  );
+
+  const handleSpreadsheetApply = useCallback(
+    (file: File, result: ImportValidationResult) => {
+      if (!companyId) return;
+      appendDemoImportFromSpreadsheet(companyId, file, result, true);
+      void loadImports();
+    },
+    [companyId, loadImports],
+  );
 
   const { paginatedItems, footerProps } = useTablePagination(imports);
 
@@ -72,8 +141,13 @@ const ImportsPage: React.FC = () => {
   }, [imports]);
 
   const handleFile = async (file: File) => {
-    if (isLogstokaDemoCompany(companyId)) {
-      toast.success(`[Demo] ${file.name} importado — dados demo atualizados`);
+    if (demo) {
+      setLoading(true);
+      try {
+        await registerDemoImport(file);
+      } finally {
+        setLoading(false);
+      }
       return;
     }
     setLoading(true);
@@ -109,6 +183,7 @@ const ImportsPage: React.FC = () => {
         return;
       }
 
+      pulseLogstokaSystem();
       await loadImports();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Falha na importação');
@@ -118,8 +193,13 @@ const ImportsPage: React.FC = () => {
   };
 
   const handleOcrFile = async (file: File) => {
-    if (isLogstokaDemoCompany(companyId)) {
-      toast.success(`[Demo] OCR ${file.name} — 24 linhas extraídas`);
+    if (demo) {
+      setOcrLoading(true);
+      try {
+        await registerDemoImport(file);
+      } finally {
+        setOcrLoading(false);
+      }
       return;
     }
     setOcrLoading(true);
@@ -131,6 +211,7 @@ const ImportsPage: React.FC = () => {
         file_name: file.name,
       });
       toast.success(`OCR concluído — ${result.rowsProcessed} linhas, ${result.movements} saídas`);
+      pulseLogstokaSystem();
       await loadImports();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Falha no OCR');
@@ -139,12 +220,33 @@ const ImportsPage: React.FC = () => {
     }
   };
 
+  const onFileDrop = (event: React.DragEvent) => {
+    preventDragDefaults(event);
+    setFileDropActive(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) void handleFile(file);
+  };
+
+  const onOcrDrop = (event: React.DragEvent) => {
+    preventDragDefaults(event);
+    setOcrDropActive(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) void handleOcrFile(file);
+  };
+
   return (
     <div className="space-y-6">
       <LogstokaPageHeader
         icon={<FileUp size={20} strokeWidth={2.25} />}
         title="Centro de Importação"
-        subtitle="NF-e, planilhas e OCR — entradas e saídas em lote"
+        subtitle="NF-e, planilhas, TXT, PDF e OCR — entradas e saídas em lote"
+        actions={
+          <LogstokaAddIconButton
+            variant="dark"
+            title="Importar vendas / relatório"
+            onClick={() => setExcelWizardOpen(true)}
+          />
+        }
       />
 
       <LogstokaKpiStrip
@@ -156,8 +258,43 @@ const ImportsPage: React.FC = () => {
         ]}
       />
 
+      <div className="ls-card rounded-[24px] border border-orange-100 bg-gradient-to-br from-[#fffaf5] to-white p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="mb-2 flex items-center gap-2 font-black text-[#383838]">
+              <Sparkles size={20} className="text-orange-600" />
+              Vendas da semana — qualquer formato
+            </div>
+            <p className="max-w-2xl text-sm font-semibold text-[#525252]">
+              Para estoquistas sem API de marketplace: envie Excel, CSV, TXT, PDF ou exportação de loja.
+              O {LOGSTOKA_AI_BRAND} identifica o tipo de arquivo, mapeia colunas e valida sku, quantidade,
+              marketplace e loja antes de gerar saídas no estoque.
+            </p>
+          </div>
+          <LogstokaAddIconButton
+            variant="dark"
+            title="Importar vendas / relatório"
+            onClick={() => setExcelWizardOpen(true)}
+          />
+        </div>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="ls-card rounded-[24px] border border-slate-100">
+        <div
+          className={`ls-card rounded-[24px] border transition-colors ${
+            fileDropActive ? 'border-orange-400 bg-orange-50/40' : 'border-slate-100'
+          }`}
+          onDragEnter={(e) => {
+            preventDragDefaults(e);
+            setFileDropActive(true);
+          }}
+          onDragOver={preventDragDefaults}
+          onDragLeave={(e) => {
+            preventDragDefaults(e);
+            setFileDropActive(false);
+          }}
+          onDrop={onFileDrop}
+        >
           <div className="mb-3 flex items-center gap-2 font-black text-[#383838]">
             <FileUp size={18} className="text-orange-600" />
             Upload NF-e / Relatório
@@ -177,11 +314,27 @@ const ImportsPage: React.FC = () => {
             {loading ? 'Processando…' : 'Selecionar arquivo'}
           </button>
           <p className="mt-3 text-xs text-[#828282]">
-            XML NF-e gera entrada automática. CSV/Excel/PDF com colunas sku, quantidade, marketplace e loja geram saídas.
+            XML NF-e gera entrada automática. CSV, Excel, TXT ou PDF com colunas sku, quantidade, marketplace e loja
+            geram saídas — o {LOGSTOKA_AI_BRAND} detecta o formato.
+            {demo ? ' Arraste o arquivo aqui ou use o botão.' : ' Arraste o arquivo para importar.'}
           </p>
         </div>
 
-        <div className="ls-card rounded-[24px] border border-slate-100">
+        <div
+          className={`ls-card rounded-[24px] border transition-colors ${
+            ocrDropActive ? 'border-orange-400 bg-orange-50/40' : 'border-slate-100'
+          }`}
+          onDragEnter={(e) => {
+            preventDragDefaults(e);
+            setOcrDropActive(true);
+          }}
+          onDragOver={preventDragDefaults}
+          onDragLeave={(e) => {
+            preventDragDefaults(e);
+            setOcrDropActive(false);
+          }}
+          onDrop={onOcrDrop}
+        >
           <div className="mb-3 flex items-center gap-2 font-black text-[#383838]">
             <ScanText size={18} className="text-orange-600" />
             OCR / imagem
@@ -223,9 +376,9 @@ const ImportsPage: React.FC = () => {
               },
               {
                 key: 'upload',
-                label: 'Novo upload',
+                label: 'Nova importação inteligente',
                 icon: <FileUp size={18} strokeWidth={2} />,
-                onClick: () => inputRef.current?.click(),
+                onClick: () => setExcelWizardOpen(true),
                 accent: true,
               },
               {
@@ -285,6 +438,12 @@ const ImportsPage: React.FC = () => {
         </div>
         <LogstokaTableFooter {...footerProps} hidden={imports.length === 0} />
       </section>
+
+      <ImportExcelWizardModal
+        open={excelWizardOpen}
+        onClose={() => setExcelWizardOpen(false)}
+        onVerifiedApply={handleSpreadsheetApply}
+      />
     </div>
   );
 };

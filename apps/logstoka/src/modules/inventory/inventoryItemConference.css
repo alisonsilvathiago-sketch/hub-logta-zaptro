@@ -1,0 +1,171 @@
+.ls-inv-conference__product {
+  display: flex;
+  gap: 0.875rem;
+  align-items: flex-start;
+  padding: 0.875rem 1rem;
+  border-radius: 16px;
+  border: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.ls-inv-conference__product-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ls-inv-conference__sku {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ea580c;
+}
+
+.ls-inv-conference__name {
+  margin-top: 0.15rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #383838;
+}
+
+.ls-inv-conference__meta {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: #737373;
+}
+
+.ls-inv-conference__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.ls-inv-conference__metric {
+  padding: 0.75rem;
+  border-radius: 14px;
+  border: 1px solid #ececec;
+  background: #fff;
+}
+
+.ls-inv-conference__metric-label {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #828282;
+}
+
+.ls-inv-conference__metric-value {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #383838;
+}
+
+.ls-inv-conference__metric--warn .ls-inv-conference__metric-value {
+  color: #d97706;
+}
+
+.ls-inv-conference__metric--ok .ls-inv-conference__metric-value {
+  color: #16a34a;
+}
+
+.ls-inv-conference__actor {
+  font-size: 0.75rem;
+  color: #525252;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid rgba(234, 88, 12, 0.15);
+}
+
+.ls-inv-conference__justification {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ls-inv-conference__history-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #828282;
+}
+
+.ls-inv-conference__history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.ls-inv-conference__history-item {
+  font-size: 0.75rem;
+  color: #525252;
+}
+
+.ls-inv-conference__product-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #c2410c;
+}
+
+.ls-inventory-audit-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.ls-inventory-audit-panel__title {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #828282;
+}
+
+.ls-inventory-audit-panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ls-inventory-audit-panel__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid #ececec;
+  background: #fff;
+  font-size: 0.8125rem;
+}
+
+.ls-inventory-audit-panel__item--warning {
+  border-color: rgba(217, 119, 6, 0.25);
+  background: #fffbeb;
+}
+
+.ls-inventory-audit-panel__desc {
+  color: #525252;
+}
+
+.ls-inventory-audit-panel__meta {
+  font-size: 0.6875rem;
+  color: #828282;
+  white-space: nowrap;
+}

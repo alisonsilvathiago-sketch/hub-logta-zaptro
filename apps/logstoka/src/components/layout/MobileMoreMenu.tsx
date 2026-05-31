@@ -2,16 +2,25 @@ import React, { useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/LogstokaAuthProvider';
 import { can } from '@/lib/permissions';
+import { LOGSTOKA_ROUTES } from '@/lib/logstokaRoutes';
 import { LOGSTOKA_NAV } from './logstokaNavItems';
 
-const QUICK_PATHS = new Set(['/app', '/app/products', '/app/conference', '/app/integrations']);
+const QUICK_PATHS = new Set([
+  '/app',
+  '/app/products',
+  '/app/conference',
+  '/app/integrations',
+  LOGSTOKA_ROUTES.MARKETPLACE_HUB,
+  '/app/movements',
+]);
 
 type Props = {
   open: boolean;
   onClose: () => void;
+  showMarketplace?: boolean;
 };
 
-const MobileMoreMenu: React.FC<Props> = ({ open, onClose }) => {
+const MobileMoreMenu: React.FC<Props> = ({ open, onClose, showMarketplace = true }) => {
   const { profile } = useAuth();
   const { pathname } = useLocation();
 
@@ -28,6 +37,7 @@ const MobileMoreMenu: React.FC<Props> = ({ open, onClose }) => {
 
   const items = LOGSTOKA_NAV.filter((item) => {
     if (!item.to || QUICK_PATHS.has(item.to)) return false;
+    if (!showMarketplace && item.to.startsWith('/app/integrations')) return false;
     if (item.perm && !can(item.perm, profile?.role)) return false;
     return true;
   });

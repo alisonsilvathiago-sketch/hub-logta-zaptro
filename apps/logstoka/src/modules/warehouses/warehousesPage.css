@@ -2,7 +2,131 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ls-warehouses-page__scope-note {
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(234, 88, 12, 0.18);
+  background: #fff7ed;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9a3412;
+}
+
+.ls-warehouses-page__owner-note {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(56, 56, 56, 0.08);
+  background: #fafafa;
+  font-size: 13px;
+  font-weight: 600;
+  color: #525252;
+  line-height: 1.45;
+}
+
+.ls-warehouses-page__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: min(100%, 420px);
+  padding: 6px 8px 6px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(56, 56, 56, 0.08);
+  background: #fff;
+}
+
+.ls-warehouses-page__search-icon {
+  color: #a3a3a3;
+  flex-shrink: 0;
+}
+
+.ls-warehouses-page__search input {
+  flex: 1;
+  border: 0;
+  outline: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #404040;
+  background: transparent;
+}
+
+.ls-warehouses-page__search-clear {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  background: #f5f5f5;
+  color: #737373;
+  cursor: pointer;
+}
+
+.ls-warehouses-page__search-btn {
+  border: 0;
+  border-radius: 12px;
+  padding: 0.45rem 0.85rem;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  background: #ea580c;
+  cursor: pointer;
+}
+
+.ls-warehouses-page__toolbar-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.ls-warehouses-page__filter-wrap {
+  position: relative;
+}
+
+.ls-warehouses-page__filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(56, 56, 56, 0.08);
+  border-radius: 14px;
+  padding: 0.5rem 0.85rem;
+  font-size: 12px;
+  font-weight: 800;
+  color: #525252;
+  background: #fff;
+  cursor: pointer;
+}
+
+.ls-warehouses-page__filter-btn--open {
+  border-color: rgba(234, 88, 12, 0.25);
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.ls-warehouses-page__filter-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  width: 220px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(56, 56, 56, 0.08);
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(56, 56, 56, 0.12);
+}
+
+.ls-warehouses-page__result-count {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #737373;
 }
 
 .ls-warehouses-grid {
@@ -69,6 +193,21 @@
   color: #949494;
 }
 
+.ls-warehouse-card__location {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 6px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #737373;
+}
+
+.ls-warehouse-card__location svg {
+  margin-right: 2px;
+  vertical-align: -2px;
+}
+
 .ls-warehouse-card__toggle {
   flex-shrink: 0;
   border: 1px solid #e5e7eb;
@@ -132,11 +271,22 @@
 }
 
 .ls-warehouse-card__link {
-  margin-top: auto;
   font-size: 12px;
   font-weight: 800;
   color: #c2410c;
   text-decoration: none;
+}
+
+.ls-warehouse-card__links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.ls-warehouse-card__link--muted {
+  color: #737373;
+  font-weight: 700;
 }
 
 .ls-warehouse-card__link:hover {

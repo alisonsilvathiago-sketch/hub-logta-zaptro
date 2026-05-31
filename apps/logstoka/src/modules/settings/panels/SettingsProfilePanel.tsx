@@ -2,18 +2,23 @@ import React from 'react';
 import {
   Briefcase,
   CheckCircle2,
+  Crown,
   Mail,
   Phone,
   User,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/LogstokaAuthProvider';
-import { resolveRole } from '@/lib/permissions';
+import { useLogstokaWarehouseScope } from '@/context/LogstokaWarehouseScopeContext';
+import { profileOrgScopeLabel } from '@/lib/logstokaOrgModel';
+import { displayRoleLabel, roleDescription, isAccountOwner } from '@/lib/permissions';
+import { SETTINGS_BASE } from '@/modules/settings/settingsNav';
 
 const SettingsProfilePanel: React.FC = () => {
   const { profile } = useAuth();
-  const role = resolveRole(profile?.role);
-  const roleLabel = role === 'master_admin' ? 'Administrador WMS' : 'Operador WMS';
+  const { visibleWarehouses } = useLogstokaWarehouseScope();
+  const owner = isAccountOwner(profile);
   const initials =
     profile?.full_name?.trim()?.[0]?.toUpperCase() ||
     profile?.email?.trim()?.[0]?.toUpperCase() ||
@@ -25,7 +30,7 @@ const SettingsProfilePanel: React.FC = () => {
     <div className="space-y-8">
       <div className="border-b border-gray-100 pb-6">
         <h2 className="text-xl font-black text-gray-900">Meu Perfil</h2>
-        <p className="mt-1 text-sm text-gray-500">Informações pessoais da sua conta LogStoka.</p>
+        <p className="mt-1 text-sm text-gray-500">Papel na empresa, escopo de CDs e dados pessoais.</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-8 border-b border-gray-100 pb-8">
@@ -34,9 +39,29 @@ const SettingsProfilePanel: React.FC = () => {
         </div>
         <div>
           <h3 className="text-2xl font-black text-gray-900">{profile?.full_name || 'Usuário LogStoka'}</h3>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-normal text-orange-600">{roleLabel}</p>
+          <p className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-normal text-orange-600">
+            {owner ? <Crown size={12} aria-hidden /> : null}
+            {displayRoleLabel(profile)}
+          </p>
           <p className="mt-2 text-sm font-medium text-gray-500">{profile?.email}</p>
+          <p className="mt-1 text-xs font-semibold text-gray-400">{profileOrgScopeLabel(profile)}</p>
         </div>
+      </div>
+
+      <div className="rounded-3xl border border-gray-100 bg-gray-50 p-5">
+        <p className="text-sm font-bold text-gray-700">{roleDescription(profile)}</p>
+        {visibleWarehouses.length === 1 ? (
+          <p className="mt-2 text-xs font-semibold text-gray-500">CD autorizado: {visibleWarehouses[0].name}</p>
+        ) : null}
+        {owner ? (
+          <Link to={`${SETTINGS_BASE}/conta`} className="mt-3 inline-block text-xs font-black text-orange-700">
+            Ver conta, plano e pagamento →
+          </Link>
+        ) : (
+          <p className="mt-3 text-xs font-semibold text-amber-700">
+            Pagamento e plano são gerenciados apenas pelo Admin Sênior (titular da compra).
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -44,7 +69,7 @@ const SettingsProfilePanel: React.FC = () => {
           { label: 'Nome completo', icon: User, value: profile?.full_name || '' },
           { label: 'E-mail', icon: Mail, value: profile?.email || '' },
           { label: 'Telefone / WhatsApp', icon: Phone, value: '(11) 98765-4321' },
-          { label: 'Cargo', icon: Briefcase, value: roleLabel },
+          { label: 'Papel no LogStoka', icon: Briefcase, value: displayRoleLabel(profile) },
         ].map((field) => {
           const Icon = field.icon;
           return (

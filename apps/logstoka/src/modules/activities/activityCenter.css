@@ -742,6 +742,42 @@ button.ls-act-center__item-desc--btn:hover {
   max-width: 28rem;
 }
 
+.ls-act-preview__responsible-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #fde68a;
+  background: linear-gradient(135deg, #fffbeb 0%, #fff7ed 100%);
+  color: #92400e;
+}
+
+.ls-act-preview__responsible-label {
+  margin: 0;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b45309;
+}
+
+.ls-act-preview__responsible-name {
+  margin: 2px 0 0;
+  font-size: 1.0625rem;
+  font-weight: 900;
+  color: #78350f;
+  line-height: 1.25;
+}
+
+.ls-act-preview__responsible-hint {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #a16207;
+}
+
 .ls-act-preview__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

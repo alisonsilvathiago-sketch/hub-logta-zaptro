@@ -15,6 +15,7 @@ import {
 import { LOGSTOKA_AI_BRAND } from '../constants';
 import {
   getXRayContextDefaultUrl,
+  getXRayContextFocusAreas,
   getXRayContextTitle,
   getXRayScanPhrases,
   XRAY_SCAN_PHRASE_MS,
@@ -29,9 +30,38 @@ function scoreTone(score: number): 'good' | 'warn' | 'bad' {
 }
 
 function scoreLabel(score: number): string {
-  if (score >= 95) return 'Excelente · sem gargalos';
-  if (score >= 80) return 'Bom · requer ajustes';
-  return 'Crítico · risco operacional';
+  if (score >= 95) return 'Excelente';
+  if (score >= 80) return 'Bom';
+  return 'Crítico';
+}
+
+function scoreHint(score: number): string {
+  if (score >= 95) return 'Sem gargalos detectados';
+  if (score >= 80) return 'Ajustes recomendados';
+  return 'Risco operacional';
+}
+
+const SCORE_RING_R = 38;
+const SCORE_RING_C = 2 * Math.PI * SCORE_RING_R;
+
+function XRayScoreRing({ score, tone }: { score: number; tone: 'good' | 'warn' | 'bad' }) {
+  const offset = SCORE_RING_C - (score / 100) * SCORE_RING_C;
+  return (
+    <div className="ls-xray-results__score-hero" aria-hidden>
+      <svg viewBox="0 0 88 88" className="ls-xray-results__score-svg">
+        <circle cx="44" cy="44" r={SCORE_RING_R} className="ls-xray-results__score-track" />
+        <circle
+          cx="44"
+          cy="44"
+          r={SCORE_RING_R}
+          className={`ls-xray-results__score-fill ls-xray-results__score-fill--${tone}`}
+          strokeDasharray={SCORE_RING_C}
+          strokeDashoffset={offset}
+        />
+      </svg>
+      <span className="ls-xray-results__score-value">{score}%</span>
+    </div>
+  );
 }
 
 function itemTargetUrl(item: XRayDiagnosticItem, contextDefaultUrl: string): string | undefined {
@@ -117,9 +147,12 @@ const LogstokaXRayDrawer: React.FC = () => {
   const visibleItems = auditData?.items.filter((item) => !ignoredIds.has(item.id)) ?? [];
   const issueItems = visibleItems.filter((item) => item.status !== 'ok');
   const okItems = visibleItems.filter((item) => item.status === 'ok');
+  const errorCount = issueItems.filter((item) => item.status === 'error').length;
+  const warningCount = issueItems.filter((item) => item.status === 'warning').length;
   const issueCountLabel = issueItems.length;
   const tone = auditData ? scoreTone(auditData.score) : 'warn';
   const pageTitle = getXRayContextTitle(activeContext);
+  const focusAreas = getXRayContextFocusAreas(activeContext);
 
   return createPortal(
     <div className="ls-xray-root" role="dialog" aria-modal="true" aria-label={`Raio-X · ${pageTitle}`}>
@@ -151,16 +184,51 @@ const LogstokaXRayDrawer: React.FC = () => {
               <aside className="ls-xray-results__aside">
                 {auditData ? (
                   <>
-                    <div className="ls-xray-results__score">
-                      <div className={`ls-xray-results__score-ring ls-xray-results__score-ring--${tone}`}>
-                        {auditData.score}%
-                      </div>
-                      <div>
-                        <p className="ls-xray-results__score-label">Saúde da seção</p>
-                        <p className="ls-xray-results__score-title">{scoreLabel(auditData.score)}</p>
-                      </div>
+                    <div className="ls-xray-results__aside-hero">
+                      <XRayScoreRing score={auditData.score} tone={tone} />
+                      <p className="ls-xray-results__score-label">Saúde da seção</p>
+                      <p className={`ls-xray-results__status-pill ls-xray-results__status-pill--${tone}`}>
+                        {scoreLabel(auditData.score)} · {scoreHint(auditData.score)}
+                      </p>
                     </div>
-                    <p className="ls-xray-results__summary">{auditData.summary}</p>
+
+                    <dl className="ls-xray-results__stats">
+                      <div className="ls-xray-results__stat ls-xray-results__stat--error">
+                        <dt>Críticos</dt>
+                        <dd>{errorCount}</dd>
+                      </div>
+                      <div className="ls-xray-results__stat ls-xray-results__stat--warn">
+                        <dt>Atenção</dt>
+                        <dd>{warningCount}</dd>
+                      </div>
+                      <div className="ls-xray-results__stat ls-xray-results__stat--ok">
+                        <dt>OK</dt>
+                        <dd>{okItems.length}</dd>
+                      </div>
+                    </dl>
+
+                    <div className="ls-xray-results__insight">
+                      <p className="ls-xray-results__insight-brand">{LOGSTOKA_AI_BRAND}</p>
+                      {issueCountLabel === 0 ? (
+                        <p className="ls-xray-results__insight-text">
+                          Nenhuma inconsistência com evidência nesta seção. Áreas verificadas: {focusAreas}.
+                        </p>
+                      ) : (
+                        <>
+                          <p className="ls-xray-results__insight-text">
+                            {issueCountLabel} ponto{issueCountLabel !== 1 ? 's' : ''} para corrigir nesta seção.
+                          </p>
+                          <p className="ls-xray-results__insight-meta">
+                            Verificamos {focusAreas}.
+                          </p>
+                          {errorCount > 0 ? (
+                            <p className="ls-xray-results__insight-tip">
+                              Priorize os {errorCount} item{errorCount !== 1 ? 's' : ''} marcados como Erro.
+                            </p>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
                   </>
                 ) : null}
               </aside>

@@ -38,6 +38,8 @@ export const INICIO_MEGA_MENU: InicioMegaSection[] = [
           { label: 'Conferência do dia', to: '/app/picking' },
           { label: 'Conferir material', to: '/app/conference' },
           { label: 'Expedir / saídas', to: '/app/movements' },
+          { label: 'Transferências', to: LOGSTOKA_ROUTES.TRANSFERS },
+          { label: 'Portaria motoristas', to: LOGSTOKA_ROUTES.DRIVER_GATE },
           { label: 'Importar relatório', to: '/app/imports' },
         ],
       },
@@ -111,16 +113,29 @@ export type FavoriteShortcut = {
 export const DEFAULT_FAVORITE_SHORTCUTS: FavoriteShortcut[] = [
   { id: 'operacao', label: 'Operação', to: LOGSTOKA_ROUTES.OPERATIONAL_WORK },
   { id: 'atividades', label: 'Atividades', to: LOGSTOKA_ROUTES.ACTIVITY_CENTER },
-  { id: 'picking', label: 'Conferir dia', to: '/app/picking' },
+  { id: 'picking', label: 'Conferir dia', to: LOGSTOKA_ROUTES.PICKING },
   { id: 'products', label: 'Produtos', to: LOGSTOKA_ROUTES.PRODUCTS },
   { id: 'imports', label: 'Importar', to: '/app/imports' },
 ];
 
+/** Catálogo completo — escolha no + do menu lateral da home. */
 export const SHORTCUT_CATALOG: FavoriteShortcut[] = [
-  ...DEFAULT_FAVORITE_SHORTCUTS,
-  { id: 'conference', label: 'Conferir', to: '/app/conference' },
-  { id: 'movements', label: 'Expedir', to: '/app/movements' },
+  { id: 'operacao', label: 'Operação', to: LOGSTOKA_ROUTES.OPERATIONAL_WORK },
+  { id: 'atividades', label: 'Atividades', to: LOGSTOKA_ROUTES.ACTIVITY_CENTER },
+  { id: 'entry', label: 'Entrada', to: '/app/movements?tab=entry' },
+  { id: 'exit', label: 'Saída', to: '/app/movements?tab=exit' },
+  { id: 'movements', label: 'Movimentações', to: LOGSTOKA_ROUTES.MOVEMENTS },
+  { id: 'picking', label: 'Conferir dia', to: LOGSTOKA_ROUTES.PICKING },
+  { id: 'conference', label: 'Conferir material', to: '/app/conference' },
+  { id: 'transfers', label: 'Transferências', to: LOGSTOKA_ROUTES.TRANSFERS },
+  { id: 'driver_gate', label: 'Portaria motoristas', to: LOGSTOKA_ROUTES.DRIVER_GATE },
+  { id: 'products', label: 'Produtos', to: LOGSTOKA_ROUTES.PRODUCTS },
   { id: 'inventory', label: 'Inventário', to: '/app/inventory' },
-  { id: 'integrations', label: 'Canais', to: LOGSTOKA_ROUTES.INTEGRATIONS_CENTRAL },
+  { id: 'warehouses', label: 'Depósitos', to: LOGSTOKA_ROUTES.WAREHOUSES },
+  { id: 'sales', label: 'Pedidos de venda', to: LOGSTOKA_ROUTES.SALES },
+  { id: 'imports', label: 'Importar relatório', to: '/app/imports' },
+  { id: 'integrations', label: 'Canais / lojas', to: LOGSTOKA_ROUTES.INTEGRATIONS_CENTRAL },
+  { id: 'dashboard', label: 'Dashboard', to: LOGSTOKA_ROUTES.DASHBOARD },
+  { id: 'interactions', label: 'Interações / auditoria', to: LOGSTOKA_ROUTES.SETTINGS_AUDIT },
   { id: 'settings', label: 'Configurações', to: LOGSTOKA_ROUTES.SETTINGS },
 ];

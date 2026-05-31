@@ -1,0 +1,216 @@
+.ls-wh-register-modal-panel {
+  max-width: min(820px, calc(100vw - 24px)) !important;
+}
+
+.ls-wh-register-modal {
+  display: grid;
+  gap: 16px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+@media (min-width: 720px) {
+  .ls-wh-register-modal {
+    grid-template-columns: minmax(0, 1.15fr) minmax(240px, 0.85fr);
+    align-items: start;
+  }
+}
+
+.ls-wh-register-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ls-wh-register-modal__section {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(56, 56, 56, 0.08);
+  background: #fff;
+}
+
+.ls-wh-register-modal__section--location {
+  border-color: rgba(234, 88, 12, 0.2);
+  background: linear-gradient(160deg, #fffaf5 0%, #fff 60%);
+}
+
+.ls-wh-register-modal__section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #383838;
+}
+
+.ls-wh-register-modal__section-head svg {
+  color: #ea580c;
+  flex-shrink: 0;
+}
+
+.ls-wh-register-modal__grid {
+  display: grid;
+  gap: 10px;
+}
+
+@media (min-width: 520px) {
+  .ls-wh-register-modal__grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ls-wh-register-modal__field {
+  min-width: 0;
+}
+
+.ls-wh-register-modal__field--span2 {
+  grid-column: 1 / -1;
+}
+
+.ls-wh-register-modal .ls-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #737373;
+}
+
+.ls-wh-register-modal .ls-input {
+  width: 100%;
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.ls-wh-register-modal__hint {
+  margin: 6px 0 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: #a3a3a3;
+}
+
+.ls-wh-register-modal__hint--ok {
+  color: #047857;
+}
+
+.ls-wh-register-modal__preview {
+  position: sticky;
+  top: 0;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(234, 88, 12, 0.16);
+  background: linear-gradient(165deg, #fff7ed 0%, #fff 45%);
+}
+
+.ls-wh-register-modal__preview-label {
+  margin: 0 0 10px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ea580c;
+}
+
+.ls-wh-register-modal__preview-name {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  color: #383838;
+  line-height: 1.2;
+}
+
+.ls-wh-register-modal__preview-code {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #737373;
+}
+
+.ls-wh-register-modal__preview-address {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid rgba(56, 56, 56, 0.08);
+}
+
+.ls-wh-register-modal__preview-address-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a3a3a3;
+}
+
+.ls-wh-register-modal__preview-address-line {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #383838;
+  line-height: 1.4;
+}
+
+.ls-wh-register-modal__preview-address-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #525252;
+}
+
+.ls-wh-register-modal__preview-contact {
+  margin-top: 12px;
+}
+
+.ls-wh-register-modal__preview-contact-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #383838;
+}
+
+.ls-wh-register-modal__preview-contact-role {
+  margin: 2px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #737373;
+}
+
+.ls-wh-register-modal__preview-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #525252;
+}
+
+.ls-wh-register-modal__preview-empty {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 600;
+  color: #737373;
+  line-height: 1.45;
+}
+
+.ls-wh-register-modal__footer-note {
+  margin-right: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: #737373;
+}
+
+.ls-wh-register-modal__footer-note--warn {
+  color: #9a3412;
+}
